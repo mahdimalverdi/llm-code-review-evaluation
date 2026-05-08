@@ -1,7 +1,12 @@
 # Paper Analysis Template
 
 > [!NOTE]
-> Use this template for every paper. The goal is not only to summarize the paper, but to extract evidence for our own research argument about LLM-based code review evaluation, context quality, problematic comments, and trade-off-aware evaluation.
+> Use this template for every paper. The goal is not to summarize papers for their own sake. The goal is to extract coded evidence for a focused evidence synthesis that produces:
+>
+> 1. a taxonomy of problematic LLM-generated code review comments,
+> 2. an evaluation framework for generated review comments,
+> 3. a context-quality model,
+> 4. and a trade-off matrix for filtering/gating/aggregation decisions.
 
 ## Completion Checklist
 
@@ -11,16 +16,18 @@ Before marking this paper as completed, make sure every item below is checked.
 - [ ] The one-sentence summary is written in a precise and non-generic way.
 - [ ] The paper’s main goal is separated from our interpretation of its contribution.
 - [ ] All reported research questions are listed, or `Not reported` is written explicitly.
-- [ ] Dataset details are filled as much as the paper allows.
-- [ ] Missing dataset details are marked as `Not reported`, not left blank.
+- [ ] Dataset/study details are filled as much as the paper allows.
+- [ ] Missing details are marked as `Not reported`, not left blank.
 - [ ] Evaluation methods and metrics are described.
-- [ ] Human annotation protocol is documented, if any.
+- [ ] Human annotation, user-study, or production-feedback protocol is documented, if any.
 - [ ] Evaluation dimensions are checked and explained.
-- [ ] Problematic comment types are extracted or inferred carefully.
+- [ ] Problematic comment types are extracted separately from evaluation dimensions.
+- [ ] Context-quality dimensions are extracted, if relevant.
+- [ ] Trade-offs are explicitly identified, not only mentioned.
 - [ ] Every inferred point is marked as `Inferred`.
 - [ ] Limitations from the paper are separated from our own critique.
-- [ ] Relevance to our research is explicitly explained.
-- [ ] Evidence for our argument is extracted into Section 15.
+- [ ] Relevance to our research questions is explicitly explained.
+- [ ] Evidence for our argument is extracted into Section 17.
 - [ ] Open questions for follow-up reading are listed.
 - [ ] No `TODO` remains unless it is intentionally listed in the follow-up checklist.
 
@@ -31,6 +38,7 @@ Before marking this paper as completed, make sure every item below is checked.
 - Priority: `High | Medium | Low`
 - Reading depth: `Skimmed | Read once | Deep read | Verified with notes`
 - Last updated: `YYYY-MM-DD`
+- Confidence in extraction: `High | Medium | Low`
 
 ## Notation Rules
 
@@ -48,6 +56,18 @@ Use these labels consistently.
 > [!IMPORTANT]
 > Do not leave important fields empty. If the paper does not say something, write `Not reported`. Empty fields make cross-paper synthesis unreliable.
 
+## Our Research Questions
+
+Use these as the coding lens while reading each paper.
+
+| RQ | Question | What to extract from each paper |
+|---|---|---|
+| RQ1 | What types of problematic comments appear in LLM-generated code review? | Error types, failure examples, hallucinations, low-value comments, missed issues. |
+| RQ2 | How is context quality defined, used, or ignored in LLM-based code review evaluation? | Context sources, context-selection strategy, context failures, context-size effects. |
+| RQ3 | Which evaluation dimensions are covered or missing in current studies? | Correctness, grounding, usefulness, actionability, specificity, coverage, cost, workflow impact. |
+| RQ4 | What trade-offs appear when filtering, gating, aggregating, or enriching generated review comments? | Error reduction vs useful feedback preservation, context size vs noise/cost, automation vs reviewer overhead. |
+| RQ5 | What should a trade-off-aware evaluation framework include? | Taxonomy categories, metrics, annotation protocol, context-quality dimensions, decision matrix. |
+
 ---
 
 # PXX — Paper Title
@@ -60,10 +80,10 @@ Use these labels consistently.
 | Authors |  |
 | Year |  |
 | Venue / Source |  |
-| Publication type | `Journal | Conference | Workshop | Preprint | Industrial report | Benchmark paper | Case study | Survey` |
+| Publication type | `Journal | Conference | Workshop | Preprint | Industrial report | Benchmark paper | Case study | User study | Survey` |
 | Link |  |
 | DOI / arXiv |  |
-| Code / artifact | `Reported | Not reported` |
+| Code / artifact | `Reported | Not reported | Partially reported` |
 
 ### Citation Note
 
@@ -91,9 +111,11 @@ Write one precise sentence.
 - [ ] Context quality / context selection
 - [ ] LLM-as-a-judge
 - [ ] Human annotation / human evaluation
+- [ ] User study / reviewer behavior
 - [ ] Industrial deployment
 - [ ] Benchmark construction
 - [ ] Cost / latency / operational trade-off
+- [ ] Filtering / gating / aggregation
 - [ ] Other: 
 
 ### Goal
@@ -112,14 +134,15 @@ Write one precise sentence.
 | RQ2 |  | `Reported | Inferred | Not reported` |
 | RQ3 |  | `Reported | Inferred | Not reported` |
 | RQ4 |  | `Reported | Inferred | Not applicable` |
+| RQ5 |  | `Reported | Inferred | Not applicable` |
 
-## 5. Dataset and Study Context
+## 5. Dataset / Study Context
 
 | Field | Value |
 |---|---|
-| Dataset name |  |
-| Dataset source |  |
-| Dataset size |  |
+| Dataset / study name |  |
+| Dataset / study source |  |
+| Dataset / study size |  |
 | Number of repositories / projects |  |
 | Programming languages |  |
 | Repository type | `Open-source | Enterprise/proprietary | Mixed | Synthetic | Not reported` |
@@ -128,17 +151,17 @@ Write one precise sentence.
 | Time period |  |
 | Data availability | `Public | Private | Partially public | Not reported` |
 
-### Dataset Validity Notes
+### Dataset / Study Validity Notes
 
-- [ ] The dataset is realistic for code review.
-- [ ] The dataset has human review feedback.
-- [ ] The dataset includes actual pull requests / merge requests.
-- [ ] The dataset includes generated LLM comments.
-- [ ] The dataset includes developer reactions or production signals.
-- [ ] The dataset may have incomplete ground truth.
-- [ ] Dataset details need a second verification pass.
+- [ ] The dataset/study is realistic for code review.
+- [ ] The dataset/study has human review feedback.
+- [ ] The dataset/study includes actual pull requests / merge requests.
+- [ ] The dataset/study includes generated LLM comments.
+- [ ] The dataset/study includes developer reactions, acceptance, or production signals.
+- [ ] The dataset/study may have incomplete ground truth.
+- [ ] Dataset/study details need a second verification pass.
 
-### Important Notes About the Dataset
+### Important Notes About the Dataset / Study
 
 
 
@@ -152,39 +175,44 @@ Write one precise sentence.
 | Post-generation verification |  |
 | Static analysis or rule-based checks |  |
 | Human-in-the-loop component |  |
+| Filtering / gating / aggregation mechanism |  |
 | Other mechanisms |  |
 
 ### Method Checklist
 
 - [ ] The paper evaluates generated review comments.
 - [ ] The paper evaluates a judge/filter/gate.
+- [ ] The paper evaluates aggregation or multi-review synthesis.
 - [ ] The paper compares multiple LLMs.
 - [ ] The paper compares multiple prompts or context settings.
 - [ ] The paper uses retrieval or context augmentation.
 - [ ] The paper includes a post-generation quality check.
-- [ ] The paper includes a human evaluation component.
+- [ ] The paper includes a human/user-study component.
+- [ ] The paper includes production or workflow evidence.
 
 ## 7. Evaluation Method
 
 | Field | Value |
 |---|---|
 | Automatic metrics |  |
-| Human evaluation |  |
+| Human evaluation / user study |  |
 | Qualitative analysis |  |
 | Statistical analysis |  |
-| Cost-related evaluation |  |
+| Cost / latency / time evaluation |  |
 | Reproducibility materials |  |
 
 ### Evaluation Validity Checklist
 
 - [ ] The evaluation goes beyond BLEU/ROUGE/text similarity.
 - [ ] The evaluation checks semantic correctness.
+- [ ] The evaluation checks grounding / context alignment.
 - [ ] The evaluation checks usefulness or developer value.
 - [ ] The evaluation checks actionability.
 - [ ] The evaluation checks hallucination or unsupported claims.
 - [ ] The evaluation measures false positives.
 - [ ] The evaluation measures false negatives.
-- [ ] The evaluation measures cost or latency.
+- [ ] The evaluation measures preservation of useful feedback.
+- [ ] The evaluation measures cost, latency, or reviewer time.
 - [ ] The evaluation includes real developer feedback.
 - [ ] The evaluation includes production/workflow signals.
 
@@ -196,6 +224,7 @@ Use `Yes`, `No`, `Partially`, `Not reported`, or `Not applicable`.
 |---|---|---|
 | Technical correctness |  |  |
 | Relevance to code change |  |  |
+| Grounding / context alignment |  |  |
 | Usefulness |  |  |
 | Actionability |  |  |
 | Specificity |  |  |
@@ -205,11 +234,12 @@ Use `Yes`, `No`, `Partially`, `Not reported`, or `Not applicable`.
 | False negative rate |  |  |
 | Preservation of useful comments |  |  |
 | Wrong removal of useful comments |  |  |
-| Review coverage |  |  |
+| Review coverage / issue coverage |  |  |
 | Human escalation rate |  |  |
 | Human annotation cost |  |  |
 | Computational cost |  |  |
 | Latency |  |  |
+| Reviewer time overhead |  |  |
 | Operational complexity |  |  |
 | Trade-off analysis |  |  |
 | Developer trust |  |  |
@@ -220,6 +250,9 @@ Use `Yes`, `No`, `Partially`, `Not reported`, or `Not applicable`.
 
 
 ## 9. Problematic Comment Types / Error Taxonomy
+
+> [!IMPORTANT]
+> Keep this section separate from evaluation dimensions. For example, `actionability` is an evaluation dimension, while `non-actionable comment` is a problematic comment type.
 
 ### Explicitly Defined Error Types
 
@@ -257,6 +290,7 @@ Mark inferred items explicitly.
 - [ ] Comment that misses the actual issue
 - [ ] Comment that depends on missing project context
 - [ ] Technically plausible but unsupported comment
+- [ ] Comment with poor value-to-time ratio
 
 ### Does the Paper Separate Correctness, Usefulness, and Actionability?
 
@@ -265,34 +299,86 @@ Mark inferred items explicitly.
 
 
 
-## 10. Human Annotation Protocol
+## 10. Context-Quality Extraction
+
+> [!NOTE]
+> Fill this even when the paper does not explicitly use the phrase “context quality.” We need to know whether the study assumes, measures, improves, or ignores context quality.
+
+| Context Dimension | Coverage | Evidence / Notes |
+|---|---|---|
+| Relevance |  |  |
+| Completeness |  |  |
+| Specificity / focus |  |  |
+| Consistency |  |  |
+| Groundability |  |  |
+| Locality |  |  |
+| Freshness |  |  |
+| Attention load |  |  |
+| Cost / token budget |  |  |
+| Context availability vs context usability |  |  |
+
+### Context Failure Types
+
+- [ ] Missing project context
+- [ ] Missing language/framework/version context
+- [ ] Missing surrounding code
+- [ ] Missing cross-file dependency
+- [ ] Irrelevant retrieved context
+- [ ] Excessive context / attention dilution
+- [ ] Contradictory PR metadata and diff
+- [ ] Unsupported inference from partial context
+- [ ] Generated claim not grounded in provided context
+
+## 11. Trade-off Extraction
+
+> [!IMPORTANT]
+> Do not only say “there is a trade-off.” Specify the strategy, benefit, risk, and missing metric.
+
+| Strategy / Mechanism | Benefit | Risk / Cost | Missing Metric |
+|---|---|---|---|
+| More context |  |  |  |
+| RAG / retrieval |  |  |  |
+| Hallucination gate |  |  |  |
+| Actionability gate |  |  |  |
+| LLM-as-a-Judge |  |  |  |
+| Human escalation |  |  |  |
+| Multi-review aggregation |  |  |  |
+| Live reviewer inspection |  |  |  |
+
+### Trade-off Notes
+
+
+
+## 12. Human Annotation / User Study / Production Protocol
 
 | Field | Value |
 |---|---|
-| Human annotators | `Yes | No | Not reported` |
-| Number of annotators |  |
-| Annotator expertise |  |
-| Annotation guideline provided |  |
-| Pilot annotation phase |  |
-| Inter-rater agreement reported |  |
+| Human annotators / participants | `Yes | No | Not reported` |
+| Number of annotators / participants |  |
+| Expertise |  |
+| Guideline or study protocol provided |  |
+| Pilot phase |  |
+| Inter-rater agreement / validation reported |  |
 | Agreement metric used |  |
 | Conflict resolution method |  |
+| Production/workflow signal |  |
 
-### Annotation Quality Checklist
+### Protocol Quality Checklist
 
 - [ ] Independent annotation is used.
 - [ ] At least two annotators are used.
-- [ ] Annotators have software engineering expertise.
-- [ ] Annotation guideline is described.
-- [ ] Inter-rater agreement is reported.
+- [ ] Annotators/participants have software engineering expertise.
+- [ ] Annotation guideline or study protocol is described.
+- [ ] Inter-rater agreement or validation is reported.
 - [ ] Conflict resolution is described.
-- [ ] Threats to annotation validity are discussed.
+- [ ] Threats to annotation/user-study validity are discussed.
+- [ ] Live workflow or production signal is included.
 
-### Main Concerns About Annotation Validity
+### Main Concerns About Validity
 
 
 
-## 11. Key Findings of the Paper
+## 13. Key Findings of the Paper
 
 | Finding | Summary | Evidence / Metric | Importance for us |
 |---|---|---|---|
@@ -302,11 +388,11 @@ Mark inferred items explicitly.
 | Finding 4 |  |  |  |
 | Finding 5 |  |  |  |
 
-## 12. Limitations from the Paper’s Own Perspective
+## 14. Limitations from the Paper’s Own Perspective
 
 - 
 
-## 13. Limitations from Our Perspective
+## 15. Limitations from Our Perspective
 
 > [!WARNING]
 > This section is our critique. Do not present it as a claim made by the paper.
@@ -319,7 +405,7 @@ Mark inferred items explicitly.
 
 
 
-## 14. Relevance to Our Paper
+## 16. Relevance to Our Paper
 
 ### Useful For
 
@@ -329,30 +415,41 @@ Mark inferred items explicitly.
 - [ ] Taxonomy of problematic comments
 - [ ] Context-quality argument
 - [ ] Hallucination / unsupported-claim discussion
-- [ ] Human annotation protocol
+- [ ] Human annotation / user-study protocol
 - [ ] Cost / latency / operational trade-off
-- [ ] Industrial validation
+- [ ] Industrial or live validation
 - [ ] Benchmark selection
 - [ ] Methodology design
 - [ ] Discussion / threats to validity
+
+### Mapping to Our RQs
+
+| Our RQ | Relevance | Evidence |
+|---|---|---|
+| RQ1 — problematic comments |  |  |
+| RQ2 — context quality |  |  |
+| RQ3 — evaluation dimensions |  |  |
+| RQ4 — trade-offs |  |  |
+| RQ5 — framework design |  |  |
 
 ### Explanation
 
 
 
-## 15. Extracted Evidence for Our Argument
+## 17. Extracted Evidence for Our Argument
 
 | Argument Need | Evidence from this paper | Label |
 |---|---|---|
 | Limitations of current evaluations |  | `Reported | Inferred | Our perspective` |
-| Missing cost analysis |  | `Reported | Inferred | Our perspective` |
+| Missing cost/latency/reviewer-overhead analysis |  | `Reported | Inferred | Our perspective` |
 | Missing actionability/usefulness distinction |  | `Reported | Inferred | Our perspective` |
-| Need for taxonomy |  | `Reported | Inferred | Our perspective` |
-| Need for human annotation quality control |  | `Reported | Inferred | Our perspective` |
+| Need for problematic-comment taxonomy |  | `Reported | Inferred | Our perspective` |
+| Need for human annotation / user-study quality control |  | `Reported | Inferred | Our perspective` |
 | Need for context-quality evaluation |  | `Reported | Inferred | Our perspective` |
 | Need for trade-off-aware evaluation |  | `Reported | Inferred | Our perspective` |
+| Need for useful-feedback preservation metric |  | `Reported | Inferred | Our perspective` |
 
-## 16. Final Assessment
+## 18. Final Assessment
 
 | Field | Value |
 |---|---|
@@ -376,13 +473,16 @@ Mark inferred items explicitly.
 ## Follow-up TODOs
 
 - [ ] Verify bibliographic metadata.
-- [ ] Verify dataset size and composition.
+- [ ] Verify dataset/study size and composition.
 - [ ] Verify model list and prompting setup.
 - [ ] Verify exact metrics and results.
 - [ ] Extract 1–3 short cite-worthy statements.
 - [ ] Add BibTeX.
 - [ ] Update `matrices/cross-paper-synthesis.md`.
-- [ ] Update relevant synthesis files.
+- [ ] Update `synthesis/evaluation-dimensions.md`.
+- [ ] Update `synthesis/problematic-comment-taxonomy.md`.
+- [ ] Update `synthesis/context-quality.md`.
+- [ ] Update `synthesis/trade-off-framework.md`.
 
 <details>
 <summary>Scratchpad</summary>
