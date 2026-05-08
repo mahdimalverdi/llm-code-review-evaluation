@@ -1,48 +1,37 @@
 # P04 — SWE-PRBench: Benchmarking AI Code Review Quality Against Pull Request Feedback
 
 > [!NOTE]
-> This note uses the repository paper-analysis template. This paper is highly relevant to our project because it gives direct evidence that more context does not necessarily improve LLM-based code review quality.
+> This note follows the v2 framework-coding template. This paper is central to our context-quality argument because it reports that adding more context can degrade LLM-based code review performance.
 
 ## Completion Checklist
 
-- [x] All bibliographic fields are filled.
-- [x] The one-sentence summary is written in a precise and non-generic way.
-- [x] The paper’s main goal is separated from our interpretation of its contribution.
-- [x] All reported research questions are listed, or `Not reported` is written explicitly.
-- [x] Dataset details are filled as much as the paper allows.
-- [x] Missing dataset details are marked as `Not reported`, not left blank.
+- [x] Bibliographic fields are filled.
+- [x] Dataset/study details are filled as far as the paper allows.
 - [x] Evaluation methods and metrics are described.
-- [x] Human annotation protocol is documented as far as available in the first pass.
-- [x] Evaluation dimensions are checked and explained.
-- [x] Problematic comment types are extracted or inferred carefully.
-- [x] Every inferred point is marked as `Inferred`.
-- [x] Limitations from the paper are separated from our own critique.
-- [x] Relevance to our research is explicitly explained.
-- [x] Evidence for our argument is extracted into Section 15.
-- [x] Open questions for follow-up reading are listed.
-- [x] No `TODO` remains unless it is intentionally listed in the follow-up checklist.
+- [x] Human/LLM-judge validation protocol is documented as far as available.
+- [x] Evaluation dimensions are separated from problematic comment types.
+- [x] Context-quality evidence is extracted.
+- [x] Trade-offs are explicitly identified.
+- [x] Mapping to our RQs is included.
 
 ## Status
 
 - Paper ID: `P04`
-- Analysis status: `First pass completed; public abstract/details verified once`
+- Analysis status: `First pass completed; migrated to v2 template; needs PDF-level verification`
 - Priority: `High`
 - Reading depth: `Read once + metadata verified`
 - Last updated: `2026-05-08`
+- Confidence in extraction: `Medium`
 
-## Notation Rules
+## Our Research Questions
 
-| Label | Meaning |
-|---|---|
-| `Reported` | Explicitly stated in the paper or public paper metadata. |
-| `Inferred` | Reconstructed from examples, tables, results, or implications. |
-| `Our perspective` | Our own critique, interpretation, or research positioning. |
-| `Not reported` | The paper does not provide this information in the material checked so far. |
-| `Not applicable` | The field does not fit this paper. |
-| `Partially` | The paper touches the dimension but does not operationalize it clearly. |
-
-> [!IMPORTANT]
-> This paper is central to the context-quality part of our argument: context should be evaluated by quality and usefulness, not merely by quantity.
+| RQ | Question | Relevance of this paper |
+|---|---|---|
+| RQ1 | What types of problematic comments appear in LLM-generated code review? | Shows missed human-flagged issues, fabricated issues, unmatched plausible issues, and context-induced failures. |
+| RQ2 | How is context quality defined, used, or ignored? | Compares diff-only, diff+file, and full-context settings; reports degradation as context expands. |
+| RQ3 | Which evaluation dimensions are covered or missing? | Strong on issue detection/coverage; weaker on usefulness, workflow impact, cost, and acceptance. |
+| RQ4 | What trade-offs arise from filtering/gating/evaluation? | Strong context-richness vs attention/noise trade-off; judge validity trade-off. |
+| RQ5 | What should our framework include? | Supports explicit context-quality and context-size evaluation. |
 
 ---
 
@@ -57,7 +46,7 @@
 | Publication type | Benchmark + empirical evaluation |
 | Link | arXiv / Hugging Face paper page |
 | DOI / arXiv | arXiv:2603.26130 |
-| Code / artifact | Reported: dataset, contexts, annotations, and evaluation harness are released publicly |
+| Code / artifact | Reported: dataset, contexts, annotations, and evaluation harness are public |
 
 ### Citation Note
 
@@ -71,7 +60,7 @@
 
 ## 2. One-Sentence Summary
 
-> This paper introduces SWE-PRBench, a benchmark of 350 human-annotated pull requests for evaluating whether AI code review systems can detect human-flagged review issues, and shows that current frontier models detect only a minority of such issues while performance degrades as more context is added.
+> SWE-PRBench introduces a 350-PR benchmark for evaluating whether AI code review systems detect human-flagged review issues and reports that frontier models detect only a minority of issues while performance degrades as more context is added.
 
 ## 3. Main Goal of the Paper
 
@@ -83,168 +72,159 @@
 - [x] Context quality / context selection
 - [x] LLM-as-a-judge
 - [x] Human annotation / human evaluation
+- [ ] User study / reviewer behavior
 - [ ] Industrial deployment
 - [x] Benchmark construction
 - [ ] Cost / latency / operational trade-off
-- [x] Other: PR-level human-feedback benchmark and context ablation
+- [ ] Filtering / gating / aggregation
 
 ### Goal
 
-The paper aims to build and evaluate a dedicated benchmark for AI code review quality. Instead of evaluating whether a model can generate code or pass tests, SWE-PRBench evaluates whether models can identify issues that human reviewers flagged in real pull-request feedback.
+The paper builds a PR-level benchmark to test whether AI reviewers can detect issues that human reviewers flagged, under different context configurations.
 
 ### Notes
 
-The paper is highly relevant because it frames code review evaluation around real pull-request feedback instead of generic code-generation or bug-fixing tasks. Its most useful contribution for us is the finding that adding more context does not automatically improve review quality and may reduce performance across models. This directly supports our argument that context quality and context selection need explicit evaluation rather than assuming “more context is always better.”
+This paper is critical because it challenges the naive assumption that more context improves review quality. It supports our claim that context must be evaluated by quality, not just size.
 
 ## 4. Research Questions of the Paper
 
 | RQ | Text | Status |
 |---|---|---|
-| RQ1 | How well do AI models identify issues that human reviewers flagged in pull-request feedback? | `Reported / Inferred from benchmark objective` |
-| RQ2 | How do different frontier models perform on PR-level code review quality? | `Reported / Inferred from model comparison` |
-| RQ3 | How does changing the amount or type of context affect AI code review performance? | `Reported` |
-| RQ4 | Can LLM-as-judge evaluation be used to compare generated review comments against human PR feedback? | `Reported` |
-| Implicit question | What benchmark design is needed to measure AI code review quality against realistic human review behavior? | `Inferred` |
+| RQ1 | How well do AI models identify issues human reviewers flagged in PR feedback? | `Reported / Inferred` |
+| RQ2 | How do frontier models perform on PR-level review quality? | `Reported / Inferred` |
+| RQ3 | How does context amount/type affect AI code review performance? | `Reported` |
+| RQ4 | Can LLM-as-Judge compare generated comments against human PR feedback? | `Reported` |
 
-## 5. Dataset and Study Context
+## 5. Dataset / Study Context
 
 | Field | Value |
 |---|---|
-| Dataset name | SWE-PRBench |
-| Dataset source | Pull requests from active open-source repositories, with human review feedback used as human-annotated ground truth |
-| Dataset size | 350 pull requests, filtered from 700 candidates using a Repository Quality Score |
-| Number of repositories / projects | Not fully verified in this pass; repository filtering is reported, but exact repository count should be checked from the paper tables/artifact |
-| Programming languages | Not fully verified in this pass; likely mixed open-source repositories |
+| Dataset / study name | SWE-PRBench |
+| Dataset / study source | Pull requests from active open-source repositories with human review feedback |
+| Dataset / study size | 350 pull requests, filtered from 700 candidates using Repository Quality Score |
+| Number of repositories / projects | Not fully verified |
+| Programming languages | Not fully verified |
 | Repository type | Open-source / PR-based repositories |
-| Input context available | Three frozen context configurations: `config_A` diff only, `config_B` diff with file content, and `config_C` full context |
-| Output being evaluated | AI-generated review comments or issue detections, compared against human pull-request feedback |
+| Input context available | `config_A`: diff only; `config_B`: diff + file content; `config_C`: full context |
+| Output being evaluated | Generated review comments or issue detections matched against human PR feedback |
 | Time period | Not reported in this pass |
-| Data availability | Publicly released dataset, contexts, annotations, and evaluation harness |
+| Data availability | Public dataset, contexts, annotations, and evaluation harness |
 
-### Dataset Validity Notes
+### Dataset / Study Validity Notes
 
-- [x] The dataset is realistic for code review.
-- [x] The dataset has human review feedback.
-- [x] The dataset includes actual pull requests / merge requests.
-- [ ] The dataset includes generated LLM comments as original ground truth.
-- [ ] The dataset includes production developer reactions.
-- [x] The dataset may have incomplete ground truth.
-- [x] Dataset details need a second verification pass.
+- [x] Realistic PR-level benchmark.
+- [x] Has human review feedback.
+- [x] Includes actual PRs.
+- [x] Ground truth may be incomplete.
+- [x] Context configurations are explicitly controlled.
+- [ ] Needs PDF-level verification.
 
-### Important Notes About the Dataset
+### Important Notes
 
-The dataset is important because it is anchored in human PR review rather than synthetic bugs or generic code-generation benchmarks. However, human PR feedback is an imperfect ground truth: reviewers may miss issues, may focus on style or maintainability rather than defects, and may leave comments whose intent is not always directly comparable to model output. This is an important validity issue for our own evaluation framework.
+Human PR feedback is realistic but incomplete. A model comment that does not match human feedback may still be useful, and a human comment may be subjective or stylistic.
 
 ## 6. Methods, Models, or Systems Studied
 
 | Field | Value |
 |---|---|
-| Models / systems | Eight frontier models are evaluated; exact model list should be verified from the experiment table in the second pass |
-| Prompting strategy | Models are evaluated under three frozen context configurations rather than a single prompt condition |
-| Retrieval or context selection | Central experimental variable. The paper compares diff-only, diff-with-file-content, and full-context settings. It also reports structured semantic context layers such as AST-extracted function context and import graph resolution |
-| Post-generation verification | Uses LLM-as-judge evaluation to compare generated model feedback against human pull-request feedback |
-| Static analysis or rule-based checks | Not the main evaluation target; context construction uses structured extraction, including AST/function context and import graph information |
-| Human-in-the-loop component | Human review feedback is used as benchmark reference/ground truth, but the evaluation is benchmark-based rather than a live human-in-the-loop deployment |
-| Other mechanisms | Repository Quality Score filtering, context ablations, judge-based matching, and issue-type analysis such as Type2_Contextual issue detection |
+| Models / systems | Eight frontier models; exact list needs verification |
+| Prompting strategy | Evaluation under three frozen context configurations |
+| Retrieval or context selection | Central variable: diff-only, diff+file, full context; structured semantic context such as AST/function and import graph reported |
+| Post-generation verification | LLM-as-Judge matching against human PR feedback |
+| Static analysis or rule-based checks | Context construction uses structured extraction, but not main evaluation target |
+| Human-in-the-loop component | Human review feedback used as reference; no live human-in-loop deployment |
+| Filtering / gating / aggregation mechanism | Judge-based matching, not deployment-time gate |
+| Other mechanisms | Repository quality filtering, issue-type analysis, context ablations |
 
 ### Method Checklist
 
-- [x] The paper evaluates generated review comments or issue detections.
-- [x] The paper evaluates a judge/filter/gate through LLM-as-judge matching.
-- [x] The paper compares multiple LLMs.
-- [x] The paper compares multiple prompts or context settings.
-- [x] The paper uses structured context augmentation / context configurations.
-- [ ] The paper includes a post-generation quality gate for deployment.
-- [x] The paper includes human review feedback as ground truth.
+- [x] Evaluates generated review comments/issue detections.
+- [x] Evaluates LLM-as-Judge matching.
+- [ ] Evaluates aggregation.
+- [x] Compares multiple LLMs.
+- [x] Compares context settings.
+- [x] Uses structured context configurations.
+- [ ] Includes production/workflow evidence.
 
 ## 7. Evaluation Method
 
 | Field | Value |
 |---|---|
-| Automatic metrics | Model ability to detect human-flagged issues; detection rates/recall-like measures; composite scoring; LLM-as-judge labels and matching against human feedback |
-| Human evaluation | Human PR review feedback is used as benchmark reference/ground truth; the LLM-as-judge framework is validated with human agreement |
-| Qualitative analysis | Partially; discusses context-induced performance degradation and issue-type collapse, especially Type2_Contextual issue detection |
-| Statistical analysis | Reports that top four models are statistically indistinguishable with mean scores around 0.147–0.153, and a tier gap separates them from remaining models with mean score <= 0.113 |
-| Cost-related evaluation | Limited; focuses mainly on review quality, model performance, and context effects, not detailed compute cost, latency, or human verification burden |
-| Reproducibility materials | Reported: dataset, contexts, annotations, and evaluation harness are publicly released |
+| Automatic metrics | Issue detection / recall-like measures, composite score, judge labels |
+| Human evaluation / user study | Human PR feedback as benchmark reference; judge validation with human agreement |
+| Qualitative analysis | Discusses context-induced degradation and Type2_Contextual collapse |
+| Statistical analysis | Reports top model tiers and mean score ranges |
+| Cost / latency / time evaluation | Limited; context cost not deeply quantified |
+| Reproducibility materials | Publicly released benchmark/evaluation harness |
 
 ### Evaluation Validity Checklist
 
-- [x] The evaluation goes beyond BLEU/ROUGE/text similarity.
-- [x] The evaluation checks semantic correspondence to human review feedback.
-- [x] The evaluation checks usefulness or developer value indirectly through human-flagged PR issues.
-- [x] The evaluation partially checks actionability.
-- [x] The evaluation partially checks hallucination or unsupported claims through LLM-as-judge labels and false-positive analysis.
-- [x] The evaluation measures false positives or fabricated comments partially.
-- [x] The evaluation measures false negatives / missed human-flagged issues.
-- [ ] The evaluation measures cost or latency in detail.
-- [ ] The evaluation includes live developer feedback.
-- [ ] The evaluation includes production/workflow signals.
+- [x] Beyond BLEU/ROUGE.
+- [x] Checks semantic correspondence to human feedback.
+- [ ] Separately checks grounding/context alignment.
+- [x] Indirectly checks usefulness via human-flagged issues.
+- [x] Partially checks actionability.
+- [x] Partially checks fabricated/hallucinated issues.
+- [x] Measures missed issues.
+- [ ] Measures useful-feedback preservation.
+- [ ] Measures cost/latency in detail.
+- [ ] Includes live workflow signals.
 
 ## 8. Evaluation Dimensions Covered
 
 | Dimension | Coverage | Notes |
 |---|---|---|
-| Technical correctness | `Partially` | Matching human-flagged PR feedback approximates correctness, but does not fully prove every generated comment is technically correct. |
-| Relevance to code change | `Yes` | The task is PR-level review and outputs are judged against pull-request feedback. |
-| Usefulness | `Partially` | Human PR comments are treated as useful reference feedback, but usefulness is not fully separated from human-comment matching. |
-| Actionability | `Partially` | Human review comments often imply actionable issues; actionability contributes to judge scoring, but it is not the only target. |
-| Specificity | `Partially` | Matching against concrete PR feedback encourages specificity, but specificity is not the main standalone dimension. |
-| Novelty / non-triviality | `Partially` | Detecting human-flagged issues is more meaningful than generic review output, but novelty is not a primary metric. |
-| Hallucination / unsupported claim | `Partially` | Judge labels can identify fabricated/unmatched issues, but hallucination is not the paper’s central framing. |
-| False positive rate | `Partially` | Extra comments not matching human feedback may indicate false positives, but human feedback is incomplete ground truth. |
-| False negative rate | `Yes` | Failure to catch human-flagged issues is central to the benchmark. |
-| Preservation of useful comments | `No / Partially` | The benchmark measures catching useful human feedback, but does not study filtering/mitigation preservation trade-offs. |
-| Wrong removal of useful comments | `No` | Not a mitigation/filtering paper. |
-| Review coverage | `Yes / Partially` | Strongly related to coverage of human-flagged PR issues. |
+| Technical correctness | `Partially` | Matching human issues approximates correctness. |
+| Relevance to code change | `Yes` | PR-level review target. |
+| Grounding / context alignment | `Partially` | Judge matching and context configurations, but not claim grounding. |
+| Usefulness | `Partially` | Human feedback as proxy. |
+| Actionability | `Partially` | Part of judge scoring, not fully isolated. |
+| Specificity | `Partially` | Concrete PR feedback encourages specificity. |
+| Novelty / non-triviality | `Partially` | Human-flagged issues are meaningful targets. |
+| Hallucination / unsupported claim | `Partially` | Fabricated/unmatched issues. |
+| False positive rate | `Partially` | Extra/unmatched comments may be false positives, but ground truth incomplete. |
+| False negative rate | `Yes` | Missed human-flagged issues central. |
+| Preservation of useful comments | `No / Partially` | Not a filtering paper. |
+| Wrong removal of useful comments | `No` | Not evaluated. |
+| Review coverage / issue coverage | `Yes` | Core benchmark objective. |
 | Human escalation rate | `No` | Not evaluated. |
-| Human annotation cost | `Not reported / limited` | Not central. |
-| Computational cost | `Not central` | Not central to evaluation. |
+| Human annotation cost | `Not reported` | Not central. |
+| Computational cost | `Not central` | Not central. |
 | Latency | `Not central` | Not central. |
-| Operational complexity | `Not central` | Not a deployment paper. |
-| Trade-off analysis | `Partially` | Context configuration creates an important trade-off: more context may add noise and reduce performance; cost and workflow trade-offs are less developed. |
-| Developer trust | `No` | Not directly studied. |
-| Workflow impact | `No` | Benchmark performance may not translate directly to production workflow impact. |
-
-### Notes on Evaluation Dimensions
-
-This paper is especially useful for our framework’s context-quality dimension and for arguing that review quality should be evaluated against realistic PR feedback. It is less complete for cost, trust, annotation protocol, and production workflow effects.
+| Reviewer time overhead | `No` | Not live user study. |
+| Operational complexity | `No` | Not deployment paper. |
+| Trade-off analysis | `Partially` | Context expansion vs performance degradation. |
+| Developer trust | `No` | Not studied. |
+| Workflow impact | `No` | Not production study. |
 
 ## 9. Problematic Comment Types / Error Taxonomy
 
 ### Explicitly Defined Error Types
 
-This is not primarily a taxonomy paper, but it distinguishes issue-detection difficulty and evaluation labels. Important reported categories include:
-
-- Type1 direct issues visible in the diff.
+- Type1 direct issues visible in diff.
 - Type2 contextual issues requiring same-file context.
 - Type3 latent/cross-file issues.
 - Confirmed issues.
-- Plausible but not ground-truth-matching issues.
+- Plausible but unmatched issues.
 - Fabricated/hallucinated issues.
 
 ### Inferred Error Types
 
 - `Inferred`: Missed human-flagged issue.
-- `Inferred`: Comment that does not correspond to any human review concern.
-- `Inferred`: Review comment caused by noisy or excessive context.
+- `Inferred`: Context-induced failure.
 - `Inferred`: Over-contextualized review output.
-- `Inferred`: Generic or low-signal review feedback.
-- `Inferred`: Incorrect matching between generated review and human feedback.
-- `Inferred`: Potential false positive due to incomplete ground truth.
-- `Inferred`: Attention-dilution failure caused by longer or richer context.
+- `Inferred`: Generic/low-signal feedback.
+- `Inferred`: False positive due to incomplete ground truth.
+- `Inferred`: Attention-dilution failure.
 
 ### Example Problematic Comments
 
-> [!CAUTION]
-> Detailed examples should be extracted from the PDF in a second pass. The examples below are conceptual categories, not direct quotes.
-
-| Type | Example / Paraphrase | Source in paper | Label |
+| Type | Example / Paraphrase | Source | Label |
 |---|---|---|---|
-| Missed human-flagged issue | Model fails to identify an issue that human reviewers flagged. | Benchmark objective/results | `Reported` |
-| Context-induced failure | Model performs worse when file content or full context is added. | Context ablation results | `Reported` |
-| Fabricated issue | Model produces a review concern that the judge labels as fabricated. | Judge label scheme | `Reported` |
-| Plausible unmatched issue | Model produces a factually plausible issue that is not in human ground truth. | Judge label scheme | `Reported` |
+| Missed issue | Model fails to identify a human-flagged issue. | Benchmark objective/results | `Reported` |
+| Context-induced failure | Model performs worse when file/full context is added. | Context ablation | `Reported` |
+| Fabricated issue | Model produces a fabricated review concern. | Judge label scheme | `Reported` |
+| Plausible unmatched issue | Model produces a plausible issue outside human ground truth. | Judge labels | `Reported` |
 
 ### Taxonomy Checklist
 
@@ -263,108 +243,151 @@ This is not primarily a taxonomy paper, but it distinguishes issue-detection dif
 - [x] Comment that misses the actual issue
 - [x] Comment that depends on missing project context
 - [x] Technically plausible but unsupported comment
+- [ ] Comment with poor value-to-time ratio
 
 ### Does the Paper Separate Correctness, Usefulness, and Actionability?
 
 - Answer: `Partially`
-- Explanation: It operationalizes quality mainly through agreement with human PR feedback and judge scoring. Correctness, usefulness, and actionability are therefore partially collapsed into the benchmark target, although the judge framework reportedly considers actionability and hallucination/fabrication penalties.
+- Explanation: Quality is mostly operationalized through match to human PR feedback and judge scoring; constructs are partly collapsed.
 
-## 10. Human Annotation Protocol
+## 10. Context-Quality Extraction
+
+| Context Dimension | Coverage | Evidence / Notes |
+|---|---|---|
+| Relevance | `Partially` | Configs vary context amount/type; relevance not separately scored. |
+| Completeness | `Yes / Partially` | Richer configs intended to provide more evidence. |
+| Specificity / focus | `Yes` | Diff-only vs richer context explicitly tests focus. |
+| Consistency | `Not reported` | Not central. |
+| Groundability | `Partially` | Judge labels, but not evidence-span grounding. |
+| Locality | `Yes / Partially` | Type2 contextual issues require same-file context. |
+| Freshness | `Not reported` | Not central. |
+| Attention load | `Yes` | Degradation with richer context supports attention/noise concern. |
+| Cost / token budget | `Partially` | Context expansion implies cost, not deeply measured. |
+| Context availability vs usability | `Yes` | More context available but less usable by models. |
+
+### Context Failure Types
+
+- [x] Missing surrounding code
+- [x] Missing cross-file dependency
+- [ ] Missing language/framework/version context
+- [ ] Irrelevant retrieved context
+- [x] Excessive context / attention dilution
+- [ ] Contradictory PR metadata and diff
+- [x] Unsupported inference from partial context
+- [x] Generated claim not grounded in provided context
+
+## 11. Trade-off Extraction
+
+| Strategy / Mechanism | Benefit | Risk / Cost | Missing Metric |
+|---|---|---|---|
+| More context | More evidence for contextual/cross-file issues. | Performance degradation, attention dilution, cost. | Marginal value of added context. |
+| Diff-only context | Focused and cheaper. | Misses contextual issues. | Context sufficiency score. |
+| Full context | Realistic and information-rich. | Noise and lower performance. | Useful-context ratio. |
+| LLM-as-Judge | Scales semantic matching. | Judge bias and matching errors. | Judge calibration by issue type. |
+| Human PR feedback ground truth | Realistic reference. | Incomplete and subjective. | Ground-truth completeness estimate. |
+
+### Trade-off Notes
+
+P04 is one of the strongest empirical supports for our claim that context quality is not the same as context quantity.
+
+## 12. Human Annotation / User Study / Production Protocol
 
 | Field | Value |
 |---|---|
-| Human annotators | Human PR reviewers provide original reference feedback; LLM-as-judge framework is validated against human agreement |
-| Number of annotators | Not fully verified in this pass; benchmark has 350 human-annotated PRs |
-| Annotator expertise | Software developers/reviewers involved in the original pull requests; additional validation annotators should be verified from the paper |
-| Annotation guideline provided | Partially verified; judge rubric and labels should be checked in the full paper |
-| Pilot annotation phase | Not verified |
-| Inter-rater agreement reported | Yes, LLM-as-judge framework validated at kappa = 0.75 |
-| Agreement metric used | Cohen’s Kappa / kappa = 0.75 for judge validation; cross-judge validation should be verified from full paper |
-| Conflict resolution method | Not fully verified |
+| Human annotators / participants | Human PR reviewers provide original feedback; judge validated against human agreement |
+| Number of annotators / participants | Benchmark has 350 human-annotated PRs; exact annotator count not verified |
+| Expertise | Original software reviewers/developers; validation annotators need verification |
+| Guideline or study protocol provided | Judge rubric/labels should be checked in PDF |
+| Pilot phase | Not verified |
+| Inter-rater agreement / validation reported | Yes |
+| Agreement metric used | Kappa = 0.75 for judge validation |
+| Conflict resolution method | Not verified |
+| Production/workflow signal | No live production signal |
 
-### Annotation Quality Checklist
+### Protocol Quality Checklist
 
-- [ ] Independent annotation is used.
-- [ ] At least two annotators are used.
-- [x] Annotators have software engineering expertise through original PR review context.
-- [x] Annotation or judge rubric is described.
-- [x] Inter-rater / judge agreement is reported.
-- [ ] Conflict resolution is described.
-- [x] Threats to annotation validity are relevant and should be discussed.
+- [ ] Independent annotation verified.
+- [ ] At least two annotators verified.
+- [x] SE expertise through PR review context.
+- [x] Judge rubric partially described.
+- [x] Agreement reported.
+- [ ] Conflict resolution verified.
+- [ ] Live workflow signal included.
 
-### Main Concerns About Annotation Validity
+### Main Concerns About Validity
 
-Human PR feedback is realistic but incomplete. A generated comment that does not match a human comment may still be correct or useful; likewise, a human comment may be stylistic, subjective, or context-dependent. LLM-as-judge matching adds another layer of possible evaluation error. This is directly relevant to our need for a careful ground-truth and annotation strategy.
+Human PR feedback is realistic but incomplete; judge matching can hide semantic or construct-validity errors.
 
-## 11. Key Findings of the Paper
+## 13. Key Findings
 
 | Finding | Summary | Evidence / Metric | Importance for us |
 |---|---|---|---|
-| Finding 1 | SWE-PRBench provides a PR-level benchmark for evaluating AI code review quality against human pull-request feedback. | 350 human-annotated pull requests. | Strong benchmark reference. |
-| Finding 2 | Current frontier models still perform far below human reviewers. | Eight frontier models detect only 15–31% of human-flagged issues in diff-only configuration. | Strong motivation for caution around AI code review. |
-| Finding 3 | More context is not automatically helpful. | All eight models degrade monotonically from diff-only to richer context configurations. | Central evidence for context-quality argument. |
-| Finding 4 | The main degradation mechanism is linked to Type2_Contextual issue detection collapse. | Type2 issue detection drops when context is expanded. | Supports attention-dilution / noisy-context hypothesis. |
-| Finding 5 | LLM-as-judge evaluation can support scalable comparison, but it adds validity concerns. | Judge validation kappa = 0.75. | Important for our evaluation methodology. |
+| F1 | Provides PR-level benchmark. | 350 human-annotated PRs. | Benchmark realism. |
+| F2 | Frontier models detect only minority of issues. | 15–31% in diff-only config. | Caution on model capability. |
+| F3 | More context degrades performance. | All eight models degrade across richer contexts. | Core context-quality evidence. |
+| F4 | Type2 contextual detection collapses with expansion. | Reported issue-type drop. | Attention/noise hypothesis. |
+| F5 | LLM-as-Judge supports scalable evaluation. | Kappa = 0.75. | Methodology evidence. |
 
-## 12. Limitations from the Paper’s Own Perspective
+## 14. Limitations from the Paper’s Own Perspective
 
-- The benchmark relies on human PR feedback as reference data, which is realistic but incomplete and potentially subjective.
-- Judge-based evaluation may not perfectly capture semantic equivalence or practical usefulness of generated comments.
-- Results may depend on selected repositories, PRs, models, prompts, and context configurations.
-- Benchmark performance may not directly translate to production workflow impact, developer trust, or code-resolution outcomes.
+- Human PR feedback is realistic but incomplete/subjective.
+- Judge-based evaluation may not perfectly capture usefulness.
+- Results depend on repositories, PRs, models, prompts, and context configs.
+- Benchmark performance may not translate to workflow impact.
 
-## 13. Limitations from Our Perspective
+## 15. Limitations from Our Perspective
 
-> [!WARNING]
-> This section is our critique. Do not present it as a claim made by the paper.
+- Human comments as ground truth may miss valid AI comments.
+- Focuses on recall/matching more than full taxonomy.
+- Does not separate correctness, usefulness, actionability, and preference.
+- Cost/latency/human verification effort underdeveloped.
+- Shows extra context can hurt but does not provide full context-quality model.
 
-### Possible Issues
-
-- The benchmark improves realism but still uses human review comments as ground truth, which may miss valid AI comments.
-- It focuses more on recall/matching human feedback than on fine-grained problematic-comment taxonomy.
-- It does not fully separate correctness, usefulness, actionability, and developer preference.
-- Cost, latency, human verification effort, and operational complexity are underdeveloped.
-- It shows that extra context can hurt, but does not yet provide a general context-quality scoring framework.
-- LLM-as-judge evaluation adds scalability but may hide systematic matching errors.
-
-### Detailed Notes
-
-This paper is an important bridge between benchmark evaluation and realistic PR review behavior. For our paper, it supports the need to evaluate context conditions, not just generated comments. It also supports a trade-off-aware framing where additional context can increase noise and cost while reducing review quality.
-
-## 14. Relevance to Our Paper
+## 16. Relevance to Our Paper
 
 ### Useful For
 
 - [x] Related work
 - [x] Motivation / research gap
 - [x] Evaluation framework
-- [ ] Taxonomy of problematic comments
+- [x] Taxonomy of problematic comments
 - [x] Context-quality argument
 - [x] Hallucination / unsupported-claim discussion
-- [x] Human annotation protocol
+- [x] Human annotation / user-study protocol
 - [x] Cost / latency / operational trade-off
-- [ ] Industrial validation
+- [ ] Industrial or live validation
 - [x] Benchmark selection
 - [x] Methodology design
 - [x] Discussion / threats to validity
 
+### Mapping to Our RQs
+
+| Our RQ | Relevance | Evidence |
+|---|---|---|
+| RQ1 — problematic comments | `Medium` | Missed issues, fabricated issues, plausible unmatched issues. |
+| RQ2 — context quality | `High` | More context worsens performance; config comparison. |
+| RQ3 — evaluation dimensions | `High` | Issue coverage and judge labels. |
+| RQ4 — trade-offs | `High` | Context richness vs attention/noise/performance. |
+| RQ5 — framework design | `High` | Context-quality dimension must be explicit. |
+
 ### Explanation
 
-SWE-PRBench is directly relevant because it studies AI code review quality against real PR feedback. Its context finding is especially important for our contribution: evaluation should not assume that more context is better, but should measure whether context improves or hurts correctness, usefulness, coverage, and cost.
+SWE-PRBench is direct evidence that context expansion must be evaluated, not assumed beneficial.
 
-## 15. Extracted Evidence for Our Argument
+## 17. Extracted Evidence for Our Argument
 
-| Argument Need | Evidence from this paper | Label |
+| Argument Need | Evidence | Label |
 |---|---|---|
-| Limitations of current evaluations | The paper shows the need for PR-level benchmarks grounded in human review feedback rather than generic code-generation or synthetic bug benchmarks. | `Reported` |
-| Missing cost analysis | The paper evaluates quality and context effects but does not fully quantify inference cost, latency, human verification burden, or cost of excessive context. | `Our perspective` |
-| Missing actionability/usefulness distinction | Quality is mainly measured by matching human PR feedback and judge scoring, so usefulness, correctness, actionability, and human preference are not fully separated. | `Our perspective` |
-| Need for taxonomy | Failures can be reconstructed as missed human issues, unmatched generated comments, context-induced errors, generic review feedback, fabricated issues, and false positives caused by incomplete ground truth. | `Inferred` |
-| Need for human annotation quality control | The benchmark depends on human PR feedback and judge-based matching, so careful annotation/matching validation is essential for trustworthy evaluation. | `Reported / Our perspective` |
-| Need for context-quality evaluation | All eight models degrade monotonically as context expands from diff-only to richer context settings. | `Reported` |
-| Need for trade-off-aware evaluation | The paper shows that context expansion can increase information while reducing quality, implying a trade-off between context richness and attention/noise. | `Reported / Our perspective` |
+| Limitations of current evaluations | Need for PR-level human-feedback benchmark. | `Reported` |
+| Missing cost/latency/reviewer-overhead analysis | Quality/context effects measured, cost not deeply quantified. | `Our perspective` |
+| Missing actionability/usefulness distinction | Human-feedback matching collapses correctness/usefulness/actionability. | `Our perspective` |
+| Need for problematic-comment taxonomy | Missed, fabricated, unmatched, context-induced failures. | `Inferred` |
+| Need for human annotation / user-study quality control | Human feedback and judge matching require validation. | `Reported / Our perspective` |
+| Need for context-quality evaluation | Richer context degrades performance. | `Reported` |
+| Need for trade-off-aware evaluation | Context expansion adds evidence but can reduce quality. | `Reported / Our perspective` |
+| Need for useful-feedback preservation metric | Not measured. | `Our perspective` |
 
-## 16. Final Assessment
+## 18. Final Assessment
 
 | Field | Value |
 |---|---|
@@ -375,36 +398,28 @@ SWE-PRBench is directly relevant because it studies AI code review quality again
 
 ### Short Justification
 
-This is a high-priority paper because it provides a realistic PR-level benchmark and directly challenges the assumption that adding more context improves LLM-based code review. It is central to our context-quality, evaluation-validity, and trade-off-aware arguments.
+This paper is crucial because it empirically challenges naive context expansion and supports context-quality as a first-class evaluation object.
 
 ## Open Questions for Follow-up Reading
 
-- [ ] What is the exact repository selection process and language distribution?
-- [ ] Which exact eight models are evaluated?
-- [ ] How large is the performance drop from `config_A` to `config_B` and `config_C` for each model?
-- [ ] How exactly does the paper validate its LLM-as-judge matching procedure?
-- [ ] Does the benchmark distinguish exact issue detection from semantically related but differently phrased review comments?
-- [ ] How can SWE-PRBench be combined with our taxonomy of problematic review comments?
+- [ ] What is the exact model list?
+- [ ] What is the exact performance drop by config/model?
+- [ ] How is LLM-as-Judge validated?
+- [ ] What are exact issue labels and definitions?
+- [ ] How does judge handle semantically related but differently phrased comments?
 
 ## Follow-up TODOs
 
-- [ ] Verify bibliographic metadata against arXiv PDF and BibTeX.
-- [ ] Verify exact model list and context configuration details.
-- [ ] Verify repository count, language distribution, and filtering pipeline.
-- [ ] Extract 1–3 short cite-worthy statements.
+- [ ] Verify arXiv PDF/BibTeX.
+- [ ] Verify model list and context configs.
+- [ ] Extract cite-worthy statements.
 - [ ] Add BibTeX.
-- [ ] Update `matrices/cross-paper-synthesis.md` with the context-degradation finding.
-- [ ] Update `synthesis/context-quality.md` with config_A/config_B/config_C and attention-dilution notes.
-- [ ] Update `synthesis/evaluation-dimensions.md` with PR-level issue detection and judge labels.
-- [ ] Update `synthesis/trade-off-framework.md` with context richness vs review-quality degradation.
+- [ ] Update synthesis if deep reading changes coding.
 
 <details>
 <summary>Scratchpad</summary>
 
-- Strongest use: more context can hurt code review performance.
-- This is a direct counterargument to naive RAG/context expansion.
-- Important for advisor critique: gives a concrete empirical basis for context-quality scoring.
-- Need caution: benchmark ground truth is human PR feedback, which is realistic but incomplete.
-- Potential framing: context quality is not just relevance/completeness; it also includes whether the model can attend to the right part of the context.
+- Strongest use: more context can hurt.
+- Important contrast with P05/P06: full/enriched context may be needed, but quality/filtering matters.
 
 </details>
