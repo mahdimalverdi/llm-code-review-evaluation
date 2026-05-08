@@ -1,48 +1,37 @@
 # P06 — ContextCRBench: Benchmarking LLMs for Fine-Grained Code Review with Enriched Context in Practice
 
 > [!NOTE]
-> This note uses the repository paper-analysis template. This paper is especially important for the context-quality and benchmark-validity parts of our work because it explicitly critiques existing code review benchmarks for lacking semantic context, having noisy data, and operating at coarse granularity.
+> This note follows the v2 framework-coding template. ContextCRBench is important because it explicitly connects benchmark validity to semantic context, data quality, and fine-grained review granularity.
 
 ## Completion Checklist
 
-- [x] All bibliographic fields are filled.
-- [x] The one-sentence summary is written in a precise and non-generic way.
-- [x] The paper’s main goal is separated from our interpretation of its contribution.
-- [x] All reported research questions are listed, or `Not reported` is written explicitly.
-- [x] Dataset details are filled as much as the paper allows.
-- [x] Missing dataset details are marked as `Not reported`, not left blank.
-- [x] Evaluation methods and metrics are described.
-- [x] Human annotation protocol is documented as far as available in the first pass.
-- [x] Evaluation dimensions are checked and explained.
-- [x] Problematic comment types are extracted or inferred carefully.
-- [x] Every inferred point is marked as `Inferred`.
-- [x] Limitations from the paper are separated from our own critique.
-- [x] Relevance to our research is explicitly explained.
-- [x] Evidence for our argument is extracted into Section 15.
-- [x] Open questions for follow-up reading are listed.
-- [x] No `TODO` remains unless it is intentionally listed in the follow-up checklist.
+- [x] Bibliographic fields are filled.
+- [x] Dataset/study details are filled as far as the paper allows.
+- [x] Evaluation methods and metrics are described as far as available.
+- [x] Human/data-quality protocol is documented as far as available.
+- [x] Evaluation dimensions are separated from problematic comment types.
+- [x] Context-quality evidence is extracted.
+- [x] Trade-offs are explicitly identified.
+- [x] Mapping to our RQs is included.
 
 ## Status
 
 - Paper ID: `P06`
-- Analysis status: `First pass completed; public abstract/details verified once`
+- Analysis status: `First pass completed; migrated to v2 template; needs PDF-level verification`
 - Priority: `High`
-- Reading depth: `Read once from metadata/abstract + source row; needs PDF-level verification`
+- Reading depth: `Read once from metadata/abstract + source row`
 - Last updated: `2026-05-08`
+- Confidence in extraction: `Medium`
 
-## Notation Rules
+## Our Research Questions
 
-| Label | Meaning |
-|---|---|
-| `Reported` | Explicitly stated in the paper, abstract, or verified metadata. |
-| `Inferred` | Reconstructed from examples, tables, results, or implications. |
-| `Our perspective` | Our own critique, interpretation, or research positioning. |
-| `Not reported` | The paper does not provide this information in the material checked so far. |
-| `Not applicable` | The field does not fit this paper. |
-| `Partially` | The paper touches the dimension but does not operationalize it clearly. |
-
-> [!IMPORTANT]
-> This paper should be used to support the evaluation-gap section: existing benchmarks often lack semantic context, contain noisy samples, and evaluate at a granularity that is too coarse for realistic code review.
+| RQ | Question | Relevance of this paper |
+|---|---|---|
+| RQ1 | What types of problematic comments appear in LLM-generated code review? | Highlights failures caused by missing semantic context, noisy/outdated data, coarse granularity, and localization failure. |
+| RQ2 | How is context quality defined, used, or ignored? | Strong evidence for semantic textual context, surrounding code context, and context-enriched benchmark design. |
+| RQ3 | Which evaluation dimensions are covered or missing? | Strong on fine-grained localization/comment generation; weaker on cost, useful-feedback preservation, and live acceptance. |
+| RQ4 | What trade-offs arise from filtering/gating/evaluation? | Data filtering and context enrichment improve quality but may add cost and filtering errors. |
+| RQ5 | What should our framework include? | Supports context-quality dimensions: semantic intent, surrounding code, data cleanliness, and fine-grained localization. |
 
 ---
 
@@ -57,7 +46,7 @@
 | Publication type | Benchmark + empirical evaluation + industrial deployment |
 | Link | arXiv / Hugging Face paper page |
 | DOI / arXiv | DOI: 10.48550/arXiv.2511.07017; arXiv:2511.07017 |
-| Code / artifact | Reported: GitHub repository is linked from the paper page |
+| Code / artifact | Reported: GitHub repository linked from paper page |
 
 ### Citation Note
 
@@ -71,7 +60,7 @@
 
 ## 2. One-Sentence Summary
 
-> This paper introduces ContextCRBench, a context-rich and fine-grained benchmark for LLM-based code review, constructed from issue-PR pairs and enriched with textual and code context to evaluate hunk-level quality assessment, line-level defect localization, and line-level comment generation.
+> ContextCRBench introduces a context-rich, fine-grained benchmark for LLM-based code review by linking issue-PR pairs, enriching samples with textual and surrounding-code context, filtering noisy data, and evaluating hunk-level quality, line-level localization, and line-level comment generation.
 
 ## 3. Main Goal of the Paper
 
@@ -83,169 +72,160 @@
 - [x] Context quality / context selection
 - [x] LLM-as-a-judge
 - [x] Human annotation / human evaluation
+- [ ] User study / reviewer behavior
 - [x] Industrial deployment
 - [x] Benchmark construction
 - [ ] Cost / latency / operational trade-off
-- [x] Other: fine-grained line-level evaluation and semantic context enrichment
+- [x] Filtering / gating / aggregation
 
 ### Goal
 
-The paper aims to address three limitations of existing LLM-based code review benchmarks: lack of semantic context, data quality issues, and coarse granularity. It proposes ContextCRBench as a benchmark that links issue-PR pairs, extracts textual and code context, filters noisy samples, and evaluates models at a fine-grained review level.
+The paper addresses three limitations of current LLM-based code review benchmarks: missing semantic context, noisy data, and coarse granularity.
 
 ### Notes
 
-This paper is strongly relevant to our work because it gives explicit support for treating context as more than diff text. It also connects data quality and evaluation granularity to benchmark reliability, which fits our argument that context quality and evaluation validity should be first-class concerns in LLM-based code review.
+P06 is useful because it shows that “context” must include semantic intent and surrounding code, not just more diff tokens. It also makes data quality part of evaluation validity.
 
 ## 4. Research Questions of the Paper
 
 | RQ | Text | Status |
 |---|---|---|
-| RQ1 | How can LLM-based code review benchmarks include richer semantic and code context? | `Inferred` |
-| RQ2 | How do leading LLMs perform on fine-grained code review tasks under context-enriched conditions? | `Reported / Inferred` |
-| RQ3 | Does textual context or code context provide greater performance gains? | `Reported` |
+| RQ1 | How can LLM code review benchmarks include richer semantic and code context? | `Inferred` |
+| RQ2 | How do leading LLMs perform on fine-grained review tasks under enriched context? | `Reported / Inferred` |
+| RQ3 | Does textual context or code context provide greater gains? | `Reported` |
 | RQ4 | Can the benchmark support an industrial self-evolving code review system? | `Reported` |
 
-## 5. Dataset and Study Context
+## 5. Dataset / Study Context
 
 | Field | Value |
 |---|---|
-| Dataset name | ContextCRBench |
-| Dataset source | Issues and pull requests from selected top-tier open-source repositories; deployment context at ByteDance |
-| Dataset size | Raw data includes 153.7K issues and pull requests; after context extraction and multi-stage filtering, the final benchmark has 67,910 context-enriched entries |
-| Number of repositories / projects | ResearchGate/public abstract mentions filtering from 90 popular repositories across nine programming languages; this should be verified against the PDF |
-| Programming languages | Nine programming languages reported in secondary/preview text; exact distribution should be verified from the PDF |
-| Repository type | Open-source for benchmark construction; industrial deployment at ByteDance |
-| Input context available | Textual context from linked issue-PR pairs and code context from the full surrounding function or class |
-| Output being evaluated | Hunk-level quality assessment, line-level defect localization, and line-level comment generation |
+| Dataset / study name | ContextCRBench |
+| Dataset / study source | Issue-PR pairs from top-tier open-source repositories; deployment context at ByteDance |
+| Dataset / study size | 153.7K raw issue/PR items; 67,910 context-enriched final entries after extraction/filtering |
+| Number of repositories / projects | Reported in secondary text as 90 popular repositories; needs PDF verification |
+| Programming languages | Reported as nine languages; exact distribution needs PDF verification |
+| Repository type | Open-source benchmark + industrial deployment |
+| Input context available | Textual issue/PR context and surrounding function/class code context |
+| Output being evaluated | Hunk-level quality assessment, line-level defect localization, line-level comment generation |
 | Time period | Not reported in this pass |
-| Data availability | GitHub repository reported from paper page; exact artifact completeness should be verified |
+| Data availability | GitHub repository reported; completeness needs verification |
 
-### Dataset Validity Notes
+### Dataset / Study Validity Notes
 
-- [x] The dataset is realistic for code review.
-- [x] The dataset has issue/PR context.
-- [x] The dataset includes actual pull requests / merge requests.
-- [x] The dataset includes fine-grained line-level review targets.
-- [x] The dataset includes semantic textual context.
-- [x] The dataset includes code context beyond the diff.
-- [x] The dataset uses multi-stage filtering to improve quality.
-- [x] Dataset details need a second verification pass.
+- [x] Realistic code review data.
+- [x] Includes issue/PR semantic context.
+- [x] Includes actual PRs.
+- [x] Includes fine-grained line-level tasks.
+- [x] Includes surrounding code context.
+- [x] Uses multi-stage filtering.
+- [x] Needs PDF-level verification.
 
-### Important Notes About the Dataset
+### Important Notes
 
-The dataset design is directly relevant to our context-quality argument. ContextCRBench does not simply add more code; it adds two forms of context: textual context from issue/PR links and code context from surrounding functions or classes. Its construction pipeline also treats data quality as an evaluation requirement by filtering outdated, malformed, or low-value samples.
+ContextCRBench does not merely increase context size. It enriches samples with semantically meaningful context and filters noisy examples, which is exactly the distinction our context-quality model needs.
 
 ## 6. Methods, Models, or Systems Studied
 
 | Field | Value |
 |---|---|
-| Models / systems | Eight leading LLMs: four closed-source and four open-source models; exact list should be verified from the paper tables |
-| Prompting strategy | Not fully verified in this pass |
-| Retrieval or context selection | Comprehensive context extraction links issue-PR pairs for textual context and extracts surrounding function/class for code context |
-| Post-generation verification | Evaluation covers quality assessment, defect localization, and comment generation; exact judge/evaluation mechanism should be verified |
-| Static analysis or rule-based checks | Multi-stage data filtering combines rule-based checks and LLM-based validation |
-| Human-in-the-loop component | Not fully verified; benchmark is built from real review data and validated through filtering, but human annotation details should be checked |
-| Other mechanisms | Industrial deployment at ByteDance in a self-evolving code review system |
+| Models / systems | Eight leading LLMs: four closed-source and four open-source; exact list needs verification |
+| Prompting strategy | Not fully verified |
+| Retrieval or context selection | Issue-PR linkage for textual context; surrounding function/class extraction for code context |
+| Post-generation verification | Evaluates quality assessment, localization, and comment generation; judge details need verification |
+| Static analysis or rule-based checks | Rule-based checks and LLM-based validation in filtering pipeline |
+| Human-in-the-loop component | Not fully verified |
+| Filtering / gating / aggregation mechanism | Multi-stage data filtering: outdated/malformed/low-value samples removed |
+| Other mechanisms | ByteDance self-evolving code review deployment |
 
 ### Method Checklist
 
-- [x] The paper evaluates generated review comments or code review outputs.
-- [x] The paper evaluates multiple LLMs.
-- [x] The paper compares semantic context and code context effects.
-- [x] The paper uses enriched context.
-- [x] The paper uses rule-based and LLM-based data filtering.
-- [x] The paper includes industrial deployment evidence.
-- [ ] The paper fully reports a human annotation protocol in the first-pass material.
+- [x] Evaluates generated review/comment outputs.
+- [ ] Evaluates deployment-time gate.
+- [ ] Evaluates aggregation.
+- [x] Compares multiple LLMs.
+- [x] Compares context types/effects.
+- [x] Uses enriched context.
+- [x] Uses filtering/validation.
+- [x] Includes industrial utility evidence.
 
 ## 7. Evaluation Method
 
 | Field | Value |
 |---|---|
-| Automatic metrics | Task-specific metrics for hunk-level quality assessment, line-level defect localization, and line-level comment generation; exact metrics should be verified from the PDF |
-| Human evaluation | Not fully verified in this pass |
-| Qualitative analysis | Partially; paper analyzes performance under textual context vs code context and discusses remaining gap to human-level review ability |
-| Statistical analysis | Not fully verified in this pass |
-| Cost-related evaluation | Limited / not central in first-pass material; industrial deployment suggests practical utility but cost/latency details need verification |
-| Reproducibility materials | GitHub repository reported; exact reproducibility status should be verified |
+| Automatic metrics | Task-specific metrics for hunk-level quality, line-level localization, comment generation; exact metrics need PDF check |
+| Human evaluation / user study | Not fully verified |
+| Qualitative analysis | Textual vs code context effect; gap to human-level review ability |
+| Statistical analysis | Not fully verified |
+| Cost / latency / time evaluation | Not central in first-pass material |
+| Reproducibility materials | GitHub repository reported |
 
 ### Evaluation Validity Checklist
 
-- [x] The evaluation goes beyond BLEU/ROUGE/text similarity.
-- [x] The evaluation checks fine-grained line-level review ability.
-- [x] The evaluation checks semantic context impact.
-- [x] The evaluation checks code context impact.
-- [x] The evaluation includes multiple task scenarios aligned with review workflow.
-- [ ] The evaluation fully separates correctness, usefulness, and actionability in the first pass.
-- [ ] The evaluation measures cost or latency in detail.
-- [x] The evaluation includes industrial utility evidence.
-- [ ] The evaluation includes production developer feedback in the first-pass material.
+- [x] Beyond BLEU/ROUGE.
+- [x] Fine-grained line-level evaluation.
+- [x] Semantic context impact.
+- [x] Code context impact.
+- [x] Workflow-aligned tasks.
+- [ ] Fully separates correctness/usefulness/actionability.
+- [ ] Measures cost/latency in detail.
+- [x] Includes industrial utility evidence.
+- [ ] Includes live developer feedback.
 
 ## 8. Evaluation Dimensions Covered
 
 | Dimension | Coverage | Notes |
 |---|---|---|
-| Technical correctness | `Partially / Yes` | Defect localization and comment generation evaluate whether models identify meaningful review targets. |
-| Relevance to code change | `Yes` | Fine-grained hunk and line-level tasks are tied to code changes. |
-| Usefulness | `Partially` | Comment generation and defect localization imply usefulness, but usefulness is not fully isolated. |
-| Actionability | `Partially` | Line-level comment generation may require actionable feedback, but actionability scoring should be verified. |
-| Specificity | `Yes / Partially` | Line-level localization directly requires fine-grained specificity. |
-| Novelty / non-triviality | `Partially` | The benchmark targets realistic review tasks rather than generic comments. |
-| Hallucination / unsupported claim | `Partially` | Low-value/noisy samples are filtered and comment generation is evaluated, but hallucination is not the main frame. |
-| False positive rate | `Partially` | Hunk-level quality assessment and localization can expose false positives, but exact metrics should be verified. |
-| False negative rate | `Partially / Yes` | Missing problematic lines or review targets maps to false negatives. |
-| Preservation of useful comments | `No / Partially` | Not mainly a filtering/mitigation paper. |
-| Wrong removal of useful comments | `No` | Not mainly a filtering paper. |
-| Review coverage | `Yes / Partially` | Three workflow-aligned tasks cover multiple review stages. |
-| Human escalation rate | `No` | Not reported in first pass. |
-| Human annotation cost | `Not reported / limited` | Not central in first-pass material. |
-| Computational cost | `Not central` | Not central in first-pass material. |
-| Latency | `Not central` | Not central in first-pass material. |
-| Operational complexity | `Partially` | Industrial deployment exists, but operational complexity is not deeply analyzed in the first pass. |
-| Trade-off analysis | `Partially` | Textual vs code context comparison gives context-effect evidence, but broader cost/latency trade-off is not central. |
-| Developer trust | `No / Partially` | Industrial utility is reported, but trust is not directly isolated in first-pass material. |
-| Workflow impact | `Partially / Yes` | Deployed at ByteDance and improves a self-evolving code review system by 61.98%. |
-
-### Notes on Evaluation Dimensions
-
-P06 is strong for context-rich benchmark construction and fine-grained evaluation. It is especially useful for defining context dimensions and benchmark quality requirements. It is weaker for trade-offs around filtering, useful-comment preservation, and end-to-end cost.
+| Technical correctness | `Partially / Yes` | Defect localization/comment generation assess meaningful review targets. |
+| Relevance to code change | `Yes` | Hunk/line-level tasks tied to changes. |
+| Grounding / context alignment | `Partially` | Enriched context used, but claim grounding not central. |
+| Usefulness | `Partially` | Implied by workflow-aligned tasks. |
+| Actionability | `Partially` | Line-level comment generation may imply actionability; exact scoring unverified. |
+| Specificity | `Yes / Partially` | Line-level localization requires specificity. |
+| Novelty / non-triviality | `Partially` | Realistic tasks, not generic comments. |
+| Hallucination / unsupported claim | `Partially` | Noisy/low-value filtering, but not main frame. |
+| False positive rate | `Partially` | Hunk quality/localization may expose false positives. |
+| False negative rate | `Partially / Yes` | Missed lines/targets. |
+| Preservation of useful comments | `No / Partially` | Not a deployment filter paper. |
+| Wrong removal of useful comments | `No` | Data filtering may remove samples, but not measured as useful loss. |
+| Review coverage / issue coverage | `Yes / Partially` | Three review tasks cover multiple stages. |
+| Human escalation rate | `No` | Not reported. |
+| Human annotation cost | `Not reported` | Not central. |
+| Computational cost | `Not central` | Not central. |
+| Latency | `Not central` | Not central. |
+| Reviewer time overhead | `No` | Not live user study. |
+| Operational complexity | `Partially` | Industrial deployment, details limited. |
+| Trade-off analysis | `Partially` | Textual vs code context comparison; cost not central. |
+| Developer trust | `No / Partially` | Industrial utility, but trust not isolated. |
+| Workflow impact | `Partially / Yes` | ByteDance self-evolving system improves 61.98%. |
 
 ## 9. Problematic Comment Types / Error Taxonomy
 
 ### Explicitly Defined Error Types
 
-The paper’s main limitation categories for existing benchmarks are:
-
-- lack of semantic context;
-- data quality issues;
-- coarse granularity.
-
-It also filters samples that are:
-
-- outdated;
-- malformed;
-- low-value.
+- Missing semantic context.
+- Data quality issues.
+- Coarse granularity.
+- Outdated samples.
+- Malformed samples.
+- Low-value samples.
 
 ### Inferred Error Types
 
 - `Inferred`: Review based on missing semantic intent.
-- `Inferred`: Review on outdated or irrelevant code.
-- `Inferred`: Coarse file-level/commit-level review that misses line-level issues.
-- `Inferred`: Low-value review sample that reduces evaluation reliability.
+- `Inferred`: Review on outdated/irrelevant code.
+- `Inferred`: Coarse review missing line-level issue.
 - `Inferred`: Failure to localize problematic lines.
-- `Inferred`: Comment generation without enough textual context.
-- `Inferred`: Comment generation without enough surrounding code context.
+- `Inferred`: Comment generation without textual context.
+- `Inferred`: Comment generation without surrounding-code context.
 
 ### Example Problematic Comments
 
-> [!CAUTION]
-> Detailed examples should be extracted from the PDF in a second pass. The examples below are conceptual categories, not direct quotes.
-
-| Type | Example / Paraphrase | Source in paper | Label |
+| Type | Example / Paraphrase | Source | Label |
 |---|---|---|---|
-| Missing semantic context | A benchmark sample includes a diff but lacks issue description or PR intent. | Paper motivation | `Reported / Paraphrased` |
-| Noisy outdated sample | A review is associated with outdated or irrelevant code. | Data-quality critique | `Reported / Paraphrased` |
-| Coarse-grained sample | A file-level benchmark misses the line-level reasoning required for precise review. | Paper motivation | `Reported / Paraphrased` |
-| Low-value sample | A sample is removed by rule-based or LLM-based filtering as low-value. | Construction pipeline | `Reported / Paraphrased` |
+| Missing semantic context | Diff-only sample lacks issue/PR intent. | Paper motivation | `Reported / Paraphrased` |
+| Noisy outdated sample | Review associated with outdated/irrelevant code. | Data-quality critique | `Reported / Paraphrased` |
+| Coarse-grained sample | File-level benchmark misses line-level reasoning. | Paper motivation | `Reported / Paraphrased` |
+| Low-value sample | Sample removed by rule/LLM filtering. | Construction pipeline | `Reported / Paraphrased` |
 
 ### Taxonomy Checklist
 
@@ -264,74 +244,108 @@ It also filters samples that are:
 - [x] Comment that misses the actual issue
 - [x] Comment that depends on missing project context
 - [x] Technically plausible but unsupported comment
+- [ ] Comment with poor value-to-time ratio
 
 ### Does the Paper Separate Correctness, Usefulness, and Actionability?
 
 - Answer: `Partially`
-- Explanation: The benchmark separates multiple workflow-aligned tasks, but the first-pass material does not show a clean conceptual separation between correctness, usefulness, and actionability. This should be verified in the full PDF.
+- Explanation: It separates workflow-aligned tasks, but first-pass material does not show a clean conceptual split among correctness/usefulness/actionability.
 
-## 10. Human Annotation Protocol
+## 10. Context-Quality Extraction
+
+| Context Dimension | Coverage | Evidence / Notes |
+|---|---|---|
+| Relevance | `Yes / Partially` | Issue-PR textual context aims to capture intent. |
+| Completeness | `Yes` | Adds textual and surrounding-code context. |
+| Specificity / focus | `Yes` | Fine-grained hunk/line-level tasks. |
+| Consistency | `Partially` | Issue-PR linkage implies intent consistency, needs verification. |
+| Groundability | `Partially` | Context available for evaluation, not full claim grounding. |
+| Locality | `Yes` | Line-level localization central. |
+| Freshness | `Partially` | Filters outdated samples. |
+| Attention load | `Not reported / Inferred` | Enriched context may add load, not central. |
+| Cost / token budget | `Not central` | Not deeply measured. |
+| Context availability vs usability | `Yes` | Textual context gives greater gains than code context alone. |
+
+### Context Failure Types
+
+- [x] Missing project/semantic context
+- [ ] Missing language/framework/version context
+- [x] Missing surrounding code
+- [ ] Missing cross-file dependency
+- [ ] Irrelevant retrieved context
+- [ ] Excessive context / attention dilution
+- [ ] Contradictory PR metadata and diff
+- [x] Unsupported inference from partial context
+- [x] Outdated or malformed context/sample
+
+## 11. Trade-off Extraction
+
+| Strategy / Mechanism | Benefit | Risk / Cost | Missing Metric |
+|---|---|---|---|
+| Textual context enrichment | Adds semantic intent and improves performance. | Linkage/extraction errors. | Context correctness and relevance score. |
+| Surrounding code context | Adds local implementation evidence. | More tokens and possible noise. | Marginal gain per added context. |
+| Multi-stage filtering | Removes noisy/outdated/low-value samples. | May remove useful edge cases. | Wrong-removal rate. |
+| Fine-grained evaluation | Better localization and specificity. | More complex labeling/evaluation. | Annotation cost by granularity. |
+| Industrial deployment | Practical evidence. | Organization-specific results. | Generalizability and workflow-cost metrics. |
+
+### Trade-off Notes
+
+P06 supports a nuanced view: context helps when it is semantically meaningful and quality-filtered, but enrichment still needs cost/noise/validity evaluation.
+
+## 12. Human Annotation / User Study / Production Protocol
 
 | Field | Value |
 |---|---|
-| Human annotators | Not fully verified in this pass |
-| Number of annotators | Not reported in first-pass material |
-| Annotator expertise | Not reported in first-pass material |
-| Annotation guideline provided | Not fully verified; filtering and validation pipeline is described at a high level |
-| Pilot annotation phase | Not reported in first-pass material |
-| Inter-rater agreement reported | Not verified in this pass |
-| Agreement metric used | Not verified in this pass |
-| Conflict resolution method | Not verified in this pass |
+| Human annotators / participants | Not fully verified |
+| Number of annotators / participants | Not reported in first-pass material |
+| Expertise | Not reported in first-pass material |
+| Guideline or study protocol provided | Filtering/validation pipeline described at high level |
+| Pilot phase | Not reported |
+| Inter-rater agreement / validation reported | Not verified |
+| Agreement metric used | Not verified |
+| Conflict resolution method | Not verified |
+| Production/workflow signal | ByteDance deployment improvement reported |
 
-### Annotation Quality Checklist
+### Protocol Quality Checklist
 
-- [ ] Independent annotation is used.
-- [ ] At least two annotators are used.
-- [ ] Annotators have software engineering expertise.
-- [x] Data filtering and validation are described at a high level.
-- [ ] Inter-rater agreement is reported.
-- [ ] Conflict resolution is described.
-- [x] Threats to annotation/data-quality validity are central to the paper’s motivation.
+- [ ] Independent annotation verified.
+- [ ] At least two annotators verified.
+- [ ] Annotator expertise verified.
+- [x] Data filtering/validation described.
+- [ ] Inter-rater agreement verified.
+- [ ] Conflict resolution verified.
+- [x] Data-quality threats central.
+- [x] Industrial utility evidence included.
 
-### Main Concerns About Annotation Validity
+### Main Concerns About Validity
 
-The paper is explicitly concerned with data quality, which is a strength. However, in this first pass, the exact human annotation protocol, agreement metric, and conflict resolution process are not yet verified. Since the paper uses rule-based and LLM-based filtering, we should check how much of the quality control depends on automated validation and how much is human-verified.
+The balance between rule-based, LLM-based, and human validation needs verification. Data quality is a strength, but filtering may hide lost useful or difficult samples.
 
-## 11. Key Findings of the Paper
+## 13. Key Findings
 
 | Finding | Summary | Evidence / Metric | Importance for us |
 |---|---|---|---|
-| Finding 1 | Existing LLM code review benchmarks have three major limitations. | Lack of semantic context, data quality issues, coarse granularity. | Directly supports our evaluation-gap section. |
-| Finding 2 | ContextCRBench provides a large context-enriched dataset. | 153.7K raw issue/PR items filtered to 67,910 context-enriched entries. | Strong benchmark construction evidence. |
-| Finding 3 | ContextCRBench supports three workflow-aligned tasks. | Hunk-level quality assessment, line-level defect localization, line-level comment generation. | Useful for evaluation-dimension design. |
-| Finding 4 | Textual context provides greater performance gains than code context alone. | Reported model evaluation result across eight LLMs. | Important for context-quality argument. |
-| Finding 5 | Current LLMs remain far from human-level review ability. | Reported in paper abstract/results summary. | Supports cautious framing of LLM code review. |
-| Finding 6 | Industrial deployment at ByteDance improves performance. | Self-evolving code review system improves by 61.98%. | Useful industrial utility evidence. |
+| F1 | Existing benchmarks lack semantic context, data quality, and granularity. | Paper motivation. | Evaluation-gap support. |
+| F2 | Large context-enriched benchmark. | 153.7K raw → 67,910 final entries. | Benchmark construction evidence. |
+| F3 | Three workflow-aligned tasks. | Hunk quality, line localization, line comment generation. | Evaluation-dimension design. |
+| F4 | Textual context gives greater gains than code context alone. | Reported model result. | Context-quality argument. |
+| F5 | LLMs remain far from human-level review. | Reported results summary. | Cautious framing. |
+| F6 | Industrial deployment improves system. | 61.98% improvement. | Practical utility evidence. |
 
-## 12. Limitations from the Paper’s Own Perspective
+## 14. Limitations from the Paper’s Own Perspective
 
 - Not fully verified in this pass.
-- Likely limitations include benchmark selection, repository/language distribution, dependence on issue-PR linkage quality, filtering errors, and generalizability beyond the selected repositories and ByteDance deployment context.
-- Full limitations section should be checked directly in the PDF.
+- Likely limitations: repository/language selection, issue-PR linkage quality, filtering errors, and ByteDance generalizability.
 
-## 13. Limitations from Our Perspective
+## 15. Limitations from Our Perspective
 
-> [!WARNING]
-> This section is our critique. Do not present it as a claim made by the paper.
+- Context enrichment is not the same as context-quality scoring.
+- Filtering pipeline’s human/LLM balance needs verification.
+- Cost/latency of enriched context not central.
+- Focuses on benchmark tasks more than deployment-time filtering decisions.
+- Industrial impact needs workflow/trust details.
 
-### Possible Issues
-
-- The paper improves context richness, but context enrichment is not identical to context-quality scoring.
-- The filtering pipeline improves data quality, but the exact human/LLM validation balance needs verification.
-- The benchmark focuses on fine-grained evaluation tasks, but not necessarily on deployment-time filtering decisions.
-- Cost and latency of enriched context are not central in the first-pass material.
-- Industrial deployment is valuable, but details of workflow impact, human trust, and operational complexity need deeper reading.
-
-### Detailed Notes
-
-This paper is useful for arguing that benchmark quality depends on both context and granularity. However, it should not be read as proving that more context is always better. In fact, when combined with P04, it supports a more nuanced claim: enriched context can help when it is semantically relevant and well-filtered, but context expansion without quality control can degrade performance.
-
-## 14. Relevance to Our Paper
+## 16. Relevance to Our Paper
 
 ### Useful For
 
@@ -341,30 +355,41 @@ This paper is useful for arguing that benchmark quality depends on both context 
 - [x] Taxonomy of problematic comments
 - [x] Context-quality argument
 - [ ] Hallucination / unsupported-claim discussion
-- [x] Human annotation/data-quality protocol
+- [x] Human annotation / user-study protocol
 - [x] Cost / latency / operational trade-off
-- [x] Industrial validation
+- [x] Industrial or live validation
 - [x] Benchmark selection
 - [x] Methodology design
 - [x] Discussion / threats to validity
 
+### Mapping to Our RQs
+
+| Our RQ | Relevance | Evidence |
+|---|---|---|
+| RQ1 — problematic comments | `Medium` | Missing semantic context, coarse granularity, low-value/noisy samples. |
+| RQ2 — context quality | `High` | Textual/code context, filtering, fine-grained localization. |
+| RQ3 — evaluation dimensions | `High` | Hunk quality, line localization, comment generation. |
+| RQ4 — trade-offs | `Medium / High` | Enrichment/filtering vs cost and wrong-removal risk. |
+| RQ5 — framework design | `High` | Adds semantic context and data quality to framework. |
+
 ### Explanation
 
-ContextCRBench is one of the most relevant papers for our context-quality framing. It explicitly names lack of semantic context, noisy data, and coarse granularity as benchmark limitations. It also gives concrete context dimensions: issue/PR textual context and surrounding function/class code context. This makes it useful for converting our context-quality idea into operational evaluation dimensions.
+ContextCRBench helps operationalize context quality as semantic intent, surrounding code, data cleanliness, and fine-grained localization.
 
-## 15. Extracted Evidence for Our Argument
+## 17. Extracted Evidence for Our Argument
 
-| Argument Need | Evidence from this paper | Label |
+| Argument Need | Evidence | Label |
 |---|---|---|
-| Limitations of current evaluations | Existing benchmarks lack semantic context, contain noisy samples, and operate at coarse granularity. | `Reported` |
-| Missing cost analysis | Enriched context and multi-stage filtering likely increase cost/latency, but cost is not central in the first-pass material. | `Our perspective` |
-| Missing actionability/usefulness distinction | Three tasks align with review workflow, but correctness, usefulness, and actionability are not fully separated in the first-pass material. | `Our perspective` |
-| Need for taxonomy | The paper identifies outdated, malformed, low-value, and coarse-grained samples as threats to benchmark reliability. | `Reported / Inferred` |
-| Need for human annotation quality control | The paper uses multi-stage filtering and validation to remove noisy samples, supporting the need for data-quality controls. | `Reported` |
-| Need for context-quality evaluation | Textual context and code context are explicitly extracted and evaluated; textual context gives greater gains than code context alone. | `Reported` |
-| Need for trade-off-aware evaluation | Context enrichment helps, but should be balanced against data quality, granularity, cost, and possible attention/noise effects. | `Our perspective` |
+| Limitations of current evaluations | Benchmarks lack semantic context, have noisy data, and are coarse-grained. | `Reported` |
+| Missing cost/latency/reviewer-overhead analysis | Enriched context/filtering likely costly, but cost not central. | `Our perspective` |
+| Missing actionability/usefulness distinction | Workflow tasks help, but constructs are not fully separated. | `Our perspective` |
+| Need for problematic-comment taxonomy | Outdated, malformed, low-value, coarse-grained samples. | `Reported / Inferred` |
+| Need for human annotation / user-study quality control | Multi-stage filtering supports data-quality control. | `Reported` |
+| Need for context-quality evaluation | Textual and code context are explicitly extracted/evaluated. | `Reported` |
+| Need for trade-off-aware evaluation | Enrichment helps but must be balanced against data quality/cost/noise. | `Our perspective` |
+| Need for useful-feedback preservation metric | Filtering removes low-value samples, but wrong removals not measured. | `Our perspective` |
 
-## 16. Final Assessment
+## 18. Final Assessment
 
 | Field | Value |
 |---|---|
@@ -375,37 +400,29 @@ ContextCRBench is one of the most relevant papers for our context-quality framin
 
 ### Short Justification
 
-This is a high-priority benchmark paper because it directly supports our claim that evaluation of LLM-based code review must account for semantic context, data quality, and fine-grained reasoning. It complements P04 and P05 by making context enrichment and benchmark-quality control explicit.
+This paper is high-priority because it explicitly supports the context-quality and data-quality parts of our framework.
 
 ## Open Questions for Follow-up Reading
 
 - [ ] What exact eight LLMs are evaluated?
-- [ ] What exact metrics are used for hunk-level quality assessment, localization, and comment generation?
+- [ ] What exact metrics are used for the three tasks?
 - [ ] How are issue-PR pairs linked and validated?
-- [ ] How much of the filtering pipeline is rule-based, LLM-based, and human-verified?
-- [ ] What are the exact nine programming languages and 90 repositories?
+- [ ] How much filtering is human vs automated?
 - [ ] How is the 61.98% industrial improvement measured?
-- [ ] Does textual context ever hurt, or does it consistently help across all tasks/models?
 
 ## Follow-up TODOs
 
-- [ ] Verify bibliographic metadata against arXiv PDF and BibTeX.
-- [ ] Verify exact model list.
-- [ ] Verify repository count, language distribution, and dataset construction pipeline.
-- [ ] Verify task metrics and result tables.
-- [ ] Extract 1–3 short cite-worthy statements.
+- [ ] Verify arXiv PDF/BibTeX.
+- [ ] Verify model list and task metrics.
+- [ ] Verify repository/language distribution.
+- [ ] Extract cite-worthy statements.
 - [ ] Add BibTeX.
-- [ ] Update `matrices/cross-paper-synthesis.md` with ContextCRBench.
-- [ ] Update `synthesis/context-quality.md` with semantic context, code context, and data filtering.
-- [ ] Update `synthesis/evaluation-dimensions.md` with hunk-level assessment, line-level localization, and comment generation.
-- [ ] Update `synthesis/problematic-comment-taxonomy.md` with outdated/malformed/low-value benchmark samples.
+- [ ] Update synthesis if deep reading changes coding.
 
 <details>
 <summary>Scratchpad</summary>
 
-- Strongest use: direct support for “semantic context matters.”
-- Good contrast with P04: P04 warns that more context can hurt; P06 shows context can help when it is semantically meaningful and quality-filtered.
-- Good contrast with P05: P05 emphasizes full project context; P06 emphasizes enriched textual/code context and fine-grained tasks.
-- This paper helps define context quality as: semantic intent + surrounding code + data cleanliness + fine-grained localization.
+- Strongest use: semantic context matters.
+- Good synthesis with P04/P05: context can hurt when noisy, helps when meaningful and filtered.
 
 </details>
