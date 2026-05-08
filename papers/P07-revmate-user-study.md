@@ -1,48 +1,37 @@
 # P07 — Impact of LLM-based Review Comment Generation in Practice: A Mixed Open-/Closed-source User Study
 
 > [!NOTE]
-> This note uses the repository paper-analysis template. This paper is important because it evaluates LLM-generated review comments in live review environments at Mozilla and Ubisoft, measuring reviewer acceptance, perceived value, and time overhead.
+> This note follows the v2 framework-coding template. P07 is central for the human-centered part of our framework because it evaluates generated review comments in live Mozilla and Ubisoft review workflows.
 
 ## Completion Checklist
 
-- [x] All bibliographic fields are filled.
-- [x] The one-sentence summary is written in a precise and non-generic way.
-- [x] The paper’s main goal is separated from our interpretation of its contribution.
-- [x] All reported research questions are listed, or `Not reported` is written explicitly.
-- [x] Dataset/study details are filled as much as the paper allows.
-- [x] Missing details are marked as `Not reported`, not left blank.
-- [x] Evaluation methods and metrics are described.
-- [x] Human/user-study protocol is documented as far as available in the first pass.
-- [x] Evaluation dimensions are checked and explained.
-- [x] Problematic comment types are extracted or inferred carefully.
-- [x] Every inferred point is marked as `Inferred`.
-- [x] Limitations from the paper are separated from our own critique.
-- [x] Relevance to our research is explicitly explained.
-- [x] Evidence for our argument is extracted into Section 15.
-- [x] Open questions for follow-up reading are listed.
-- [x] No `TODO` remains unless it is intentionally listed in the follow-up checklist.
+- [x] Bibliographic fields are filled.
+- [x] Dataset/study details are filled as far as the paper allows.
+- [x] Evaluation methods and live-study metrics are described.
+- [x] User-study protocol is documented as far as available.
+- [x] Evaluation dimensions are separated from problematic comment types.
+- [x] Context-quality evidence is extracted.
+- [x] Trade-offs are explicitly identified.
+- [x] Mapping to our RQs is included.
 
 ## Status
 
 - Paper ID: `P07`
-- Analysis status: `First pass completed; public abstract/details verified once`
+- Analysis status: `First pass completed; migrated to v2 template; needs PDF-level verification`
 - Priority: `High`
-- Reading depth: `Read once from metadata/abstract/public page; needs PDF-level verification`
+- Reading depth: `Read once from metadata/abstract/public page`
 - Last updated: `2026-05-08`
+- Confidence in extraction: `Medium`
 
-## Notation Rules
+## Our Research Questions
 
-| Label | Meaning |
-|---|---|
-| `Reported` | Explicitly stated in the paper, abstract, or verified public metadata. |
-| `Inferred` | Reconstructed from examples, tables, results, or implications. |
-| `Our perspective` | Our own critique, interpretation, or research positioning. |
-| `Not reported` | The paper does not provide this information in the material checked so far. |
-| `Not applicable` | The field does not fit this paper. |
-| `Partially` | The paper touches the dimension but does not operationalize it clearly. |
-
-> [!IMPORTANT]
-> This paper is one of the best sources for evaluating real reviewer behavior. It directly helps us separate “model can generate comments” from “reviewers accept, value, inspect, edit, and act on those comments.”
+| RQ | Question | Relevance of this paper |
+|---|---|---|
+| RQ1 | What types of problematic comments appear in LLM-generated code review? | Provides rejected comments, valuable-but-not-accepted comments, filtered irrelevant comments, and poor value-to-time cases. |
+| RQ2 | How is context quality defined, used, or ignored? | RevMate uses RAG and LLM-as-a-Judge filtering; context strategy affects reviewer exposure and value. |
+| RQ3 | Which evaluation dimensions are covered or missing? | Strong on acceptance, perceived value, reviewer overhead, and downstream revision; weaker on independent correctness labels. |
+| RQ4 | What trade-offs arise from filtering/gating/evaluation? | Strong usefulness-vs-time-overhead and filtering-before-exposure trade-off. |
+| RQ5 | What should our framework include? | Supports separating acceptance, usefulness, actionability, downstream impact, and reviewer overhead. |
 
 ---
 
@@ -71,7 +60,7 @@
 
 ## 2. One-Sentence Summary
 
-> This paper evaluates RevMate, an LLM-based review assistant using RAG and LLM-as-a-Judge, in live review environments at Mozilla and Ubisoft, showing that generated comments have modest direct acceptance but meaningful perceived value and reasonable reviewer time overhead.
+> This paper evaluates RevMate, an LLM-based review assistant using RAG and LLM-as-a-Judge filtering, in live Mozilla and Ubisoft review workflows, showing modest direct acceptance but meaningful perceived value, downstream revisions, and measurable reviewer time overhead.
 
 ## 3. Main Goal of the Paper
 
@@ -83,158 +72,164 @@
 - [x] Context quality / context selection
 - [x] LLM-as-a-judge
 - [x] Human annotation / human evaluation
-- [x] Industrial / live deployment
+- [x] User study / reviewer behavior
+- [x] Industrial or live deployment
 - [ ] Benchmark construction
 - [x] Cost / latency / operational trade-off
-- [x] Other: reviewer acceptance, perceived value, review-time overhead
+- [x] Filtering / gating / aggregation
 
 ### Goal
 
-The paper aims to evaluate the practical impact of LLM-generated review comments inside normal review workflows, comparing open-source and closed-source settings and measuring whether reviewers accept, value, inspect, edit, or act on the generated comments.
+The paper evaluates practical impact of generated review comments inside normal review workflows, comparing Mozilla and Ubisoft and measuring acceptance, value, inspection/editing time, and downstream revisions.
 
 ### Notes
 
-This paper is important because it studies actual reviewer interaction rather than only offline benchmark performance. It helps us argue that acceptance, usefulness, reviewer overhead, and downstream revisions are separate evaluation dimensions that cannot be reduced to text similarity or model correctness alone.
+P07 is essential because it separates “accepted” from “valuable.” It gives concrete evidence that usefulness is not equivalent to direct acceptance.
 
 ## 4. Research Questions of the Paper
 
 | RQ | Text | Status |
 |---|---|---|
-| RQ1 | What is the acceptance rate of LLM-generated review comments in live review workflows? | `Reported / Inferred` |
-| RQ2 | How valuable do reviewers find generated comments even when they do not directly accept them? | `Reported / Inferred` |
-| RQ3 | What time overhead do reviewers incur when inspecting or editing generated comments? | `Reported / Inferred` |
-| RQ4 | Do accepted generated comments lead to patch revisions at rates comparable to human-written comments? | `Reported / Inferred` |
-| RQ5 | How do results differ between open-source and closed-source organizational settings? | `Reported / Inferred` |
+| RQ1 | What is the acceptance rate of generated comments in live workflows? | `Reported / Inferred` |
+| RQ2 | How valuable are generated comments even when not directly accepted? | `Reported / Inferred` |
+| RQ3 | What reviewer time overhead is introduced? | `Reported / Inferred` |
+| RQ4 | Do accepted generated comments lead to patch revisions like human comments? | `Reported / Inferred` |
+| RQ5 | How do open-source and closed-source settings differ? | `Reported / Inferred` |
 
-## 5. Dataset and Study Context
+## 5. Dataset / Study Context
 
 | Field | Value |
 |---|---|
-| Study system | RevMate |
-| Study source | Live review environments at Mozilla and Ubisoft |
-| Study size | 6-week user study; 59 reviewers; 587 patch reviews; about 1.6k generated comments; post-study survey completed by 37/59 participants |
-| Organizations | Mozilla, with open-source codebase; Ubisoft, fully closed-source setting |
+| Dataset / study name | RevMate live user study |
+| Dataset / study source | Mozilla and Ubisoft review environments |
+| Dataset / study size | 6 weeks; 59 reviewers; 587 patch reviews; about 1.6K generated comments; 37/59 survey responses |
+| Number of repositories / projects | Not fully verified |
+| Programming languages | Not fully verified |
 | Repository type | Mixed open-source and closed-source industrial settings |
-| Input context available | Extra code and review context through RAG, plus LLM-as-a-Judge filtering of irrelevant generated comments |
-| Output being evaluated | LLM-generated review comments suggested to reviewers inside their normal review environment |
+| Input context available | RAG-provided code/review context; LLM-as-a-Judge filtering of irrelevant comments |
+| Output being evaluated | Generated comments suggested to reviewers in normal review environment |
 | Time period | 6 weeks |
-| Data availability | Not fully public; study results are reported, but organization-level raw review data is likely not public |
+| Data availability | Raw organization-level data likely private |
 
 ### Dataset / Study Validity Notes
 
-- [x] The study is realistic for code review.
-- [x] The study includes live reviewer behavior.
-- [x] The study includes generated LLM comments.
-- [x] The study includes open-source and closed-source settings.
-- [x] The study includes reviewer acceptance and perceived value signals.
-- [x] The study includes time-overhead measurement.
-- [x] Study details need a second PDF-level verification pass.
+- [x] Realistic live review setting.
+- [x] Includes live reviewer behavior.
+- [x] Includes generated LLM comments.
+- [x] Includes open-source and closed-source settings.
+- [x] Includes acceptance/value/time signals.
+- [x] Needs PDF-level verification.
 
-### Important Notes About the Study
+### Important Notes
 
-This is one of the strongest papers for practical impact. It does not only ask whether the generated comments are correct; it asks whether reviewers accept them, mark them as valuable, spend reasonable time inspecting them, and whether accepted generated comments lead to later patch revisions similarly to human-written comments.
+This study has strong ecological validity. It is not a clean correctness benchmark; it measures how reviewers interact with generated suggestions in practice.
 
 ## 6. Methods, Models, or Systems Studied
 
 | Field | Value |
 |---|---|
-| Models / systems | RevMate, an LLM-based assistive tool for generating review comments; public text reports GPT-4o as the underlying model |
-| Prompting strategy | Not fully verified in this pass |
-| Retrieval or context selection | RAG provides extra code and review context; RevMate has a code-context variant and an example/comment retrieval variant |
-| Post-generation verification | LLM-as-a-Judge is used to auto-evaluate generated comments and discard irrelevant cases |
-| Static analysis or rule-based checks | Not reported as the main mechanism in first-pass material |
-| Human-in-the-loop component | Yes; reviewers inspect, accept, edit, or mark generated comments as valuable within their normal review environment |
-| Other mechanisms | Comparison across open-source and closed-source organizations; post-study survey; comparison with human-written comments for downstream revisions |
+| Models / systems | RevMate; public text reports GPT-4o as underlying model |
+| Prompting strategy | Not fully verified |
+| Retrieval or context selection | RAG provides code/review context; variants include code context and related comment examples |
+| Post-generation verification | LLM-as-a-Judge filters irrelevant generated comments |
+| Static analysis or rule-based checks | Not main mechanism in first pass |
+| Human-in-the-loop component | Reviewers inspect, accept, edit, mark value, or reject comments |
+| Filtering / gating / aggregation mechanism | LLM-as-a-Judge relevance filtering before reviewer exposure |
+| Other mechanisms | Post-study survey; comparison with human comments for downstream revisions |
 
 ### Method Checklist
 
-- [x] The paper evaluates generated review comments.
-- [x] The paper evaluates a judge/filter/gate through LLM-as-a-Judge filtering.
-- [ ] The paper compares multiple LLMs.
-- [x] The paper compares contextualization variants, at least code context vs related comment examples.
-- [x] The paper uses retrieval or context augmentation.
-- [x] The paper includes a post-generation quality check.
-- [x] The paper includes a live human evaluation component.
+- [x] Evaluates generated review comments.
+- [x] Evaluates judge/filter behavior.
+- [ ] Evaluates aggregation.
+- [ ] Compares multiple LLMs.
+- [x] Compares context variants.
+- [x] Uses RAG/context augmentation.
+- [x] Includes post-generation filtering.
+- [x] Includes live human evaluation.
+- [x] Includes workflow evidence.
 
 ## 7. Evaluation Method
 
 | Field | Value |
 |---|---|
-| Automatic metrics | Acceptance rate, value-marking rate, time spent inspecting/editing generated comments, patch revision after accepted comments, comparison with human-written comment outcomes |
-| Human evaluation | Live reviewer interaction and survey feedback from 37/59 participants |
-| Qualitative analysis | Partially; survey and reviewer perspectives are collected, but exact thematic analysis should be checked in the PDF |
-| Statistical analysis | Not fully verified in this pass |
-| Cost-related evaluation | Yes, through reviewer time overhead; median extra time is reported as 43 seconds per patch |
-| Reproducibility materials | Not fully verified; live organization data is likely not fully reproducible |
+| Automatic metrics | Acceptance rate, value marking, inspection/editing time, patch revision after accepted comments, comparison with human-written comment outcomes |
+| Human evaluation / user study | Live reviewer interaction and survey feedback |
+| Qualitative analysis | Survey/reviewer perspectives collected; exact thematic analysis needs PDF verification |
+| Statistical analysis | Not fully verified |
+| Cost / latency / time evaluation | Reviewer time overhead; median 43 seconds per patch |
+| Reproducibility materials | Not fully verified; live data likely private |
 
 ### Evaluation Validity Checklist
 
-- [x] The evaluation goes beyond BLEU/ROUGE/text similarity.
-- [x] The evaluation checks practical reviewer value.
-- [x] The evaluation checks acceptance.
-- [x] The evaluation checks actionability indirectly through accepted comments and patch revisions.
-- [x] The evaluation uses post-generation filtering.
-- [x] The evaluation measures cost/time overhead.
-- [x] The evaluation includes real developer feedback.
-- [x] The evaluation includes live workflow signals.
-- [ ] The evaluation fully separates correctness, usefulness, and actionability.
-- [ ] The evaluation systematically measures hallucination or unsupported claims.
+- [x] Beyond text similarity.
+- [ ] Independently checks semantic correctness for every comment.
+- [x] Partially checks relevance via filtering/acceptance.
+- [x] Checks usefulness/developer value.
+- [x] Checks actionability indirectly via acceptance/revision.
+- [ ] Systematically checks hallucination.
+- [x] Partially measures false positives via rejected/non-valued comments.
+- [ ] Measures missed issues.
+- [x] Partially measures useful-feedback preservation/value.
+- [x] Measures reviewer time overhead.
+- [x] Includes live workflow signals.
 
 ## 8. Evaluation Dimensions Covered
 
 | Dimension | Coverage | Notes |
 |---|---|---|
-| Technical correctness | `Partially` | Accepted comments and downstream revisions imply usefulness/correctness, but correctness is not necessarily independently labeled for every generated comment. |
-| Relevance to code change | `Yes / Partially` | LLM-as-a-Judge filters irrelevant cases; reviewer acceptance/value also indicates relevance. |
-| Usefulness | `Yes` | Core dimension: reviewers accept comments or mark them valuable as review/development tips. |
-| Actionability | `Partially / Yes` | Accepted comments can be used in review and may lead to patch revisions. |
-| Specificity | `Partially` | Not fully verified as a standalone metric. |
-| Novelty / non-triviality | `Partially` | Refactoring comments have higher acceptance than functional comments; exact novelty dimension not isolated. |
-| Hallucination / unsupported claim | `Partially` | LLM-as-a-Judge discards irrelevant cases, but hallucination-specific evaluation is not central in first-pass material. |
-| False positive rate | `Partially` | Rejected or non-valued comments may indicate false positives, but rejection can also reflect low priority or preference. |
-| False negative rate | `No / Partially` | Study does not primarily measure missed review issues. |
-| Preservation of useful comments | `Partially` | LLM-as-a-Judge discards irrelevant cases, but useful-comment loss due to filtering is not fully measured in first pass. |
-| Wrong removal of useful comments | `Not reported` | Not fully analyzed in first-pass material. |
-| Review coverage | `Partially` | 587 patch reviews and 1.6k comments provide usage coverage, but issue coverage is not central. |
-| Human escalation rate | `Not applicable / No` | Human reviewers are always in the loop; no separate escalation metric. |
-| Human annotation cost | `Partially` | Reviewer time overhead is measured. |
-| Computational cost | `Not reported / limited` | Not central in first-pass material. |
-| Latency | `Partially` | Reviewer overhead is measured; model latency is not central in first-pass material. |
-| Operational complexity | `Partially` | Integration into two real review environments demonstrates practical complexity, but details need PDF checking. |
-| Trade-off analysis | `Partially` | Measures acceptance/value against reviewer time overhead; does not fully model filtering thresholds or useful-comment preservation. |
-| Developer trust | `Partially / Yes` | Survey and reviewer behavior capture trust-related signals, but trust should be checked in the full paper. |
-| Workflow impact | `Yes` | Live setup, review-time overhead, acceptance, value, and patch revisions are workflow signals. |
-
-### Notes on Evaluation Dimensions
-
-P07 is especially strong for the usefulness-vs-cost side of evaluation. It shows that even low direct acceptance rates can coexist with additional perceived value, reasonable overhead, and patch revisions comparable to human-written comments.
+| Technical correctness | `Partially` | Accepted comments and revisions imply value, but correctness not independently labeled. |
+| Relevance to code change | `Yes / Partially` | LLM-as-Judge filters irrelevant cases; acceptance/value indicate relevance. |
+| Grounding / context alignment | `Partially` | RAG and judge filtering, but no full claim-grounding analysis. |
+| Usefulness | `Yes` | Acceptance and value-marking. |
+| Actionability | `Partially / Yes` | Accepted comments and patch revisions. |
+| Specificity | `Partially` | Not fully verified. |
+| Novelty / non-triviality | `Partially` | Refactoring vs functional acceptance differences. |
+| Hallucination / unsupported claim | `Partially` | Filtering irrelevant cases, not hallucination-specific. |
+| False positive rate | `Partially` | Rejected/non-valued comments may indicate false positives. |
+| False negative rate | `No / Partially` | Missed review issues not central. |
+| Preservation of useful comments | `Partially` | Valuable-but-not-accepted signal helps; filter wrong removals not measured. |
+| Wrong removal of useful comments | `Not reported` | Pre-exposure filtering may hide wrong removals. |
+| Review coverage / issue coverage | `Partially` | Usage coverage, not issue coverage. |
+| Human escalation rate | `Not applicable / No` | Humans always in loop. |
+| Human annotation cost | `Partially` | Reviewer time overhead. |
+| Computational cost | `Not reported` | Not central. |
+| Latency | `Partially` | Reviewer overhead measured, not model latency. |
+| Reviewer time overhead | `Yes` | Median 43 seconds per patch. |
+| Operational complexity | `Partially` | Live integration at two organizations. |
+| Trade-off analysis | `Partially / Yes` | Acceptance/value vs time overhead. |
+| Developer trust | `Partially / Yes` | Survey/behavior signals. |
+| Workflow impact | `Yes` | Live setup and downstream revisions. |
 
 ## 9. Problematic Comment Types / Error Taxonomy
 
 ### Explicitly Defined Error Types
 
-First-pass public material does not expose a detailed taxonomy of bad comments. However, it distinguishes accepted comments, valuable tips, and filtered irrelevant cases.
+First-pass public material does not expose a detailed bad-comment taxonomy, but it distinguishes:
+
+- accepted comments;
+- valuable tips;
+- filtered irrelevant cases;
+- edited accepted comments;
+- rejected comments.
 
 ### Inferred Error Types
 
-- `Inferred`: Irrelevant generated comment filtered by LLM-as-a-Judge.
-- `Inferred`: Generated comment that reviewers inspect but do not accept.
-- `Inferred`: Generated comment that is valuable as a tip but not directly accepted.
-- `Inferred`: Functional comment with lower acceptance than refactoring comment.
+- `Inferred`: Irrelevant generated comment filtered by judge.
+- `Inferred`: Comment inspected but not accepted.
+- `Inferred`: Valuable but not directly accepted comment.
 - `Inferred`: Comment requiring editing before acceptance.
-- `Inferred`: Comment that imposes reviewer overhead without enough value.
+- `Inferred`: Comment with poor value-to-time ratio.
+- `Inferred`: Functional comment with lower acceptance than refactoring comment.
 
 ### Example Problematic Comments
 
-> [!CAUTION]
-> Detailed examples should be extracted from the PDF in a second pass. The examples below are conceptual categories, not direct quotes.
-
-| Type | Example / Paraphrase | Source in paper | Label |
+| Type | Example / Paraphrase | Source | Label |
 |---|---|---|---|
-| Rejected generated comment | Reviewer sees a generated comment but does not accept it. | Live interaction signal | `Reported / Inferred` |
-| Valuable but not accepted | Reviewer marks a generated comment as valuable for review/development but does not directly post it. | Reported value signal | `Reported` |
-| Edited accepted comment | Reviewer accepts a generated comment after editing. | Reported interaction pattern | `Reported` |
-| Irrelevant filtered comment | LLM-as-a-Judge discards irrelevant generated cases before reviewer exposure. | RevMate mechanism | `Reported` |
+| Rejected generated comment | Reviewer sees comment but does not accept it. | Live interaction signal | `Reported / Inferred` |
+| Valuable but not accepted | Reviewer marks comment valuable but does not post it. | Reported value signal | `Reported` |
+| Edited accepted comment | Reviewer edits generated comment before accepting. | Interaction pattern | `Reported` |
+| Irrelevant filtered comment | LLM-as-Judge discards irrelevant comment before reviewer exposure. | RevMate mechanism | `Reported` |
 
 ### Taxonomy Checklist
 
@@ -257,70 +252,101 @@ First-pass public material does not expose a detailed taxonomy of bad comments. 
 ### Does the Paper Separate Correctness, Usefulness, and Actionability?
 
 - Answer: `Partially`
-- Explanation: The paper separates acceptance, perceived value, reviewer time, and downstream patch revision. This is stronger than many benchmark papers, but it does not necessarily isolate technical correctness for each generated comment.
+- Explanation: It separates acceptance, perceived value, reviewer time, and downstream revision, but does not independently label correctness for each comment.
 
-## 10. Human/User Study Protocol
+## 10. Context-Quality Extraction
+
+| Context Dimension | Coverage | Evidence / Notes |
+|---|---|---|
+| Relevance | `Yes / Partially` | LLM-as-Judge filters irrelevant comments. |
+| Completeness | `Partially` | RAG adds code/review context. |
+| Specificity / focus | `Partially` | Context variants should be checked in PDF. |
+| Consistency | `Not reported` | Not central in first pass. |
+| Groundability | `Partially` | Filtering, but not full claim grounding. |
+| Locality | `Partially` | Patch review context, exact locality not verified. |
+| Freshness | `Not reported` | Not central. |
+| Attention load | `Not reported` | Not central. |
+| Cost / token budget | `Not reported` | Compute cost not central. |
+| Context availability vs usability | `Yes / Partially` | RAG context affects practical usefulness/acceptance. |
+
+### Context Failure Types
+
+- [x] Missing project context
+- [ ] Missing language/framework/version context
+- [x] Missing surrounding code
+- [ ] Missing cross-file dependency
+- [x] Irrelevant retrieved/generated context
+- [ ] Excessive context / attention dilution
+- [ ] Contradictory PR metadata and diff
+- [x] Unsupported inference from partial context
+
+## 11. Trade-off Extraction
+
+| Strategy / Mechanism | Benefit | Risk / Cost | Missing Metric |
+|---|---|---|---|
+| RAG context | Adds code/review context for better suggestions. | Irrelevant or low-value suggestions may still occur. | Context relevance/quality score. |
+| LLM-as-Judge filtering | Reduces irrelevant comments before reviewer exposure. | Wrongly removed useful comments are hidden. | Wrong-removal / useful-comment preservation rate. |
+| Live reviewer inspection | Preserves human control and captures real value. | Adds reviewer time overhead. | Value-to-time ratio by comment type. |
+| Direct acceptance metric | Simple practical signal. | Underestimates useful-but-not-accepted comments. | Valuable-but-not-accepted rate. |
+| Editing before acceptance | Improves usability of generated comments. | Attribution becomes harder. | Edit effort and edit distance. |
+
+### Trade-off Notes
+
+P07 is the strongest evidence that usefulness must be evaluated separately from acceptance. It also shows why reviewer overhead belongs in our framework.
+
+## 12. Human Annotation / User Study / Production Protocol
 
 | Field | Value |
 |---|---|
-| Human participants | Yes; 59 reviewers across Mozilla and Ubisoft |
-| Number of participants | 59 reviewers; 37/59 completed the post-study survey |
-| Participant expertise | Professional reviewers/developers in Mozilla and Ubisoft review workflows |
-| Study guideline provided | Not fully verified in this pass |
+| Human annotators / participants | 59 reviewers across Mozilla and Ubisoft |
+| Number of annotators / participants | 59 reviewers; 37 survey responses |
+| Expertise | Professional reviewers/developers |
+| Guideline or study protocol provided | Not fully verified |
 | Pilot phase | Not reported in first-pass material |
-| Agreement reported | Not applicable in the same way as annotation studies; interaction metrics and survey are used |
+| Inter-rater agreement / validation reported | Not applicable as annotation study |
 | Agreement metric used | Not applicable / not reported |
 | Conflict resolution method | Not applicable / not reported |
+| Production/workflow signal | Acceptance, value, time overhead, downstream patch revision |
 
-### Annotation / Study Quality Checklist
+### Protocol Quality Checklist
 
-- [x] Real users are involved.
-- [x] Professional developers/reviewers are involved.
-- [x] The study is conducted in live review environments.
-- [x] Both open-source and closed-source settings are included.
-- [x] Interaction metrics are collected.
-- [x] Survey feedback is collected.
-- [ ] Controlled inter-rater agreement is reported.
-- [x] Threats to ecological validity are reduced by live setup.
+- [x] Real users involved.
+- [x] Professional developers/reviewers.
+- [x] Live review environment.
+- [x] Open-source and closed-source settings.
+- [x] Interaction metrics collected.
+- [x] Survey feedback collected.
+- [ ] Controlled inter-rater agreement.
+- [x] Live workflow signal included.
 
-### Main Concerns About Study Validity
+### Main Concerns About Validity
 
-The live setup gives strong ecological validity, but acceptance does not equal correctness. Reviewers may reject correct comments because of timing, style, redundancy, or priority. They may accept comments after editing, which complicates attribution. The study also uses RevMate’s filtering before reviewers see comments, so the effect of discarded comments and possible wrong removals needs deeper reading.
+Acceptance does not equal correctness. Rejection can reflect timing, style, redundancy, or priority. Pre-exposure filtering means wrong removals may be invisible.
 
-## 11. Key Findings of the Paper
+## 13. Key Findings
 
 | Finding | Summary | Evidence / Metric | Importance for us |
 |---|---|---|---|
-| Finding 1 | Direct acceptance of generated comments is modest. | 8.1% at Mozilla and 7.2% at Ubisoft accepted. | Shows that generation alone is not enough. |
-| Finding 2 | Some non-accepted comments are still valuable. | 14.6% and 20.5% marked valuable as review/development tips. | Supports separating acceptance from usefulness. |
-| Finding 3 | Refactoring comments are more accepted than functional comments. | 18.2% and 18.6% vs 4.8% and 5.2%. | Supports issue-type-specific evaluation. |
-| Finding 4 | Reviewer time overhead is reasonable. | Overall median of 43 seconds per patch; accepted edited comments include 36/119 cases. | Useful for cost/time trade-off. |
-| Finding 5 | Accepted generated comments lead to future revisions similarly to human comments. | 74% vs 73% at chunk level. | Strong workflow-impact evidence. |
+| F1 | Direct acceptance is modest. | 8.1% Mozilla, 7.2% Ubisoft. | Generation alone is not enough. |
+| F2 | Non-accepted comments can still be valuable. | 14.6% and 20.5% valuable tips. | Separates usefulness from acceptance. |
+| F3 | Refactoring comments accepted more than functional comments. | 18.2/18.6% vs 4.8/5.2%. | Issue-type evaluation. |
+| F4 | Reviewer overhead is reasonable. | Median 43 seconds per patch. | Cost/time trade-off. |
+| F5 | Accepted generated comments lead to revisions like human comments. | 74% vs 73% at chunk level. | Workflow-impact evidence. |
 
-## 12. Limitations from the Paper’s Own Perspective
+## 14. Limitations from the Paper’s Own Perspective
 
 - Not fully verified in this pass.
-- Likely limitations include dependence on RevMate design, organization-specific workflows, limited study duration, reviewer self-selection, and the challenge of attributing downstream patch revisions to generated comments.
-- Full limitations section should be checked directly in the PDF.
+- Likely limitations: RevMate-specific design, organization-specific workflows, study duration, reviewer self-selection, attribution of revisions.
 
-## 13. Limitations from Our Perspective
+## 15. Limitations from Our Perspective
 
-> [!WARNING]
-> This section is our critique. Do not present it as a claim made by the paper.
+- Acceptance is not correctness/usefulness/actionability.
+- Value-marking is subjective and culture/workload-dependent.
+- Wrong removals by LLM-as-Judge are hidden from reviewers.
+- Reviewer time measured, compute cost/model latency not fully measured.
+- Edited vs accepted vs tip-only usage needs careful interpretation.
 
-### Possible Issues
-
-- Acceptance is not the same as correctness, usefulness, or actionability.
-- Value-marking is subjective and may depend on reviewer style, team culture, and review workload.
-- LLM-as-a-Judge filtering happens before reviewer exposure, so wrong removal of useful comments may be hidden.
-- The study measures reviewer time overhead, but not full compute cost or system latency.
-- The distinction between generated comments used directly, edited comments, and comments used only as tips needs careful interpretation.
-
-### Detailed Notes
-
-This paper should be central for the human-centered evaluation side of our work. It provides evidence that a generated comment can be valuable even if it is not directly accepted. This helps us argue that evaluation should include multiple outcomes: direct acceptance, perceived value, downstream revision, reviewer overhead, and filtering side effects.
-
-## 14. Relevance to Our Paper
+## 16. Relevance to Our Paper
 
 ### Useful For
 
@@ -330,30 +356,41 @@ This paper should be central for the human-centered evaluation side of our work.
 - [x] Taxonomy of problematic comments
 - [x] Context-quality argument
 - [ ] Hallucination / unsupported-claim discussion
-- [x] Human annotation/user-study protocol
+- [x] Human annotation / user-study protocol
 - [x] Cost / latency / operational trade-off
-- [x] Industrial/live validation
+- [x] Industrial or live validation
 - [ ] Benchmark selection
 - [x] Methodology design
 - [x] Discussion / threats to validity
 
+### Mapping to Our RQs
+
+| Our RQ | Relevance | Evidence |
+|---|---|---|
+| RQ1 — problematic comments | `Medium` | Rejected, filtered, edited, valuable-but-not-accepted, poor value-to-time comments. |
+| RQ2 — context quality | `Medium / High` | RAG context and judge filtering in live workflow. |
+| RQ3 — evaluation dimensions | `High` | Acceptance, value, overhead, downstream revision. |
+| RQ4 — trade-offs | `High` | Usefulness vs acceptance vs reviewer time; hidden wrong removals. |
+| RQ5 — framework design | `High` | Human-centered evaluation layer. |
+
 ### Explanation
 
-P07 gives us real-world evidence that LLM-generated review comments should be evaluated through reviewer behavior, not only offline correctness. Its strongest contribution for our paper is the distinction between accepted comments, comments marked valuable as tips, reviewer time overhead, and downstream patch revisions. This directly supports a trade-off-aware and human-centered evaluation framework.
+RevMate provides real-world evidence that generated review comments need human-centered evaluation dimensions beyond offline correctness.
 
-## 15. Extracted Evidence for Our Argument
+## 17. Extracted Evidence for Our Argument
 
-| Argument Need | Evidence from this paper | Label |
+| Argument Need | Evidence | Label |
 |---|---|---|
-| Limitations of current evaluations | Live reviewer acceptance and value differ from offline comment quality; generated comments need workflow-level evaluation. | `Reported / Our perspective` |
-| Missing cost analysis | The paper measures reviewer time overhead, but not full compute cost, latency, or cost of wrong filtering. | `Reported / Our perspective` |
-| Missing actionability/usefulness distinction | Acceptance, perceived value, and downstream revisions are distinct signals; usefulness is not identical to acceptance. | `Reported` |
-| Need for taxonomy | Refactoring and functional comments have different acceptance patterns, suggesting issue-type-specific evaluation is needed. | `Reported` |
-| Need for human annotation/user-study quality control | The study uses live reviewers and survey feedback, supporting ecological evaluation beyond offline annotation. | `Reported` |
-| Need for context-quality evaluation | RevMate uses RAG to provide extra code/review context; context strategy likely affects comment relevance and acceptance. | `Reported / Inferred` |
-| Need for trade-off-aware evaluation | LLM-as-a-Judge filters irrelevant cases, but the evaluation should also consider wrong removals, reviewer overhead, and value preservation. | `Our perspective` |
+| Limitations of current evaluations | Live acceptance/value differ from offline quality. | `Reported / Our perspective` |
+| Missing cost/latency/reviewer-overhead analysis | Reviewer time overhead measured, compute/latency not fully covered. | `Reported / Our perspective` |
+| Missing actionability/usefulness distinction | Acceptance, value, and downstream revision are distinct. | `Reported` |
+| Need for problematic-comment taxonomy | Refactoring vs functional acceptance patterns; rejected/filtered comments. | `Reported / Inferred` |
+| Need for human annotation / user-study quality control | Live reviewers and surveys provide ecological validity. | `Reported` |
+| Need for context-quality evaluation | RAG context and LLM-as-Judge filtering affect relevance/exposure. | `Reported / Inferred` |
+| Need for trade-off-aware evaluation | Filtering/reviewer overhead/value preservation are central. | `Our perspective` |
+| Need for useful-feedback preservation metric | Valuable-but-not-accepted comments show usefulness can be hidden by acceptance-only metric. | `Reported / Our perspective` |
 
-## 16. Final Assessment
+## 18. Final Assessment
 
 | Field | Value |
 |---|---|
@@ -364,37 +401,30 @@ P07 gives us real-world evidence that LLM-generated review comments should be ev
 
 ### Short Justification
 
-This is a high-priority paper because it evaluates LLM-generated review comments in live open-source and closed-source review environments. It provides strong evidence for human-centered evaluation dimensions such as acceptance, perceived value, reviewer overhead, and downstream patch revisions.
+This is high-priority because it provides live evidence for separating acceptance, usefulness, reviewer overhead, and downstream impact.
 
 ## Open Questions for Follow-up Reading
 
-- [ ] What exact study protocol did Mozilla and Ubisoft reviewers follow?
+- [ ] What exact study protocol did reviewers follow?
 - [ ] How are accepted, valuable, edited, and rejected comments defined?
-- [ ] What kinds of comments were discarded by LLM-as-a-Judge before reviewer exposure?
-- [ ] How much did code-context retrieval vs example/comment retrieval affect acceptance?
-- [ ] What survey questions were asked, and what were the qualitative themes?
-- [ ] How do acceptance/value rates differ by reviewer role, project, or comment category?
-- [ ] Are there measures of trust, annoyance, or review interruption beyond median time overhead?
+- [ ] What was discarded by LLM-as-Judge before exposure?
+- [ ] How did context variants affect acceptance/value?
+- [ ] Are trust/annoyance/interruption measured beyond time overhead?
 
 ## Follow-up TODOs
 
-- [ ] Verify bibliographic metadata against arXiv PDF and BibTeX.
+- [ ] Verify arXiv PDF/BibTeX.
 - [ ] Verify RevMate model/prompt details.
-- [ ] Verify exact definitions of acceptance and value.
-- [ ] Extract 1–3 short cite-worthy statements.
+- [ ] Verify definitions of acceptance/value/editing.
+- [ ] Extract cite-worthy statements.
 - [ ] Add BibTeX.
-- [ ] Update `matrices/cross-paper-synthesis.md` with RevMate.
-- [ ] Update `synthesis/evaluation-dimensions.md` with acceptance, value, reviewer overhead, and downstream revision.
-- [ ] Update `synthesis/trade-off-framework.md` with usefulness vs time-overhead trade-off.
-- [ ] Update `synthesis/context-quality.md` with RAG code/review context and LLM-as-a-Judge filtering.
+- [ ] Update synthesis if deep reading changes coding.
 
 <details>
 <summary>Scratchpad</summary>
 
-- Strongest use: acceptance is low, but value can still exist.
-- Important for trade-off: reviewer overhead is measurable and not huge in this study.
-- Important for taxonomy: refactoring vs functional comments have different acceptance patterns.
-- Important for gates: LLM-as-a-Judge filters comments before humans see them, but wrong removals are not obvious.
-- Good phrase for paper: “usefulness is not equivalent to direct acceptance.”
+- Strongest use: usefulness is not acceptance.
+- Strong trade-off evidence: reviewer overhead vs value.
+- Gate issue: hidden wrong removals before reviewer sees comments.
 
 </details>
