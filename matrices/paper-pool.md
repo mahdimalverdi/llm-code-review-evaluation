@@ -8,6 +8,7 @@
 | P04 | SWE-PRBench | High | First pass completed; needs second verification pass | PR-level benchmark; context degradation evidence |
 | P05 | SWRBench | High | First pass completed; needs PDF-level verification | PR-centric benchmark; full project context; structured ground truth |
 | P06 | ContextCRBench | High | First pass completed; needs PDF-level verification | Enriched semantic/code context; fine-grained evaluation; data-quality critique |
+| P07 | RevMate user study | High | First pass completed; needs PDF-level verification | Live user study; acceptance; perceived value; reviewer time overhead |
 
 ## Working Rule
 
