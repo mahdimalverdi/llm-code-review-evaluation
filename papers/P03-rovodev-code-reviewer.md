@@ -1,48 +1,37 @@
 # P03 — RovoDev Code Reviewer: A Large-Scale Online Evaluation of LLM-based Code Review Automation at Atlassian
 
 > [!NOTE]
-> This note uses the repository paper-analysis template. This paper is one of the strongest industrial anchors for our work because it evaluates an LLM-based code review system in a real enterprise workflow.
+> This note follows the v2 framework-coding template. This paper is a core industrial anchor because it evaluates an LLM-based code review assistant in a real enterprise workflow.
 
 ## Completion Checklist
 
-- [x] All bibliographic fields are filled.
-- [x] The one-sentence summary is written in a precise and non-generic way.
-- [x] The paper’s main goal is separated from our interpretation of its contribution.
-- [x] All reported research questions are listed, or `Not reported` is written explicitly.
-- [x] Dataset details are filled as much as the paper allows.
-- [x] Missing dataset details are marked as `Not reported`, not left blank.
-- [x] Evaluation methods and metrics are described.
-- [x] Human annotation protocol is documented.
-- [x] Evaluation dimensions are checked and explained.
-- [x] Problematic comment types are extracted or inferred carefully.
-- [x] Every inferred point is marked as `Inferred`.
-- [x] Limitations from the paper are separated from our own critique.
-- [x] Relevance to our research is explicitly explained.
-- [x] Evidence for our argument is extracted into Section 15.
-- [x] Open questions for follow-up reading are listed.
-- [x] No `TODO` remains unless it is intentionally listed in the follow-up checklist.
+- [x] Bibliographic fields are filled.
+- [x] Dataset/study details are filled as far as the paper allows.
+- [x] Evaluation methods and production metrics are described.
+- [x] Human/user/production-feedback protocol is documented.
+- [x] Evaluation dimensions are separated from problematic comment types.
+- [x] Context-quality evidence is extracted.
+- [x] Trade-offs are explicitly identified.
+- [x] Mapping to our RQs is included.
 
 ## Status
 
 - Paper ID: `P03`
-- Analysis status: `First pass completed`
+- Analysis status: `First pass completed; migrated to v2 template`
 - Priority: `High`
 - Reading depth: `Read once`
 - Last updated: `2026-05-08`
+- Confidence in extraction: `Medium`
 
-## Notation Rules
+## Our Research Questions
 
-| Label | Meaning |
-|---|---|
-| `Reported` | Explicitly stated in the paper. |
-| `Inferred` | Reconstructed from examples, tables, results, or implications. |
-| `Our perspective` | Our own critique, interpretation, or research positioning. |
-| `Not reported` | The paper does not provide this information. |
-| `Not applicable` | The field does not fit this paper. |
-| `Partially` | The paper touches the dimension but does not operationalize it clearly. |
-
-> [!IMPORTANT]
-> This paper is not just about comment quality. Its value for our work is that it evaluates deployment impact: code resolution, PR cycle time, reduced human comments, developer feedback, and quality gates.
+| RQ | Question | Relevance of this paper |
+|---|---|---|
+| RQ1 | What types of problematic comments appear in LLM-generated code review? | Reports noisy, vague, non-actionable, factually incorrect, context-missing, and low-value comments. |
+| RQ2 | How is context quality defined, used, or ignored? | Uses PR, Jira, guideline, and code-change context; shows missing language/framework/version context causes failures. |
+| RQ3 | Which evaluation dimensions are covered or missing? | Strong on workflow impact and actionability; weaker on controlled correctness labels and missed issues. |
+| RQ4 | What trade-offs arise from filtering/gating/evaluation? | Provides quality-gate ablations, but does not fully measure useful-comment loss under filtering. |
+| RQ5 | What should our framework include? | Supports production metrics, workflow impact, quality gates, and developer-facing value. |
 
 ---
 
@@ -53,11 +42,11 @@
 | Title | RovoDev Code Reviewer: A Large-Scale Online Evaluation of LLM-based Code Review Automation at Atlassian |
 | Authors | Kla Tantithamthavorn, Yaotian Zou, Andy Wong, Michael Gupta, Zhe Wang, Mike Buller, Ryan Jiang, Matthew Watson, Minwoo Jeong, Kun Chen, Ming Wu |
 | Year | 2026 |
-| Venue / Source | ICSE-SEIP 2026 / ACM; arXiv preprint version |
+| Venue / Source | ICSE-SEIP 2026 / ACM; arXiv preprint |
 | Publication type | Industrial evaluation + large-scale online deployment study |
 | Link | ACM / arXiv |
-| DOI / arXiv | ACM DOI: 10.1145/3786583.3786851; arXiv:2601.01129 |
-| Code / artifact | Limited; architecture, metrics, and methodology are described, but production data and proprietary repositories are not public |
+| DOI / arXiv | DOI: 10.1145/3786583.3786851; arXiv:2601.01129 |
+| Code / artifact | Limited; production data and proprietary repositories are not public |
 
 ### Citation Note
 
@@ -71,7 +60,7 @@
 
 ## 2. One-Sentence Summary
 
-> This paper presents RovoDev Code Reviewer, an enterprise-grade, review-guided, context-aware, and quality-checked LLM-based code review assistant deployed inside Atlassian, and evaluates its practical impact through offline analysis, online production metrics, and user feedback over a year-long deployment.
+> This paper presents RovoDev Code Reviewer, an enterprise-scale LLM-based code review assistant deployed at Atlassian, and evaluates it through code resolution, PR cycle time, human-comment reduction, quality gates, and developer feedback.
 
 ## 3. Main Goal of the Paper
 
@@ -83,131 +72,133 @@
 - [x] Context quality / context selection
 - [x] LLM-as-a-judge
 - [x] Human annotation / human evaluation
+- [x] User study / reviewer behavior
 - [x] Industrial deployment
 - [ ] Benchmark construction
 - [x] Cost / latency / operational trade-off
-- [x] Other: workflow impact, developer adoption, quality gates
+- [x] Filtering / gating / aggregation
 
 ### Goal
 
-The paper evaluates whether a production LLM-based code review assistant can provide useful review comments at enterprise scale and whether such comments affect real code review workflows. It focuses on practical outcomes such as code resolution, PR cycle time, reduction in human-written comments, and developer feedback.
+The paper evaluates whether an LLM-based code review assistant can provide useful comments at enterprise scale and improve real review workflows.
 
 ### Notes
 
-The paper is important for our work because it shifts evaluation from offline benchmark scores to real deployment signals such as code resolution, PR cycle time, human-written comment reduction, and practitioner feedback. It also explicitly includes quality checks for factual correctness and actionability, which makes it highly relevant to our gate/trade-off framing.
+Its main value for us is not just comment quality; it adds production signals: code resolution, PR cycle time, reduced human-written comments, developer feedback, and quality-gate ablations.
 
 ## 4. Research Questions of the Paper
 
 | RQ | Text | Status |
 |---|---|---|
-| RQ1 | How frequently do software engineers resolve the comments generated by RovoDev Code Reviewer when compared to human-written comments? | `Reported` |
-| RQ2 | How does the adoption of RovoDev-generated comments impact the code review workflow? | `Reported` |
-| RQ3 | How do software engineers perceive the quality of the code review comments generated by RovoDev Code Reviewer? | `Reported` |
-| Discussion question | How well do RovoDev-generated comments align with human-written comments, and which prompt or quality-check components contribute most to effectiveness? | `Reported / Inferred` |
+| RQ1 | How frequently do engineers resolve RovoDev-generated comments compared with human-written comments? | `Reported` |
+| RQ2 | How does adoption of RovoDev-generated comments impact code review workflow? | `Reported` |
+| RQ3 | How do engineers perceive the quality of RovoDev-generated comments? | `Reported` |
+| RQ4 | Which prompt/quality-check components contribute most to effectiveness? | `Reported / Inferred` |
 
-## 5. Dataset and Study Context
+## 5. Dataset / Study Context
 
 | Field | Value |
 |---|---|
-| Dataset name | Atlassian RovoDev Code Reviewer production deployment data, plus an internal benchmark dataset for human-alignment analysis |
-| Dataset source | Atlassian internal repositories, Bitbucket pull-request workflows, Jira-linked context, and production developer interactions with generated review comments |
-| Dataset size | 12-month deployment across over 2,000 Atlassian source-code repositories; more than 54,000 generated review comments; average 2.1 generated comments per PR; online comparison includes 43,633 PRs with RovoDev comments and 42,981 PRs without RovoDev comments; internal benchmark contains 2,068 code changes, 2,894 high-quality human-written review comments, and 1,468 PRs |
-| Number of repositories / projects | Over 2,000 Atlassian repositories |
-| Programming languages | Not fully reported in the main text; examples include JavaScript and Jira expressions |
+| Dataset / study name | Atlassian RovoDev production deployment + internal benchmark |
+| Dataset / study source | Atlassian internal repositories, Bitbucket PR workflows, Jira-linked context, developer interactions |
+| Dataset / study size | 12-month deployment; 2,000+ repositories; 54,000+ generated comments; 43,633 PRs with RovoDev comments and 42,981 without; benchmark: 2,068 code changes, 2,894 human comments, 1,468 PRs |
+| Number of repositories / projects | 2,000+ Atlassian repositories |
+| Programming languages | Not fully reported; examples include JavaScript and Jira expressions |
 | Repository type | Enterprise/proprietary |
-| Input context available | Pull request title and description, Jira issue summary and description, code changes, review guidelines, test-file guidelines, comment guidelines, task definition, persona, and chain-of-thought instructions |
-| Output being evaluated | LLM-generated code review comments posted to pull requests, including comments that may lead to code changes, developer feedback, and workflow effects |
-| Time period | 12-month deployment; one-month dogfooding before general availability |
-| Data availability | Private / proprietary; production data and repositories are not publicly reproducible |
+| Input context available | PR title/description, Jira issue, code changes, review guidelines, test-file guidelines, task/persona instructions |
+| Output being evaluated | LLM-generated review comments posted into PRs |
+| Time period | 12-month deployment; one-month dogfooding |
+| Data availability | Private/proprietary |
 
-### Dataset Validity Notes
+### Dataset / Study Validity Notes
 
-- [x] The dataset is realistic for code review.
-- [x] The dataset has human review feedback.
-- [x] The dataset includes actual pull requests / merge requests.
-- [x] The dataset includes generated LLM comments.
-- [x] The dataset includes developer reactions or production signals.
-- [x] The dataset may have incomplete ground truth.
-- [ ] Dataset details need a second verification pass.
+- [x] Realistic live code review setting.
+- [x] Includes human review feedback and production behavior.
+- [x] Includes actual PRs.
+- [x] Includes generated LLM comments.
+- [x] Includes developer reactions / workflow signals.
+- [x] Ground truth is noisy and proxy-based.
+- [ ] Needs second verification pass.
 
-### Important Notes About the Dataset
+### Important Notes
 
-This study has strong ecological validity because it evaluates a deployed tool in a real enterprise workflow. However, the data is proprietary, and production signals such as code resolution or thumbs-up feedback are practical proxies rather than direct labels of correctness. For our work, this paper is useful as production evidence, but not as a controlled annotation benchmark.
+This paper has high ecological validity but limited controlled-label validity. Code resolution and thumbs-up feedback are practical signals, not clean correctness labels.
 
 ## 6. Methods, Models, or Systems Studied
 
 | Field | Value |
 |---|---|
-| Models / systems | RovoDev Code Reviewer, Atlassian’s LLM-based code review assistant integrated into Bitbucket; generation model is Claude 3.5 Sonnet; factual correctness is checked using an LLM-as-a-Judge approach based on gpt-4o-mini; actionability is checked using a ModernBERT-based Comment Quality Gate |
-| Prompting strategy | Zero-shot, context-aware, review-guided prompting; prompt includes persona, task definition, chain-of-thought instructions, review guidelines, test-file guidelines, comment guidelines, PR title/description, Jira issue information, and code changes |
-| Retrieval or context selection | The paper avoids fine-tuning and does not rely on historical RAG over similar comments as the main mechanism; it uses available PR, Jira, guideline, and code-change context |
-| Post-generation verification | Yes; two quality checks after generation: an LLM-as-a-Judge factual correctness gate and a ModernBERT-based actionability gate |
-| Static analysis or rule-based checks | Not the main mechanism; the system is LLM/prompting-based with learned or LLM-based quality checks rather than static-analysis-first automation |
-| Human-in-the-loop component | Yes; RovoDev posts selected comments into Bitbucket pull requests where human reviewers and authors can inspect, discuss, accept, reject, or resolve them |
-| Other mechanisms | Event-driven Bitbucket integration, repository cloning and context gathering at PR creation time, binary selection-based judging for factual correctness, and actionability prediction based on whether historical comments led to code resolution |
+| Models / systems | RovoDev Code Reviewer; Claude 3.5 Sonnet for generation; gpt-4o-mini for factuality judge; ModernBERT actionability gate |
+| Prompting strategy | Zero-shot, context-aware, review-guided prompting with persona, task, guidelines, PR/Jira context, and code changes |
+| Retrieval or context selection | Uses PR/Jira/guideline/code context, not historical RAG as main mechanism |
+| Post-generation verification | Factual correctness gate + actionability gate |
+| Static analysis or rule-based checks | Not main mechanism |
+| Human-in-the-loop component | Comments are shown to human reviewers/authors in Bitbucket |
+| Filtering / gating / aggregation mechanism | Factuality LLM judge and ModernBERT actionability gate |
+| Other mechanisms | Event-driven integration, repository cloning/context gathering, ablation over components |
 
 ### Method Checklist
 
-- [x] The paper evaluates generated review comments.
-- [x] The paper evaluates a judge/filter/gate.
-- [ ] The paper compares multiple LLMs.
-- [x] The paper compares multiple prompt or quality-check components through ablations.
-- [ ] The paper uses retrieval or context augmentation as the main mechanism.
-- [x] The paper includes a post-generation quality check.
-- [x] The paper includes a human evaluation component.
+- [x] Evaluates generated review comments.
+- [x] Evaluates gates/filters.
+- [ ] Evaluates aggregation.
+- [ ] Compares multiple LLMs.
+- [x] Compares quality-check/prompt components.
+- [x] Uses context augmentation.
+- [x] Includes post-generation quality checks.
+- [x] Includes production/workflow evidence.
 
 ## 7. Evaluation Method
 
 | Field | Value |
 |---|---|
-| Automatic metrics | Code Resolution Rate (CRR), PR cycle time, number of human-written comments per PR, human-aligned comments (%HAC), pull-request-level human alignment (%PR_HAC), and human-not-aligned variants (%!HAC, %PR_!HAC) |
-| Human evaluation | Yes, through real production behavior and explicit developer feedback; user feedback is collected per generated comment and managed through Atlassian’s Jira Service Management Cloud |
-| Qualitative analysis | Yes; reflexive thematic analysis with open coding over user feedback, identifying themes such as accurate error detection/actionable suggestions and lack of holistic code understanding |
-| Statistical analysis | Mann-Whitney U tests for PR cycle time and human-comment comparisons, interrupted time-series analysis with OLS regression, confidence intervals for repeated experiments, and Spearman correlation for validating the LLM judge against a small human-labeled sample |
-| Cost-related evaluation | Partially; evaluates workflow efficiency through PR cycle time reduction and reduced human-written comments, but does not fully quantify computational cost, latency, reviewer interruption cost, or cost of wrong automated comments |
-| Reproducibility materials | Limited; architecture, metrics, and methodology are described, but production data and proprietary repositories are not publicly reproducible |
+| Automatic metrics | Code Resolution Rate, PR cycle time, human-written comments per PR, %HAC, %PR_HAC, non-alignment variants |
+| Human evaluation / user study | Production behavior, explicit developer feedback, qualitative feedback |
+| Qualitative analysis | Reflexive thematic analysis of user feedback |
+| Statistical analysis | Mann-Whitney U, interrupted time-series OLS, confidence intervals, Spearman correlation for judge validation |
+| Cost / latency / time evaluation | Workflow time via PR cycle time; detailed compute/latency not central |
+| Reproducibility materials | Limited due to proprietary data |
 
 ### Evaluation Validity Checklist
 
-- [x] The evaluation goes beyond BLEU/ROUGE/text similarity.
-- [x] The evaluation checks semantic correctness partially through gates and feedback.
-- [x] The evaluation checks usefulness or developer value.
-- [x] The evaluation checks actionability.
-- [x] The evaluation checks hallucination or unsupported claims partially through factual correctness gate.
-- [x] The evaluation partially measures false positives.
-- [ ] The evaluation systematically measures false negatives.
-- [x] The evaluation measures workflow time, but not full inference latency/cost.
-- [x] The evaluation includes real developer feedback.
-- [x] The evaluation includes production/workflow signals.
+- [x] Beyond text similarity.
+- [x] Partially checks semantic correctness.
+- [x] Partially checks grounding/context alignment.
+- [x] Checks usefulness/developer value.
+- [x] Checks actionability.
+- [x] Partially checks hallucination/unsupported claims.
+- [x] Partially measures false positives.
+- [ ] Systematically measures false negatives.
+- [ ] Measures useful-feedback preservation.
+- [x] Measures workflow time.
+- [x] Includes production/workflow signals.
 
 ## 8. Evaluation Dimensions Covered
 
 | Dimension | Coverage | Notes |
 |---|---|---|
-| Technical correctness | `Yes / Partially` | Factual-correctness quality check exists, and user feedback discusses accurate error detection; not independently labeled for every production comment. |
-| Relevance to code change | `Yes` | RovoDev is designed to generate comments relevant to the PR context and code locations. |
-| Usefulness | `Yes` | Uses code resolution, developer feedback, PR cycle time, and reduced human-written comments as usefulness indicators. |
-| Actionability | `Yes` | Core design dimension, checked using a ModernBERT-based gate trained on whether comments led to code resolution. |
-| Specificity | `Partially` | Vague or non-specific comments are discussed as noisy comments, but specificity is not a standalone score. |
-| Novelty / non-triviality | `Partially` | Values comments that lead to code changes or catch subtle errors, but novelty is not a standalone metric. |
-| Hallucination / unsupported claim | `Partially / Yes` | Includes factual correctness gate to remove hallucinated, inaccurate, inconsistent, or nonsensical comments; not mainly a hallucination-detection paper. |
-| False positive rate | `Partially` | Low-quality or non-actionable comments are filtered; feedback can reveal incorrect suggestions, but false positives are not a primary metric. |
-| False negative rate | `No / Partially` | Does not systematically measure missed issues that RovoDev failed to comment on. |
-| Preservation of useful comments | `Partially` | Studies code resolution and human alignment after quality checks, but does not explicitly frame useful-comment preservation as a filtering trade-off. |
-| Wrong removal of useful comments | `Partially` | Quality-check ablation implies filters can change alignment and comment volume, but wrong removal is not directly measured. |
-| Review coverage | `Partially` | Large-scale deployment and comment volume provide coverage evidence, but systematic issue coverage is not central. |
-| Human escalation rate | `No` | Humans remain in the loop, but explicit escalation rate is not measured. |
-| Human annotation cost | `Not reported` | Not directly reported. |
-| Computational cost | `Partially` | Operational deployment implies inference cost, but detailed compute-cost modeling is not central. |
-| Latency | `Partially` | PR cycle time is measured as workflow metric; model inference latency is not directly analyzed. |
-| Operational complexity | `Partially` | Describes event-driven integration, Bitbucket deployment, quality gates, and rollout, but does not quantify operational complexity. |
-| Trade-off analysis | `Partially` | Analyzes workflow benefits and ablations, but not formal trade-offs among usefulness, false positives, filtering strictness, cost, and coverage. |
-| Developer trust | `Partially` | Feedback and adoption signals are relevant, but trust is not deeply isolated as a construct. |
-| Workflow impact | `Yes` | PR cycle time, human-comment reduction, and production usage are central evaluation dimensions. |
-
-### Notes on Evaluation Dimensions
-
-This paper is very strong for production and workflow-centered evaluation. It is weaker for fine-grained error taxonomy and controlled labeling of each generated comment. It is useful for showing that realistic evaluation must include developer-facing value, adoption, and workflow impact.
+| Technical correctness | `Partially / Yes` | Factual-correctness gate exists, but not every production comment has independent correctness label. |
+| Relevance to code change | `Yes` | Comments are PR-contextual and code-location-based. |
+| Grounding / context alignment | `Partially` | Quality gates and context-aware prompting, but not full grounding taxonomy. |
+| Usefulness | `Yes` | Code resolution, developer feedback, PR cycle time, human-comment reduction. |
+| Actionability | `Yes` | ModernBERT actionability gate. |
+| Specificity | `Partially` | Vague/non-specific comments discussed. |
+| Novelty / non-triviality | `Partially` | Subtle error detection discussed. |
+| Hallucination / unsupported claim | `Partially / Yes` | Factuality gate filters hallucinated/inaccurate comments. |
+| False positive rate | `Partially` | Feedback reveals incorrect suggestions; not central metric. |
+| False negative rate | `No / Partially` | Missed issues not systematically measured. |
+| Preservation of useful comments | `Partially` | Ablation implies gates affect volume/alignment, but wrong removal not measured. |
+| Wrong removal of useful comments | `Partially` | Not directly measured. |
+| Review coverage / issue coverage | `Partially` | Large deployment volume; issue coverage not central. |
+| Human escalation rate | `No` | Humans are in loop but no escalation metric. |
+| Human annotation cost | `Not reported` | Not central. |
+| Computational cost | `Partially` | Inference cost implied, not modeled. |
+| Latency | `Partially` | PR cycle time, not model latency. |
+| Reviewer time overhead | `Partially` | Workflow time, not direct inspection overhead. |
+| Operational complexity | `Partially` | Integration/rollout described, not quantified. |
+| Trade-off analysis | `Partially` | Workflow and ablation trade-offs, not full filtering trade-off. |
+| Developer trust | `Partially` | Feedback/adoption signals. |
+| Workflow impact | `Yes` | Central dimension. |
 
 ## 9. Problematic Comment Types / Error Taxonomy
 
@@ -216,29 +207,22 @@ This paper is very strong for production and workflow-centered evaluation. It is
 - Noisy comments.
 - Vague comments.
 - Nitpicking without context.
-- Unfocused or off-topic comments.
-- Comments lacking specificity.
+- Off-topic/unfocused comments.
+- Non-specific comments.
 - Non-actionable comments.
-- Hallucinated, inaccurate, inconsistent, or nonsensical comments.
-- Comments caused by missing context.
+- Hallucinated/inaccurate/inconsistent/nonsensical comments.
+- Context-missing comments.
 
 ### Inferred Error Types
 
-- `Inferred`: Factually incorrect review comment.
-- `Inferred`: Non-actionable suggestion.
-- `Inferred`: Vague or generic feedback.
-- `Inferred`: Nitpicking without practical value.
-- `Inferred`: Incorrect language/framework assumption.
+- `Inferred`: Wrong language/framework assumption.
 - `Inferred`: Comment lacking holistic code understanding.
-- `Inferred`: Comment that is useful in spirit but technically incorrect.
-- `Inferred`: Comment whose quality depends on missing syntactic or project context.
+- `Inferred`: Useful-in-spirit but technically incorrect comment.
+- `Inferred`: Low-value style/nitpick feedback.
 
 ### Example Problematic Comments
 
-> [!CAUTION]
-> The examples below are paraphrased or kept very short. They should be rechecked against the paper before direct quotation.
-
-| Type | Example / Paraphrase | Source in paper | Label |
+| Type | Example / Paraphrase | Source | Label |
 |---|---|---|---|
 | Low-value nitpick | “Add a blank line here.” | Paper examples | `Reported` |
 | Vague feedback | “Needs improvement.” | Paper examples | `Reported` |
@@ -246,7 +230,6 @@ This paper is very strong for production and workflow-centered evaluation. It is
 | Empty praise | “Good job!” | Paper examples | `Reported` |
 | Context/language confusion | AI mistakes Jira Expression syntax for another language. | Paper discussion | `Reported / Paraphrased` |
 | Wrong language assumption | AI thinks JavaScript code is PHP. | Paper discussion | `Reported / Paraphrased` |
-| Useful but incorrect | Developer feedback indicates the suggestion was incorrect but highlighted something worth commenting in the code. | User feedback example | `Reported / Paraphrased` |
 
 ### Taxonomy Checklist
 
@@ -265,74 +248,107 @@ This paper is very strong for production and workflow-centered evaluation. It is
 - [ ] Comment that misses the actual issue
 - [x] Comment that depends on missing project context
 - [x] Technically plausible but unsupported comment
+- [x] Comment with poor value-to-time ratio
 
 ### Does the Paper Separate Correctness, Usefulness, and Actionability?
 
 - Answer: `Partially`
-- Explanation: It separates factual correctness and actionability as two quality-check components, and uses code resolution as a practical usefulness signal. However, usefulness, correctness, and actionability are still partly intertwined in the production metrics.
+- Explanation: It separates factual correctness and actionability gates, and uses code resolution as usefulness proxy, but production metrics still blend constructs.
 
-## 10. Human Annotation Protocol
+## 10. Context-Quality Extraction
+
+| Context Dimension | Coverage | Evidence / Notes |
+|---|---|---|
+| Relevance | `Yes` | PR and code-location context drive comment generation. |
+| Completeness | `Partially` | Missing context causes incorrect/non-actionable comments. |
+| Specificity / focus | `Partially` | Guidelines and PR/Jira context focus generation, but specificity not scored. |
+| Consistency | `Partially` | Factuality gate checks inconsistency in generated comments. |
+| Groundability | `Partially` | Factuality gate, but not full evidence-span grounding. |
+| Locality | `Yes / Partially` | Code-location comments in Bitbucket. |
+| Freshness | `Not reported` | Not central. |
+| Attention load | `Not reported` | Not central. |
+| Cost / token budget | `Partially` | Not modeled in detail. |
+| Context availability vs usability | `Yes / Partially` | Missing language/framework/version context affects quality. |
+
+### Context Failure Types
+
+- [x] Missing project context
+- [x] Missing language/framework/version context
+- [x] Missing surrounding code
+- [ ] Missing cross-file dependency
+- [ ] Irrelevant retrieved context
+- [ ] Excessive context / attention dilution
+- [ ] Contradictory PR metadata and diff
+- [x] Unsupported inference from partial context
+
+## 11. Trade-off Extraction
+
+| Strategy / Mechanism | Benefit | Risk / Cost | Missing Metric |
+|---|---|---|---|
+| Factuality gate | Filters hallucinated/incorrect comments. | Minimal measured impact; may be redundant or miscalibrated. | Wrong-removal rate and gate precision/recall. |
+| Actionability gate | Improves practical alignment and reduces low-value comments. | May remove high-level but valuable concerns. | Useful-comment preservation. |
+| Production deployment | Measures real workflow value. | Metrics are noisy proxies. | Construct separation: correctness vs acceptance vs usefulness. |
+| Rich PR/Jira context | Improves relevance and task alignment. | Context can be missing, stale, or hard to interpret. | Context-quality score. |
+| Human-in-loop review | Preserves final human control. | Human verification cost remains. | Reviewer overhead. |
+
+### Trade-off Notes
+
+The paper shows that actionability can matter more than factuality in production, but it does not fully explain whether this is because hallucinations are rare, factuality gate is weak, or actionability gate already removes many bad comments.
+
+## 12. Human Annotation / User Study / Production Protocol
 
 | Field | Value |
 |---|---|
-| Human annotators | `Yes`, mainly through production software engineers and qualitative feedback; a small human-judgment sample is also used for judge validation |
-| Number of annotators | More than 5,500 software engineers accepted or used RovoDev-generated comments during deployment; for validating the semantic-similarity judge, the paper reports a small sample of 47 human-written comments |
-| Annotator expertise | Professional software engineers at Atlassian |
-| Annotation guideline provided | `Partially`; production feedback is naturalistic rather than a controlled annotation protocol; qualitative feedback uses open coding and reflexive thematic analysis |
-| Pilot annotation phase | Internal dogfooding lasted one month before general availability and involved multiple iterations based on feedback |
-| Inter-rater agreement reported | Not in the same way as a controlled annotation study; validates an LLM judge through Spearman correlation with human judgment |
-| Agreement metric used | Spearman correlation of 0.69 between the gpt-4o-mini judge and human judgment on a small semantic-similarity sample |
-| Conflict resolution method | Not clearly reported for qualitative coding; reflexive thematic analysis allows codes and themes to evolve during analysis |
+| Human annotators / participants | `Yes` |
+| Number of annotators / participants | 5,500+ engineers used/accepted comments; 47-comment human sample for judge validation |
+| Expertise | Professional Atlassian engineers |
+| Guideline or study protocol provided | Production feedback naturalistic; qualitative open coding described |
+| Pilot phase | One-month internal dogfooding |
+| Inter-rater agreement / validation reported | Spearman correlation with human judgment |
+| Agreement metric used | Spearman 0.69 for semantic-similarity judge validation |
+| Conflict resolution method | Not clearly reported |
+| Production/workflow signal | Code resolution, PR cycle time, human-comment reduction, feedback |
 
-### Annotation Quality Checklist
+### Protocol Quality Checklist
 
-- [ ] Independent annotation is used in a controlled way.
-- [ ] At least two annotators are used for every sample.
-- [x] Annotators have software engineering expertise.
-- [x] Annotation / coding approach is partially described.
-- [x] Agreement or validation metric is reported for the LLM judge.
-- [ ] Conflict resolution is clearly described.
-- [x] Threats to annotation validity are discussed.
+- [ ] Controlled independent annotation for all samples.
+- [ ] At least two annotators per sample.
+- [x] Participants have SE expertise.
+- [x] Study/coding approach partially described.
+- [x] Validation metric reported for LLM judge.
+- [ ] Conflict resolution clearly described.
+- [x] Production signal included.
 
-### Main Concerns About Annotation Validity
+### Main Concerns About Validity
 
-Developer feedback and code resolution are realistic but noisy. A resolved comment may indicate usefulness, but not necessarily full correctness; an unresolved comment may still be correct but deprioritized. Qualitative feedback is valuable but not equivalent to a controlled multi-annotator labeling protocol.
+Production metrics are realistic but noisy. Code resolution may not equal correctness; unresolved comments may still be correct; developer reactions reflect priority, workflow, and trust as well as quality.
 
-## 11. Key Findings of the Paper
+## 13. Key Findings
 
 | Finding | Summary | Evidence / Metric | Importance for us |
 |---|---|---|---|
-| Finding 1 | RovoDev-generated comments achieved a code resolution rate close to human-written comments. | 38.70% CRR for RovoDev vs 44.45% for human comments; relative difference 12.9%. | Strong industrial evidence of practical usefulness. |
-| Finding 2 | RovoDev improved workflow metrics. | Median PR cycle time reduced by about 30.8% / 31%; human-written comments reduced by 35.6%. | Supports workflow-aware evaluation. |
-| Finding 3 | Developers valued RovoDev for accurate error detection and actionable suggestions. | Qualitative feedback themes. | Supports developer-facing value dimensions. |
-| Finding 4 | Missing or insufficient context can lead to incorrect or non-actionable comments. | Examples involving language, framework, version, or surrounding code context. | Supports context-quality argument. |
-| Finding 5 | Actionability checking had larger positive impact than factual-correctness judging in ablation. | Reported ablation result. | Important for gate design and trade-off analysis. |
+| F1 | RovoDev comments have code-resolution rate close to human comments. | 38.70% vs 44.45%. | Practical usefulness signal. |
+| F2 | RovoDev improves workflow metrics. | Median PR cycle time down ~31%, human comments down 35.6%. | Workflow-aware evaluation. |
+| F3 | Developers value accurate/actionable suggestions. | Qualitative themes. | Human-centered dimensions. |
+| F4 | Missing context causes incorrect/non-actionable comments. | Language/framework/version examples. | Context-quality argument. |
+| F5 | Actionability gate has large impact. | Ablation result. | Gate-design evidence. |
 
-## 12. Limitations from the Paper’s Own Perspective
+## 14. Limitations from the Paper’s Own Perspective
 
-- Results are limited to Claude 3.5 Sonnet and Atlassian’s internal Bitbucket-based code review context, so they may not generalize to other LLMs, companies, repositories, or platforms.
-- Human-alignment evaluation uses LLM-as-a-Judge as a proxy for semantic similarity, even though judge reliability is itself a construct-validity concern.
-- Production feedback and code resolution are practical signals, but they do not perfectly isolate comment correctness, usefulness, actionability, or developer trust.
-- The proprietary industrial setting limits full external replication of the deployment and dataset.
+- Internal Atlassian/Bitbucket context may not generalize.
+- LLM-as-a-Judge as semantic-similarity proxy creates construct-validity risk.
+- Production signals do not isolate correctness/usefulness/actionability/trust.
+- Proprietary data limits replication.
 
-## 13. Limitations from Our Perspective
+## 15. Limitations from Our Perspective
 
-> [!WARNING]
-> This section is our critique. Do not present it as a claim made by the paper.
+- Strong on production value, weak on controlled taxonomy.
+- Does not cleanly separate correctness/usefulness/actionability/preference.
+- Does not systematically measure missed issues.
+- Factuality gate’s limited impact needs deeper explanation.
+- Context limitations discussed but not formalized as context-quality scoring.
 
-### Possible Issues
-
-- The paper is strong on production value but weaker on fine-grained controlled taxonomy of problematic comments.
-- It does not fully separate correctness, usefulness, relevance, actionability, and developer preference in the final production metrics.
-- Code resolution is a useful practical metric, but it can miss correct comments that are not immediately acted on and can include changes made for reasons other than comment correctness.
-- The factual-correctness gate has limited measured impact, but the paper does not fully analyze whether the judge is too permissive, too strict, or redundant with the actionability gate.
-- The paper discusses context limitations, but does not provide a general context-quality scoring framework.
-
-### Detailed Notes
-
-This paper should be positioned as industrial evidence that benchmark-only evaluation is insufficient. It supports our broader framing that evaluation must include developer-facing value, adoption, and workflow impact, while leaving room for our contribution around taxonomy, controlled annotation, context-quality scoring, and trade-off-aware evaluation.
-
-## 14. Relevance to Our Paper
+## 16. Relevance to Our Paper
 
 ### Useful For
 
@@ -342,30 +358,41 @@ This paper should be positioned as industrial evidence that benchmark-only evalu
 - [x] Taxonomy of problematic comments
 - [x] Context-quality argument
 - [x] Hallucination / unsupported-claim discussion
-- [x] Human annotation protocol
+- [x] Human annotation / user-study protocol
 - [x] Cost / latency / operational trade-off
-- [x] Industrial validation
+- [x] Industrial or live validation
 - [ ] Benchmark selection
 - [x] Methodology design
 - [x] Discussion / threats to validity
 
+### Mapping to Our RQs
+
+| Our RQ | Relevance | Evidence |
+|---|---|---|
+| RQ1 — problematic comments | `High` | Noisy, vague, non-actionable, factually incorrect, context-missing comments. |
+| RQ2 — context quality | `High` | PR/Jira context and missing language/framework/version failures. |
+| RQ3 — evaluation dimensions | `High` | Code resolution, PR cycle time, actionability, developer feedback. |
+| RQ4 — trade-offs | `High` | Factuality/actionability gate ablations and workflow effects. |
+| RQ5 — framework design | `High` | Shows need for production/workflow layer in the framework. |
+
 ### Explanation
 
-RovoDev Code Reviewer gives us one of the strongest industrial anchors for the paper. It shows that LLM-based code review systems can operate at scale, but it also shows why evaluation must consider developer behavior, workflow outcomes, trust, and context availability. For our work, it connects quality-rubric papers like DeepCRCEval with safeguard papers like HalluJudge and gives practical evidence for quality gates and trade-off-aware evaluation.
+RovoDev connects quality-rubric papers like P01 with gate papers like P02 and adds real workflow evidence.
 
-## 15. Extracted Evidence for Our Argument
+## 17. Extracted Evidence for Our Argument
 
-| Argument Need | Evidence from this paper | Label |
+| Argument Need | Evidence | Label |
 |---|---|---|
-| Limitations of current evaluations | The paper argues that offline benchmark evaluation based on human-comment similarity is static and cannot capture whether generated comments actually facilitate code resolution or improve workflow outcomes. | `Reported` |
-| Missing cost analysis | Although the paper measures PR cycle time and human-comment reduction, it does not fully quantify computational cost, inference latency, reviewer interruption cost, human verification cost, or cost of incorrect/low-value comments. | `Our perspective` |
-| Missing actionability/usefulness distinction | The paper treats actionability as a quality-check target and code resolution as a practical value signal, but production usefulness still blends actionability, correctness, relevance, and developer workflow priorities. | `Our perspective` |
-| Need for taxonomy | The paper lists noisy or low-quality comments such as vague, nitpicking, off-topic, non-specific, non-actionable, factually incorrect, and context-missing comments. | `Reported` |
-| Need for human annotation quality control | Production feedback from expert developers is valuable, but not the same as controlled annotation; our work still needs explicit labeling rules, multiple annotators, conflict resolution, and agreement metrics. | `Our perspective` |
-| Need for context-quality evaluation | The paper shows that missing language, framework, version, or surrounding-code context can lead to incorrect or non-actionable comments. | `Reported` |
-| Need for trade-off-aware evaluation | The paper uses quality gates and ablations, but does not fully measure what useful comments may be lost due to filtering or quality checks. | `Our perspective` |
+| Limitations of current evaluations | Offline human-comment similarity cannot capture code resolution or workflow impact. | `Reported` |
+| Missing cost/latency/reviewer-overhead analysis | PR cycle time measured, but compute cost and verification cost not fully quantified. | `Our perspective` |
+| Missing actionability/usefulness distinction | Actionability gate and code resolution are practical signals but still blend constructs. | `Our perspective` |
+| Need for problematic-comment taxonomy | Lists noisy, vague, non-actionable, incorrect, and context-missing comments. | `Reported` |
+| Need for human annotation / user-study quality control | Production feedback is useful but not controlled annotation. | `Our perspective` |
+| Need for context-quality evaluation | Missing context causes wrong or non-actionable comments. | `Reported` |
+| Need for trade-off-aware evaluation | Gates exist but useful-comment loss is not measured. | `Our perspective` |
+| Need for useful-feedback preservation metric | Gate ablations do not directly report useful comments removed. | `Our perspective` |
 
-## 16. Final Assessment
+## 18. Final Assessment
 
 | Field | Value |
 |---|---|
@@ -376,35 +403,29 @@ RovoDev Code Reviewer gives us one of the strongest industrial anchors for the p
 
 ### Short Justification
 
-This is a core industrial paper for our project because it demonstrates real-world deployment and evaluation of LLM-based code review at enterprise scale. It provides strong evidence for human-centered and workflow-aware evaluation, while leaving open the need for fine-grained taxonomy, context-quality analysis, and trade-off-aware metrics.
+This is a core industrial paper because it demonstrates large-scale real-world deployment and shows why evaluation must include workflow, actionability, context, and developer behavior.
 
 ## Open Questions for Follow-up Reading
 
-- [ ] Which production signals in this paper can be reused or adapted as evaluation dimensions in our framework?
-- [ ] How should we distinguish developer acceptance, code resolution, and technical correctness in real-world code review data?
-- [ ] Why did the factual-correctness gate show minimal impact compared with the actionability gate, and what does this imply for gate design?
-- [ ] How can production feedback be combined with controlled human annotation?
-- [ ] What workflow-level costs, such as noise, interruption, latency, and trust erosion, remain underreported?
+- [ ] Why did factuality gate have limited impact compared with actionability gate?
+- [ ] Which production signals can be reused in our framework?
+- [ ] How should code resolution be separated from technical correctness?
+- [ ] How can controlled annotation be combined with production feedback?
+- [ ] What reviewer/workflow costs remain underreported?
 
 ## Follow-up TODOs
 
-- [ ] Verify bibliographic metadata against the final ACM version.
-- [ ] Verify exact statistical tests and reported effect sizes.
-- [ ] Verify the quality-gate ablation table and exact claims around factual correctness vs actionability.
-- [ ] Extract 1–3 short cite-worthy statements.
+- [ ] Verify final ACM metadata.
+- [ ] Verify quality-gate ablation tables.
+- [ ] Extract cite-worthy statements.
 - [ ] Add BibTeX.
-- [ ] Update `matrices/cross-paper-synthesis.md` with production/workflow dimensions.
-- [ ] Update `synthesis/evaluation-dimensions.md` with CRR, PR cycle time, human-comment reduction, and developer feedback.
-- [ ] Update `synthesis/context-quality.md` with missing context failure examples.
-- [ ] Update `synthesis/trade-off-framework.md` with actionability-gate and factual-correctness-gate implications.
+- [ ] Update synthesis if deep reading changes coding.
 
 <details>
 <summary>Scratchpad</summary>
 
-- Strongest use: industrial evidence that offline metrics are not enough.
-- Connects directly to HalluJudge: both use gates, but RovoDev studies production workflow and HalluJudge isolates hallucination/context alignment.
-- Important critique: production metrics are realistic but noisy; code resolution is not the same as correctness.
-- Good argument for our paper: a framework should combine controlled annotation with workflow signals.
-- Need to check if the factual-correctness gate’s low impact is because hallucinations are rare, judge is weak, or actionability gate already filters many bad comments.
+- Strongest use: production/workflow evidence.
+- Key caution: production metrics are realistic but noisy.
+- Good framework insight: combine controlled labels with workflow signals.
 
 </details>
