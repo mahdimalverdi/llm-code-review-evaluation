@@ -1,48 +1,39 @@
 # P02 — HalluJudge: A Reference-Free Hallucination Detection for Context Misalignment in Code Review Automation
 
 > [!NOTE]
-> This note uses the repository paper-analysis template. This paper is especially important for our project because it operationalizes a practical safeguard/gate for LLM-generated code review comments.
+> This note follows the v2 framework-coding template. HalluJudge is central for our work because it operationalizes a reference-free safeguard/gate for generated code review comments.
 
 ## Completion Checklist
 
-- [x] All bibliographic fields are filled.
-- [x] The one-sentence summary is written in a precise and non-generic way.
-- [x] The paper’s main goal is separated from our interpretation of its contribution.
-- [x] All reported research questions are listed, or `Not reported` is written explicitly.
-- [x] Dataset details are filled as much as the paper allows.
-- [x] Missing dataset details are marked as `Not reported`, not left blank.
+- [x] Bibliographic fields are filled.
+- [x] The paper’s goal is separated from our interpretation.
+- [x] Dataset/study details are filled as far as the paper allows.
 - [x] Evaluation methods and metrics are described.
-- [x] Human annotation protocol is documented.
-- [x] Evaluation dimensions are checked and explained.
-- [x] Problematic comment types are extracted or inferred carefully.
-- [x] Every inferred point is marked as `Inferred`.
-- [x] Limitations from the paper are separated from our own critique.
-- [x] Relevance to our research is explicitly explained.
-- [x] Evidence for our argument is extracted into Section 15.
-- [x] Open questions for follow-up reading are listed.
-- [x] No `TODO` remains unless it is intentionally listed in the follow-up checklist.
+- [x] Human annotation / production-feedback protocol is documented.
+- [x] Evaluation dimensions are separated from problematic comment types.
+- [x] Context-quality evidence is extracted.
+- [x] Trade-offs are explicitly identified.
+- [x] Mapping to our RQs is included.
+- [x] Open questions and follow-up TODOs are listed.
 
 ## Status
 
 - Paper ID: `P02`
-- Analysis status: `First pass completed`
+- Analysis status: `First pass completed; migrated to v2 template`
 - Priority: `High`
 - Reading depth: `Read once`
 - Last updated: `2026-05-08`
+- Confidence in extraction: `Medium`
 
-## Notation Rules
+## Our Research Questions
 
-| Label | Meaning |
-|---|---|
-| `Reported` | Explicitly stated in the paper. |
-| `Inferred` | Reconstructed from examples, tables, results, or implications. |
-| `Our perspective` | Our own critique, interpretation, or research positioning. |
-| `Not reported` | The paper does not provide this information. |
-| `Not applicable` | The field does not fit this paper. |
-| `Partially` | The paper touches the dimension but does not operationalize it clearly. |
-
-> [!IMPORTANT]
-> HalluJudge is probably the closest paper to a gate/safeguard idea. Our contribution should not be framed as simply detecting hallucination better; it should use HalluJudge as evidence that gates are promising, then move toward broader trade-off-aware evaluation.
+| RQ | Question | Relevance of this paper |
+|---|---|---|
+| RQ1 | What types of problematic comments appear in LLM-generated code review? | Strong evidence for hallucinated, unsupported, context-misaligned, and wrong API/type-assumption comments. |
+| RQ2 | How is context quality defined, used, or ignored? | Treats the diff as grounding context and judges claim-to-diff support. |
+| RQ3 | Which evaluation dimensions are covered or missing? | Strong on hallucination/grounding; weaker on usefulness, actionability, and workflow impact. |
+| RQ4 | What trade-offs arise from filtering/gating/evaluation? | Provides cost-vs-effectiveness trade-off for judge strategies, but not full useful-comment preservation. |
+| RQ5 | What should our framework include? | Supports explicit grounding checks and false-positive/false-negative gate evaluation. |
 
 ---
 
@@ -53,11 +44,11 @@
 | Title | HalluJudge: A Reference-Free Hallucination Detection for Context Misalignment in Code Review Automation |
 | Authors | Kla Tantithamthavorn, Hong Yi Lin, Patanamon Thongtanunam, Wachiraphan Charoenwet, Minwoo Jeong, Ming Wu |
 | Year | 2026 |
-| Venue / Source | FSE Companion 2026 / ACM; arXiv preprint version |
+| Venue / Source | FSE Companion 2026 / ACM; arXiv preprint |
 | Publication type | Industrial case study + hallucination detection framework + post-generation safeguard |
 | Link | ACM / arXiv |
-| DOI / arXiv | ACM DOI: 10.1145/3803437.3805236; arXiv:2601.19072 |
-| Code / artifact | Partially reported; prompts/scoring setup are described, but industrial datasets are proprietary |
+| DOI / arXiv | DOI: 10.1145/3803437.3805236; arXiv:2601.19072 |
+| Code / artifact | Partially reported; prompts/scoring setup described, datasets proprietary |
 
 ### Citation Note
 
@@ -71,7 +62,7 @@
 
 ## 2. One-Sentence Summary
 
-> This paper proposes HalluJudge, a reference-free hallucination detector that treats hallucinated code review comments as context-misaligned claims and judges whether each generated comment is supported by, traceable to, and consistent with the code diff.
+> HalluJudge detects hallucinated code review comments by judging whether each generated claim is supported by, traceable to, and consistent with the code diff, without requiring a human-written reference comment.
 
 ## 3. Main Goal of the Paper
 
@@ -83,131 +74,133 @@
 - [x] Context quality / context selection
 - [x] LLM-as-a-judge
 - [x] Human annotation / human evaluation
+- [ ] User study / reviewer behavior
 - [x] Industrial deployment
 - [ ] Benchmark construction
 - [x] Cost / latency / operational trade-off
-- [x] Other: post-generation safeguard / validation layer
+- [x] Filtering / gating / aggregation
 
 ### Goal
 
-The paper aims to detect hallucinated LLM-generated code review comments without relying on human-written reference comments. It reframes hallucination as context misalignment: a generated review comment is suspicious when its claims are not supported by, traceable to, or consistent with the code diff.
+The paper aims to detect hallucinated LLM-generated review comments without relying on reference comments. It reframes hallucination as context misalignment between generated claims and the reviewed diff.
 
 ### Notes
 
-The paper is highly aligned with our work because it operationalizes a practical gate/safeguard before LLM-generated comments reach developers. Its core contribution is claim-to-diff grounding. However, it still focuses mainly on hallucination detection rather than the broader trade-off between suppressing bad comments and preserving useful feedback.
+This is the closest paper to our gate/safeguard direction. Our work should not claim simply to “detect hallucinations better”; instead, it should use HalluJudge as evidence that gating is promising while arguing for broader trade-off-aware evaluation.
 
 ## 4. Research Questions of the Paper
 
 | RQ | Text | Status |
 |---|---|---|
-| RQ1 | To what degree do the assessment strategies in HalluJudge effectively detect hallucinations in code review comments? | `Reported` |
+| RQ1 | To what degree do HalluJudge assessment strategies detect hallucinations in code review comments? | `Reported` |
 | RQ2 | How efficient is HalluJudge in detecting code review hallucination? | `Reported` |
-| RQ3 | To what degree do HalluJudge’s hallucination judgments align with developers’ preferences in practice? | `Reported` |
+| RQ3 | To what degree do HalluJudge judgments align with developers’ preferences in practice? | `Reported` |
 | RQ4 | Not applicable. | `Not applicable` |
 
-## 5. Dataset and Study Context
+## 5. Dataset / Study Context
 
 | Field | Value |
 |---|---|
-| Dataset name | Atlassian RovoDev generated review comments; two evaluation datasets are used: a human-annotated hallucination dataset and a developer-preference production dataset |
-| Dataset source | Atlassian internal enterprise projects and Bitbucket developer reactions, using review comments generated by RovoDev Code Reviewer |
-| Dataset size | Human annotation dataset: 97 merged PRs from 14 internal projects, producing 143 generated comments; 32 comments were context-misaligned and 111 were context-aligned. Developer-preference dataset: 557 generated comments with explicit feedback, sampled from 2,000 production comments over three months. The production system operates across about 2,500 repositories, 10 programming languages, and more than 4,000 Atlassian engineers |
-| Number of repositories / projects | 14 internal projects in the human-annotated dataset; about 2,500 repositories in the broader production setting |
-| Programming languages | Java, Python, JavaScript, TypeScript, and Kotlin in the human-annotated dataset; broader production system spans 10 programming languages |
+| Dataset / study name | Atlassian RovoDev generated review comments; human-annotated hallucination dataset; developer-preference production dataset |
+| Dataset / study source | Atlassian internal enterprise projects and Bitbucket developer reactions |
+| Dataset / study size | 97 merged PRs from 14 projects, 143 generated comments; 32 context-misaligned and 111 context-aligned. Production preference dataset: 557 comments sampled from 2,000 production comments over three months |
+| Number of repositories / projects | 14 internal projects; broader production system around 2,500 repositories |
+| Programming languages | Java, Python, JavaScript, TypeScript, Kotlin in annotation dataset; broader system spans 10 languages |
 | Repository type | Enterprise/proprietary |
-| Input context available | Code diff plus the corresponding LLM-generated review comment; no human-written reference comment is required |
-| Output being evaluated | A context-misalignment / hallucination judgment for each generated review comment, including a 0–4 alignment score and a concise explanation grounded in the code diff |
-| Time period | Developer-preference dataset sampled from production comments over three months |
-| Data availability | Private / proprietary industrial data; evaluation setup and prompts are described but datasets are not fully public |
+| Input context available | Code diff plus generated review comment; no reference comment required |
+| Output being evaluated | Context-misalignment/hallucination judgment, 0–4 alignment score, explanation grounded in diff |
+| Time period | Production preference dataset sampled over three months |
+| Data availability | Private/proprietary; setup and prompts partially described |
 
-### Dataset Validity Notes
+### Dataset / Study Validity Notes
 
-- [x] The dataset is realistic for code review.
-- [x] The dataset has human review feedback.
-- [x] The dataset includes actual pull requests / merge requests.
-- [x] The dataset includes generated LLM comments.
-- [x] The dataset includes developer reactions or production signals.
-- [x] The dataset may have incomplete ground truth.
-- [ ] Dataset details need a second verification pass.
+- [x] Realistic for code review.
+- [x] Has human labels.
+- [x] Includes actual PRs.
+- [x] Includes generated LLM comments.
+- [x] Includes developer reactions/production signals.
+- [x] Ground truth and preference signals may be incomplete/noisy.
+- [ ] Needs second verification pass.
 
-### Important Notes About the Dataset
+### Important Notes
 
-The study combines a smaller but carefully labeled human-annotation dataset with a larger production-feedback dataset. This is useful for our work because it separates correctness-oriented labels from practical developer-preference signals. However, the production preference signal is noisy because thumbs-up / thumbs-down reactions do not necessarily mean factual correctness or hallucination.
+The paper separates human-labeled hallucination judgments from noisy production preference signals. This is useful for our framework because it shows why correctness-oriented labels and developer-value signals should not be collapsed.
 
 ## 6. Methods, Models, or Systems Studied
 
 | Field | Value |
 |---|---|
-| Models / systems | RovoDev Code Reviewer generates the review comments; Claude-Sonnet-4, Qwen3-Coder, and GPT-5 are used as generation engines for the annotation dataset; HalluJudge is evaluated with Gemini 3 and GPT-5.1 as judge models |
-| Prompting strategy | Four assessment strategies: direct zero-shot assessment, few-shot assessment with five labeled examples, multi-step reasoning, and tree-of-thoughts reasoning with branches for alignment, misalignment, evidence mapping, and context boundaries |
-| Retrieval or context selection | Not the main focus; the paper uses the code diff as the grounding context and evaluates whether the generated comment stays within that context |
-| Post-generation verification | Yes; HalluJudge is positioned as a filtering or validation layer that can judge generated review comments before developers see them |
-| Static analysis or rule-based checks | Not reported as a primary mechanism; the method relies on LLM-based judgment over claim-to-diff grounding rather than static analysis |
-| Human-in-the-loop component | Yes; three experienced software engineering researchers label hallucination for the human-annotated dataset; production developer feedback is also used as a practical preference signal |
-| Other mechanisms | Grounding function `G` for claims, 0–4 context-alignment scoring guide, and four judgment strategies with different reasoning structures |
+| Models / systems | RovoDev Code Reviewer generates comments; Claude-Sonnet-4, Qwen3-Coder, GPT-5 used as generation engines; Gemini 3 and GPT-5.1 used as judge models |
+| Prompting strategy | Direct zero-shot, few-shot, multi-step reasoning, tree-of-thoughts |
+| Retrieval or context selection | Not the focus; diff is the grounding context |
+| Post-generation verification | Yes; HalluJudge validates comments before developer exposure or evaluation |
+| Static analysis or rule-based checks | Not primary; LLM-based claim-to-diff judgment |
+| Human-in-the-loop component | Three expert annotators; production developer feedback |
+| Filtering / gating / aggregation mechanism | Reference-free hallucination/context-alignment gate |
+| Other mechanisms | Grounding function `G`, 0–4 alignment scoring, evidence-based explanation |
 
 ### Method Checklist
 
-- [x] The paper evaluates generated review comments.
-- [x] The paper evaluates a judge/filter/gate.
-- [x] The paper compares multiple LLMs.
-- [x] The paper compares multiple prompts or context settings.
-- [ ] The paper uses retrieval or context augmentation.
-- [x] The paper includes a post-generation quality check.
-- [x] The paper includes a human evaluation component.
+- [x] Evaluates generated review comments.
+- [x] Evaluates a judge/filter/gate.
+- [ ] Evaluates aggregation.
+- [x] Compares multiple LLMs/judge strategies.
+- [x] Compares prompt/reasoning settings.
+- [ ] Uses retrieval/context augmentation.
+- [x] Includes post-generation quality check.
+- [x] Includes human evaluation.
+- [x] Includes production preference signal.
 
 ## 7. Evaluation Method
 
 | Field | Value |
 |---|---|
-| Automatic metrics | Precision, recall, and F1 against human labels; token count and estimated monetary cost for efficiency; consistency and preference coverage against developer thumbs-up signals |
-| Human evaluation | Two annotators independently labeled 143 generated comments in three rounds, with a third annotator as tie-breaker; Cohen’s Kappa was 0.78, 0.81, and 0.84 across the three rounds |
-| Qualitative analysis | Yes; includes examples showing unsupported SQL-injection claims and an incorrect Optional/String API assumption, then inspects HalluJudge explanations to show how the judge maps claims back to diff evidence |
-| Statistical analysis | Yes; precision, recall, F1, Cohen’s Kappa, and consistency/coverage measures for alignment with developer preference |
-| Cost-related evaluation | Yes; direct assessment is the most cost-effective strategy, with average cost around $0.009 per judgment for Gemini 3 and $0.004 for GPT-5.1; tree-of-thoughts performs best but costs more |
-| Reproducibility materials | Partially; the paper describes prompts, scoring guide, and evaluation setup, but industrial datasets are proprietary and not fully public |
+| Automatic metrics | Precision, recall, F1; token count; monetary cost; consistency and preference coverage |
+| Human evaluation / user study | Two annotators label all 143 comments, third annotator resolves disagreements |
+| Qualitative analysis | Examples of unsupported SQL-injection and wrong Optional/String assumptions; explanation analysis |
+| Statistical analysis | Precision/recall/F1, Cohen’s Kappa, preference consistency/coverage |
+| Cost / latency / time evaluation | Per-judgment cost by judge model/strategy; token count as time proxy |
+| Reproducibility materials | Partial; prompts and scoring guide described, datasets proprietary |
 
 ### Evaluation Validity Checklist
 
-- [x] The evaluation goes beyond BLEU/ROUGE/text similarity.
-- [x] The evaluation checks semantic correctness.
-- [x] The evaluation partially checks usefulness or developer value.
-- [ ] The evaluation separately checks actionability.
-- [x] The evaluation checks hallucination or unsupported claims.
-- [x] The evaluation measures false positives.
-- [x] The evaluation measures false negatives.
-- [x] The evaluation measures cost or latency proxy.
-- [x] The evaluation includes real developer feedback.
-- [x] The evaluation includes production/workflow signals.
+- [x] Beyond BLEU/ROUGE.
+- [x] Checks semantic correctness/claim support.
+- [x] Checks grounding/context alignment.
+- [x] Partially checks usefulness/developer preference.
+- [ ] Separately checks actionability.
+- [x] Checks hallucination/unsupported claims.
+- [x] Measures false positives and false negatives.
+- [x] Partially measures useful-feedback preservation via preference coverage.
+- [x] Measures cost proxy.
+- [x] Includes production signal.
 
 ## 8. Evaluation Dimensions Covered
 
 | Dimension | Coverage | Notes |
 |---|---|---|
-| Technical correctness | `Partially / Yes` | Captures correctness when a comment makes a claim contradicted by the diff, such as assuming an unsupported API return type. |
-| Relevance to code change | `Yes` | Core evaluation dimension: every claim should be traceable to the code diff and within the scope of the change. |
-| Usefulness | `Partially` | Approximated through developer thumbs-up signals, but not decomposed into detailed usefulness dimensions. |
-| Actionability | `Partially` | Review comments are suggestions, but actionability is not evaluated separately from context alignment. |
-| Specificity | `Partially` | Claims must be grounded and traceable, but specificity is not separately scored. |
-| Novelty / non-triviality | `No` | Not directly evaluated. |
-| Hallucination / unsupported claim | `Yes` | Main focus; a comment is hallucinated if it contains at least one ungrounded claim unsupported by the code diff. |
-| False positive rate | `Yes` | Captured through precision against human hallucination labels. |
-| False negative rate | `Yes` | Captured through recall against human hallucination labels. |
-| Preservation of useful comments | `Partially` | Preference coverage measures how many developer-liked comments are judged non-hallucinated, but this is not explicitly framed as useful-comment preservation under a filtering policy. |
-| Wrong removal of useful comments | `Partially` | False positives and low preference coverage imply this risk, but wrong removal is not analyzed as a separate deployment metric. |
-| Review coverage | `Partially` | Measures preference coverage, but not broad review coverage after filtering. |
+| Technical correctness | `Partially / Yes` | Captures contradictions and unsupported technical claims. |
+| Relevance to code change | `Yes` | Core dimension: claims must be traceable to diff and within scope. |
+| Grounding / context alignment | `Yes` | Main focus. |
+| Usefulness | `Partially` | Approximated through developer preference coverage. |
+| Actionability | `Partially` | Not separated from grounding. |
+| Specificity | `Partially` | Traceability required, but specificity not separately scored. |
+| Novelty / non-triviality | `No` | Not evaluated. |
+| Hallucination / unsupported claim | `Yes` | Main dimension. |
+| False positive rate | `Yes` | Precision against human labels. |
+| False negative rate | `Yes` | Recall against human labels. |
+| Preservation of useful comments | `Partially` | Preference coverage gives partial evidence. |
+| Wrong removal of useful comments | `Partially` | Implied by false positives, not fully modeled. |
+| Review coverage / issue coverage | `Partially` | Preference coverage, not issue coverage. |
 | Human escalation rate | `No` | Not evaluated. |
-| Human annotation cost | `Partially` | Manual evaluation is described as expensive and hard to scale, but not deeply quantified. |
-| Computational cost | `Yes` | Measures input/output tokens and monetary cost per inference for each judge strategy and LLM. |
-| Latency | `Partially` | Token count is used as a proxy for computation time; actual deployment latency is not directly measured. |
-| Operational complexity | `Partially` | Discusses HalluJudge as a safeguard layer, but does not deeply analyze integration, rollout, monitoring, or escalation complexity. |
-| Trade-off analysis | `Partially` | Analyzes performance-cost trade-off between direct assessment and tree-of-thoughts, but not the downstream trade-off between filtering hallucinations and losing useful comments. |
-| Developer trust | `Partially` | Indirectly addressed via developer preference alignment, but not deeply studied. |
-| Workflow impact | `Partially` | Production feedback is used, but workflow impact is not the main evaluation target. |
-
-### Notes on Evaluation Dimensions
-
-This paper is one of the strongest sources for our gate/context-alignment argument, but it also shows why hallucination detection alone is not enough for a full evaluation framework. It covers grounding well, but it does not fully separate actionability, usefulness, specificity, and preservation of useful comments.
+| Human annotation cost | `Partially` | Manual evaluation described as costly, not deeply quantified. |
+| Computational cost | `Yes` | API/token costs reported. |
+| Latency | `Partially` | Token count proxy only. |
+| Reviewer time overhead | `No` | Not live reviewer study. |
+| Operational complexity | `Partially` | Safeguard layer discussed, integration not deeply analyzed. |
+| Trade-off analysis | `Partially` | Strategy cost-effectiveness, but not downstream useful-feedback loss. |
+| Developer trust | `Partially` | Indirect through preference alignment. |
+| Workflow impact | `Partially` | Production feedback used, workflow not central. |
 
 ## 9. Problematic Comment Types / Error Taxonomy
 
@@ -217,27 +210,23 @@ This paper is one of the strongest sources for our gate/context-alignment argume
 - Unsupported claims.
 - Contradictions with the code diff.
 - Irrelevant or out-of-scope references.
-- Five alignment levels from fully aligned to completely misaligned.
+- Alignment levels from fully aligned to completely misaligned.
 
 ### Inferred Error Types
 
 - `Inferred`: Hallucinated security concern.
-- `Inferred`: Hallucinated API or type assumption.
+- `Inferred`: Hallucinated API/type assumption.
 - `Inferred`: Non-traceable suggestion.
-- `Inferred`: Comment relying on external assumptions absent from the diff.
-- `Inferred`: Scope creep beyond the reviewed change.
+- `Inferred`: Scope creep beyond the diff.
 - `Inferred`: Factually plausible but unsupported review claim.
 
 ### Example Problematic Comments
 
-> [!CAUTION]
-> The examples below are paraphrased to keep the note concise and avoid over-quoting.
-
-| Type | Example / Paraphrase | Source in paper | Label |
+| Type | Example / Paraphrase | Source | Label |
 |---|---|---|---|
-| Unsupported security claim | A generated comment claims SQL-injection risk although the diff contains no SQL or query construction. | Paper example | `Reported / Paraphrased` |
-| Hallucinated API/type assumption | A generated comment assumes `getHeader` returns `Optional<String>` and suggests `isPresent()`, although the diff evidence indicates a plain `String`. | Paper example | `Reported / Paraphrased` |
-| Non-traceable suggestion | A suggestion cannot be grounded in the provided code diff. | Inferred from context-alignment definition | `Inferred` |
+| Unsupported security claim | Comment claims SQL-injection risk although diff has no SQL/query construction. | Paper example | `Reported / Paraphrased` |
+| Wrong API/type assumption | Comment assumes `getHeader` returns `Optional<String>` and suggests `isPresent()` while diff indicates plain `String`. | Paper example | `Reported / Paraphrased` |
+| Non-traceable suggestion | Suggestion cannot be grounded in the provided diff. | Context-alignment definition | `Inferred` |
 
 ### Taxonomy Checklist
 
@@ -256,74 +245,108 @@ This paper is one of the strongest sources for our gate/context-alignment argume
 - [ ] Comment that misses the actual issue
 - [x] Comment that depends on missing project context
 - [x] Technically plausible but unsupported comment
+- [ ] Comment with poor value-to-time ratio
 
 ### Does the Paper Separate Correctness, Usefulness, and Actionability?
 
 - Answer: `Partially`
-- Explanation: The paper clearly separates context alignment from developer preference, but actionability and usefulness are not treated as fully separate evaluation dimensions.
+- Explanation: It separates grounding/context alignment from developer preference, but usefulness and actionability are not fully isolated.
 
-## 10. Human Annotation Protocol
+## 10. Context-Quality Extraction
+
+| Context Dimension | Coverage | Evidence / Notes |
+|---|---|---|
+| Relevance | `Yes` | Comment claims must stay within diff scope. |
+| Completeness | `Partially` | Missing evidence causes hallucination label, but context completeness is not separately scored. |
+| Specificity / focus | `Yes` | Diff is focused grounding context. |
+| Consistency | `Yes` | Claims must be consistent with diff. |
+| Groundability | `Yes` | Core criterion. |
+| Locality | `Partially` | Diff-based traceability, not broader locality model. |
+| Freshness | `Not reported` | Not discussed. |
+| Attention load | `Not reported` | Not discussed. |
+| Cost / token budget | `Yes` | Judge strategy cost reported. |
+| Context availability vs usability | `Partially` | Assumes diff as usable grounding context; broader context usability not studied. |
+
+### Context Failure Types
+
+- [ ] Missing surrounding code
+- [x] Unsupported inference from partial context
+- [ ] Missing language/framework/version context
+- [ ] Missing cross-file dependency
+- [ ] Irrelevant retrieved context
+- [ ] Excessive context / attention dilution
+- [x] Generated claim not grounded in provided context
+- [x] Contradiction with provided diff
+
+## 11. Trade-off Extraction
+
+| Strategy / Mechanism | Benefit | Risk / Cost | Missing Metric |
+|---|---|---|---|
+| Direct LLM judge | Cheapest/fastest assessment. | May be less accurate than deeper reasoning. | Error type breakdown by strategy. |
+| Tree-of-thoughts judge | Highest reported F1. | More token cost and latency. | Marginal gain per added cost. |
+| Hallucination gate | Removes unsupported claims. | May suppress useful but weakly grounded comments. | Useful-comment preservation. |
+| Developer preference alignment | Connects judge to real reactions. | Thumbs-up/down are noisy proxies. | Validated usefulness/correctness split. |
+| Human annotation | Reliable labels and kappa. | Expensive, small sample. | Cost per label and scalability. |
+
+### Trade-off Notes
+
+HalluJudge evaluates gate effectiveness and cost, but does not fully model the downstream decision: show, suppress, rewrite, or escalate.
+
+## 12. Human Annotation / User Study / Production Protocol
 
 | Field | Value |
 |---|---|
-| Human annotators | `Yes` |
-| Number of annotators | Three experienced software engineering researchers |
-| Annotator expertise | Experienced software engineering researchers |
-| Annotation guideline provided | Yes; hallucination is defined as context misalignment, and annotators check factual grounding, traceability to the diff, and adherence to the change intent |
-| Pilot annotation phase | Not clearly reported |
-| Inter-rater agreement reported | Yes |
-| Agreement metric used | Cohen’s Kappa: 0.78, 0.81, and 0.84 across three annotation rounds |
-| Conflict resolution method | Two annotators independently labeled all samples; disagreements were discussed between rounds; the third annotator acted as tie-breaker |
+| Human annotators / participants | `Yes` |
+| Number of annotators / participants | Three experienced SE researchers; production developer reactions also used |
+| Expertise | Experienced software engineering researchers and Atlassian developers |
+| Guideline or study protocol provided | Hallucination defined as context misalignment; factual grounding and traceability checked |
+| Pilot phase | Not clearly reported |
+| Inter-rater agreement / validation reported | Yes |
+| Agreement metric used | Cohen’s Kappa: 0.78, 0.81, 0.84 |
+| Conflict resolution method | Two independent annotators; discussions; third annotator as tie-breaker |
+| Production/workflow signal | Developer thumbs-up/down preference dataset |
 
-### Annotation Quality Checklist
+### Protocol Quality Checklist
 
 - [x] Independent annotation is used.
 - [x] At least two annotators are used.
-- [x] Annotators have software engineering expertise.
-- [x] Annotation guideline is described.
-- [x] Inter-rater agreement is reported.
+- [x] Annotators have SE expertise.
+- [x] Guideline/protocol is described.
+- [x] Agreement is reported.
 - [x] Conflict resolution is described.
-- [x] Threats to annotation validity are discussed.
+- [x] Threats to validity are discussed.
+- [x] Production signal is included.
 
-### Main Concerns About Annotation Validity
+### Main Concerns About Validity
 
-The human-labeled dataset is relatively small and internal to Atlassian. Hallucination is operationalized specifically as context misalignment, which may exclude other quality problems such as redundancy, low value, unclear wording, or weak actionability. Developer thumbs-up/down reactions are useful ecological signals, but they are noisy proxies for correctness or hallucination.
+Small internal dataset; proprietary setting; developer reactions are noisy and do not directly equal correctness or hallucination labels.
 
-## 11. Key Findings of the Paper
+## 13. Key Findings
 
 | Finding | Summary | Evidence / Metric | Importance for us |
 |---|---|---|---|
-| Finding 1 | HalluJudge can effectively detect hallucinated code review comments. | Gemini 3 with tree-of-thoughts reaches 0.85 precision, 0.85 recall, and 0.85 F1. | Strong evidence that a gate-like judge can work. |
-| Finding 2 | Direct assessment is the most cost-effective strategy. | Direct assessment is cheaper; tree-of-thoughts is more effective but costs more. | Useful for performance-cost trade-off discussion. |
-| Finding 3 | HalluJudge judgments align reasonably with production developer preferences. | Average consistency and coverage up to 0.67. | Connects hallucination detection with practical developer preference. |
-| Finding 4 | Combining multiple assessment strategies as an ensemble does not outperform the best single strategy. | Ensemble does not beat best single strategy. | Suggests judge strategies may not provide strongly complementary signals. |
-| Finding 5 | HalluJudge explanations are evidence-based and auditable. | Explanations map claims back to diff evidence. | Supports explainable filtering/gating design. |
+| F1 | HalluJudge detects hallucinated comments effectively. | Gemini 3 + tree-of-thoughts: 0.85 precision/recall/F1. | Evidence for gate feasibility. |
+| F2 | Direct assessment is most cost-effective. | Lower cost; tree-of-thoughts more effective but costlier. | Cost-quality trade-off. |
+| F3 | Judgments align reasonably with developer preferences. | Consistency/coverage up to 0.67. | Connects grounding to human value. |
+| F4 | Ensembles do not outperform best single strategy. | No strong complementarity. | Cautions against complexity. |
+| F5 | Explanations are evidence-based. | Claims mapped back to diff. | Supports auditable gating. |
 
-## 12. Limitations from the Paper’s Own Perspective
+## 14. Limitations from the Paper’s Own Perspective
 
-- The evaluation is based on Atlassian’s enterprise-scale internal projects; results may not generalize directly to open-source projects, smaller teams, or different review workflows.
-- Developer thumbs-up / thumbs-down reactions are useful ecological signals, but they are noisy proxies for correctness or hallucination.
-- The paper operationalizes hallucination as context misalignment, so it may not cover other review-comment quality problems such as stylistic redundancy or lack of actionable detail.
-- The industrial datasets are proprietary, which limits independent replication.
+- Atlassian internal projects may not generalize.
+- Developer reactions are noisy proxies.
+- Hallucination is operationalized as context misalignment, not all quality problems.
+- Proprietary datasets limit replication.
 
-## 13. Limitations from Our Perspective
+## 15. Limitations from Our Perspective
 
-> [!WARNING]
-> This section is our critique. Do not present it as a claim made by the paper.
+- Does not fully model post-detection action.
+- Does not quantify cost of judge mistakes in workflow.
+- Does not measure useful-comment loss under filtering.
+- Does not cover grounded but low-value comments.
+- Does not separate actionability, usefulness, specificity, and acceptance.
 
-### Possible Issues
-
-- The paper focuses on detecting hallucinated comments, but it does not fully model what should happen after detection.
-- It does not fully analyze the cost of judge mistakes: false positives may suppress useful comments, while false negatives may expose developers to hallucinated comments.
-- It provides per-inference cost, but not end-to-end operational cost such as latency budget, integration complexity, monitoring, reviewer interruption, or escalation workflows.
-- It treats developer preference as a practical signal, but thumbs-up does not necessarily mean correctness and thumbs-down does not necessarily mean hallucination.
-- It does not cover grounded but low-value comments, such as generic, redundant, vague, or non-actionable comments.
-
-### Detailed Notes
-
-This paper is probably the closest related work to a safeguard/gate-based approach. Our contribution should therefore not be framed as simply “detecting hallucination better.” A stronger positioning is to use HalluJudge as evidence that gate-like mechanisms are promising, then argue that the field still lacks a broader trade-off-aware framework for deciding when filtering is beneficial, what useful comments are lost, and how context quality affects the reliability of the whole review pipeline.
-
-## 14. Relevance to Our Paper
+## 16. Relevance to Our Paper
 
 ### Useful For
 
@@ -333,30 +356,41 @@ This paper is probably the closest related work to a safeguard/gate-based approa
 - [x] Taxonomy of problematic comments
 - [x] Context-quality argument
 - [x] Hallucination / unsupported-claim discussion
-- [x] Human annotation protocol
+- [x] Human annotation / user-study protocol
 - [x] Cost / latency / operational trade-off
-- [x] Industrial validation
+- [x] Industrial or live validation
 - [ ] Benchmark selection
 - [x] Methodology design
 - [x] Discussion / threats to validity
 
+### Mapping to Our RQs
+
+| Our RQ | Relevance | Evidence |
+|---|---|---|
+| RQ1 — problematic comments | `High` | Unsupported claims, context misalignment, wrong API/type assumptions. |
+| RQ2 — context quality | `High` | Claim-to-diff grounding and alignment score. |
+| RQ3 — evaluation dimensions | `Medium` | Strong on hallucination/grounding, weak on usefulness/actionability. |
+| RQ4 — trade-offs | `High` | Judge effectiveness vs cost; risk of wrong removals. |
+| RQ5 — framework design | `High` | Shows need for grounding gates plus useful-feedback preservation. |
+
 ### Explanation
 
-HalluJudge gives us strong industrial evidence that LLM-generated code review comments can be judged through explicit context alignment before reaching developers. It directly supports our argument that evaluation should not only ask whether a model can generate fluent comments, but whether those comments are grounded in the review context. At the same time, it leaves room for our work around taxonomy, context-quality scoring, useful-comment preservation, and trade-off-aware evaluation.
+HalluJudge supports our framework’s grounding and gate components, but also reveals the need to evaluate gate consequences beyond hallucination detection.
 
-## 15. Extracted Evidence for Our Argument
+## 17. Extracted Evidence for Our Argument
 
-| Argument Need | Evidence from this paper | Label |
+| Argument Need | Evidence | Label |
 |---|---|---|
-| Limitations of current evaluations | The paper explicitly argues that reference-based metrics such as BLEU or exact match are weak for code review because several valid comments may exist and lexical overlap does not guarantee semantic correctness or grounding. | `Reported` |
-| Missing cost analysis | The paper reports token and monetary cost per inference, but does not model end-to-end operational cost, latency budget, developer interruption cost, or cost of wrong filtering decisions. | `Our perspective` |
-| Missing actionability/usefulness distinction | The paper uses developer preference as a practical signal, but it does not separately evaluate actionability, specificity, clarity, or practical value of grounded comments. | `Our perspective` |
-| Need for taxonomy | The paper defines context misalignment broadly, but its examples reveal more specific failure modes such as unsupported security claims, hallucinated API/type assumptions, non-traceable suggestions, and comments outside the diff scope. | `Reported / Inferred` |
-| Need for human annotation quality control | The paper uses independent annotation, a tie-breaker, and Cohen’s Kappa, supporting our need for clear annotation protocol and agreement reporting. | `Reported` |
-| Need for context-quality evaluation | HalluJudge treats the diff as the grounding context and judges claim-to-diff alignment, directly supporting context-quality and context-alignment evaluation. | `Reported` |
-| Need for trade-off-aware evaluation | The paper analyzes judge effectiveness versus cost, but not the downstream trade-off between reducing hallucinations and preserving useful comments. | `Our perspective` |
+| Limitations of current evaluations | Reference metrics weak because multiple valid comments exist and lexical overlap does not guarantee grounding. | `Reported` |
+| Missing cost/latency/reviewer-overhead analysis | Per-inference cost reported, but end-to-end workflow cost absent. | `Our perspective` |
+| Missing actionability/usefulness distinction | Developer preference used but not decomposed into actionability/specificity/usefulness. | `Our perspective` |
+| Need for problematic-comment taxonomy | Examples reveal unsupported security claims, wrong API assumptions, non-traceable suggestions. | `Reported / Inferred` |
+| Need for human annotation / user-study quality control | Independent annotation, tie-breaker, Cohen’s Kappa. | `Reported` |
+| Need for context-quality evaluation | Hallucination defined through claim-to-diff support. | `Reported` |
+| Need for trade-off-aware evaluation | Effectiveness-cost trade-off covered, but useful-comment loss not. | `Our perspective` |
+| Need for useful-feedback preservation metric | Preference coverage partially covers this, but wrong removals are not directly evaluated. | `Our perspective` |
 
-## 16. Final Assessment
+## 18. Final Assessment
 
 | Field | Value |
 |---|---|
@@ -367,35 +401,30 @@ HalluJudge gives us strong industrial evidence that LLM-generated code review co
 
 ### Short Justification
 
-This is a central paper for our project because it directly studies a reference-free safeguard for hallucinated LLM-generated code review comments and frames hallucination as context misalignment between the comment and the diff. It is especially important for motivating context-quality and gate-based evaluation, but it still leaves important gaps around useful-comment preservation and operational trade-offs.
+This is a central paper for grounding, hallucination, and gate design. It is also a strong example of why gate evaluation must include false positives, false negatives, cost, and useful-feedback preservation.
 
 ## Open Questions for Follow-up Reading
 
-- [ ] How should a context-alignment score be combined with other review-quality dimensions such as actionability, usefulness, specificity, and severity?
-- [ ] What filtering threshold should be used in practice, and how many useful comments would be lost under stricter hallucination filters?
-- [ ] Can the hallucination taxonomy be expanded beyond context misalignment to cover low-value, vague, redundant, or non-actionable comments that may still be grounded in the diff?
-- [ ] Should a safeguard like HalluJudge be used before comments reach developers, after generation for evaluation only, or as part of a human-escalation workflow?
-- [ ] How should we evaluate the interaction between context quality and hallucination detection accuracy?
+- [ ] How should a context-alignment score combine with actionability/usefulness/specificity?
+- [ ] What threshold should trigger suppression vs escalation?
+- [ ] How many useful comments would strict hallucination filtering remove?
+- [ ] Can context misalignment taxonomy cover low-value but grounded comments?
+- [ ] How should context quality affect judge accuracy?
 
 ## Follow-up TODOs
 
-- [ ] Verify bibliographic metadata against the final ACM version.
-- [ ] Verify exact model names and versions from the final paper.
-- [ ] Verify cost numbers and whether they include only API cost or broader runtime assumptions.
-- [ ] Extract 1–3 short cite-worthy statements.
+- [ ] Verify final ACM metadata.
+- [ ] Verify exact model/version names.
+- [ ] Verify cost assumptions.
+- [ ] Extract cite-worthy statements.
 - [ ] Add BibTeX.
-- [ ] Update `matrices/cross-paper-synthesis.md` if the HalluJudge positioning changes.
-- [ ] Update `synthesis/problematic-comment-taxonomy.md` with HalluJudge-specific grounding failure types.
-- [ ] Update `synthesis/context-quality.md` with claim-to-diff grounding.
-- [ ] Update `synthesis/trade-off-framework.md` with false-positive / false-negative filtering consequences.
+- [ ] Update synthesis if deep reading changes coding.
 
 <details>
 <summary>Scratchpad</summary>
 
-- Strongest use: evidence that a safeguard/gate can judge generated review comments before developers see them.
-- Strongest taxonomy value: context misalignment, unsupported claims, hallucinated security concerns, hallucinated API/type assumptions.
-- Need caution: HalluJudge is not a general comment-quality framework; it is mainly a hallucination/context-alignment framework.
-- Key gap for our paper: after a judge detects risk, how should the system decide whether to suppress, rewrite, escalate, or show the comment?
-- Good connection to P03: RovoDev has production deployment and quality gates; HalluJudge isolates the hallucination gate more explicitly.
+- Strongest use: safeguard/gate evidence.
+- Strongest taxonomy value: unsupported claims and wrong API/type assumptions.
+- Key gap: what happens after the judge flags risk?
 
 </details>
