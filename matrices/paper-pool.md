@@ -10,6 +10,7 @@
 | P06 | ContextCRBench | High | First pass completed; migrated to v2; needs PDF-level verification | Enriched semantic/code context; fine-grained evaluation; data-quality critique |
 | P07 | RevMate user study | High | First pass completed; migrated to v2; needs PDF-level verification | Live user study; acceptance; perceived value; reviewer time overhead |
 | P08 | Too Noisy To Learn | High | First pass completed; needs PDF-level verification | Data quality; noisy/vague/non-actionable comments; semantic cleaning |
+| P09 | Hydra-Reviewer | High | First pass completed; needs PDF-level verification | Multi-agent mitigation; comprehensiveness; vagueness/incorrectness; cost/latency |
 
 ## Working Rule
 
@@ -17,7 +18,7 @@ Keep this file aligned with the spreadsheet, but use the Markdown files as the m
 
 ## Next Reading Candidates
 
-- Papers on hallucination or unsupported claims in code review.
+- P10 — BitsAI-CR for industrial deployment, rule checker, review filter, and adoption-oriented metrics.
 - Papers on RAG/context selection for software engineering tasks.
 - Papers on human annotation reliability for LLM evaluation.
 - Additional industrial deployment studies beyond Atlassian, Mozilla/Ubisoft, and ByteDance.
