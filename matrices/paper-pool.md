@@ -11,6 +11,7 @@
 | P07 | RevMate user study | High | First pass completed; migrated to v2; needs PDF-level verification | Live user study; acceptance; perceived value; reviewer time overhead |
 | P08 | Too Noisy To Learn | High | First pass completed; needs PDF-level verification | Data quality; noisy/vague/non-actionable comments; semantic cleaning |
 | P09 | Hydra-Reviewer | High | First pass completed; needs PDF-level verification | Multi-agent mitigation; comprehensiveness; vagueness/incorrectness; cost/latency |
+| P10 | BitsAI-CR | High | First pass completed from PDF; needs citation/BibTeX cleanup | Industrial deployment; RuleChecker/ReviewFilter; Outdated Rate; data flywheel; precision-vs-recall trade-off |
 
 ## Working Rule
 
@@ -18,7 +19,7 @@ Keep this file aligned with the spreadsheet, but use the Markdown files as the m
 
 ## Next Reading Candidates
 
-- P10 — BitsAI-CR for industrial deployment, rule checker, review filter, and adoption-oriented metrics.
+- P11 — LAURA for RAG/context-enriched review comment generation and helpfulness/correctness evaluation.
 - Papers on RAG/context selection for software engineering tasks.
 - Papers on human annotation reliability for LLM evaluation.
 - Additional industrial deployment studies beyond Atlassian, Mozilla/Ubisoft, and ByteDance.
