@@ -16,6 +16,12 @@
 | P12 | SGCR | High | First pass completed from PDF; needs citation/BibTeX cleanup | Specification-grounded review; explicit/implicit paths; trustworthiness; adoption rate; rule traceability |
 | P13 | Prompting and Fine-tuning LLMs for Code Review | High | First pass completed from PDF; needs citation/BibTeX cleanup | Prompting vs QLoRA fine-tuning; call graph/summary augmentation; metric validity; human qualitative evaluation |
 | P14 | CodeReviewer | High | First pass completed from PDF; needs citation/BibTeX cleanup | Foundational baseline; CodeReview dataset; diff-hunk representation; BLEU critique; information/relevance human evaluation |
+| P15 | LLaMA-Reviewer | Medium / High | First pass completed from PDF; needs citation/BibTeX cleanup | PEFT/resource-aware adaptation; LoRA vs prefix tuning; input representation; threshold trade-offs |
+| P16 | Context-Aware Code Review Automation | Medium / High | First pass completed from PDF; needs citation/BibTeX cleanup | RAG/context-aware review; context collapse; hybrid expert routing; hallucination/severity overestimation |
+| P17 | CodeReviewQA | High | First pass completed from PDF; needs citation/BibTeX cleanup | Comprehension probes; CTR/CL/SI; contamination-aware benchmark; clean manual curation |
+| P18 | Harnessing LLMs for Curated Code Reviews | Medium / High | First pass completed from PDF; needs citation/BibTeX cleanup | Data curation; relevance/clarity/conciseness/civility; LLM-as-judge calibration; downstream gains |
+| P19 | Fine-Grained Review Comment Classification | Low / Medium | First pass completed from PDF; needs venue/DOI verification | 17-category taxonomy; usefulness-linked categories; LLM classification; code-context and class-imbalance trade-offs |
+| P20 | RAG-Reviewer | Medium / High | First pass completed from PDF; needs citation/BibTeX cleanup | Retrieval-augmented comment generation; pair vs singleton exemplars; low-frequency-token coverage; k/token-budget trade-offs |
 
 ## Working Rule
 
@@ -23,8 +29,8 @@ Keep this file aligned with the spreadsheet, but use the Markdown files as the m
 
 ## Next Reading Candidates
 
-- P15 — LLaMA-Reviewer: Advancing Code Review Automation with Large Language Models through Parameter-Efficient Fine-Tuning.
-- Papers on RAG/context selection for software engineering tasks.
-- Papers on human annotation reliability for LLM evaluation.
-- Additional industrial deployment studies beyond Atlassian, Mozilla/Ubisoft, and ByteDance.
+- P21 — iCodeReviewer: Improving Secure Code Review with Mixture of Prompts.
+- P22 — Combining Large Language Models with Static Analyzers for Code Review Generation.
+- Papers on LLM-as-a-judge reliability and bias for software engineering evaluation.
+- Additional industrial deployment studies beyond Atlassian, Mozilla/Ubisoft, ByteDance, and SGCR.
 - Papers on data cleaning, noisy labels, and dataset quality for code review generation.
