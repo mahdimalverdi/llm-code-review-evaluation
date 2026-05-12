@@ -15,6 +15,7 @@
 | P11 | LAURA | High | First pass completed from PDF; needs citation/BibTeX cleanup | RAG/context-enriched review generation; context augmentation; retrieval exemplars; I/IH/M-Score |
 | P12 | SGCR | High | First pass completed from PDF; needs citation/BibTeX cleanup | Specification-grounded review; explicit/implicit paths; trustworthiness; adoption rate; rule traceability |
 | P13 | Prompting and Fine-tuning LLMs for Code Review | High | First pass completed from PDF; needs citation/BibTeX cleanup | Prompting vs QLoRA fine-tuning; call graph/summary augmentation; metric validity; human qualitative evaluation |
+| P14 | CodeReviewer | High | First pass completed from PDF; needs citation/BibTeX cleanup | Foundational baseline; CodeReview dataset; diff-hunk representation; BLEU critique; information/relevance human evaluation |
 
 ## Working Rule
 
@@ -22,7 +23,7 @@ Keep this file aligned with the spreadsheet, but use the Markdown files as the m
 
 ## Next Reading Candidates
 
-- P14 — next high-priority paper from Paper Pool.
+- P15 — LLaMA-Reviewer: Advancing Code Review Automation with Large Language Models through Parameter-Efficient Fine-Tuning.
 - Papers on RAG/context selection for software engineering tasks.
 - Papers on human annotation reliability for LLM evaluation.
 - Additional industrial deployment studies beyond Atlassian, Mozilla/Ubisoft, and ByteDance.
