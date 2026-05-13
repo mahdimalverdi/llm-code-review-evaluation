@@ -28,6 +28,11 @@
 | P24 | Reward Models for Code Review Comment Generation | Medium / High | First pass completed from PDF; needs citation/BibTeX cleanup | RL/reward-guided comment generation; semantic reward; downstream code-refinement reward; LLM-as-judge usefulness |
 | P25 | Carllm | High | First pass completed from PDF; needs citation/BibTeX cleanup | Comprehensible ACR; issue detection/localization/explanation/repair suggestion; CoT data curation; balanced loss |
 | P26 | Human-AI Synergy in Agentic Code Review | High | First pass completed from PDF; needs citation/BibTeX cleanup | Human-vs-AI agent review; feedback diversity; interaction patterns; suggestion adoption; code-quality impact |
+| P27 | From Industry Claims to Empirical Reality | Medium / High | First pass completed from PDF; needs citation/BibTeX cleanup | Code review agents in PRs; CRA-only vs human-only outcomes; signal-to-noise ratio; abandonment risk |
+| P28 | Support, Not Automation | Medium | First pass completed from PDF; needs citation/BibTeX cleanup | AI-supported code review; human-in-the-loop; knowledge transfer; team awareness; shared ownership |
+| P29 | Can LLMs Replace Human Evaluators? | High | First pass completed from PDF; needs citation/BibTeX cleanup | LLM-as-a-judge validity in SE; task dependence; pairwise instability; verbosity/order bias |
+| P30 | CodeUltraFeedback | Medium / High | First pass completed from PDF; needs citation/BibTeX cleanup | Coding preferences; LLM-as-a-judge preference data; SFT/DPO alignment; judge-selection sensitivity |
+| P31 | CodeJudgeBench | High | First pass completed from PDF; needs citation/BibTeX cleanup | Coding-task judge benchmark; thinking judges; position bias; source-model/preprocessing sensitivity |
 
 ## Working Rule
 
@@ -35,8 +40,8 @@ Keep this file aligned with the spreadsheet, but use the Markdown files as the m
 
 ## Next Reading Candidates
 
-- P27 — next paper from Paper Pool.
-- P28 — Support, Not Automation: Towards AI-supported Code Review for Code Quality and Beyond.
-- P29 — Can LLMs Replace Human Evaluators? An Empirical Study of LLM-as-a-Judge in Software Engineering.
-- Papers on LLM-as-a-judge reliability and bias for software engineering evaluation.
-- Additional industrial deployment studies beyond Atlassian, Mozilla/Ubisoft, ByteDance, SGCR, and agentic GitHub review.
+- P32 — Bias in the Loop: Auditing LLM-as-a-Judge for Software Engineering.
+- P33 — LLM-as-a-Judge for Software Engineering: Literature Review, Vision, and the Road Ahead.
+- P34 — From Code to Courtroom: LLMs as the New Software Judges.
+- P35 — LLM Critics Help Catch LLM Bugs.
+- P37–P39 — foundational modern code review and usefulness papers.
