@@ -28,147 +28,142 @@
 | P19 — Fine-Grained Review Comment Classification | Usefulness-linked taxonomy/classification | Classifies 17 review-comment categories linked to practitioner usefulness; shows LLMs help rare/useful categories | Single OpenStack dataset; moderate original annotation agreement; classification does not prove correctness/actionability | Taxonomy layer + usefulness categories + prioritization/evaluation support |
 | P20 — RAG-Reviewer | Retrieval-augmented comment generation | Shows pair retrieval beats singleton, RAG improves EM/BLEU and low-frequency-token generation, and manual semantic equivalence improves | Java/Tufano-only; manual analysis is small; BLEU/EM still dominant; no live acceptance | Retrieval-quality + exemplar design + low-frequency-token coverage + token-budget trade-off |
 | P21 — iCodeReviewer | Secure code review with mixture-of-prompts | Defines secure review as category + location + comment; uses feature-grounded prompt expert routing; reports issue F1, localization accuracy, I/H/M/U, and production acceptance | Private data; one-week deployment; routing false negatives and prompt-expert maintenance are under-modeled; no detailed cost/latency | Secure-review evaluation + routing-vs-coverage + category/location/helpfulness metrics |
+| P22 — Combining LLMs with Static Analyzers | Hybrid static-analysis + LLM review generation | Compares DAT, RAG, and NCO; shows static-analyzer output is useful only when integrated carefully; calibrates LLM judge | Java/PMD/Checkstyle-specific; LLM-as-judge remains central; no live workflow | Hybrid mitigation + static-analysis context + accuracy/coverage trade-off |
+| P23 — Leveraging Reviewer Experience | Reviewer-experience-aware training | Uses reviewer authoring/reviewing ownership as data-quality signal; evaluates applicability, semantic equivalence, informativeness, explanation, and issue types | Experience is only a proxy; open-source-only; manual sample is small | Data provenance + reviewer expertise + usefulness-linked reference quality |
+| P24 — Reward Models for Code Review | RL/reward-guided comment generation | Uses semantic-similarity and downstream code-refinement rewards; validates o3-mini usefulness judgment with humans | Reward model may be imperfect; BLEU still dominant; no live developer outcome | Downstream usefulness + reward-model trade-offs + actionability proxy |
+| P25 — Carllm | Comprehensible automated code review | Defines comprehensibility as issue detection, localization, explanation, and repair suggestion; uses CoT data curation and balanced loss | ChatGPT-annotated data may contain artifacts; no live deployment; ternary clarity labels are coarse | Structured evaluation + comprehensibility chain + decoding stability |
+| P26 — Human-AI Synergy in Agentic Code Review | Human vs AI-agent review workflow | Large-scale GitHub analysis of feedback type, verbosity, interaction patterns, suggestion adoption, and code-quality impact | Public GitHub only; agent identity and PR status are proxies; metrics do not capture full semantic quality | Human-AI workflow + adoption + code-quality impact + oversight needs |
 
 ## Cross-Paper Patterns
 
 ### 1. Evaluation is moving beyond lexical similarity, but old metrics still dominate
 
-P14 already recognized that BLEU is weak for review comment generation because review comments are diverse and non-unique, so it added human evaluation for information and relevance. Later work extends this: P01 directly critiques text similarity; P07/P10/P12 add workflow or adoption signals; P11 and P21 use I/H/M/U-style helpfulness categories; P13 shows automatic metrics can disagree with professional-developer judgments; P16 calibrates LLM-as-a-Judge with human experts; P17 decomposes correctness into comprehension probes; P18 adds relevance, clarity, conciseness, and civility; P20 adds manual semantic-equivalence and alternative-solution labels. Yet many papers still report BLEU, EM, BERTScore, CodeBLEU, or ROUGE as main results.
+P14 already recognized that BLEU is weak for review comment generation because review comments are diverse and non-unique. Later work extends this concern in many directions: P01 critiques text similarity directly; P11/P21 use I/H/M/U-style categories; P16/P18/P22 calibrate LLM-as-a-Judge with human labels; P17 decomposes correctness into comprehension probes; P18 adds relevance, clarity, conciseness, and civility; P20 adds semantic-equivalence and alternative-solution labels; P23 evaluates semantic equivalence, applicability, informativeness, explanation, and issue type; P24 evaluates downstream code-refinement usefulness through rewards; P25 evaluates clarity/comprehensibility; and P26 measures suggestion adoption and code-quality deltas. Still, BLEU, EM, CodeBLEU, BERTScore, and ROUGE remain common.
 
-**Implication for us:** The field has known for years that lexical overlap is incomplete, but evaluation practice still inherits BLEU/EM-style and single-reference assumptions. Our contribution should synthesize this into a trade-off-aware framework rather than another “better score” claim.
+**Implication for us:** The field has known for years that lexical overlap is incomplete, but evaluation practice still inherits single-reference and similarity-score assumptions. Our contribution should synthesize richer evaluation evidence into a trade-off-aware framework.
 
-### 2. Context matters, but context quantity, context quality, and model capacity are different
+### 2. Context quality is now broader than code context
 
-P14 introduced diff-hunk-level context with [ADD], [DEL], and [KEEP] tags. P04 shows that more context can degrade review performance; P05 argues full project context is needed; P11 and P20 show retrieved exemplars help when they are relevant and structured; P12 uses specifications as authoritative context; P13 shows call graphs can help while summaries can hurt; P16 shows retrieval helps larger/specialized models but causes context collapse for smaller models. P21 adds a security-specific perspective: context should be feature-grounded and routed to only relevant prompt experts, rather than exposing the LLM to every possible CWE category. P17 adds that even with a code hunk and review comment, a model may fail to identify the change type, target location, or solution.
+Earlier papers focus on diff hunks, PR context, repository context, RAG exemplars, and specifications. P22 adds static-analysis output as structured context, showing that analyzer findings must be injected carefully rather than simply concatenated. P23 adds reviewer experience and ownership as a source/provenance signal for the reference comment. P24 adds downstream refinement as a context for judging whether a comment is actionable. P25 treats context as a structured reasoning chain: issue decision, location, explanation, and repair. P26 adds socio-technical project context, such as renamed classes, build configuration, prior review decisions, and human clarification.
 
-**Implication for us:** Context quality must include granularity, relevance, completeness, traceability, retrieval quality, exemplar design, metadata quality, specification freshness, feature-grounded routing, model capacity, attention load, and marginal value per token. More context is not automatically better.
+**Implication for us:** Context quality should include code context, retrieval context, static-analysis context, reviewer/provenance context, specification context, structured reasoning context, downstream repair context, and socio-technical workflow context.
 
 ### 3. Data and reference quality are first-class evaluation concerns
 
-P14 uses human review comments as ground truth but keeps only the earliest comment per hunk. P08 and P18 show that human-written review comments can be noisy, vague, irrelevant, unclear, verbose, uncivil, or non-actionable. P17 manually removes unclear, ignored, wrongly linked, solution-leaking, formatting-only, and non-self-contained examples. P19 inherits annotation ambiguity from a taxonomy dataset with moderate agreement. P20 relies on Tufano’s Java benchmark and shows why exact-match references miss semantic equivalence and alternative useful solutions. P21 uses developer-confirmed security issues and benign false positives, which makes category/location evaluation more objective than comment-only evaluation, but the data remains private and domain-specific.
+P14/P08/P18 show that human review comments are noisy or incomplete. P17 shows that strict benchmark curation improves reliability but reduces coverage. P22 shows that synthetic/static-analysis-based data can improve coverage but may introduce contradictions. P23 shows that not all human references should be weighted equally: reviewer experience affects likely usefulness. P25 shows raw comments are too sparse for comprehensible ACR and need logic-rich curation. P26 shows real-world agent/human comments differ radically in verbosity, scope, and adoption.
 
-**Implication for us:** Evaluation must model reference completeness, reference clarity, annotation reliability, multiple-valid-comment cases, noisy labels, category/location ground truth, and the risk that a “human reference” is realistic but not necessarily complete, correct, useful, or learnable.
+**Implication for us:** Evaluation must model reference completeness, provenance, clarity, annotation reliability, multiple-valid-comment cases, reviewer expertise, and workflow origin.
 
-### 4. Taxonomy should combine harmfulness, usefulness, type, severity, and actionability
+### 4. Taxonomy should combine harmfulness, usefulness, type, severity, and workflow effect
 
-P02 contributes hallucination/context-misalignment. P08/P18 contribute noisy, vague, irrelevant, unclear, uncivil, verbose, and non-actionable comments. P10 contributes hallucinated, technically correct but superfluous, redundant, and low-value production comments. P17 contributes unfaithful benchmark/comment cases. P19 contributes a 17-category taxonomy linked to practitioner usefulness. P20 adds generic high-frequency comments and low-frequency-token omissions. P21 adds security-specific categories: false-positive CWE reports, false negatives, wrong-location security comments, misleading security comments, and severity-prioritization errors.
+The taxonomy should include hallucination, irrelevance, vagueness, non-actionability, wrong location, wrong category, redundancy, severity miscalibration, uncivil/unclear comments, generic high-frequency output, low-frequency-token omission, confused questions, hybrid contradictions, non-actionable reward cases, missing explanation, missing repair suggestion, verbose/narrow AI-agent feedback, incorrect AI code suggestions, and complexity-increasing adopted suggestions.
 
-**Implication for us:** The final problematic-comment taxonomy should not be only a hallucination taxonomy. It should include correctness, grounding, relevance, specificity, actionability, usefulness, severity, civility, redundancy, location quality, category quality, and category-level priority.
+**Implication for us:** The final problematic-comment taxonomy should not be only about hallucination. It must cover comment content, grounding, usefulness, actionability, structure, social/workflow effects, and downstream code impact.
 
 ### 5. Mitigation strategies should be compared as trade-off choices
 
-Across the papers, mitigation strategies include diff-aware pre-training (P14), PEFT (P15), hallucination detection (P02), data cleaning/reformulation (P08/P18), RAG and retrieval exemplars (P11/P16/P20), LLM-as-a-Judge filtering (P07/P10/P18), RuleChecker/ReviewFilter (P10), multi-agent review (P09), specification grounding (P12), semantic metadata (P13), comprehension probes (P17), taxonomy/classification/prioritization (P19), and mixture-of-prompts routing (P21). These strategies optimize different things and introduce different risks.
+The papers now cover many mitigation families: diff-aware pre-training, PEFT, hallucination detection, data cleaning/reformulation, RAG, LLM-as-a-Judge filtering, rule checking, multi-agent review, specification grounding, semantic metadata, comprehension probes, taxonomy/classification, mixture-of-prompts routing, static-analyzer hybrids, reviewer-experience weighting, RL rewards, CoT fine-tuning, and human-AI workflow oversight.
 
-**Implication for us:** The trade-off matrix should compare what each strategy reduces, what useful feedback it may suppress, what it costs, and which new failure modes it introduces: context collapse, retrieval distraction, checklist fixation, prompt sensitivity, poor transfer, over-normalized comments, category error propagation, routing false negatives, and judge bias.
+**Implication for us:** The trade-off matrix should compare what each strategy reduces, what useful feedback it may suppress, what it costs, and what new failure modes it introduces.
 
 ### 6. Useful-feedback preservation is still under-measured
 
-P10 explicitly prioritizes precision over recall to protect trust. P11 reports LLM filtering can remove high-quality samples. P18 filters low-relevance comments and reformulates comments, which improves clarity but may alter intent. P20 shows retrieved exemplars improve rare-token coverage but are limited by token budget. P12’s specification verification can suppress useful but undocumented issues. P17’s strict cleaning improves benchmark reliability but reduces coverage to 900 examples. P21 routes only selected prompt experts to reduce false positives, but this can miss security issues when routing fails.
+Many methods reduce harmful comments or improve metrics, but few report what useful feedback is lost. P10/P21 optimize precision/routing and may miss issues. P11/P18/P25 clean or restructure data and may remove context-dependent signals. P22 shows DAT/RAG/NCO can improve coverage but may introduce contradictions. P23 weights experienced reviewers but may down-weight useful novice perspectives. P24 rewards downstream refinability, but may prefer comments easy for the model rather than comments best for humans. P26 shows AI suggestions can be adopted but still increase complexity.
 
-**Implication for us:** Every filter, cleaner, verifier, retriever, router, or curation step should report not only harmful-comment reduction but also useful-feedback preservation, ideally severity-weighted and value-weighted.
+**Implication for us:** Every filter, cleaner, retriever, router, reward, judge, or workflow policy should report harmful-comment reduction and useful-feedback preservation separately.
 
-### 7. Human feedback, LLM-as-a-Judge, and production telemetry are all useful but imperfect
+### 7. Human feedback, LLM judges, and telemetry are complementary but imperfect
 
-P03/P07/P10/P12/P21 provide workflow-facing signals. P16 and P18 calibrate LLM-as-a-Judge with human experts. P17 uses manual curation and contamination-aware probes. P11 introduces Uncertain when humans lack project context. P19 relies on expert labels with moderate agreement. P21 combines manual I/H/M/U inspection with production acceptance rates. These are stronger than pure lexical metrics, but each has construct-validity limits.
+P03/P07/P10/P12/P21/P26 provide production or workflow signals. P16/P18/P22/P24 calibrate LLM judges against humans. P17/P23/P25 use manual evaluation for cleaner diagnostic dimensions. These signals capture different constructs and cannot replace one another. Adoption, acceptance, Outdated Rate, LLM-judge usefulness, issue F1, location accuracy, and code-metric deltas each have different proxy-validity limitations.
 
-**Implication for us:** Human labels, LLM-judge scores, adoption, acceptance rate, Outdated Rate, direct acceptance, EM, BLEU, and benchmark issue coverage should be treated as complementary evidence, not interchangeable ground truth.
+**Implication for us:** The framework should explicitly classify evidence types and state what each can and cannot prove.
 
-### 8. Resource constraints shape what evaluation means
+### 8. Structured review output is becoming essential
 
-P14 required large-scale pre-training; P15 and P13 respond with LoRA/QLoRA and prompting; P16 uses open-weight model routing; P20 adds retrieval infrastructure and token-budget constraints; P12 uses ensembles and specification retrieval; P10 reports latency/cost-like production constraints. P21 uses prompt routing partly to avoid unnecessary prompt expert calls, but does not fully quantify cost/latency. Resource constraints affect not only feasibility but also quality because they determine context length, model size, retrieval depth, routing policy, expert activation, and human review burden.
+P21 defines secure review as category + location + comment. P25 defines comprehensible review as issue detection + location + explanation + repair suggestion. P17 decomposes comprehension into change type, localization, and solution identification. P26 shows that suggestions should also be evaluated by adoption and code-quality impact.
 
-**Implication for us:** The framework should include quality-per-cost, quality-per-token, quality-per-latency, and quality-per-human-attention dimensions.
+**Implication for us:** Evaluation should not treat review comments as a single text string. It should evaluate structured subclaims and outputs separately.
 
-### 9. Secure code review needs category and location, not only comments
+### 9. Human-AI workflow is now part of code-review evaluation
 
-P21 formalizes secure code review as `program -> (category, location, comment)`. This is different from generic review comment generation because it allows more objective evaluation of issue identification and localization. It also exposes a problem seen in many LLM review systems: a model may identify a plausible issue but report the wrong CWE, wrong line, or misleading explanation.
+P26 shows that AI agents are scalable but verbose, narrow, less interactive, and lower-adoption than humans. Human reviewers provide understanding, testing, knowledge transfer, and final judgment. AI suggestions are adopted less often and, when adopted, can increase complexity and code size more than human suggestions.
 
-**Implication for us:** Our evaluation framework should include structured-output dimensions for security and defect-focused review: category correctness, location correctness, severity calibration, and comment helpfulness should be measured separately.
+**Implication for us:** A trade-off-aware framework must include reviewer attention, verbosity, interaction rounds, human-final-response need, suggestion adoption, and code-quality deltas.
 
 ## Emerging Gap Statement
 
-The first twenty-one papers show that the field is improving its evaluation of LLM-based code review: from diff-aware pre-training and BLEU-plus-human evaluation to richer rubrics, hallucination detection, PR-level benchmarks, enriched/full context, live user studies, noisy-data cleaning, multi-agent systems, production filters, RAG, specification grounding, PEFT, semantic metadata, comprehension probes, curated references, usefulness-linked taxonomies, retrieval-augmented generation, and secure-review mixture-of-prompts routing. However, they still do not provide a unified framework that jointly evaluates:
+The first twenty-six papers show that the field is improving its evaluation of LLM-based code review: from diff-aware pre-training and BLEU-plus-human evaluation to richer rubrics, hallucination detection, PR-level benchmarks, context enrichment, live studies, data cleaning, multi-agent systems, production filters, RAG, specification grounding, PEFT, semantic metadata, comprehension probes, curated references, usefulness-linked taxonomies, secure-review routing, static-analyzer hybrids, reviewer-experience weighting, reward-guided generation, comprehensible ACR, and agentic human-AI workflow analysis. However, they still do not provide a unified framework that jointly evaluates:
 
 - context quality, context granularity, and model-capacity fit,
-- retrieval quality, exemplar quality, and pair-vs-singleton design,
-- feature-grounded routing quality,
-- semantic-metadata quality,
-- specification quality,
-- reference/comment/data quality,
-- problematic comment types and usefulness-linked categories,
-- hallucination, grounding, severity calibration, false positives, and false negatives,
-- category correctness and location correctness,
-- traceability and explanation clarity,
-- comprehension steps such as change type, localization, and solution identification,
-- issue coverage and benchmark ground truth,
-- multi-reviewer and multi-perspective feedback loss,
-- actionability, usefulness, relevance, information value, readability, clarity, conciseness, civility, sufficiency, operability, acceptance, adoption, uncertainty, trust, and downstream impact,
-- useful-feedback preservation under filtering, cleaning, reformulation, routing, aggregation, rule blocking, retrieval, prompt augmentation, pre-training, fine-tuning, specification verification, or multi-agent generation,
-- severity-weighted missed issues,
-- human annotation, LLM-as-a-Judge, user-study, and production-telemetry validity,
-- proxy-validity limits of BLEU, BERTScore, ROUGE, EM, CodeBLEU, LLM-judge scores, Outdated Rate, acceptance rate, and adoption rate,
-- cost, token budget, latency, training cost, API cost, routing cost, expert-maintenance cost, reviewer overhead, retention, specification maintenance, and workflow impact.
+- retrieval quality, exemplar quality, and static-analysis context quality,
+- feature-grounded routing and prompt-expert maintenance,
+- semantic-metadata quality and specification quality,
+- reference/comment/data quality and reviewer-experience provenance,
+- hallucination, grounding, false positives, false negatives, severity calibration, category correctness, and location correctness,
+- traceability, explanation clarity, issue detection, localization, repair suggestion, and downstream refinability,
+- usefulness, relevance, information value, clarity, conciseness, civility, applicability, semantic equivalence, acceptance, adoption, uncertainty, trust, and workflow impact,
+- useful-feedback preservation under filtering, cleaning, reformulation, routing, aggregation, static-analysis hybridization, reward optimization, specification verification, or agentic review,
+- human annotation, LLM-as-a-Judge, user-study, production-telemetry, and code-metric validity,
+- proxy-validity limits of BLEU, BERTScore, ROUGE, EM, CodeBLEU, LLM-judge scores, Outdated Rate, acceptance rate, adoption rate, and code metric deltas,
+- cost, token budget, latency, training cost, API cost, routing cost, reward-model cost, expert-maintenance cost, reviewer overhead, retention, and human-AI interaction cost.
 
 ## Working Contribution Direction
 
-A promising contribution is a **taxonomy and trade-off-aware evaluation framework** for LLM-generated code review comments, with special emphasis on context quality, retrieval quality, reference quality, semantic-metadata quality, specification quality, feature-routing quality, human-centered value, traceability, explanation clarity, problematic-comment types, useful-feedback preservation, uncertainty, proxy-validity analysis, and the consequences of filtering, cleaning, prompting, fine-tuning, pre-training, retrieving, routing, verifying, aggregating, suppressing, blocking, or expanding generated comments.
+A promising contribution is a **taxonomy and trade-off-aware evaluation framework** for LLM-generated code review comments, with special emphasis on context quality, retrieval/static-analysis/specification quality, reference provenance, reviewer experience, structured review outputs, downstream usefulness, traceability, problematic-comment types, useful-feedback preservation, proxy-validity analysis, and the consequences of filtering, cleaning, prompting, fine-tuning, pre-training, retrieving, routing, rewarding, verifying, aggregating, suppressing, blocking, or expanding generated comments.
 
 ## Paper-to-Argument Mapping
 
 | Argument Need | Best Supporting Papers | Notes |
 |---|---|---|
-| Text similarity is insufficient | P14, P01, P11, P13, P16, P17, P18, P20, P21, P03, P07, P10, P12 | P21 adds I/H/M/U and acceptance for secure review. |
-| Context quality matters | P14, P04, P05, P06, P10, P11, P12, P13, P16, P17, P20, P21 | P21 is strongest for feature-grounded prompt routing. |
-| Retrieval/routing quality matters | P11, P16, P20, P21, P12, P13, P07 | P21 adds prompt-expert routing for security. |
-| Data/reference quality matters | P14, P08, P18, P17, P11, P19, P20, P21, P06 | P21 adds developer-confirmed positive/benign security samples. |
-| Taxonomy/usefulness categories matter | P19, P21, P18, P10, P08, P02, P17, P20 | P21 adds CWE/security category and location dimensions. |
-| Hallucination and grounding matter | P02, P10, P12, P16, P21, P11, P20 | P21 directly targets hallucinated CWE false positives. |
-| Comprehension/localization should be decomposed | P17, P21, P05, P06, P11 | P21 measures security issue localization. |
-| LLM-as-a-Judge needs calibration | P16, P18, P11, P10 | P21 uses human inspection, not LLM-as-judge. |
-| Resource-aware evaluation matters | P14, P15, P13, P16, P20, P21, P10, P12 | P21 implies routing cost benefits but lacks detailed cost metrics. |
-| Useful-feedback preservation is missing | P10, P11, P18, P17, P12, P20, P21, P02, P08 | P21 highlights routing false-negative risk. |
-| Production/workflow value needs proxy-validity analysis | P03, P07, P10, P12, P21, P16 | P21 adds acceptance rates in production lines. |
+| Text similarity is insufficient | P14, P01, P11, P13, P16, P17, P18, P20, P21, P22, P23, P24, P25, P26 | P23/P24/P25/P26 add applicability, downstream reward, clarity, and adoption/code-impact evidence. |
+| Context quality matters | P14, P04, P05, P06, P10, P11, P12, P13, P16, P17, P20, P21, P22, P25, P26 | P22 adds static-analysis context; P25 structured reasoning context; P26 socio-technical context. |
+| Data/reference quality matters | P14, P08, P18, P17, P11, P19, P20, P21, P22, P23, P25, P26 | P23 adds reviewer experience; P25 adds CoT data curation. |
+| Taxonomy/usefulness categories matter | P19, P21, P18, P10, P08, P02, P17, P20, P23, P25, P26 | P26 adds agentic suggestion failures and workflow effects. |
+| Hybrid mitigation needs trade-off analysis | P22, P10, P21, P11, P12, P16, P20 | P22 directly compares DAT/RAG/NCO. |
+| Downstream usefulness matters | P24, P25, P26, P07, P10, P20 | P24 uses refinement reward; P26 measures adoption and code metrics. |
+| Comprehensibility should be decomposed | P25, P17, P21, P23 | P25 gives detection/localization/explanation/repair decomposition. |
+| LLM-as-a-Judge needs calibration | P16, P18, P22, P24, P11, P10 | P22/P24 add calibrated judge use. |
+| Resource-aware evaluation matters | P14, P15, P13, P16, P20, P21, P22, P24, P25, P26 | P24 adds RL/reward cost; P26 adds human attention/interaction cost. |
+| Human-AI workflow matters | P26, P07, P03, P10, P12, P21 | P26 is strongest for interaction patterns and code-quality impact. |
+| Useful-feedback preservation is missing | P10, P11, P18, P17, P12, P20, P21, P22, P23, P24, P25, P26 | Most papers optimize one side of the trade-off without measuring useful lost feedback. |
 
 ## Tensions Worth Highlighting
 
 ### Context tension
 
-- **P14:** Diff hunks and diff tags are tractable but lose broader context.
 - **P04:** More context can degrade review performance.
-- **P05:** Full project context is necessary for realistic review.
-- **P11/P20:** Retrieved exemplars help, especially when paired with code.
+- **P11/P20:** Retrieved exemplars help when relevant and structured.
 - **P13:** Call graphs can help, summaries can hurt.
-- **P16:** Larger/specialized models benefit from retrieval, smaller models can collapse under context.
-- **P17:** Even available hunk/comment context may be insufficient for change type, localization, or solution reasoning.
-- **P21:** Routing to fewer relevant prompt experts reduces false positives, but wrong routing can miss security issues.
+- **P16:** Smaller models can collapse under retrieval context.
+- **P21:** Routing reduces false positives but can miss relevant security experts.
+- **P22:** Static-analyzer output helps through RAG but post-hoc concatenation can conflict.
+- **P25:** Structured CoT context improves clarity but may be rigid.
+- **P26:** Missing project/social context lowers AI suggestion adoption.
 
 ### Usefulness tension
 
-- **P14:** Information/relevance improve over BLEU but still miss correctness/actionability.
 - **P07:** Non-accepted comments may still be valuable.
 - **P10:** Technically correct comments may be practically superfluous.
-- **P11/P21:** Comments can be instrumental, helpful, misleading, or uncertain.
-- **P12:** Adoption is not automatically correctness.
-- **P18:** Clearer/civil comments are easier to learn from, but reformulation may alter intent.
-- **P20:** Exact match can miss semantically equivalent or alternative useful comments.
+- **P23:** Experienced-reviewer weighting improves applicability but does not make references absolute truth.
+- **P24:** Comments useful for refinement models may not perfectly match human usefulness.
+- **P25:** Clear comments require structure, but clarity labels are coarse.
+- **P26:** Adopted AI suggestions may still increase complexity more than human suggestions.
 
 ### Mitigation tension
 
-- **P15:** PEFT lowers adaptation cost but remains benchmark/metric-limited.
-- **P16:** Routing improves average quality but adds categorization and operational complexity.
-- **P18:** Curation improves downstream performance but can over-normalize or alter comments.
-- **P20:** RAG improves rare-token coverage but adds retrieval infrastructure and token-budget trade-offs.
-- **P12:** Specification grounding improves trust but depends on specification coverage and maintenance.
-- **P21:** Mixture-of-prompts improves security coverage and precision but requires prompt expert maintenance and routing correctness.
+- **P22:** DAT/RAG/NCO represent different static-analysis integration points with different risks.
+- **P23:** Weighting by reviewer experience improves quality but may suppress useful low-experience perspectives.
+- **P24:** Reward optimization improves target metrics but can be reward-model-dependent.
+- **P25:** CoT curation improves comprehensibility but introduces ChatGPT-generated artifacts.
+- **P26:** AI agents scale review but still need human oversight for project context and final judgment.
 
 ### Ground truth tension
 
-- **P14:** Earliest-comment references are realistic but incomplete.
-- **P17:** Strict curation improves reliability but reduces benchmark coverage.
-- **P18:** LLM-curated references may be clearer but less faithful to original human intent.
-- **P19:** Taxonomy labels are useful but annotation ambiguity remains.
-- **P20:** BLEU/EM ground truth misses semantically equivalent and alternative solutions.
-- **P21:** Security category/location labels improve objectivity, but private internal data limits reproducibility.
+- **P14:** Earliest-comment references are incomplete.
+- **P18/P25:** LLM-curated references may be clearer but may change intent.
+- **P23:** Human reference quality depends on reviewer experience.
+- **P24:** Reward models define usefulness through proxies.
+- **P26:** Suggestion adoption and code metrics are strong workflow signals but still not full semantic correctness.
 
 ## Update Rule
 
