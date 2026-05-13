@@ -33,6 +33,11 @@
 | P29 | Can LLMs Replace Human Evaluators? | High | First pass completed from PDF; needs citation/BibTeX cleanup | LLM-as-a-judge validity in SE; task dependence; pairwise instability; verbosity/order bias |
 | P30 | CodeUltraFeedback | Medium / High | First pass completed from PDF; needs citation/BibTeX cleanup | Coding preferences; LLM-as-a-judge preference data; SFT/DPO alignment; judge-selection sensitivity |
 | P31 | CodeJudgeBench | High | First pass completed from PDF; needs citation/BibTeX cleanup | Coding-task judge benchmark; thinking judges; position bias; source-model/preprocessing sensitivity |
+| P32 | Bias in the Loop | High | First pass completed from PDF; needs citation/BibTeX cleanup | SE-specific LLM-as-judge bias audit; prompt perturbation; answer rate; A/B swap; consistency |
+| P33 | LLM-as-a-Judge for Software Engineering Survey | High | First pass completed from PDF; needs citation/BibTeX cleanup | SE-specific judge survey; lifecycle artifact taxonomy; uncertainty/preferences; roadmap |
+| P34 | From Code to Courtroom | Medium / High | First pass completed from PDF; needs citation/BibTeX cleanup | Early SE 2030 LLM-as-judge vision; strict judge definition; concise roadmap |
+| P35 | LLM Critics Help Catch LLM Bugs | High | First pass completed from PDF; needs citation/BibTeX cleanup | Critic-assisted human oversight; CBI/comprehensiveness; hallucinated bugs/nitpicks; FSBS trade-off |
+| P36 | LLMs-as-Judges Comprehensive Survey | Medium / High | First pass completed from PDF; needs citation/BibTeX cleanup | General LLM-as-judge taxonomy; bias taxonomy; adversarial attacks; meta-evaluation metrics |
 
 ## Working Rule
 
@@ -40,8 +45,7 @@ Keep this file aligned with the spreadsheet, but use the Markdown files as the m
 
 ## Next Reading Candidates
 
-- P32 — Bias in the Loop: Auditing LLM-as-a-Judge for Software Engineering.
-- P33 — LLM-as-a-Judge for Software Engineering: Literature Review, Vision, and the Road Ahead.
-- P34 — From Code to Courtroom: LLMs as the New Software Judges.
-- P35 — LLM Critics Help Catch LLM Bugs.
-- P37–P39 — foundational modern code review and usefulness papers.
+- P37 — Expectations, Outcomes, and Challenges of Modern Code Review.
+- P38 — Modern Code Review: A Case Study at Google.
+- P39 — Characteristics of Useful Code Reviews: An Empirical Study at Microsoft.
+- P40–P41 — next foundational code review / review usefulness papers from the spreadsheet.
