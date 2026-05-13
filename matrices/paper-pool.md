@@ -22,6 +22,7 @@
 | P18 | Harnessing LLMs for Curated Code Reviews | Medium / High | First pass completed from PDF; needs citation/BibTeX cleanup | Data curation; relevance/clarity/conciseness/civility; LLM-as-judge calibration; downstream gains |
 | P19 | Fine-Grained Review Comment Classification | Low / Medium | First pass completed from PDF; needs venue/DOI verification | 17-category taxonomy; usefulness-linked categories; LLM classification; code-context and class-imbalance trade-offs |
 | P20 | RAG-Reviewer | Medium / High | First pass completed from PDF; needs citation/BibTeX cleanup | Retrieval-augmented comment generation; pair vs singleton exemplars; low-frequency-token coverage; k/token-budget trade-offs |
+| P21 | iCodeReviewer | High | First pass completed from PDF; needs citation/BibTeX cleanup | Secure code review; mixture-of-prompts; prompt expert routing; CWE category/location; I/H/M/U; production acceptance |
 
 ## Working Rule
 
@@ -29,7 +30,6 @@ Keep this file aligned with the spreadsheet, but use the Markdown files as the m
 
 ## Next Reading Candidates
 
-- P21 — iCodeReviewer: Improving Secure Code Review with Mixture of Prompts.
 - P22 — Combining Large Language Models with Static Analyzers for Code Review Generation.
 - Papers on LLM-as-a-judge reliability and bias for software engineering evaluation.
 - Additional industrial deployment studies beyond Atlassian, Mozilla/Ubisoft, ByteDance, and SGCR.
