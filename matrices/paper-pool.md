@@ -23,6 +23,11 @@
 | P19 | Fine-Grained Review Comment Classification | Low / Medium | First pass completed from PDF; needs venue/DOI verification | 17-category taxonomy; usefulness-linked categories; LLM classification; code-context and class-imbalance trade-offs |
 | P20 | RAG-Reviewer | Medium / High | First pass completed from PDF; needs citation/BibTeX cleanup | Retrieval-augmented comment generation; pair vs singleton exemplars; low-frequency-token coverage; k/token-budget trade-offs |
 | P21 | iCodeReviewer | High | First pass completed from PDF; needs citation/BibTeX cleanup | Secure code review; mixture-of-prompts; prompt expert routing; CWE category/location; I/H/M/U; production acceptance |
+| P22 | Combining LLMs with Static Analyzers | High | First pass completed from PDF; needs citation/BibTeX cleanup | Static analyzer + LLM hybrid review; DAT/RAG/NCO; accuracy/coverage trade-offs; LLM-as-judge calibration |
+| P23 | Leveraging Reviewer Experience | High | First pass completed from PDF; needs citation/BibTeX cleanup | Reviewer experience as data-quality signal; ELF; applicability; informativeness; issue-type usefulness |
+| P24 | Reward Models for Code Review Comment Generation | Medium / High | First pass completed from PDF; needs citation/BibTeX cleanup | RL/reward-guided comment generation; semantic reward; downstream code-refinement reward; LLM-as-judge usefulness |
+| P25 | Carllm | High | First pass completed from PDF; needs citation/BibTeX cleanup | Comprehensible ACR; issue detection/localization/explanation/repair suggestion; CoT data curation; balanced loss |
+| P26 | Human-AI Synergy in Agentic Code Review | High | First pass completed from PDF; needs citation/BibTeX cleanup | Human-vs-AI agent review; feedback diversity; interaction patterns; suggestion adoption; code-quality impact |
 
 ## Working Rule
 
@@ -30,7 +35,8 @@ Keep this file aligned with the spreadsheet, but use the Markdown files as the m
 
 ## Next Reading Candidates
 
-- P22 — Combining Large Language Models with Static Analyzers for Code Review Generation.
+- P27 — next paper from Paper Pool.
+- P28 — Support, Not Automation: Towards AI-supported Code Review for Code Quality and Beyond.
+- P29 — Can LLMs Replace Human Evaluators? An Empirical Study of LLM-as-a-Judge in Software Engineering.
 - Papers on LLM-as-a-judge reliability and bias for software engineering evaluation.
-- Additional industrial deployment studies beyond Atlassian, Mozilla/Ubisoft, ByteDance, and SGCR.
-- Papers on data cleaning, noisy labels, and dataset quality for code review generation.
+- Additional industrial deployment studies beyond Atlassian, Mozilla/Ubisoft, ByteDance, SGCR, and agentic GitHub review.
