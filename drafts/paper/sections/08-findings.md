@@ -1,25 +1,41 @@
 # Findings
 
-TODO: Write after the illustrative annotation study.
+This section will report the empirical findings after the mitigation strategies are implemented and annotated. It should present a small number of concrete, evidence-backed observations rather than a long list of descriptive statistics. The findings should be organized around trade-offs: which failure types are reduced, which useful comments are preserved or lost, and what cost or human effort is introduced.
 
-This section should report a small number of concrete insights, not a long list of observations.
+The final findings must be based on the annotated empirical sample. Until the study is run, the following are hypotheses and planned analysis targets rather than results.
 
-Candidate findings to test:
+## Finding 1: Mitigation Strategies Reduce Different Failure Types
 
-## Finding 1: Verification and Cost
+The first expected finding concerns failure-type specificity. Robust prompting, context-quality gates, post-generation verification, and hybrid designs are unlikely to reduce the same categories of problematic comments equally.
 
-Post-generation verification may reduce unsupported or hallucinated comments, but this improvement can come with higher computational or operational cost.
+For example, robust prompting may reduce vague or non-actionable comments, while post-generation verification may be more effective for unsupported or technically incorrect claims. A context-quality gate may be most useful for comments that cannot be judged because the available context is incomplete or inconsistent. The final analysis should report these differences in a strategy-by-failure-type table.
 
-## Finding 2: Context Quality and Failure Type
+## Finding 2: Error Reduction Can Hide Useful-Feedback Loss
 
-Context-quality gates may be more effective for context-dependent failures than for low-value or non-actionable comments.
+A strategy that suppresses many comments may reduce the apparent rate of problematic comments while also removing useful feedback. This finding is central to the paper. The empirical results should therefore report useful comments retained, useful comments wrongly suppressed, and useful-but-not-directly-acceptable comments that would be better rewritten than removed.
 
-## Finding 3: Error Reduction and Utility
+The strongest version of this finding would show that a strategy with the best error-reduction score is not necessarily best under preservation and coverage metrics.
 
-Reducing problematic comments does not necessarily improve review utility if useful comments are also suppressed or review coverage decreases.
+## Finding 3: Context Quality Changes Mitigation Behavior
 
-## Finding 4: Useful but Not Directly Acceptable Comments
+Context quality is expected to moderate mitigation success. Low-context or inconsistent-context instances may lead to more unsupported, context-dependent, or hard-to-judge comments. In such cases, a context-quality gate may reduce risky comments but also lower automatic review coverage.
 
-Some comments may not be directly acceptable as review comments but still provide useful signals for human reviewers.
+The final results should compare high-context and low-context instances when feasible and report whether different strategies behave differently across these groups.
 
-Final findings should be based on annotated evidence, not only literature synthesis.
+## Finding 4: Hybrid Mitigation May Improve Safety but Increase Cost
+
+A hybrid gate-plus-verifier strategy may reduce complementary failure types, but it may also add model calls, increase latency, raise the human escalation rate, or suppress more useful comments. The paper should not assume the hybrid strategy is best. It should evaluate whether the hybrid improves the trade-off profile compared with its individual components.
+
+## Finding 5: Rewrite and Escalate Decisions Capture a Gray Zone
+
+Binary show/suppress decisions may miss comments that contain useful signals but are not safe or clear enough to show directly. The empirical results should therefore report rewrite and escalation rates. These decisions are important because they show when mitigation should preserve a comment in modified form or route it to a human rather than simply deleting it.
+
+## Reporting Principles
+
+Each finding should include three elements:
+
+1. a quantitative summary from the annotated sample;
+2. one or more representative examples;
+3. an interpretation of the trade-off and its implication for LLM-based code review tools.
+
+The section should avoid overclaiming. If the sample is small, findings should be described as exploratory but still useful for designing larger evaluations.
