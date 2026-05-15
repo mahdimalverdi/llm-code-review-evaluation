@@ -1,14 +1,33 @@
 # Research Gap
 
 > [!NOTE]
-> This file collects the emerging research gap from the paper notes. It should become the basis for the introduction, related-work critique, contribution statement, and methodology. Citations use keys from `references/references.bib`.
+> This file defines the research gap that motivates the paper. It is aligned with `synthesis/core-claim.md` and `docs/research-roadmap.md`. The paper should be framed as a focused evidence synthesis and trade-off-aware evaluation framework, not as a comparison of several mitigation strategies.
+
+## Core Positioning
+
+Current evaluations of LLM-generated code review comments are fragmented. Prior work has studied important parts of the problem, including quality metrics, hallucination detection, PR-level benchmarks, context enrichment, production signals, data curation, human-centered usefulness, and LLM-as-a-Judge validity. However, these strands are usually evaluated separately.
+
+The central gap is not that the literature lacks another model comparison or another benchmark. The central gap is that current evaluations rarely connect:
+
+```text
+problematic comment type
++ context quality
++ generated comment quality
++ useful-feedback preservation
++ review coverage
++ human and computational cost
++ evaluator validity
++ mitigation decision
+```
+
+This project addresses that gap by developing an operational taxonomy of problematic comments and a multi-dimensional, trade-off-aware evaluation framework, supported by a small annotated evidence layer.
 
 ## Current Literature Movement
 
 The analyzed papers show a clear movement in LLM-based code review evaluation.
 
 1. **From lexical similarity to quality rubrics**  
-   Early code review generation work and later evaluation papers show that BLEU/ROUGE-like metrics are weak for review comments because valid review comments are diverse, context-dependent, and often not lexically similar to a single human reference [@p14_li2022_codereviewer; @p01_lu2025_deepcrceval].
+   Early code review generation work and later evaluation papers show that BLEU/ROUGE-like metrics are weak for review comments because valid comments are diverse, context-dependent, and often not lexically similar to a single human reference [@p14_li2022_codereviewer; @p01_lu2025_deepcrceval].
 
 2. **From generated text to grounded claims**  
    Hallucination and context-misalignment work reframes review-comment quality as a grounding problem: a generated comment should be traceable to the diff, PR context, specification, static-analysis output, or another explicit evidence source [@p02_tantithamthavorn2026_hallujudge; @p12_wang2025_sgcr; @p22_jaoua2025_static_analyzers].
@@ -28,26 +47,23 @@ The analyzed papers show a clear movement in LLM-based code review evaluation.
 7. **From general review to specialized sublayers**  
    Security review, static-analysis-guided code-quality repair, documentation-behavior consistency, and non-functional efficiency evaluation each introduce additional dimensions that should not be collapsed into a single generic quality score [@p21_peng2025_icodereviewer; @p46_zhou2025_vulnerability_repair; @p48_patcas2026_code_quality_issues; @p49_lee2025_metamon; @p50_peng2025_coffe].
 
-## Core Gap
+## Main Research Gap
 
-Recent work improves evaluation along many dimensions, but these dimensions remain fragmented. Existing studies do not yet provide a unified framework that jointly evaluates:
+Recent work improves evaluation along several dimensions, but these dimensions remain fragmented. Existing studies do not yet provide a unified framework that jointly evaluates:
 
 - **generated-comment quality**, including correctness, relevance, specificity, grounding, actionability, explanation quality, and usefulness;
 - **context quality**, including relevance, completeness, specificity, consistency, groundability, freshness, reviewability, provenance, behavioral evidence, attention load, and cost;
 - **reference and data quality**, including noisy human comments, reviewer expertise, reference incompleteness, multiple-valid-comment cases, and AI-generated reference/provenance risk;
 - **problematic comment types**, instead of only aggregate model scores;
-- **grounding and hallucination**, without reducing the whole problem to hallucination detection;
-- **actionability and practical usefulness**, without collapsing them into correctness or semantic similarity;
-- **acceptance and perceived value**, without treating direct acceptance as the only signal of usefulness;
-- **preservation of useful feedback**, especially when filters, gates, judges, retrieval, or aggregation strategies are applied;
-- **false-positive and false-negative consequences** of automated quality gates;
-- **human annotation, user-study, and judge validity**, including expertise, uncertainty, disagreement, agreement reporting, prompt sensitivity, order bias, and evaluator calibration;
-- **cost, latency, reviewer overhead, escalation, and workflow impact** in realistic review settings;
-- **specialized layers** for secure review, static-analysis-guided review, repair validation, context consistency, and non-functional quality claims.
+- **useful-feedback preservation**, especially when filters, gates, judges, retrieval, or aggregation strategies are applied;
+- **review coverage**, including whether mitigation strategies suppress or miss issues that human reviewers would consider valuable;
+- **cost and workflow impact**, including computational cost, reviewer effort, escalation burden, latency, and socio-technical review value;
+- **evaluator validity**, including LLM judge bias, prompt sensitivity, order effects, answer rate, human disagreement, and calibration;
+- **specialized evaluation layers** for secure review, static-analysis-guided review, repair validation, context consistency, and non-functional quality claims.
 
 ## Why the Gap Matters
 
-A code review assistant can fail in several different ways that are easy to collapse under a single “quality” score:
+A code review assistant can fail in different ways that are easy to collapse under a single quality score:
 
 - It can produce a hallucinated comment.
 - It can produce a technically grounded but useless comment.
@@ -64,15 +80,15 @@ A code review assistant can fail in several different ways that are easy to coll
 - It can reduce visible noise while hiding the cost of wrong removals.
 - It can be judged by an LLM evaluator whose score is biased, unstable, or under-calibrated.
 
-These failures imply that evaluation should not only ask whether a generated comment is good. It should also ask what kind of failure occurred, what caused it, what evidence supports the judgment, and what trade-off a mitigation strategy introduces.
+These failures imply that evaluation should not only ask whether a generated comment is good. It should also ask what kind of failure occurred, what evidence supports the judgment, whether useful feedback is preserved, what cost is introduced, and how reliable the evaluator is.
 
-## Candidate Research Problem
+## Revised Research Problem
 
-Current LLM-based code review evaluation lacks a trade-off-aware framework for assessing generated review comments under varying context quality, reference quality, problematic comment types, evaluator validity, and filtering/gating decisions.
+Current LLM-based code review evaluation lacks a trade-off-aware framework for assessing generated review comments under varying context quality, reference quality, problematic comment types, evaluator validity, and filtering or gating decisions.
 
 More specifically, current work lacks a systematic way to answer:
 
-- Which problematic comment types occur in LLM-generated code review?
+- Which problematic comment types occur in LLM-generated code review, and how can they be annotated reliably?
 - Which failures are caused or amplified by poor context quality or low reviewability?
 - How should we evaluate comments that are grounded but low-value?
 - How should we evaluate comments that are useful but not directly accepted?
@@ -81,32 +97,35 @@ More specifically, current work lacks a systematic way to answer:
 - How should controlled annotation, benchmark issue coverage, live reviewer feedback, and LLM-as-a-Judge results be combined?
 - How should evaluator validity be reported when LLM judges are used as measurement instruments?
 
-## Research Questions
+## Revised Research Questions
 
 | RQ | Question | Expected Output |
 |---|---|---|
-| RQ1 | What types of problematic comments appear in LLM-generated code review? | Problematic-comment taxonomy |
-| RQ2 | How is context quality defined, used, or ignored in current LLM-based code review evaluation? | Context-quality model |
-| RQ3 | Which evaluation dimensions are covered or missing in current studies? | Evaluation-dimension matrix |
-| RQ4 | What trade-offs arise when generated review comments are filtered, gated, judged, aggregated, or enriched with context? | Trade-off matrix |
-| RQ5 | What should a trade-off-aware evaluation framework for LLM-generated code review comments include? | Final evaluation framework |
+| RQ1 | What types of problematic comments occur in LLM-generated code review, and how can they be operationally annotated? | Operational taxonomy and annotation guideline |
+| RQ2 | Which evaluation dimensions are needed to assess problematic comments beyond technical correctness? | Multi-dimensional evaluation matrix |
+| RQ3 | How do common mitigation strategies trade off error reduction against useful-feedback preservation, review coverage, human effort, and computational cost? | Trade-off framework and measurable trade-off dimensions |
+| RQ4 | How does context quality affect the occurrence, detection, and mitigation of problematic review comments? | Context-quality layer and context-failure analysis |
+| RQ5 | What framework can guide trade-off-aware evaluation of LLM-generated code review comments? | Final evaluation framework |
 
-## Possible Contribution
+## Intended Contribution
 
-A strong contribution direction is:
+The intended contribution is not a model comparison or a benchmark leaderboard. The paper should make four framework-oriented contributions.
 
-> A taxonomy and trade-off-aware evaluation framework for LLM-generated code review comments, with special attention to context quality, reference/provenance quality, evaluator validity, and the consequences of filtering, judging, aggregating, suppressing, rewriting, or escalating generated comments.
+### C1 — Operational Taxonomy
 
-This contribution can include:
+The paper develops an operational taxonomy of problematic LLM-generated code review comments. The taxonomy should include definitions, decision rules, examples, ambiguous cases, and links to evaluation dimensions. It should be usable for annotation rather than only conceptual discussion.
 
-- a taxonomy of problematic generated review comments;
-- a context-quality model for code review automation;
-- an evaluation matrix separating correctness, grounding, usefulness, actionability, explanation quality, acceptance, coverage, workflow impact, and cost;
-- a trade-off matrix for filtering/gating/judging/aggregation decisions;
-- a judge-validity checklist for LLM-as-a-Judge use in code review evaluation;
-- optional specialized sublayers for security, static-analysis/code-quality, context-consistency, and non-functional quality evaluation;
-- guidelines for human annotation, user-study design, agreement reporting, and useful-feedback preservation;
-- a mapping from current papers to missing evaluation dimensions.
+### C2 — Multi-Dimensional Evaluation Framework
+
+The paper proposes a framework for evaluating generated review comments across input/context quality, generated-comment quality, problematic-comment type, usefulness and actionability, mitigation decision, cost and workflow impact, and evaluator validity.
+
+### C3 — Annotation Protocol and Evidence Layer
+
+The paper adds a structured annotation protocol and a small annotated evidence layer. This layer should include transparent label definitions, a pilot annotation round, at least two annotators if feasible, inter-annotator agreement reporting, conflict resolution rules, and a reproducible sampling and generation setup.
+
+### C4 — Concrete Trade-off Findings
+
+The paper reports a small number of concrete insights about trade-offs, rather than only listing methods. Candidate findings include the cost of post-generation verification, the limits of context-quality gates, the difference between error reduction and review utility, and the gray zone of useful but non-directly-acceptable comments.
 
 ## What This Is Not
 
@@ -117,7 +136,8 @@ To avoid weak positioning, the contribution should **not** be framed as:
 - just another hallucination detector;
 - just another rubric like DeepCRCEval;
 - just another RAG/context expansion method;
-- just a generic survey of LLMs for software engineering.
+- a generic survey of LLMs for software engineering;
+- or a small empirical method-comparison paper whose main contribution is choosing a winning strategy.
 
 The stronger framing is that existing methods each cover one part of the evaluation problem, but the field still lacks a framework for reasoning about the trade-offs between quality, context, reference provenance, filtering, evaluator validity, cost, and developer value.
 
@@ -142,7 +162,7 @@ The stronger framing is that existing methods each cover one part of the evaluat
 
 ## Methodological Implication
 
-The method should be described as a **focused evidence synthesis**, not as a simple literature summary. The analysis pipeline is:
+The method should be described as a **focused evidence synthesis** with an added annotation layer, not as a simple literature summary. The analysis pipeline is:
 
 ```text
 Paper selection
@@ -152,13 +172,18 @@ Paper selection
   → extraction of context-quality dimensions
   → extraction of trade-offs
   → cross-paper synthesis
-  → taxonomy + framework + trade-off matrix
+  → operational taxonomy
+  → annotation guideline
+  → small annotated evidence layer
+  → final trade-off-aware framework
 ```
 
 ## Next Steps
 
-- [ ] Convert this gap into a concise introduction section.
-- [ ] Convert this gap into a related-work critique section.
-- [ ] Decide whether to include a small illustrative mini-validation.
-- [ ] Replace `TODO_PUBLISHER_BIBTEX` entries with official publisher-exported BibTeX.
+- [ ] Update `drafts/methodology.md` to include taxonomy construction, annotation protocol, and the small annotated evidence layer.
+- [ ] Create `method/annotation-guideline.md`.
+- [ ] Create `method/evaluation-schema.md`.
+- [ ] Create `synthesis/final-framework.md`.
+- [ ] Create `drafts/introduction.md`.
+- [ ] Replace core `TODO_PUBLISHER_BIBTEX` entries with official publisher-exported BibTeX.
 - [ ] Deep-read P39, P40, and P49 for stronger usefulness/context-quality framing.
