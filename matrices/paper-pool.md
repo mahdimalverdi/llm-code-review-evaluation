@@ -46,7 +46,7 @@
 | P42 | Developers Shared Conversations with ChatGPT in GitHub PRs/Issues | Low | First pass completed; needs PDF-level verification | Real developer use of ChatGPT in PR/issue collaboration; provenance and workflow context |
 | P43 | Survey on LLMs for Software Engineering | Medium | First pass completed; needs PDF-level verification | Broad LLM-for-SE positioning; task taxonomy; evaluation limitations |
 | P44 | Survey on LLMs for Code Generation | Low | First pass completed; needs PDF-level verification | General code-generation evaluation; benchmark limitations; non-review coding background |
-| P45 | Code-specific LLMs survey | Low | Missing from spreadsheet; PDF exists in Drive; note not created yet | Restore metadata before analysis; likely background on code LLM evolution and benchmarks |
+| P45 | Code-specific LLMs survey | Low | First pass completed; needs PDF-level verification | Code LLM evolution; code-task benchmarks; broad code-specific LLM background |
 | P46 | LLM for Vulnerability Detection and Repair | Low / Medium | First pass completed; needs PDF-level verification | Security-oriented review; vulnerability localization; repair correctness; false-positive/false-negative trade-offs |
 | P47 | LLM Misalignment Critical Survey | Low | First pass completed; needs PDF-level verification | Broad misalignment, trust, hallucination, and safety framing |
 | P48 | LLMs for Code Quality Issues | Low / Medium | First pass completed; needs PDF-level verification | Static-analysis-driven code quality fixes; repair validation; quality issue resolution |
@@ -59,12 +59,12 @@ Keep this file aligned with the spreadsheet, but use the Markdown files as the m
 
 ## Current Gaps
 
-- `P45` is missing from the spreadsheet but the PDF exists in Drive. Restore its row before writing the paper note.
+- No known missing paper IDs in P01–P50 after restoring P45.
 - P42–P50 are mostly background/survey/adjacent papers. Use them carefully: they should support framing, security/code-quality/context-consistency/non-functional-quality dimensions, not replace core code-review evaluation evidence.
 
 ## Next Reading Candidates
 
-- Restore and analyze P45.
 - Deep-read P39 and P40 because they directly strengthen usefulness and context-quality arguments.
 - Deep-read P49 if context consistency becomes a core part of the framework.
 - Deep-read P46 only if the final framework includes a secure-review subcase.
+- Verify whether P45 has a peer-reviewed version; for now it remains an arXiv/background source.
