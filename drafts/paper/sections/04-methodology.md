@@ -87,6 +87,14 @@ A retrieval-augmented context strategy may be added if implementation time allow
 
 The baseline is not expected to be the best strategy. It provides the reference point for measuring how many problematic comments appear without additional mitigation. Robust prompting tests whether generation-time constraints are enough. The context-quality gate tests whether preventing or routing low-context cases reduces problematic comments. Post-generation verification tests whether checking comments after generation improves quality before display. The hybrid strategy tests whether pre-generation and post-generation controls complement each other.
 
+## Paired Comparison Design
+
+The empirical comparison uses a paired design: each strategy is evaluated on the same underlying review instances wherever feasible. This design is important because generated review comments vary strongly by change type, code context, and available textual context. Comparing strategies on different samples would confound mitigation behavior with input difficulty.
+
+For each review instance, the study records the baseline output and the outputs or decisions produced by each mitigation strategy. The paired structure allows the analysis to ask instance-level questions: did the verifier suppress a comment that the annotators considered useful? Did the context-quality gate route an instance that produced an unsupported baseline comment? Did robust prompting improve actionability for the same underlying change? Did the hybrid strategy preserve useful feedback that a single-stage filter would have removed?
+
+When a strategy cannot produce an output for a specific instance, the missing output should be recorded as part of the strategy behavior rather than silently removed from the analysis. For example, a context-quality gate that escalates an instance instead of generating a comment affects both coverage and human effort.
+
 ## Generation and Mitigation Procedure
 
 For each code-review instance, the baseline strategy generates a review comment using the fixed model and base prompt. Other strategies either change the generation prompt, add a pre-generation or pre-display context-quality decision, verify the generated comment, or combine these interventions.
@@ -128,6 +136,41 @@ Inter-annotator agreement should be reported separately for key label groups whe
 
 Disagreements are resolved through discussion or adjudication. The final dataset should preserve the initial annotator labels, resolved labels, and disagreement notes where useful. This is especially important for borderline cases such as useful-but-weakly-grounded comments, correct-but-low-value comments, and context-dependent comments.
 
+## Operational Measures
+
+The study operationalizes each construct through explicit labels, counts, or ratios. Table \ref{tab:methodology-operational-measures} summarizes the main constructs used in the analysis.
+
+<!-- table: caption="Operational measures used in the empirical comparison." label="tab:methodology-operational-measures" longtable="true" -->
+| Construct | Operational measure | Source |
+| --- | --- | --- |
+| Problematic-comment rate | Proportion of generated comments with at least one problematic-comment label. | Human annotation. |
+| Failure-type rate | Proportion of comments labeled with each failure type, such as unsupported, irrelevant, non-actionable, or invalid fix. | Human annotation. |
+| Useful-feedback preservation | Proportion of useful baseline or candidate comments retained as show or rewrite decisions. | Human annotation plus strategy decision. |
+| Wrongly suppressed useful comments | Number or proportion of comments judged useful but suppressed by a strategy. | Human annotation plus strategy decision. |
+| Review coverage | Proportion of review instances that still receive at least one shown or rewritten useful comment after mitigation. | Strategy output plus annotation. |
+| Unsafe exposure | Number or proportion of comments shown by a strategy but judged suppress or escalate by annotators. | Strategy decision compared with resolved annotation. |
+| Recoverable feedback loss | Number or proportion of comments suppressed by a strategy but judged rewrite by annotators. | Strategy decision compared with resolved annotation. |
+| Human escalation rate | Proportion of instances routed to human review or additional context collection. | Strategy decision. |
+| Context-quality effect | Difference in strategy behavior between high-context and low-context or inconsistent-context instances. | Context-quality label plus strategy metrics. |
+| Computational cost | Number of model calls, verifier calls, retrieval calls, approximate token count, or latency proxy. | Execution log or cost proxy. |
+| Evaluator reliability | Agreement on key labels such as problematic type, usefulness, actionability, and mitigation decision. | Annotator labels and agreement statistics. |
+
+These measures make the trade-off explicit. A strategy can improve the problematic-comment rate while worsening useful-feedback preservation or review coverage. Conversely, a strategy can preserve more useful comments while requiring more escalation or computational cost.
+
+## Decision-Confusion Analysis
+
+The study compares each strategy's decision with the resolved human annotation decision. This creates a decision-confusion view over the four actions: show, suppress, rewrite, and escalate.
+
+Several error types are especially important:
+
+- **Unsafe exposure**: the strategy shows a comment that annotators judge should be suppressed or escalated.
+- **False suppression**: the strategy suppresses a comment that annotators judge should be shown.
+- **Recoverable feedback loss**: the strategy suppresses a comment that annotators judge should be rewritten.
+- **Unnecessary escalation**: the strategy escalates a comment that annotators judge could be shown or rewritten.
+- **Missed escalation**: the strategy shows or rewrites a comment that annotators judge requires escalation.
+
+This analysis is important because it captures costs that are invisible in a binary quality score. For example, false suppression and recoverable feedback loss both remove useful information, but recoverable feedback loss is especially important because a rewrite strategy could have preserved the signal.
+
 ## Metrics
 
 The study reports both error-reduction metrics and trade-off metrics.
@@ -160,13 +203,17 @@ The study should not report only a single quality score. A strategy that removes
 
 ## Analysis Plan
 
-The analysis compares strategies along three axes.
+The analysis compares strategies along four axes.
 
 First, it compares the distribution of problematic-comment types produced or retained by each strategy. This answers which strategies are effective for unsupported claims, irrelevant comments, non-actionable comments, invalid fix suggestions, and low-value comments.
 
 Second, it compares preservation and coverage. This asks how many useful comments each strategy keeps, how many useful comments it wrongly suppresses, and how much automatic review coverage remains after filtering or escalation.
 
-Third, it compares cost and effort. This includes additional model calls, verifier calls, retrieval cost if applicable, human escalation rate, and annotation or verification effort. These measures are used to avoid presenting a high-cost strategy as better only because it reduces more problematic comments.
+Third, it compares strategy decisions against resolved annotation decisions using the decision-confusion analysis. This identifies unsafe exposure, false suppression, recoverable feedback loss, unnecessary escalation, and missed escalation.
+
+Fourth, it compares cost and effort. This includes additional model calls, verifier calls, retrieval cost if applicable, human escalation rate, and annotation or verification effort. These measures are used to avoid presenting a high-cost strategy as better only because it reduces more problematic comments.
+
+If the sample size permits, paired comparisons should use uncertainty estimates such as confidence intervals or bootstrap intervals. For paired binary outcomes, tests such as McNemar's test or paired bootstrap comparisons may be used when their assumptions are reasonable. If the sample is small, the analysis should remain primarily descriptive and should pair quantitative summaries with qualitative examples.
 
 If the hybrid strategy is included, it is analyzed as a trade-off case rather than as an assumed improvement. The analysis should ask whether combining a context-quality gate with post-generation verification reduces complementary failure types or merely increases cost and suppression.
 
@@ -176,6 +223,6 @@ Context quality is analyzed as a moderator. The study should compare high-contex
 
 To support reproducibility, the repository should include the paper pool, coding template, annotation guideline, evaluation schema, prompts, model settings, generated outputs where licensing permits, and scripts for computing metrics. If closed models or restricted datasets are used, the study should still document prompts, settings, sampling decisions, and annotation procedures as precisely as possible.
 
-The main scope risk is that the work becomes too broad: too many datasets, too many models, too many strategies, or too many evaluation dimensions. The initial study therefore keeps the design limited. It should use a small set of representative strategies and a sample size that supports careful annotation.
+The main scope risk is that the work becomes too broad: too many datasets, too many models, too many strategies, or too many evaluation dimensions. The initial study therefore keeps the design limited. It should use a bounded set of representative strategies and a sample size that supports careful annotation.
 
-The main threats to validity are incomplete literature coverage, possible changes in recent preprints, dataset limitations, small sample size, annotator disagreement, sensitivity to prompts and model settings, and possible evaluator bias if LLM-as-a-Judge is used. These threats are mitigated by transparent inclusion criteria, fixed evaluation settings, pilot annotation, agreement reporting, preserved disagreement notes, and conservative interpretation of results.
+The main threats to validity are incomplete literature coverage, possible changes in recent preprints, dataset limitations, sample size limits, annotator disagreement, sensitivity to prompts and model settings, and possible evaluator bias if LLM-as-a-Judge is used. These threats are mitigated by transparent inclusion criteria, fixed evaluation settings, pilot annotation, agreement reporting, preserved disagreement notes, and conservative interpretation of results.
