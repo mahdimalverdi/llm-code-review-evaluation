@@ -59,6 +59,8 @@ Table \ref{tab:problematic-comment-taxonomy} defines the core failure labels use
 
 A generated comment can have one core label and multiple secondary modifiers. The core label should capture the dominant reason the comment should not be shown as-is. Secondary modifiers should capture additional properties that affect mitigation, cost, or later analysis.
 
+The **Specialized-risk comment** label is intentionally provisional as a core label. It should remain core only if pilot annotation shows that specialized-risk comments are frequent enough, reliably identifiable, and decision-changing. If they are rare or mostly overlap with context-dependent or unsupported claims, the label should be demoted to a secondary modifier.
+
 ## Secondary Modifiers
 
 Secondary modifiers capture details that are important for analysis but too fine-grained or context-dependent to serve as stable primary labels. They can be used to explain disagreements, refine mitigation decisions, and support later sub-analyses.
@@ -99,6 +101,22 @@ A **useful but not directly acceptable comment** should be used when suppressing
 
 A **specialized-risk comment** should be used as a core label only when the main reason for not showing the comment is that the domain requires stronger evidence or specialized verification. Otherwise, use **specialized evidence required** as a secondary modifier.
 
+## Boundary Rules for Common Ambiguities
+
+Some label boundaries are expected to be difficult in pilot annotation. Table \ref{tab:taxonomy-boundary-rules} records the intended decision rule for the most important ambiguous pairs. The annotation guideline should expand these rules with concrete examples and counterexamples.
+
+<!-- table: caption="Boundary rules for common annotation ambiguities." label="tab:taxonomy-boundary-rules" longtable="true" -->
+| Ambiguous pair | Use the first label when | Use the second label when |
+| --- | --- | --- |
+| Unsupported or hallucinated claim vs. context-dependent or insufficient-context comment | The comment makes an overconfident claim without support in the available evidence. | The missing evidence is central enough that the annotator cannot judge whether the claim is valid. |
+| Incorrect technical claim vs. context-dependent or insufficient-context comment | The available code, API, configuration, or semantics shows that the claim is false. | The available evidence is insufficient to determine whether the claim is true or false. |
+| Incorrect technical claim vs. wrong location or wrong cause | The underlying technical concern is false. | The concern may be valid, but the comment points to the wrong place or gives the wrong causal explanation. |
+| Non-actionable or weakly explained comment vs. useful but not directly acceptable comment | The concern is too vague or weak to preserve without substantial inference. | A useful signal is present, but it needs rewriting, softening, grounding, or clarification before display. |
+| Low-value or redundant comment vs. irrelevant or out-of-scope comment | The comment is related to the change but too minor, redundant, or not worth reviewer attention. | The comment is not meaningfully related to the reviewed change or belongs outside the current review scope. |
+| Specialized-risk comment vs. specialized evidence required modifier | Specialized verification is the dominant reason the comment should not be shown as-is. | The specialized domain matters but the primary issue is unsupportedness, context dependence, or another core failure. |
+
+<!-- TODO: After pilot annotation, add examples for the most frequent boundary disagreements and update this table if annotators use a different decision rule. -->
+
 ## Decision Rules for Ambiguous Cases
 
 Ambiguous cases are central to the study because they expose mitigation trade-offs.
@@ -132,6 +150,8 @@ The taxonomy does not map labels mechanically to one decision. Instead, labels c
 | Specialized-risk comment | Only after verification. | Appropriate for false alarms. | Appropriate if evidence or phrasing can be improved. | Often appropriate when evidence is incomplete. |
 
 This mapping supports the decision-confusion analysis in Section 4. For example, suppressing a comment labeled useful but not directly acceptable is counted differently from suppressing a comment labeled irrelevant. The former may be recoverable feedback loss, while the latter may be successful noise reduction.
+
+<!-- TODO: After building the PDF, check whether this decision-mapping table makes the section too long. If so, summarize it in the main text and move the full mapping to an appendix or annotation guideline. -->
 
 ## Link to the Empirical Evaluation
 
