@@ -6,7 +6,7 @@ The current paper direction is:
 
 > Reducing Problematic LLM-Generated Code Review Comments: An Empirical Study of Mitigation Trade-offs
 
-The project studies how different mitigation strategies reduce problematic review comments and what trade-offs they introduce in useful-feedback preservation, review coverage, human escalation, context quality, and computational cost.
+The project is currently framed as a planned controlled empirical study. It is designed to examine how different mitigation strategies reduce problematic review comments and what trade-offs they introduce in useful-feedback preservation, review coverage, human escalation, context quality, and computational cost.
 
 ## Main Research Question
 
@@ -20,7 +20,7 @@ The current direction is documented in:
 docs/research-roadmap.md
 ```
 
-The project should be treated as a **small controlled empirical study**, supported by a targeted literature review, an operational taxonomy, and a trade-off-aware evaluation framework.
+The project should be treated as a **planned controlled empirical study**, supported by a targeted literature review, an operational taxonomy, and a trade-off-aware evaluation framework.
 
 The strongest framing is not:
 
@@ -54,7 +54,7 @@ representative mitigation strategies
 
 ## Research Focus
 
-This project studies:
+This project is designed to study:
 
 - LLM-generated code review comments;
 - problematic, unsupported, irrelevant, non-actionable, low-value, or misleading comments;
@@ -66,7 +66,7 @@ This project studies:
 
 ## Methodological Positioning
 
-The project should be framed as a **controlled empirical comparison of representative mitigation strategies**.
+The project should be framed as a **controlled empirical comparison of representative mitigation strategies**. At the current draft stage, the empirical design is specified, but dataset selection, strategy execution, annotation, and final findings still need to be completed.
 
 The working pipeline is:
 
@@ -116,6 +116,8 @@ This project should not be positioned as:
 The intended contribution is:
 
 > an empirical trade-off analysis of mitigation strategies for problematic LLM-generated code review comments, supported by an operational taxonomy and reproducible annotation protocol.
+
+At the current stage, this contribution is still being prepared: the design is drafted, but the empirical execution and final result sections remain to be completed.
 
 ## Repository Structure
 
@@ -186,6 +188,7 @@ Use these files as the main working sources:
 - `references/references.bib` contains entries for **P01–P50**, based on the spreadsheet metadata.
 - The manuscript has been reframed toward an empirical mitigation-trade-off study.
 - The title, abstract, introduction, methodology, taxonomy, framework, and empirical evaluation design have been updated to match the current direction.
+- The empirical study has not yet been executed; dataset selection, strategy implementation, annotation, result tables, and final findings remain TODO.
 - Remaining cleanup: replace `TODO_PUBLISHER_BIBTEX` entries with official publisher-exported BibTeX and do PDF-level verification for lower-confidence paper notes.
 
 ## Core Working Rule
