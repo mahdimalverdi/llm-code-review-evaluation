@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Build a single LaTeX paper draft from Markdown section files.
+r"""Build a single LaTeX paper draft from Markdown section files.
 
 This script is intentionally lightweight. It supports the Markdown subset used in
 `drafts/paper/sections/` and converts it into a single LaTeX file. It is not a
 full Markdown or Pandoc replacement.
 
 Usage:
-    python scripts/build_latex.py
+    python3 scripts/build_latex.py
 
 Output:
     build/paper.tex
@@ -23,33 +23,30 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_ORDER_FILE = REPO_ROOT / "drafts" / "paper" / "sections_order.txt"
 DEFAULT_OUTPUT_FILE = REPO_ROOT / "build" / "paper.tex"
 
-LATEX_HEADER = r"""\documentclass[10pt,conference]{IEEEtran}
+TITLE = "Evaluating Problematic LLM-Generated Code Review Comments: An Operational Taxonomy and a Trade-off-Aware Framework"
 
-\usepackage[T1]{fontenc}
-\usepackage[utf8]{inputenc}
-\usepackage{cite}
-\usepackage{url}
-\usepackage{booktabs}
-\usepackage{enumitem}
-\usepackage{listings}
-\usepackage{xcolor}
+LATEX_HEADER = rf"""\documentclass[11pt]{{article}}
 
-\lstset{
+\usepackage[T1]{{fontenc}}
+\usepackage[utf8]{{inputenc}}
+\usepackage[margin=1in]{{geometry}}
+\usepackage{{cite}}
+\usepackage{{url}}
+\usepackage{{listings}}
+\usepackage{{xcolor}}
+
+\lstset{{
   basicstyle=\ttfamily\small,
   breaklines=true,
   columns=fullflexible,
   frame=single
-}
+}}
 
-\title{Evaluating Problematic LLM-Generated Code Review Comments: An Operational Taxonomy and a Trade-off-Aware Framework}
+\title{{{TITLE}}}
+\author{{TODO: Author Name(s)\\TODO: Affiliation\\TODO: Email}}
+\date{{}}
 
-\author{%
-  \IEEEauthorblockN{TODO: Author Name(s)}
-  \IEEEauthorblockA{TODO: Affiliation\\
-  TODO: Email}
-}
-
-\begin{document}
+\begin{{document}}
 \maketitle
 """
 
@@ -74,32 +71,25 @@ SPECIAL_CHARS = {
 
 
 def escape_latex(text: str) -> str:
-    """Escape LaTeX special characters outside inline commands we generate."""
-    escaped = []
-    for char in text:
-        escaped.append(SPECIAL_CHARS.get(char, char))
-    return "".join(escaped)
+    """Escape LaTeX special characters outside generated LaTeX commands."""
+    return "".join(SPECIAL_CHARS.get(char, char) for char in text)
 
 
-def convert_citations(text: str) -> str:
-    """Convert Pandoc-style citations to LaTeX citep commands.
+def citation_to_latex(match: re.Match[str]) -> str:
+    r"""Convert one Pandoc-style citation group to a LaTeX \cite command.
 
     Example:
-        [@a; @b] -> \citep{a,b}
+        [@a; @b] -> \cite{a,b}
     """
-
-    def replace(match: re.Match[str]) -> str:
-        body = match.group(1)
-        keys = []
-        for part in body.split(";"):
-            part = part.strip()
-            if part.startswith("@"):
-                keys.append(part[1:])
-        if not keys:
-            return match.group(0)
-        return r"\citep{" + ",".join(keys) + "}"
-
-    return re.sub(r"\[((?:@[^\]]+?)(?:;\s*@[^\]]+?)*)\]", replace, text)
+    body = match.group(1)
+    keys = []
+    for part in body.split(";"):
+        part = part.strip()
+        if part.startswith("@"):
+            keys.append(part[1:])
+    if not keys:
+        return match.group(0)
+    return r"\cite{" + ",".join(keys) + "}"
 
 
 def convert_inline_markdown(text: str) -> str:
@@ -116,11 +106,10 @@ def convert_inline_markdown(text: str) -> str:
 
         text = re.sub(pattern, repl, text)
 
-    text = convert_citations(text)
-
+    protect(r"\[((?:@[^\]]+?)(?:;\s*@[^\]]+?)*)\]", citation_to_latex)
     protect(r"`([^`]+)`", lambda m: r"\texttt{" + escape_latex(m.group(1)) + "}")
-    text = escape_latex(text)
 
+    text = escape_latex(text)
     text = re.sub(r"\*\*([^*]+)\*\*", r"\\textbf{\1}", text)
     text = re.sub(r"(?<!\*)\*([^*]+)\*(?!\*)", r"\\emph{\1}", text)
 
@@ -153,6 +142,7 @@ def convert_markdown_to_latex(markdown: str) -> str:
     in_code_block = False
     in_itemize = False
     in_enumerate = False
+    in_table_block = False
     paragraph: list[str] = []
 
     def flush_paragraph() -> None:
@@ -173,27 +163,35 @@ def convert_markdown_to_latex(markdown: str) -> str:
             output.append("")
             in_enumerate = False
 
+    def close_table_block() -> None:
+        nonlocal in_table_block
+        if in_table_block:
+            output.append(r"\end{lstlisting}")
+            output.append("")
+            in_table_block = False
+
     for raw_line in lines:
         line = raw_line.rstrip()
+
+        if in_table_block and not line.lstrip().startswith("|"):
+            close_table_block()
 
         if line.strip().startswith("<!--"):
             flush_paragraph()
             close_lists()
-            continue
-
-        if line.strip().startswith("> [!"):
-            flush_paragraph()
-            close_lists()
+            close_table_block()
             continue
 
         if line.strip().startswith(">"):
             flush_paragraph()
             close_lists()
+            close_table_block()
             continue
 
         if line.strip().startswith("```"):
             flush_paragraph()
             close_lists()
+            close_table_block()
             if in_code_block:
                 output.append(r"\end{lstlisting}")
                 output.append("")
@@ -210,12 +208,14 @@ def convert_markdown_to_latex(markdown: str) -> str:
         if not line.strip():
             flush_paragraph()
             close_lists()
+            close_table_block()
             continue
 
         heading = heading_to_latex(line)
         if heading is not None:
             flush_paragraph()
             close_lists()
+            close_table_block()
             output.append(heading)
             output.append("")
             continue
@@ -223,11 +223,12 @@ def convert_markdown_to_latex(markdown: str) -> str:
         bullet_match = re.match(r"^[-*]\s+(.*)$", line)
         if bullet_match:
             flush_paragraph()
+            close_table_block()
             if in_enumerate:
                 output.append(r"\end{enumerate}")
                 in_enumerate = False
             if not in_itemize:
-                output.append(r"\begin{itemize}[leftmargin=*]")
+                output.append(r"\begin{itemize}")
                 in_itemize = True
             output.append(r"\item " + convert_inline_markdown(bullet_match.group(1).strip()))
             continue
@@ -235,29 +236,30 @@ def convert_markdown_to_latex(markdown: str) -> str:
         enum_match = re.match(r"^\d+\.\s+(.*)$", line)
         if enum_match:
             flush_paragraph()
+            close_table_block()
             if in_itemize:
                 output.append(r"\end{itemize}")
                 in_itemize = False
             if not in_enumerate:
-                output.append(r"\begin{enumerate}[leftmargin=*]")
+                output.append(r"\begin{enumerate}")
                 in_enumerate = True
             output.append(r"\item " + convert_inline_markdown(enum_match.group(1).strip()))
             continue
 
-        # Markdown tables are kept as verbatim blocks for now.
         if line.lstrip().startswith("|"):
             flush_paragraph()
             close_lists()
-            output.append(r"\begin{lstlisting}")
+            if not in_table_block:
+                output.append(r"\begin{lstlisting}")
+                in_table_block = True
             output.append(line)
-            output.append(r"\end{lstlisting}")
-            output.append("")
             continue
 
         paragraph.append(line.strip())
 
     flush_paragraph()
     close_lists()
+    close_table_block()
 
     return "\n".join(output).strip() + "\n"
 
