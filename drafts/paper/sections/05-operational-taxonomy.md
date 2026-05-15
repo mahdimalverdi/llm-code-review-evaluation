@@ -2,7 +2,9 @@
 
 The empirical comparison requires labels that distinguish different kinds of problematic generated comments. A single binary label such as correct or incorrect is not enough because a generated review comment can fail in several ways. It may be technically wrong, unsupported by the available context, irrelevant to the changed code, too vague to act on, or valid but too low-value to justify reviewer attention. It may also contain a useful signal while being unsuitable to show directly. This section defines the operational taxonomy used to annotate generated comments, compare mitigation strategies, and interpret trade-offs.
 
-The taxonomy is operational rather than only descriptive. Each label is intended to support three tasks: human annotation, strategy-by-failure-type comparison, and mitigation-decision analysis. The initial labels are derived from the targeted literature review and the cross-paper synthesis. The taxonomy is intentionally smaller than the full failure inventory in the synthesis notes: highly specialized cases such as security-specific, performance-specific, static-analysis-specific, and evaluator-specific failures are handled as optional sublayers or decision modifiers unless they directly affect the generated comment being annotated.
+The taxonomy is operational rather than only descriptive. Each label is intended to support three tasks: human annotation, strategy-by-failure-type comparison, and mitigation-decision analysis. The initial labels are derived from the targeted literature review and the cross-paper synthesis. The taxonomy is intentionally smaller than the full failure inventory in the synthesis notes: highly specialized, context-specific, and workflow-specific cases are represented as secondary modifiers unless they must be treated as the dominant reason that a comment should not be shown as-is.
+
+The taxonomy is provisional at this stage. Its final form should be determined after pilot annotation, agreement analysis, and adjudication of ambiguous cases.
 
 <!-- TODO: After the pilot annotation round, update this paragraph to report which labels were added, merged, removed, or clarified based on pilot inspection of generated comments. -->
 
@@ -22,44 +24,60 @@ Fifth, it is designed for annotator use. Each category should have a definition,
 
 ## Label Architecture
 
-The annotation uses three kinds of labels: primary failure labels, secondary failure labels, and evaluation-dimension labels.
+The annotation uses five kinds of labels: core failure labels, secondary modifiers, evaluation-dimension labels, mitigation-decision labels, and confidence labels.
 
-The **primary failure label** captures the dominant reason a comment should not be shown as-is. The **secondary failure labels** capture additional issues that matter for analysis. For example, a comment may primarily be an unsupported claim and secondarily be a specialized-risk comment because it makes an unverified security claim. Evaluation-dimension labels record graded or categorical judgments such as correctness, grounding, usefulness, actionability, and context quality.
+The **core failure label** captures the dominant reason a comment should not be shown as-is. The **secondary modifiers** capture additional details that matter for interpretation, cost, or mitigation but should not usually become the primary class. For example, a comment may have the core label **Incorrect technical claim** and the secondary modifier **wrong API, type, or framework assumption**. Evaluation-dimension labels record graded or categorical judgments such as correctness, grounding, usefulness, actionability, and context quality.
 
 <!-- table: caption="Label architecture used in the operational taxonomy." label="tab:taxonomy-label-architecture" -->
 | Label type | Purpose | Example |
 | --- | --- | --- |
-| Primary failure label | Dominant reason the comment should not be shown as-is. | Unsupported claim. |
-| Secondary failure label | Additional failure mode relevant to interpretation or mitigation. | Wrong location; invalid fix suggestion. |
+| Core failure label | Dominant reason the comment should not be shown as-is. | Unsupported or hallucinated claim. |
+| Secondary modifier | Additional detail relevant to interpretation, mitigation, or cost. | Wrong API assumption; weak rationale; specialized risk. |
 | Evaluation-dimension label | Judgment dimension used to compare comments and decisions. | Grounding, usefulness, actionability, severity. |
-| Mitigation decision label | Recommended action before the comment reaches the user. | Show, suppress, rewrite, escalate. |
+| Mitigation-decision label | Recommended action before the comment reaches the user. | Show, suppress, rewrite, escalate. |
 | Confidence label | Annotator confidence in the judgment under the available context. | High, medium, low. |
 
 This architecture avoids forcing all information into a single class. It also supports the decision-confusion analysis in Section 4: a strategy decision can be compared with the resolved human decision, while the taxonomy explains the reason for disagreement.
 
-## Core Taxonomy
+## Core Failure Labels
 
-Table \ref{tab:problematic-comment-taxonomy} defines the core failure labels used in the empirical comparison. The labels are grouped by the kind of failure they represent, but annotators select labels at the failure-label level rather than only at the group level.
+Table \ref{tab:problematic-comment-taxonomy} defines the core failure labels used for primary annotation. These labels are intentionally limited so that annotators can apply them consistently. More specific details are captured as secondary modifiers in Table \ref{tab:taxonomy-secondary-modifiers}.
 
-<!-- table: caption="Operational taxonomy of problematic generated review comments." label="tab:problematic-comment-taxonomy" longtable="true" -->
-| Failure group | Failure label | Definition | Typical mitigation implication |
-| --- | --- | --- | --- |
-| Grounding and context | Unsupported or hallucinated claim | The comment makes a factual, causal, behavioral, or risk claim that is not supported by the available diff, surrounding code, or supplied context. | Suppress when unsupported; rewrite with uncertainty or escalate when the signal may be important. |
-| Grounding and context | Context-dependent or insufficient-context comment | The comment cannot be judged reliably because required project, API, version, specification, runtime, or cross-file context is missing or inconsistent. | Escalate, request more context, or apply a context-quality gate. |
-| Grounding and context | Stale or contradictory-context comment | The comment relies on documentation, retrieved evidence, examples, or assumptions that are stale or inconsistent with the code. | Suppress or escalate until the evidence is verified. |
-| Correctness | Incorrect technical claim | The comment states something technically false about the code, API, type, behavior, control flow, or language semantics. | Suppress; do not rewrite unless a correct related concern can be separated. |
-| Correctness | Wrong API, type, or framework assumption | The comment assumes an incorrect return type, API contract, framework behavior, version, configuration, or runtime invariant. | Suppress or rewrite after adding project-specific evidence. |
-| Localization and causality | Wrong location or wrong cause | The comment identifies the wrong line, hunk, component, or causal explanation for an otherwise plausible concern. | Rewrite if the concern is useful; suppress if the wrong location or cause makes it misleading. |
-| Relevance and scope | Irrelevant or out-of-scope comment | The comment is unrelated to the reviewed change, ignores the pull-request intent, or targets a concern outside the review scope. | Suppress unless it should be routed as a separate issue. |
-| Actionability and explanation | Non-actionable comment | The developer cannot determine a concrete next step because the comment is vague, underspecified, or lacks a clear review request. | Rewrite when the concern is useful; suppress when it adds little value. |
-| Actionability and explanation | Weak or unsupported rationale | The comment identifies a possible concern but gives a vague, generic, or unsupported explanation of why it matters. | Rewrite with grounded rationale or suppress if the rationale is misleading. |
-| Repair and suggestion quality | Invalid fix suggestion | The suggested fix does not resolve the issue, introduces a regression, changes intended behavior, or is unsafe without further validation. | Suppress the fix suggestion; possibly rewrite as a concern without the fix. |
-| Value and workflow | Low-value or redundant comment | The comment may be technically valid but is too obvious, stylistic, redundant, minor, or costly relative to its review value. | Suppress, aggregate, or show only under low-noise settings. |
-| Value and workflow | Workflow-friction comment | The comment increases reviewer or author burden without improving correctness, maintainability, understanding, or decision quality. | Suppress or aggregate; monitor signal-to-noise and reviewer burden. |
-| Preservation gray zone | Useful but not directly acceptable comment | The comment contains a useful signal but is not suitable to show as-is because it is uncertain, overconfident, poorly phrased, weakly grounded, or insufficiently actionable. | Rewrite or escalate rather than suppress. |
-| Specialized risk | Specialized-risk comment | The comment makes a security, privacy, concurrency, performance, data-loss, or financial-risk claim that requires stronger evidence than ordinary style or maintainability feedback. | Escalate or verify with specialized evidence before showing. |
+<!-- table: caption="Core failure labels for problematic generated review comments." label="tab:problematic-comment-taxonomy" longtable="true" -->
+| Core label | Definition | Typical mitigation implication |
+| --- | --- | --- |
+| Unsupported or hallucinated claim | The comment makes a factual, causal, behavioral, or risk claim that is not supported by the available diff, surrounding code, or supplied context. | Suppress when unsupported; rewrite with uncertainty or escalate when the signal may be important. |
+| Context-dependent or insufficient-context comment | The comment cannot be judged reliably because required project, API, version, specification, runtime, or cross-file context is missing or inconsistent. | Escalate, request more context, or apply a context-quality gate. |
+| Incorrect technical claim | The comment states something technically false about the code, API, type, behavior, control flow, language semantics, configuration, or runtime behavior. | Suppress; do not rewrite unless a correct related concern can be separated. |
+| Wrong location or wrong cause | The comment identifies the wrong line, hunk, component, or causal explanation for an otherwise plausible concern. | Rewrite if the concern is useful; suppress if the wrong location or cause makes it misleading. |
+| Irrelevant or out-of-scope comment | The comment is unrelated to the reviewed change, ignores the pull-request intent, or targets a concern outside the review scope. | Suppress unless it should be routed as a separate issue. |
+| Non-actionable or weakly explained comment | The developer cannot determine a concrete next step, or the comment gives a vague, generic, or weak explanation of why the concern matters. | Rewrite when the concern is useful; suppress when it adds little value. |
+| Invalid fix suggestion | The suggested fix does not resolve the issue, introduces a regression, changes intended behavior, or is unsafe without further validation. | Suppress the fix suggestion; possibly rewrite as a concern without the fix. |
+| Low-value or redundant comment | The comment may be technically valid but is too obvious, stylistic, redundant, minor, or costly relative to its review value. | Suppress, aggregate, or show only under low-noise settings. |
+| Useful but not directly acceptable comment | The comment contains a useful signal but is not suitable to show as-is because it is uncertain, overconfident, poorly phrased, weakly grounded, or insufficiently actionable. | Rewrite or escalate rather than suppress. |
+| Specialized-risk comment | The comment makes a security, privacy, concurrency, performance, data-loss, financial-risk, or other high-impact claim that requires stronger evidence than ordinary style or maintainability feedback. | Escalate or verify with specialized evidence before showing. |
 
-The taxonomy is not intended to force every generated comment into exactly one failure type. A comment can have one primary label and multiple secondary labels. The primary label should capture the dominant reason the comment should not be shown as-is. Secondary labels should capture additional properties that affect mitigation, cost, or later analysis.
+A generated comment can have one core label and multiple secondary modifiers. The core label should capture the dominant reason the comment should not be shown as-is. Secondary modifiers should capture additional properties that affect mitigation, cost, or later analysis.
+
+## Secondary Modifiers
+
+Secondary modifiers capture details that are important for analysis but too fine-grained or context-dependent to serve as stable primary labels. They can be used to explain disagreements, refine mitigation decisions, and support later sub-analyses.
+
+<!-- table: caption="Secondary modifiers for additional failure details." label="tab:taxonomy-secondary-modifiers" longtable="true" -->
+| Modifier | Use when | Typical parent label |
+| --- | --- | --- |
+| Wrong API, type, or framework assumption | The comment assumes an incorrect API contract, return type, framework behavior, version, configuration, or runtime invariant. | Incorrect technical claim. |
+| Stale or contradictory context | The comment relies on documentation, retrieved evidence, examples, or assumptions that are stale or inconsistent with the code. | Unsupported or context-dependent comment. |
+| Weak rationale | The comment identifies a possible concern but gives a vague, generic, or unsupported explanation of why it matters. | Non-actionable or weakly explained comment. |
+| Workflow-friction risk | The comment is likely to increase reviewer or author burden without improving correctness, maintainability, understanding, or decision quality. | Low-value or redundant comment. |
+| Specialized evidence required | The comment concerns security, privacy, concurrency, performance, data loss, or another high-impact area requiring stronger evidence. | Specialized-risk comment or context-dependent comment. |
+| Overconfident phrasing | The comment presents an uncertain concern as certain. | Useful but not directly acceptable comment or unsupported claim. |
+| Recoverable signal | The comment contains a useful concern that could be preserved through rewriting even though the current wording should not be shown. | Useful but not directly acceptable comment. |
+| Separate-issue candidate | The comment is out of scope for the current review but may be valid as a separate issue. | Irrelevant or out-of-scope comment. |
+
+This core/modifier split is intended to improve annotation reliability. If pilot annotation shows that a modifier is frequently selected and reliably distinguished, it may be promoted to a core label. Conversely, if a core label has low agreement, it may be merged with another label or demoted to a modifier.
+
+<!-- TODO: After pilot annotation, report which modifiers were frequently used, which labels had low agreement, and whether any core/modifier boundary changed. -->
 
 ## Inclusion and Exclusion Rules
 
@@ -69,17 +87,17 @@ An **unsupported or hallucinated claim** should be used when the comment asserts
 
 A **context-dependent or insufficient-context comment** should be used when the comment may be valid but the annotator cannot judge it reliably under the provided evidence. This label is different from unsupported claim: unsupported claim describes an overconfident comment without evidence; context-dependent describes an evaluation situation where the missing evidence is central to the judgment.
 
-An **incorrect technical claim** should be used when the comment is demonstrably false under the available code, API, language semantics, or configuration. If the claim cannot be judged, use context-dependent rather than incorrect.
+An **incorrect technical claim** should be used when the comment is demonstrably false under the available code, API, language semantics, or configuration. If the falsehood comes from an incorrect API, type, framework, version, or runtime assumption, use **wrong API, type, or framework assumption** as a secondary modifier. If the claim cannot be judged, use context-dependent rather than incorrect.
 
 A **wrong location or wrong cause** label should be used when the underlying concern may be valid but the comment points to the wrong file, hunk, line, component, or causal explanation. This label is especially important for rewrite decisions because the useful signal may be preserved after correction.
 
-A **non-actionable comment** should be used when the author cannot infer a clear next step. It should not be used for high-level design comments that are intentionally exploratory but still actionable as discussion prompts. Those comments may be labeled useful but not directly acceptable if they need reframing rather than removal.
+A **non-actionable or weakly explained comment** should be used when the author cannot infer a clear next step or cannot understand why the concern matters. It should not be used for high-level design comments that are intentionally exploratory but still actionable as discussion prompts. Those comments may be labeled useful but not directly acceptable if they need reframing rather than removal.
 
-A **low-value or redundant comment** should be used when the comment is technically acceptable but not worth showing under normal review-noise constraints. It should not be used for comments that are false, unsupported, or irrelevant; those labels take priority.
+A **low-value or redundant comment** should be used when the comment is technically acceptable but not worth showing under normal review-noise constraints. It should not be used for comments that are false, unsupported, or irrelevant; those labels take priority. If the issue is mainly the expected burden on reviewers or authors, use **workflow-friction risk** as a modifier rather than as a core label.
 
 A **useful but not directly acceptable comment** should be used when suppressing the comment would lose a useful signal, but showing it as written would be inappropriate. This label is central to the preservation analysis because it identifies cases where rewrite or escalation may be better than suppression.
 
-A **specialized-risk comment** should be used as a secondary label when the comment concerns security, privacy, concurrency, performance, data loss, or other high-impact domains where stronger evidence is required. It can also be primary when the main reason for not showing the comment is that it needs specialized verification.
+A **specialized-risk comment** should be used as a core label only when the main reason for not showing the comment is that the domain requires stronger evidence or specialized verification. Otherwise, use **specialized evidence required** as a secondary modifier.
 
 ## Decision Rules for Ambiguous Cases
 
@@ -89,7 +107,7 @@ A comment that is technically correct but too minor should be labeled low-value 
 
 A comment that raises a plausible concern but lacks enough evidence should be labeled context-dependent or unsupported, depending on whether additional context could reasonably resolve the judgment. If the available evidence contradicts the claim, the stronger label is incorrect technical claim. If the available evidence is simply insufficient, the stronger label is context-dependent or unsupported.
 
-A comment that contains a useful concern but is phrased too strongly should not automatically be counted as useless. It should be labeled useful but not directly acceptable when rewriting, softening, or grounding could preserve the signal.
+A comment that contains a useful concern but is phrased too strongly should not automatically be counted as useless. It should be labeled useful but not directly acceptable when rewriting, softening, or grounding could preserve the signal. The modifier **overconfident phrasing** can be added when the main issue is tone or certainty rather than the underlying concern.
 
 A comment with a valid concern but an invalid fix suggestion should receive labels that preserve both facts: the concern may be useful, while the fix suggestion is invalid. This is important because a mitigation strategy that suppresses the whole comment may lose useful feedback, while a rewrite strategy may preserve the concern and remove the unsafe fix.
 
@@ -97,17 +115,17 @@ A comment that is specialized-risk but weakly grounded should not be shown simpl
 
 ## Mapping Failure Labels to Mitigation Decisions
 
-The taxonomy does not map labels mechanically to one decision. Instead, labels constrain the plausible decisions. Table \ref{tab:taxonomy-decision-mapping} summarizes the typical mapping.
+The taxonomy does not map labels mechanically to one decision. Instead, labels constrain the plausible decisions. Table \ref{tab:taxonomy-decision-mapping} summarizes the typical mapping. This mapping is a design-stage guideline and should be revised after pilot annotation and adjudication.
 
-<!-- table: caption="Typical mapping from taxonomy labels to mitigation decisions." label="tab:taxonomy-decision-mapping" longtable="true" -->
-| Failure label | Show | Suppress | Rewrite | Escalate |
+<!-- table: caption="Typical mapping from core failure labels to mitigation decisions." label="tab:taxonomy-decision-mapping" longtable="true" -->
+| Core label | Show | Suppress | Rewrite | Escalate |
 | --- | --- | --- | --- | --- |
 | Unsupported or hallucinated claim | Rarely appropriate. | Appropriate when the claim has no useful signal. | Appropriate if a weaker, grounded concern remains. | Appropriate if the concern may be important but evidence is missing. |
 | Context-dependent or insufficient-context comment | Rarely appropriate as-is. | Appropriate when the concern is low-value. | Appropriate when uncertainty can be stated clearly. | Appropriate when judgment requires additional evidence. |
 | Incorrect technical claim | Not appropriate. | Usually appropriate. | Appropriate only if a correct related concern can be separated. | Rarely needed unless specialized evidence is required. |
 | Wrong location or wrong cause | Not appropriate as-is. | Appropriate if misleading and not recoverable. | Appropriate when the concern is valid but poorly localized or explained. | Appropriate when cause cannot be determined. |
 | Irrelevant or out-of-scope comment | Usually not appropriate. | Usually appropriate. | Rarely appropriate. | Appropriate if it should become a separate issue. |
-| Non-actionable comment | Not appropriate as-is. | Appropriate when the concern is weak. | Usually appropriate when the concern is useful. | Appropriate for high-level design or risk discussion. |
+| Non-actionable or weakly explained comment | Not appropriate as-is. | Appropriate when the concern is weak. | Usually appropriate when the concern is useful. | Appropriate for high-level design or risk discussion. |
 | Invalid fix suggestion | Not appropriate as-is. | Appropriate for the fix suggestion. | Appropriate if the concern can be preserved without the fix. | Appropriate when validation is required. |
 | Low-value or redundant comment | Usually not appropriate. | Usually appropriate under normal noise constraints. | Appropriate if aggregation or concise rewriting preserves value. | Rarely appropriate. |
 | Useful but not directly acceptable comment | Not appropriate as-is. | Risky because it loses useful feedback. | Usually appropriate. | Appropriate when additional judgment is needed. |
@@ -129,6 +147,6 @@ The taxonomy therefore functions as a planned measurement instrument for the emp
 
 The pilot annotation round should test whether the taxonomy is usable by annotators. The pilot should identify labels that overlap too much, labels that annotators interpret inconsistently, and failure types that are missing from the core taxonomy. After the pilot, label definitions should be revised before the final annotation sample.
 
-Reliability should be assessed on key labels, not only on the final mitigation decision. At minimum, the study should report agreement on problematic-comment presence, primary failure label, usefulness, actionability, and recommended mitigation decision when feasible. Disagreements should be treated as evidence about difficult judgment cases rather than only as noise. For example, repeated disagreement between unsupported and context-dependent labels may indicate that the available context is insufficient or that the annotation guideline needs clearer evidence requirements.
+Reliability should be assessed on key labels, not only on the final mitigation decision. At minimum, the study should report agreement on problematic-comment presence, core failure label, usefulness, actionability, and recommended mitigation decision when feasible. Disagreements should be treated as evidence about difficult judgment cases rather than only as noise. For example, repeated disagreement between unsupported and context-dependent labels may indicate that the available context is insufficient or that the annotation guideline needs clearer evidence requirements.
 
-<!-- TODO: After pilot annotation, report pilot size, annotator background, labels revised, agreement problems, and any taxonomy changes made before the final annotation sample. -->
+<!-- TODO: After pilot annotation, report pilot size, annotator background, labels revised, agreement problems, core/modifier changes, and any taxonomy changes made before the final annotation sample. -->
