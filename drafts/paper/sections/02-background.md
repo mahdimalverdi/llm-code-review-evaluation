@@ -52,7 +52,7 @@ Aggregate performance numbers also hide which review scenarios a technique can a
 
 ## LLM-Based Code Review Assistance
 
-Large language models changed the scale and flexibility of code review automation. In the literature reviewed for this paper, LLM-based review assistance can be grouped into three broad roles: direct review assistance, context enrichment, and evaluation or filtering.
+Large language models changed the scale and flexibility of code review automation. For the purposes of this paper, LLM-based review assistance can be grouped into three broad roles: direct review assistance, context enrichment, and evaluation or filtering.
 
 The first role is **direct review assistance**. In this role, the model produces or transforms review artifacts, such as natural-language review comments, change explanations, fix suggestions, or classifications of existing review feedback. This includes work on review comment generation, fine-grained review-comment classification, secure-code-review prompting, and static-analysis-guided feedback [@p14_li2022_codereviewer; @p19_nguyen2025_fine_grained_classification; @p21_peng2025_icodereviewer; @p22_jaoua2025_static_analyzers]. These systems are closest to the artifact studied in this paper because they can directly create comments that may be shown to reviewers or authors.
 
