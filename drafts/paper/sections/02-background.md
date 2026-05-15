@@ -6,7 +6,7 @@ This section defines the terms and research context used throughout the paper. I
 
 We use **modern code review** to refer to the lightweight, asynchronous, and tool-mediated process in which developers submit code changes, reviewers inspect them, and the discussion continues until the change is accepted, revised, or abandoned [@p37_sadowski2018_google_mcr; @p38_bacchelli2013_expectations_mcr; @p51_davila2021_mcr_slr_taxonomy]. We treat this process as a socio-technical practice, not only as a defect-detection activity.
 
-A **generated review comment** is a natural-language review comment produced by an automated system, usually an LLM-based review assistant, for a code change under review. It may point to a defect, request a refactoring, ask for clarification, suggest a fix, or raise a maintainability, design, testing, security, or process concern. We treat such comments as workflow interventions, not merely as text outputs.
+A **generated review comment** is a natural-language review comment produced by an automated system, often an LLM-based or LLM-assisted review system, for a code change under review. It may point to a defect, request a refactoring, ask for clarification, suggest a fix, or raise a maintainability, design, testing, security, or process concern. We treat such comments as workflow interventions, not merely as text outputs.
 
 A **problematic generated review comment** is an umbrella concept for generated comments that may harm or weaken the review process, or whose value is uncertain under the available evidence. This includes comments that are incorrect, unsupported, irrelevant, linked to the wrong location, non-actionable, misleading, low-value, or useful only after rewriting or escalation. The operational taxonomy developed later turns this broad definition into concrete labels, decision rules, and examples.
 
@@ -18,7 +18,17 @@ A **mitigation decision** is the action taken after a generated comment is produ
 
 **Evaluator validity** refers to whether the evaluation method reliably measures the intended quality dimension. Human evaluators can disagree or apply labels inconsistently, while LLM-based evaluators can be sensitive to prompts, answer order, verbosity, model choice, and task framing [@m04_zheng2023_llm_judge; @p29_wang2025_human_evaluators; @p31_jiang2025_codejudgebench; @p32_zhao2026_bias_loop; @p33_he2025_llmjudge_se].
 
-Together, these concepts separate four concerns that are often conflated: whether the evaluation instance is valid, whether the generated comment is grounded and useful, what action should be taken on the comment, and whether the evaluator is reliable. This separation is the basis for the taxonomy and framework developed in the following sections.
+Together, these concepts separate four concerns that are often conflated: whether the evaluation instance is valid, whether the generated comment is grounded and useful, what action should be taken on the comment, and whether the evaluator is reliable. Table \ref{tab:key-concepts} summarizes these concepts and their role in the rest of the paper.
+
+<!-- table: caption="Key concepts used in the proposed taxonomy and framework." label="tab:key-concepts" -->
+| Concept | Meaning in this paper | Why it matters for evaluation |
+| --- | --- | --- |
+| Generated review comment | Automated natural-language review feedback for a code change. | It is the artifact being judged and may affect the review workflow. |
+| Problematic generated review comment | Umbrella term for comments that are wrong, unsupported, irrelevant, non-actionable, low-value, or uncertain. | It defines the scope that the operational taxonomy later makes concrete. |
+| Context quality | Sufficiency, relevance, and coherence of the information available to judge a comment. | It determines whether a comment is grounded, unsupported, or impossible to judge. |
+| Mitigation decision | The action taken on a generated comment: show, suppress, rewrite, or escalate. | It turns evaluation from passive scoring into a workflow decision. |
+| Dataset validity | Whether an evaluation instance is review-relevant, judgeable, and correctly linked. | It separates model failures from invalid or misleading evaluation targets. |
+| Evaluator validity | Whether the human or LLM-based evaluator reliably measures the intended dimension. | It keeps measurement bias separate from comment quality. |
 
 ## Modern Code Review
 
@@ -64,7 +74,7 @@ Usefulness is also not identical to correctness. A correct comment can be too va
 
 Because manual evaluation is expensive, recent work increasingly uses LLMs as evaluators. This creates a second-order evaluation problem: the quality of a generated comment depends on the comment itself, but the measured quality also depends on the evaluator used to judge it. LLM-based evaluators can scale assessment and reduce manual effort, yet they are not neutral measurement devices. Their judgments can depend on prompts, answer order, model choice, verbosity, and task framing. For this reason, LLM-as-a-Judge should be treated as a measurement instrument that needs calibration and validation, not as a replacement for ground truth [@m04_zheng2023_llm_judge; @p29_wang2025_human_evaluators; @p31_jiang2025_codejudgebench; @p32_zhao2026_bias_loop; @p33_he2025_llmjudge_se].
 
-## Trade-Offs as the Main Motivation
+## Evaluation Trade-Offs
 
 The concepts above lead to a set of recurring trade-offs. A filter that removes unsupported comments may reduce hallucinations, but it may also remove uncertain comments that would have been useful to a reviewer. A retrieval component may improve grounding, but it can increase latency, cost, and context noise. A relevance filter may reduce reviewer burden, but it may also reduce review coverage. An LLM-based judge may make evaluation scalable, but it can introduce measurement bias.
 
