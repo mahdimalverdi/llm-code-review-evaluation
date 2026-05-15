@@ -1,37 +1,40 @@
 # P33 — LLM-as-a-Judge for Software Engineering: Literature Review, Vision, and the Road Ahead
 
 > [!NOTE]
-> Compact v2 analysis. P33 is the broader and newer survey/roadmap version of the LLM-as-a-Judge-in-SE line. It reviews 42 primary studies and is useful for positioning our evaluator-validity discussion within the SE lifecycle.
+> Compact v2 analysis. P33 is the broader and newer survey/roadmap version of the LLM-as-a-Judge-in-SE line. It reviews primary studies and is useful for positioning our evaluator-validity discussion within the SE lifecycle. Metadata has been aligned with the spreadsheet: the official ACM TOSEM DOI is retained, and arXiv remains the preprint/PDF source.
 
 ## Status
 
 - Paper ID: `P33`
-- Analysis status: `First pass completed from PDF; needs citation/BibTeX cleanup`
+- Analysis status: `First pass completed from PDF; metadata aligned with spreadsheet; needs BibTeX cleanup`
 - Priority: `High`
 - Reading depth: `Read once from PDF`
+- Last updated: `2026-05-15`
 - Confidence: `High`
 
 ## Bibliographic Information
 
 | Field | Value |
 |---|---|
-| Title | From Code to Courtroom: LLMs as the New Software Judges |
+| Title | LLM-as-a-Judge for Software Engineering: Literature Review, Vision, and the Road Ahead |
 | Authors | Junda He, Jieke Shi, Terry Yue Zhuo, Christoph Treude, Jiamou Sun, Zhenchang Xing, Xiaoning Du, David Lo |
 | Year | 2025 |
-| Venue / Source | arXiv / SE 2030 forward-looking paper |
-| DOI / arXiv | arXiv:2510.24367 |
+| Venue / Source | ACM Transactions on Software Engineering and Methodology |
+| Publication type | Peer-reviewed journal article / survey |
+| Link | https://dl.acm.org/doi/abs/10.1145/3797276 |
+| DOI / arXiv | DOI: 10.1145/3797276; arXiv:2510.24367 |
 
 ```bibtex
-% TODO: Add checked arXiv BibTeX.
+% TODO: Add checked ACM BibTeX.
 ```
 
 ## One-Sentence Summary
 
-> P33 surveys 42 LLM-as-a-Judge studies in software engineering and proposes a roadmap toward reliable, robust, scalable, multi-faceted human-surrogate judges for SE artifacts.
+> P33 surveys LLM-as-a-Judge studies in software engineering and proposes a roadmap toward reliable, robust, scalable, multi-faceted human-surrogate judges for SE artifacts.
 
 ## Main Contribution
 
-The paper provides a systematic review of LLM-as-a-Judge applications across the software lifecycle, formalizes the judge paradigm, identifies key limitations, and proposes a 2030-oriented roadmap for benchmarks, empirical evaluation, domain expertise, tool augmentation, human-in-the-loop evaluation, multimodality, and robustness.
+The paper provides a literature review of LLM-as-a-Judge applications across the software lifecycle, formalizes the judge paradigm, identifies key limitations, and proposes a roadmap for benchmarks, empirical evaluation, domain expertise, tool augmentation, human-in-the-loop evaluation, multimodality, and robustness.
 
 ## Formal Definition
 
@@ -50,16 +53,6 @@ E(T, C, X, R) -> (Y, E, F)
 | `Y` | Evaluation result: score, ranking, or best-choice selection. |
 | `E` | Optional explanation/justification. |
 | `F` | Optional feedback for improvement. |
-
-## Review Scope
-
-| Field | Value |
-|---|---|
-| Primary studies | 42 |
-| Search source | DBLP plus backward/forward snowballing |
-| Search date | August 2025 |
-| Domains | Requirements engineering, coding assistance, quality assurance, maintenance |
-| Quality criteria | Research contribution, methodological clarity/reproducibility, experimental rigor |
 
 ## SE Artifact Taxonomy
 
@@ -167,10 +160,11 @@ P33 is useful for the related-work and evaluation-validity sections. It lets us 
 - Broad survey/roadmap; not a code-review-comment framework.
 - Does not empirically validate the proposed roadmap.
 - Some categories are high-level and need operationalization for review-comment evaluation.
-- P34 is an earlier shorter version; avoid double-counting its claims as independent evidence.
+- P34 is an earlier shorter vision paper; avoid double-counting its claims as independent evidence.
 
 ## Follow-up TODOs
 
+- [ ] Add checked ACM BibTeX.
 - [ ] Use P33 for evaluator-validity background.
 - [ ] Add rating indeterminacy / evaluator uncertainty / evaluator preferences to framework.
 - [ ] Add distribution-aware human alignment as a possible evaluation design.
