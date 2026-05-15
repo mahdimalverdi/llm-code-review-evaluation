@@ -1,14 +1,11 @@
 # Conclusion
 
-TODO: Write after the framework, study, and findings are stable.
+LLM-based code review assistants can produce useful feedback, but they can also generate comments that are unsupported, irrelevant, incorrect, non-actionable, or too low-value to justify reviewer attention. Reducing such comments is important, but it is not a one-dimensional optimization problem. Mitigation strategies can remove harmful comments while also suppressing useful weak signals, reducing review coverage, increasing human escalation, or adding computational cost.
 
-The conclusion should briefly restate:
+This paper reframes the evaluation of problematic LLM-generated code review comments as an empirical trade-off problem. We propose a controlled study that compares representative mitigation strategies on shared review instances: a baseline LLM reviewer, robust prompting, a context-quality gate, post-generation verification, and a hybrid gate-plus-verifier strategy. The goal is not to identify one universally best strategy, but to measure which failure types each strategy reduces and what costs accompany those reductions.
 
-1. why evaluation of LLM-generated code review comments is fragmented;
-2. why trade-off-aware evaluation is needed;
-3. what the operational taxonomy contributes;
-4. what the framework contributes;
-5. what the annotated evidence layer shows;
-6. what future work remains.
+To support this comparison, the paper develops an operational taxonomy of problematic generated review comments and a trade-off-aware evaluation framework. The taxonomy supports annotation of failure types such as unsupported comments, irrelevant comments, wrong-location comments, invalid fix suggestions, non-actionable comments, low-value comments, and context-dependent cases. The framework connects these labels to show, suppress, rewrite, and escalate decisions, and evaluates strategies using both error-reduction and preservation metrics.
 
-Avoid overclaiming. The conclusion should match the scope of the framework and illustrative study.
+The expected empirical contribution is a more realistic picture of mitigation quality. A strategy should not be evaluated only by how many comments it removes or how many hallucinations it catches. It should also be evaluated by how many useful comments it preserves, how much review coverage remains, how many cases require human escalation, how context quality affects the outcome, and what computational or workflow cost is introduced.
+
+The broader implication is that evaluation of LLM-based code review tools should move beyond single-score quality claims. Future work can extend this design to more datasets, programming languages, model families, and industrial review settings. The immediate contribution is a reproducible structure for studying mitigation trade-offs in generated code review comments, with explicit attention to context quality, annotation reliability, useful-feedback preservation, and cost.
