@@ -37,13 +37,17 @@ TITLE = "Evaluating Problematic LLM-Generated Code Review Comments: An Operation
 
 LATEX_HEADER = rf"""\documentclass[12pt]{{article}}
 
+\usepackage{{cmap}}
 \usepackage[T1]{{fontenc}}
 \usepackage[utf8]{{inputenc}}
+\usepackage{{lmodern}}
 \usepackage[a4paper,margin=1in]{{geometry}}
 \usepackage{{amsmath}}
 \usepackage{{array}}
 \usepackage{{booktabs}}
 \usepackage{{cite}}
+\usepackage{{float}}
+\usepackage{{microtype}}
 \usepackage{{tabularx}}
 \usepackage{{url}}
 \usepackage{{listings}}
@@ -259,6 +263,14 @@ def normalize_table_rows(rows: list[list[str]]) -> list[list[str]]:
     return [row + [""] * (column_count - len(row)) for row in rows]
 
 
+def table_column_spec(column_count: int) -> str:
+    """Return a readable tabularx column specification."""
+    ragged = r">{\raggedright\arraybackslash}"
+    if column_count == 3:
+        return rf"@{{}}{ragged}p{{0.23\linewidth}}{ragged}X{ragged}X@{{}}"
+    return "@{}" + ragged + "X" * column_count + "@{}"
+
+
 def convert_markdown_table_to_latex(table_lines: list[str], metadata: dict[str, str] | None) -> list[str]:
     """Convert a simple Markdown table to a labeled LaTeX table."""
     parsed_rows = [split_markdown_table_row(line) for line in table_lines]
@@ -276,17 +288,17 @@ def convert_markdown_table_to_latex(table_lines: list[str], metadata: dict[str, 
         return []
 
     column_count = len(rows[0])
-    column_spec = "@{}" + ">{\\raggedright\\arraybackslash}X" * column_count + "@{}"
+    column_spec = table_column_spec(column_count)
     caption = metadata.get("caption") if metadata else None
     label = metadata.get("label") if metadata else None
 
-    output = [r"\begin{table}[t]", r"\centering"]
+    output = [r"\begin{table}[H]", r"\centering"]
     if caption:
         output.append(r"\caption{" + convert_inline_markdown(caption) + "}")
     if label:
         output.append(r"\label{" + label + "}")
     output.extend([
-        r"\small",
+        r"\footnotesize",
         r"\renewcommand{\arraystretch}{1.18}",
         rf"\begin{{tabularx}}{{\linewidth}}{{{column_spec}}}",
         r"\toprule",
