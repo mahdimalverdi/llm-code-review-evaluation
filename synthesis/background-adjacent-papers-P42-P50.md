@@ -1,19 +1,20 @@
 # Background and Adjacent Papers: P42–P50
 
 > [!NOTE]
-> This synthesis file captures the role of P42–P50. Most papers in this group are not core LLM-code-review generation/evaluation papers. They are background or adjacent evidence for workflow, software-engineering surveys, security review, static-analysis-driven code quality, context consistency, and non-functional quality benchmarks.
+> This synthesis file captures the role of P42–P50. Most papers in this group are not core LLM-code-review generation/evaluation papers. They are background or adjacent evidence for workflow, software-engineering surveys, code-specific LLMs, security review, static-analysis-driven code quality, context consistency, and non-functional quality benchmarks.
 
 ## Why This Group Matters
 
 P42–P50 should not dominate the main contribution. Their value is that they widen the framework beyond narrow generated-comment scoring.
 
-They add five useful lenses:
+They add six useful lenses:
 
 1. **Developer workflow and AI provenance** — P42.
-2. **Broad LLM-for-SE positioning** — P43 and P44.
+2. **Broad LLM-for-SE and code-LLM positioning** — P43, P44, and P45.
 3. **Security and code-quality repair evaluation** — P46 and P48.
-4. **Context consistency between documentation and behavior** — P49.
-5. **Non-functional quality and benchmark validity** — P50.
+4. **Trust and broad misalignment framing** — P47.
+5. **Context consistency between documentation and behavior** — P49.
+6. **Non-functional quality and benchmark validity** — P50.
 
 P47 adds a broader misalignment and trust vocabulary, but should be used carefully because it is not SE-specific enough to support detailed code-review claims.
 
@@ -24,6 +25,7 @@ P47 adds a broader misalignment and trust vocabulary, but should be used careful
 | P42 — Developers shared ChatGPT conversations in GitHub PRs/issues | Real developer use of ChatGPT in collaboration artifacts | Workflow/provenance background |
 | P43 — Survey on LLMs for Software Engineering | Broad LLM-for-SE landscape | Positioning and related-work framing |
 | P44 — Survey on LLMs for Code Generation | General code-generation evaluation background | Benchmark/metric-validity background |
+| P45 — Survey of Large Language Models for Code | Code-specific LLM evolution, benchmarking, and trends | Code-LLM background; benchmark/task taxonomy caveats |
 | P46 — LLM for Vulnerability Detection and Repair | Security-oriented LLM evaluation | Secure-review subdimensions |
 | P47 — LLM Misalignment Survey | General trust/safety/misalignment framing | Broad motivation only |
 | P48 — LLMs for Code Quality Issues | Static-analysis and code-quality repair evaluation | Hybrid static-analysis/code-quality feedback |
@@ -36,7 +38,8 @@ P47 adds a broader misalignment and trust vocabulary, but should be used careful
 |---|---|
 | Developer workflow / provenance | P42 shows AI outputs become part of PR/issue collaboration and should be treated as provenance-bearing artifacts. |
 | Broad SE task positioning | P43 helps distinguish review-specific evaluation from generic LLM-for-SE evaluation. |
-| Benchmark validity | P44 and P50 support the claim that coding benchmarks measure proxies that may not equal workflow usefulness. |
+| Code-LLM background | P45 helps position code review as one specialized task among code-specific LLM capabilities and benchmarks. |
+| Benchmark validity | P44, P45, and P50 support the claim that coding benchmarks measure proxies that may not equal workflow usefulness. |
 | Security review quality | P46 adds vulnerability category, location, exploitability, repair correctness, and severity calibration. |
 | Code quality issue resolution | P48 adds static-analysis alignment, issue resolution, behavior preservation, and repair validity. |
 | Context consistency | P49 adds documentation-code behavior consistency and stale-context risk. |
@@ -51,6 +54,7 @@ P42–P50 suggest these additional failure types or refinements:
 |---|---|---|
 | Unverified shared AI advice | AI output is shared in PR/issue discussion without enough validation. | P42 |
 | Provenance ambiguity | The review discussion does not make clear what came from a model and how it was verified. | P42 |
+| Benchmark-to-workflow mismatch | A model performs well on code benchmarks but the result does not transfer to review usefulness. | P43, P44, P45, P50 |
 | Security false alarm | A vulnerability comment reports a non-existent or low-risk issue. | P46 |
 | Missed vulnerability | The review system fails to catch a security-relevant issue. | P46 |
 | Wrong vulnerability category/location | Security feedback identifies the wrong CWE-like category or code location. | P46 |
@@ -73,14 +77,14 @@ P49 is the most important paper in this group for context quality. It supports a
 | Provenance | The source of context matters: human reviewer, static analyzer, documentation, benchmark, or model-generated text. |
 | Verification path | Context should include a way to validate claims, especially for security, repair, and efficiency comments. |
 
-P48 and P46 add that context quality is task-dependent: security and code-quality feedback need different evidence than style or readability feedback.
+P46 and P48 add that context quality is task-dependent: security and code-quality feedback need different evidence than style or readability feedback. P44, P45, and P50 add that benchmark context is often weaker than real workflow context.
 
 ## Trade-off Extensions
 
 | Strategy | Benefit | Risk / Cost | Related Papers |
 |---|---|---|---|
 | Sharing AI conversations in PRs/issues | Transparency and collaboration support | Unverified authority, noise, provenance ambiguity | P42 |
-| Using broad LLM-for-SE surveys | Good positioning | Too generic for review-comment evaluation | P43, P44 |
+| Using broad LLM-for-SE / code-LLM surveys | Good positioning | Too generic for review-comment evaluation | P43, P44, P45 |
 | Security-oriented review generation | Can surface high-impact issues | False alarms, missed vulnerabilities, severity miscalibration | P46 |
 | Static-analysis-guided repair | Focused, measurable code-quality target | Warning suppression instead of real improvement | P48 |
 | Documentation-behavior consistency checks | Prevents stale or contradictory context from misleading review | Extra LLM calls, false inconsistency reports | P49 |
@@ -95,11 +99,12 @@ P48 and P46 add that context quality is task-dependent: security and code-qualit
 - Use P48 only for static-analysis/code-quality issue subclaims.
 - Use P49 for context consistency and stale documentation/context claims.
 - Use P50 for benchmark/proxy-validity and non-functional quality examples.
+- Use P45 only for broad code-LLM background, not for code-review-specific claims.
 
 ### Do not overclaim
 
 - P42 does not prove LLM code review quality; it shows real developer sharing behavior.
-- P43/P44 are broad surveys, not fine-grained review-comment evaluation studies.
+- P43/P44/P45 are broad surveys, not fine-grained review-comment evaluation studies.
 - P47 is not code-review-specific; use it for general trust/misalignment framing only.
 
 ## Integration into the Main Framework
@@ -115,14 +120,14 @@ General generated-review quality
 + Optional static-analysis/code-quality layer
 + Optional non-functional-quality layer
 + Context consistency / provenance checks
++ Benchmark-to-workflow validity check
 ```
 
 This keeps the framework broad enough for real code review while preventing background papers from diluting the core LLM-code-review argument.
 
 ## Open Follow-up Items
 
-- [ ] Restore P45 in the spreadsheet and create its paper note.
 - [ ] Decide whether P46/P48/P50 belong in the final citation set or only in extended related work.
 - [ ] Add `context consistency` to `synthesis/context-quality.md` if it becomes central.
 - [ ] Add `security false alarm`, `invalid repair suggestion`, and `unsupported efficiency claim` to the final taxonomy if specialized layers are included.
-- [ ] Update `matrices/cross-paper-synthesis.md` after P45 is restored.
+- [ ] Verify whether P45 has a peer-reviewed version; for now it remains an arXiv/background source.
