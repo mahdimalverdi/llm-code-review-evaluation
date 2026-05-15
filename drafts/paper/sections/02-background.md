@@ -1,6 +1,6 @@
 # Background and Motivation
 
-This section defines the terms and research context used throughout the paper. It first introduces the key concepts needed for the proposed taxonomy and framework. It then summarizes modern code review, code review automation, LLM-based review assistance, and the main evaluation concepts that recur in later sections.
+The introduction framed LLM-generated code review evaluation as a decision-oriented trade-off problem. This section defines the terms and research context used throughout the rest of the paper. It first introduces the key concepts needed for the proposed taxonomy and framework. It then summarizes modern code review, code review automation, LLM-based review assistance, and the evaluation concepts that recur in later sections.
 
 ## Key Concepts
 
