@@ -1,14 +1,15 @@
 # P30 — CodeUltraFeedback: An LLM-as-a-Judge Dataset for Aligning Large Language Models to Coding Preferences
 
 > [!NOTE]
-> Compact v2 analysis. P30 is useful for our evaluator and preference-dimension sections because it operationalizes non-functional coding preferences and uses LLM-as-a-judge annotations for preference tuning.
+> Compact v2 analysis. P30 is useful for our evaluator and preference-dimension sections because it operationalizes non-functional coding preferences and uses LLM-as-a-judge annotations for preference tuning. Metadata has been aligned with the spreadsheet: the official ACM TOSEM DOI is retained, and arXiv remains the preprint/PDF source.
 
 ## Status
 
 - Paper ID: `P30`
-- Analysis status: `First pass completed from PDF; needs citation/BibTeX cleanup`
+- Analysis status: `First pass completed from PDF; metadata aligned with spreadsheet; needs BibTeX cleanup`
 - Priority: `Medium / High`
 - Reading depth: `Read once from PDF`
+- Last updated: `2026-05-15`
 - Confidence: `High`
 
 ## Bibliographic Information
@@ -17,13 +18,15 @@
 |---|---|
 | Title | CodeUltraFeedback: An LLM-as-a-Judge Dataset for Aligning Large Language Models to Coding Preferences |
 | Authors | Martin Weyssow, Aton Kamanda, Xin Zhou, Houari Sahraoui |
-| Year | 2024 |
-| Venue / Source | arXiv / TOSEM candidate |
-| DOI / arXiv | arXiv:2403.09032; DOI listed in sheet as 10.1145/3736407 |
+| Year | 2025 |
+| Venue / Source | ACM Transactions on Software Engineering and Methodology |
+| Publication type | Peer-reviewed journal article |
+| Link | https://dl.acm.org/doi/abs/10.1145/3736407 |
+| DOI / arXiv | DOI: 10.1145/3736407; arXiv:2403.09032 |
 | Artifact | GitHub: `martin-wey/CodeUltraFeedback` |
 
 ```bibtex
-% TODO: Verify final publication metadata and BibTeX.
+% TODO: Add checked ACM BibTeX.
 ```
 
 ## One-Sentence Summary
@@ -60,36 +63,31 @@ The paper uses LLM-as-a-judge to create preference data and then uses that data 
 
 | Finding | Summary |
 |---|---|
-| F1 | GPT-4-Turbo and GPT-3.5-Turbo receive the highest average preference scores in the dataset. |
-| F2 | Strong code models still underperform GPT-3.5/4 on preference alignment. |
-| F3 | GPT-4/3.5 responses are not always best; another LLM response is preferred for about 73% of samples. |
-| F4 | SFT+DPO improves CodeLlama-7B-Instruct alignment across preferences. |
-| F5 | DPO and SFT+DPO significantly improve most preference dimensions except instruction following. |
-| F6 | Alignment tuning can improve functional correctness versus the base model, though SFT alone gives the largest Pass@k gains. |
-| F7 | Judge selection matters: GPT-3.5 and GPT-4 produce different rankings/scores. |
-| F8 | GPT-3.5 aligns more closely with human evaluators than GPT-4 on the 100-sample manual check under their setup. |
-| F9 | GPT-4 distinguishes test-passing from test-failing HumanEval+ solutions better than GPT-3.5. |
+| F1 | Strong code models still underperform GPT-3.5/4 on preference alignment. |
+| F2 | GPT-4/3.5 responses are not always best; another LLM response can be preferred in many samples. |
+| F3 | SFT+DPO improves CodeLlama-7B-Instruct alignment across preference dimensions. |
+| F4 | Judge selection matters: GPT-3.5 and GPT-4 produce different rankings/scores. |
+| F5 | Human agreement checks are necessary because LLM preference labels are judge-dependent. |
 
 ## Evaluation Dimensions Covered
 
 | Dimension | Coverage | Notes |
 |---|---|---|
 | Coding preferences | Very high | Five explicit non-functional dimensions. |
-| LLM-as-a-judge dataset construction | High | GPT-3.5 ratings + rationales. |
-| Judge-human agreement | Medium | 100 manually judged samples. |
+| LLM-as-a-judge dataset construction | High | GPT-based ratings and rationales. |
+| Judge-human agreement | Medium | Manual validation subset. |
 | Judge selection sensitivity | High | GPT-3.5 vs GPT-4 differences. |
-| Functional correctness | Medium / High | HumanEval/HumanEval+ Pass@k. |
+| Functional correctness | Medium / High | Coding benchmark evaluation is included. |
 | Preference tuning | High | SFT/DPO experiments. |
-| Reference-guided judging | High | Bench uses reference response. |
+| Reference-guided judging | High | Benchmark uses reference responses. |
 
 ## Problematic Judge / Evaluation Types
 
 - Judge-specific preference ranking.
-- GPT-3.5 judge that may not distinguish test-passing from test-failing code well.
-- GPT-4 judge that may have different style preferences from humans/GPT-3.5.
 - Preference-over-optimization that improves non-functional alignment but may not maximize functional correctness.
 - Reference-dependent judging.
 - Verbosity/length bias risk in coding preference evaluation.
+- Closed-source judge drift and reproducibility risk.
 
 ## Context-Quality Evidence
 
@@ -112,14 +110,14 @@ P30 supports adding non-functional and preference-based dimensions to code revie
 ## Limitations from Our Perspective
 
 - Not code-review-specific.
-- GPT-3.5-generated labels are treated as preference data, creating judge-dependence.
-- Manual validation is limited to 100 samples.
+- LLM-generated preference labels create judge-dependence.
+- Manual validation is limited.
 - Reference-guided grading may not fit open-ended review-comment evaluation.
 - The paper uses coding-preference tasks, not PR workflow or review comments.
 
 ## Follow-up TODOs
 
+- [ ] Add checked ACM BibTeX.
 - [ ] Add coding preference dimensions to evaluation framework.
 - [ ] Add judge-selection sensitivity to evaluator-validity synthesis.
 - [ ] Add reference-guided judging trade-off to framework.
-- [ ] Update `matrices/cross-paper-synthesis.md` with P30 evidence.
