@@ -10,6 +10,7 @@ Usage:
 
 Output:
     build/paper.tex
+    build/references.bib
 """
 
 from __future__ import annotations
@@ -17,11 +18,14 @@ from __future__ import annotations
 import argparse
 import html
 import re
+import shutil
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_ORDER_FILE = REPO_ROOT / "drafts" / "paper" / "sections_order.txt"
 DEFAULT_OUTPUT_FILE = REPO_ROOT / "build" / "paper.tex"
+REFERENCES_FILE = REPO_ROOT / "references" / "references.bib"
+BUILD_REFERENCES_FILE_NAME = "references.bib"
 
 TITLE = "Evaluating Problematic LLM-Generated Code Review Comments: An Operational Taxonomy and a Trade-off-Aware Framework"
 
@@ -63,7 +67,7 @@ LATEX_HEADER = rf"""\documentclass[12pt]{{article}}
 
 LATEX_FOOTER = r"""
 \bibliographystyle{plain}
-\bibliography{../references/references}
+\bibliography{references}
 
 \end{document}
 """
@@ -305,6 +309,14 @@ def read_order(order_file: Path) -> list[Path]:
     return sections
 
 
+def copy_references(output_file: Path) -> None:
+    """Copy references.bib next to the generated paper.tex for reliable BibTeX resolution."""
+    if not REFERENCES_FILE.exists():
+        raise FileNotFoundError(f"Missing bibliography file: {REFERENCES_FILE}")
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(REFERENCES_FILE, output_file.parent / BUILD_REFERENCES_FILE_NAME)
+
+
 def build_latex(order_file: Path, output_file: Path) -> None:
     sections = read_order(order_file)
     missing = [str(path) for path in sections if not path.exists()]
@@ -324,7 +336,9 @@ def build_latex(order_file: Path, output_file: Path) -> None:
 
     output_file.parent.mkdir(parents=True, exist_ok=True)
     output_file.write_text("\n".join(parts), encoding="utf-8")
+    copy_references(output_file)
     print(f"Wrote {output_file.relative_to(REPO_ROOT)}")
+    print(f"Copied {REFERENCES_FILE.relative_to(REPO_ROOT)} to {output_file.parent.relative_to(REPO_ROOT) / BUILD_REFERENCES_FILE_NAME}")
 
 
 def parse_args() -> argparse.Namespace:
