@@ -155,6 +155,7 @@ SPECIAL_CHARS = {
 
 LONGTABLE_ROW_THRESHOLD = 6
 LONGTABLE_COLUMN_THRESHOLD = 4
+LATEX_LINEBREAK = r" \\"
 
 TABLE_METADATA_PATTERN = re.compile(r"^<!--\s*table:\s*(.*?)\s*-->\s*$")
 TABLE_ATTRIBUTE_PATTERN = re.compile(r"(caption|label|longtable)\s*=\s*(['\"])(.*?)\2")
@@ -326,7 +327,7 @@ def format_latex_table_row(cells: list[str], *, bold: bool = False) -> str:
         converted_cells = [r"\textbf{" + convert_inline_markdown(cell) + "}" for cell in cells]
     else:
         converted_cells = [convert_inline_markdown(cell) for cell in cells]
-    return " & ".join(converted_cells) + r" \\"
+    return " & ".join(converted_cells) + LATEX_LINEBREAK
 
 
 def convert_table_to_tabularx(rows: list[list[str]], caption: str | None, label: str | None) -> list[str]:
@@ -367,7 +368,7 @@ def convert_table_to_longtable(rows: list[list[str]], caption: str | None, label
         caption_line = r"\caption{" + convert_inline_markdown(caption) + "}"
         if label:
             caption_line += r"\label{" + label + "}"
-        output.append(caption_line + r" \")
+        output.append(caption_line + LATEX_LINEBREAK)
 
     output.extend([
         r"\toprule",
@@ -377,14 +378,14 @@ def convert_table_to_longtable(rows: list[list[str]], caption: str | None, label
     ])
 
     if caption:
-        output.append(r"\caption[]{" + convert_inline_markdown(caption) + r" (continued)} \")
+        output.append(r"\caption[]{" + convert_inline_markdown(caption) + r" (continued)}" + LATEX_LINEBREAK)
     output.extend([
         r"\toprule",
         header_row,
         r"\midrule",
         r"\endhead",
         r"\midrule",
-        rf"\multicolumn{{{column_count}}}{{r}}{{Continued on next page}} \",
+        rf"\multicolumn{{{column_count}}}{{r}}{{Continued on next page}}" + LATEX_LINEBREAK,
         r"\endfoot",
         r"\bottomrule",
         r"\endlastfoot",
