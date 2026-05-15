@@ -1,12 +1,14 @@
 # Threats to Validity
 
-This section discusses threats to the validity of the empirical comparison and the steps used to reduce them. Because the study is intentionally bounded, the main risk is overgeneralizing from a small controlled evaluation. The paper should therefore match its claims to the size, diversity, and reliability of the final annotated sample.
+<!-- TODO: After the empirical study is executed, revise this section with actual threats observed during dataset selection, generation, annotation, analysis, and artifact release. -->
+
+This section discusses threats to the validity of the planned empirical comparison and the steps intended to reduce them. Because the study is intentionally bounded, the main risk is overgeneralizing from a controlled evaluation. The paper should therefore match its claims to the size, diversity, and reliability of the final annotated sample.
 
 ## Construct Validity
 
 The study measures problematic generated review comments using an operational taxonomy. The taxonomy may not capture all possible failure modes, and some labels may overlap. For example, a comment can be both unsupported and technically incorrect, or both non-actionable and low-value. To reduce this threat, the annotation guideline should define primary and secondary labels, provide inclusion and exclusion criteria, and preserve disagreement notes for ambiguous cases.
 
-Useful-feedback preservation is also difficult to measure. A comment may be useful to one reviewer but not another, or useful only after rewriting. The study reduces this threat by separating usefulness, actionability, grounding, and mitigation decision rather than collapsing them into one score.
+Useful-feedback preservation is also difficult to measure. A comment may be useful to one reviewer but not another, or useful only after rewriting. The study design reduces this threat by separating usefulness, actionability, grounding, and mitigation decision rather than collapsing them into one score.
 
 ## Internal Validity
 
@@ -30,7 +32,7 @@ If only a subset is double-annotated, the paper should state this clearly and av
 
 The selected dataset may contain instances that are not review-relevant, not judgeable under the available context, or linked to incomplete references. Such cases can make a good generated comment appear wrong or make a bad comment appear unsupported only because the necessary context is missing.
 
-The study mitigates this by labeling context quality and dataset validity separately from generated-comment quality. Instances that cannot be judged should be marked as context-dependent or dataset-validity concerns rather than treated as ordinary model failures.
+The planned study mitigates this by labeling context quality and dataset validity separately from generated-comment quality. Instances that cannot be judged should be marked as context-dependent or dataset-validity concerns rather than treated as ordinary model failures.
 
 ## Evaluator Validity
 
@@ -46,4 +48,6 @@ The targeted literature review may miss relevant papers, especially because LLM-
 
 ## Summary
 
-The main validity strategy is transparency: fixed settings, explicit labels, pilot annotation, agreement reporting, preserved disagreement notes, separate context-quality labels, and conservative interpretation. The study should present its empirical findings as evidence about mitigation trade-offs under a controlled design, not as universal claims about all LLM-based code review tools.
+The main planned validity strategy is transparency: fixed settings, explicit labels, pilot annotation, agreement reporting, preserved disagreement notes, separate context-quality labels, and conservative interpretation. The study should present its empirical findings as evidence about mitigation trade-offs under a controlled design, not as universal claims about all LLM-based code review tools.
+
+<!-- TODO: After execution, add concrete validity details: actual sample limitations, annotation disagreements, missing data, failed strategy runs, unavailable artifacts, and any deviations from the planned protocol. -->
