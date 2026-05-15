@@ -52,6 +52,9 @@
 | P48 | LLMs for Code Quality Issues | Low / Medium | First pass completed; needs PDF-level verification | Static-analysis-driven code quality fixes; repair validation; quality issue resolution |
 | P49 | METAMON | Medium | First pass completed; needs PDF-level verification | Documentation-code consistency; context consistency checks; metamorphic LLM queries |
 | P50 | COFFE | Low | First pass completed; needs PDF-level verification | Efficiency benchmark; non-functional quality; benchmark/proxy-validity discussion |
+| P51 | Modern Code Review SLR and Taxonomy | High | Added; official publisher page verified; needs first pass | MCR taxonomy; synthesis legitimacy; background for code review goals and evaluation gaps |
+| P52 | Towards Automating Code Review Activities | High | Added; official IEEE Xplore page verified; needs first pass and DOI extraction | Pre-LLM code review automation; cost framing; automation tasks |
+| P53 | Code Review Automation: Strengths and Weaknesses | High | Added; official IEEE Xplore page verified; needs first pass and DOI extraction | Qualitative success/failure analysis; dataset issues; why quantitative metrics alone are insufficient |
 
 ## Working Rule
 
@@ -59,11 +62,14 @@ Keep this file aligned with the spreadsheet, but use the Markdown files as the m
 
 ## Current Gaps
 
-- No known missing paper IDs in P01–P50 after restoring P45.
+- P51–P53 were added after the initial P01–P50 pool because they directly strengthen the modern-code-review background, pre-LLM code review automation framing, and qualitative failure-analysis basis for the operational taxonomy.
 - P42–P50 are mostly background/survey/adjacent papers. Use them carefully: they should support framing, security/code-quality/context-consistency/non-functional-quality dimensions, not replace core code-review evaluation evidence.
 
 ## Next Reading Candidates
 
+- Deep-read P53 because it is the closest missing source to our operational taxonomy and failure-analysis framing.
+- Deep-read P51 to strengthen the Background and Methodology sections.
+- Deep-read P52 to strengthen the pre-LLM automation and cost framing.
 - Deep-read P39 and P40 because they directly strengthen usefulness and context-quality arguments.
 - Deep-read P49 if context consistency becomes a core part of the framework.
 - Deep-read P46 only if the final framework includes a secure-review subcase.
