@@ -29,11 +29,11 @@ This project studies:
 
 - LLM-based code review comment generation and evaluation;
 - hallucination and unsupported claims in generated review comments;
-- context quality and context misalignment;
-- problematic or low-value review comments;
-- human annotation, user-study, and production-feedback protocols;
+- context quality, reviewability, and context misalignment;
+- problematic, low-value, or non-actionable review comments;
+- human annotation, user-study, production-feedback, and LLM-as-a-judge protocols;
 - trade-offs between reducing harmful comments and preserving useful comments;
-- filtering, gating, aggregation, and LLM-as-a-Judge mechanisms;
+- filtering, gating, aggregation, RAG, static-analysis hybrids, and human-in-the-loop mechanisms;
 - cost, latency, reviewer overhead, human verification, and workflow impact.
 
 ## Methodological Positioning
@@ -74,13 +74,7 @@ templates/
   paper-analysis-template.md
 
 papers/
-  P01-deepcrceval.md
-  P02-hallujudge.md
-  P03-rovodev-code-reviewer.md
-  P04-swe-prbench.md
-  P05-swrbench.md
-  P06-contextcrbench.md
-  P07-revmate-user-study.md
+  P01-...md through P50-...md
 
 synthesis/
   evaluation-dimensions.md
@@ -99,6 +93,28 @@ drafts/
   related-work.md
 ```
 
+## Canonical Files
+
+Use these files as the main working sources:
+
+| File | Purpose |
+|---|---|
+| `matrices/paper-pool.md` | Compact inventory of all papers and their role in the project. |
+| `matrices/cross-paper-synthesis.md` | Main cross-paper argument map and gap synthesis. |
+| `synthesis/evaluation-dimensions.md` | Evaluation dimensions for generated review comments and review workflows. |
+| `synthesis/problematic-comment-taxonomy.md` | Failure types for generated comments, context, workflow, and evaluators. |
+| `synthesis/context-quality.md` | Context-quality dimensions, context failure types, and gating implications. |
+| `synthesis/trade-off-framework.md` | Trade-off matrix for filtering, gating, context expansion, and human escalation. |
+| `synthesis/research-gap.md` | Main gap statement and research positioning. |
+
+## Current Status
+
+- Paper notes exist for **P01–P50**.
+- `matrices/paper-pool.md` is aligned with the spreadsheet metadata after the latest cleanup pass.
+- `matrices/cross-paper-synthesis.md` is the canonical cross-paper synthesis and covers **P01–P50**.
+- Temporary synthesis files for P37–P41 and P42–P50 were removed after their content was merged into canonical synthesis/matrix files.
+- Remaining cleanup: add checked BibTeX entries and do PDF-level verification for lower-confidence paper notes.
+
 ## Core Working Rule
 
 Each paper should be analyzed using the Markdown template. The analysis should extract evidence for the framework, not merely summarize the paper.
@@ -113,31 +129,10 @@ vs
 Our perspective
 ```
 
-## Current Status
-
-| ID | Paper | Status | Main Use |
-|---|---|---|---|
-| P01 | DeepCRCEval | First pass completed | Evaluation dimensions; critique of text similarity |
-| P02 | HalluJudge | First pass completed | Hallucination; context alignment; safeguard/gate framing |
-| P03 | RovoDev Code Reviewer | First pass completed | Industrial deployment; workflow metrics; quality gates |
-| P04 | SWE-PRBench | First pass completed; needs second verification pass | PR-level benchmark; context degradation evidence |
-| P05 | SWRBench | First pass completed; needs PDF-level verification | PR-centric benchmark; full project context; structured ground truth |
-| P06 | ContextCRBench | First pass completed; needs PDF-level verification | Enriched semantic/code context; fine-grained evaluation; data-quality critique |
-| P07 | RevMate user study | First pass completed; needs PDF-level verification | Live user study; acceptance; perceived value; reviewer time overhead |
-
-## Important Synthesis Files
-
-- `synthesis/research-gap.md`: main gap statement and research questions.
-- `synthesis/evaluation-dimensions.md`: dimensions to measure in generated review comments.
-- `synthesis/problematic-comment-taxonomy.md`: failure types for generated review comments.
-- `synthesis/context-quality.md`: context-quality dimensions and context failure types.
-- `synthesis/trade-off-framework.md`: trade-off matrix for filtering/gating/aggregation decisions.
-- `matrices/cross-paper-synthesis.md`: cross-paper mapping from evidence to arguments.
-
 ## Next Steps
 
-- Verify high-priority papers against their PDFs.
-- Add BibTeX entries for cited papers.
-- Refine the taxonomy after 8–10 papers.
-- Convert `research-gap.md` into the introduction and related-work critique.
+- Add checked BibTeX entries for cited papers.
+- Deep-read P39 and P40 because they directly strengthen usefulness and context-quality arguments.
+- Deep-read P49 if context consistency becomes a core part of the framework.
+- Update draft sections from the canonical synthesis files.
 - Decide whether to add a small illustrative mini-validation using 20–50 generated review comments.
