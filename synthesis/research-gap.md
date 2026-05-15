@@ -1,32 +1,32 @@
 # Research Gap
 
 > [!NOTE]
-> This file collects the emerging research gap from the paper notes. It should become the basis for the introduction, related-work critique, contribution statement, and methodology.
+> This file collects the emerging research gap from the paper notes. It should become the basis for the introduction, related-work critique, contribution statement, and methodology. Citations use keys from `references/references.bib`.
 
 ## Current Literature Movement
 
 The analyzed papers show a clear movement in LLM-based code review evaluation.
 
 1. **From lexical similarity to quality rubrics**  
-   Early code review generation work and later evaluation papers show that BLEU/ROUGE-like metrics are weak for review comments because valid review comments are diverse, context-dependent, and often not lexically similar to a single human reference.
+   Early code review generation work and later evaluation papers show that BLEU/ROUGE-like metrics are weak for review comments because valid review comments are diverse, context-dependent, and often not lexically similar to a single human reference [@p14_li2022_codereviewer; @p01_lu2025_deepcrceval].
 
 2. **From generated text to grounded claims**  
-   Hallucination and context-misalignment work reframes review-comment quality as a grounding problem: a generated comment should be traceable to the diff, PR context, specification, static-analysis output, or another explicit evidence source.
+   Hallucination and context-misalignment work reframes review-comment quality as a grounding problem: a generated comment should be traceable to the diff, PR context, specification, static-analysis output, or another explicit evidence source [@p02_tantithamthavorn2026_hallujudge; @p12_wang2025_sgcr; @p22_jaoua2025_static_analyzers].
 
 3. **From snippet-level benchmarks to PR-level and project-aware evaluation**  
-   Newer benchmarks move from isolated hunks toward pull requests, issue coverage, project context, enriched semantic context, and human-flagged review issues. However, more context does not automatically improve performance and can increase noise, cost, and attention load.
+   Newer benchmarks move from isolated hunks toward pull requests, issue coverage, project context, enriched semantic context, and human-flagged review issues. However, more context does not automatically improve performance and can increase noise, cost, and attention load [@p04_kumar2026_swe_prbench; @p05_zeng2025_swrbench; @p06_hu2025_contextcrbench; @p16_icoz2026_context_aware].
 
 4. **From offline metrics to production and workflow signals**  
-   Industrial and user-study papers add signals such as code resolution, acceptance, perceived value, PR cycle time, reviewer overhead, signal-to-noise, abandonment, and developer trust.
+   Industrial and user-study papers add signals such as code resolution, acceptance, perceived value, PR cycle time, reviewer overhead, signal-to-noise, abandonment, and developer trust [@p03_tantithamthavorn2026_rovodev; @p07_olewicki2024_revmate; @p10_sun2025_bitsai_cr; @p26_zhong2026_human_ai_synergy; @p27_chowdhury2026_industry_claims].
 
 5. **From comment quality to input and reference quality**  
-   Several papers show that the data used for training or evaluation is itself noisy. Human review comments may be vague, low-value, incomplete, or shaped by reviewer experience. Reviewability of the input change and provenance of the reference comment therefore matter.
+   Several papers show that the data used for training or evaluation is itself noisy. Human review comments may be vague, low-value, incomplete, or shaped by reviewer experience. Reviewability of the input change and provenance of the reference comment therefore matter [@p08_liu2025_too_noisy; @p18_bensghaier2025_curated_reviews; @p23_lin2026_reviewer_experience; @p40_ram2018_reviewability].
 
 6. **From generic evaluation to LLM-as-a-Judge validity**  
-   LLM-as-a-Judge papers show that automated evaluation is itself unstable: judge decisions can depend on task type, prompt wording, response order, source model, preprocessing, verbosity, and other biases.
+   LLM-as-a-Judge papers show that automated evaluation is itself unstable: judge decisions can depend on task type, prompt wording, response order, source model, preprocessing, verbosity, and other biases [@p29_wang2025_human_evaluators; @p30_weyssow2025_codeultrafeedback; @p31_jiang2025_codejudgebench; @p32_zhao2026_bias_loop; @p33_he2025_llmjudge_se; @p36_li2024_llms_as_judges].
 
 7. **From general review to specialized sublayers**  
-   Security review, static-analysis-guided code-quality repair, documentation-behavior consistency, and non-functional efficiency evaluation each introduce additional dimensions that should not be collapsed into a single generic quality score.
+   Security review, static-analysis-guided code-quality repair, documentation-behavior consistency, and non-functional efficiency evaluation each introduce additional dimensions that should not be collapsed into a single generic quality score [@p21_peng2025_icodereviewer; @p46_zhou2025_vulnerability_repair; @p48_patcas2026_code_quality_issues; @p49_lee2025_metamon; @p50_peng2025_coffe].
 
 ## Core Gap
 
@@ -123,22 +123,22 @@ The stronger framing is that existing methods each cover one part of the evaluat
 
 ## Evidence from Current Papers
 
-| Evidence | Supporting Papers | Interpretation |
-|---|---|---|
-| Text-similarity metrics are insufficient | P01, P14, P18, P29, P30, P31 | Evaluation needs task-specific and developer-facing criteria. |
-| Hallucination can be framed as context misalignment | P02 | Generated comments should be checked against available review context. |
-| Production metrics matter | P03, P10, P26, P27 | Offline quality does not fully capture workflow impact. |
-| More context can hurt | P04, P13, P16 | Context quality must be evaluated, not assumed. |
-| Full project and PR context improve realism | P05, P06 | Realistic evaluation needs project-level information, but still needs context-quality controls. |
-| Human feedback is useful but noisy | P03, P04, P05, P07, P08, P18, P23 | Human review comments, acceptance, value signals, and references are realistic but imperfect. |
-| Gates and filters exist but trade-offs are under-modeled | P02, P03, P07, P10, P21, P22, P35 | We need to evaluate both caught errors and lost useful comments. |
-| Acceptance is not usefulness | P07, P39 | A comment can be valuable even if not directly accepted. |
-| Review has socio-technical value | P28, P37, P38, P39 | Evaluation should preserve knowledge transfer, team awareness, and shared ownership. |
-| Input reviewability matters | P40 | Low-reviewability changes can make both human and automated review harder. |
-| Explanation quality is distinct from issue detection | P25, P41 | A generated comment can identify a concern but fail to explain it usefully. |
-| LLM-as-a-Judge needs validation | P29, P30, P31, P32, P33, P36 | Automated evaluators are measurement instruments, not ground truth. |
-| Specialized security/code-quality/performance layers matter | P21, P22, P46, P48, P50 | Some review tasks need structured validation beyond generic comment quality. |
-| Context consistency and provenance matter | P12, P42, P49 | Specs, docs, AI conversations, and behavior can diverge or need verification. |
+| Evidence | Supporting Papers | Citation keys | Interpretation |
+|---|---|---|---|
+| Text-similarity metrics are insufficient | P01, P14, P18, P29, P30, P31 | [@p01_lu2025_deepcrceval; @p14_li2022_codereviewer; @p18_bensghaier2025_curated_reviews; @p29_wang2025_human_evaluators; @p30_weyssow2025_codeultrafeedback; @p31_jiang2025_codejudgebench] | Evaluation needs task-specific and developer-facing criteria. |
+| Hallucination can be framed as context misalignment | P02 | [@p02_tantithamthavorn2026_hallujudge] | Generated comments should be checked against available review context. |
+| Production metrics matter | P03, P10, P26, P27 | [@p03_tantithamthavorn2026_rovodev; @p10_sun2025_bitsai_cr; @p26_zhong2026_human_ai_synergy; @p27_chowdhury2026_industry_claims] | Offline quality does not fully capture workflow impact. |
+| More context can hurt | P04, P13, P16 | [@p04_kumar2026_swe_prbench; @p13_haider2024_prompting_finetuning; @p16_icoz2026_context_aware] | Context quality must be evaluated, not assumed. |
+| Full project and PR context improve realism | P05, P06 | [@p05_zeng2025_swrbench; @p06_hu2025_contextcrbench] | Realistic evaluation needs project-level information, but still needs context-quality controls. |
+| Human feedback is useful but noisy | P03, P04, P05, P07, P08, P18, P23 | [@p03_tantithamthavorn2026_rovodev; @p04_kumar2026_swe_prbench; @p05_zeng2025_swrbench; @p07_olewicki2024_revmate; @p08_liu2025_too_noisy; @p18_bensghaier2025_curated_reviews; @p23_lin2026_reviewer_experience] | Human review comments, acceptance, value signals, and references are realistic but imperfect. |
+| Gates and filters exist but trade-offs are under-modeled | P02, P03, P07, P10, P21, P22, P35 | [@p02_tantithamthavorn2026_hallujudge; @p03_tantithamthavorn2026_rovodev; @p07_olewicki2024_revmate; @p10_sun2025_bitsai_cr; @p21_peng2025_icodereviewer; @p22_jaoua2025_static_analyzers; @p35_mcaleese2024_llm_critics] | We need to evaluate both caught errors and lost useful comments. |
+| Acceptance is not usefulness | P07, P39 | [@p07_olewicki2024_revmate; @p39_bosu2015_useful_reviews] | A comment can be valuable even if not directly accepted. |
+| Review has socio-technical value | P28, P37, P38, P39 | [@p28_heander2025_support_not_automation; @p37_sadowski2018_google_mcr; @p38_bacchelli2013_expectations_mcr; @p39_bosu2015_useful_reviews] | Evaluation should preserve knowledge transfer, team awareness, and shared ownership. |
+| Input reviewability matters | P40 | [@p40_ram2018_reviewability] | Low-reviewability changes can make both human and automated review harder. |
+| Explanation quality is distinct from issue detection | P25, P41 | [@p25_yu2024_finetuning_acr; @p41_widyasari2025_explaining_explanations] | A generated comment can identify a concern but fail to explain it usefully. |
+| LLM-as-a-Judge needs validation | P29, P30, P31, P32, P33, P36 | [@p29_wang2025_human_evaluators; @p30_weyssow2025_codeultrafeedback; @p31_jiang2025_codejudgebench; @p32_zhao2026_bias_loop; @p33_he2025_llmjudge_se; @p36_li2024_llms_as_judges] | Automated evaluators are measurement instruments, not ground truth. |
+| Specialized security/code-quality/performance layers matter | P21, P22, P46, P48, P50 | [@p21_peng2025_icodereviewer; @p22_jaoua2025_static_analyzers; @p46_zhou2025_vulnerability_repair; @p48_patcas2026_code_quality_issues; @p50_peng2025_coffe] | Some review tasks need structured validation beyond generic comment quality. |
+| Context consistency and provenance matter | P12, P42, P49 | [@p12_wang2025_sgcr; @p42_wasserbaech2024_chatgpt_github; @p49_lee2025_metamon] | Specs, docs, AI conversations, and behavior can diverge or need verification. |
 
 ## Methodological Implication
 
@@ -160,5 +160,5 @@ Paper selection
 - [ ] Convert this gap into a concise introduction section.
 - [ ] Convert this gap into a related-work critique section.
 - [ ] Decide whether to include a small illustrative mini-validation.
-- [ ] Add checked BibTeX entries for final citation candidates.
+- [ ] Replace `TODO_PUBLISHER_BIBTEX` entries with official publisher-exported BibTeX.
 - [ ] Deep-read P39, P40, and P49 for stronger usefulness/context-quality framing.
