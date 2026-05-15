@@ -1,6 +1,8 @@
 # Empirical Evaluation Design
 
-This section defines the controlled empirical comparison used to evaluate mitigation strategies. The study is designed to be small enough to execute with careful annotation, but structured enough to produce evidence beyond a pilot demonstration. The goal is to compare representative strategies on the same review instances and measure both the errors they reduce and the useful feedback or coverage they may lose.
+This section defines the planned controlled empirical comparison used to evaluate mitigation strategies. The study is designed to be small enough to execute with careful annotation, but structured enough to produce evidence beyond a pilot demonstration. The goal is to compare representative strategies on the same review instances and measure both the errors they reduce and the useful feedback or coverage they may lose.
+
+<!-- TODO: After execution, retitle or revise this section if needed from "Empirical Evaluation Design" to "Empirical Evaluation" and replace planned procedures with actual dataset, implementation, and execution details. -->
 
 ## Study Goal
 
@@ -16,6 +18,8 @@ The sample should be selected from an existing code review dataset or pull-reque
 
 A feasible first version uses approximately 100--300 generated comments after pilot development. The final sample size should be justified by annotation resources and by the need to compare strategies across failure types. If the study remains smaller, the paper should frame the results as exploratory and avoid broad claims.
 
+<!-- TODO: Replace with the actual dataset, sampling frame, number of instances, number of generated comments, inclusion/exclusion rules, and judgeability statistics. -->
+
 ## Compared Strategies
 
 The evaluation compares a limited set of representative strategies:
@@ -27,6 +31,8 @@ The evaluation compares a limited set of representative strategies:
 5. **Hybrid gate plus verifier**: combines context-quality gating and post-generation verification.
 
 If the dataset and implementation allow it, a retrieval-augmented context strategy can be added. It should be evaluated with the same metrics and should include the cost and noise introduced by additional context.
+
+<!-- TODO: After implementation, replace generic strategy descriptions with exact prompts, verifier/gate criteria, model versions, thresholds, and any excluded strategies. -->
 
 ## Procedure
 
@@ -41,6 +47,8 @@ The evaluation proceeds in six steps.
 
 All prompts, model versions, temperature settings, retrieval settings, static-analysis settings, gating rules, verifier prompts, and decision thresholds should be fixed before the final evaluation run. Pilot tuning should be separated from the final sample.
 
+<!-- TODO: After execution, rewrite this procedure in past tense with the actual number of runs, failed cases, missing outputs, reruns, and deviations from the planned protocol. -->
+
 ## Annotation Procedure
 
 Annotators are shown the code change, available context, generated comment, and strategy output. They label the problematic-comment type, correctness, grounding, relevance, usefulness, actionability, context quality, decision, and confidence.
@@ -48,6 +56,8 @@ Annotators are shown the code change, available context, generated comment, and 
 At least two annotators with software-engineering experience should label the pilot and a substantial subset of the final sample when feasible. The pilot should be used to refine the taxonomy and annotation guideline. Agreement should be reported separately for major label groups because labels such as usefulness and actionability may be more subjective than correctness or relevance.
 
 Disagreements should be resolved through discussion or adjudication. The final dataset should preserve both initial labels and resolved labels where feasible. Preserving disagreement reasons is especially useful for understanding ambiguous categories such as useful-but-not-directly-acceptable comments or context-dependent comments.
+
+<!-- TODO: After annotation, report annotator backgrounds, training/calibration process, pilot size, double-coded proportion, agreement values, adjudication process, and labels revised due to disagreement. -->
 
 ## Metrics
 
@@ -95,3 +105,5 @@ A strategy should not be described as better only because it suppresses more com
 The hybrid strategy should not be assumed to dominate the individual strategies. It may reduce complementary failure types, but it may also increase suppression, cost, or escalation. The analysis should therefore report where the hybrid improves the trade-off and where it does not.
 
 Context quality should be analyzed as a moderator. The study should examine whether low-context or inconsistent-context instances produce different failure patterns and whether mitigation strategies behave differently under such conditions.
+
+<!-- TODO: After results are available, convert the planned-result table list into actual result tables and move interpretation rules into the findings/discussion sections as evidence-backed claims. -->
