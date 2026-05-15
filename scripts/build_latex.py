@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-r"""Build a single LaTeX paper draft from Markdown section files.
+r"""Build a single LaTeX journal-style manuscript from Markdown sections.
 
 This script is intentionally lightweight. It supports the Markdown subset used in
 `drafts/paper/sections/` and converts it into a single LaTeX file. It is not a
@@ -25,15 +25,21 @@ DEFAULT_OUTPUT_FILE = REPO_ROOT / "build" / "paper.tex"
 
 TITLE = "Evaluating Problematic LLM-Generated Code Review Comments: An Operational Taxonomy and a Trade-off-Aware Framework"
 
-LATEX_HEADER = rf"""\documentclass[11pt]{{article}}
+LATEX_HEADER = rf"""\documentclass[12pt]{{article}}
 
 \usepackage[T1]{{fontenc}}
 \usepackage[utf8]{{inputenc}}
-\usepackage[margin=1in]{{geometry}}
+\usepackage[a4paper,margin=1in]{{geometry}}
+\usepackage{{amsmath}}
 \usepackage{{cite}}
 \usepackage{{url}}
 \usepackage{{listings}}
 \usepackage{{xcolor}}
+\usepackage[hidelinks]{{hyperref}}
+
+\linespread{{1.08}}
+\setlength{{\parindent}}{{0pt}}
+\setlength{{\parskip}}{{0.65em}}
 
 \lstset{{
   basicstyle=\ttfamily\small,
@@ -42,7 +48,12 @@ LATEX_HEADER = rf"""\documentclass[11pt]{{article}}
   frame=single
 }}
 
-\title{{{TITLE}}}
+\newcommand{{\keywords}}[1]{{%
+  \vspace{{0.75em}}
+  \noindent\textbf{{Keywords: }}#1
+}}
+
+\title{{\textbf{{{TITLE}}}}}
 \author{{TODO: Author Name(s)\\TODO: Affiliation\\TODO: Email}}
 \date{{}}
 
@@ -51,7 +62,7 @@ LATEX_HEADER = rf"""\documentclass[11pt]{{article}}
 """
 
 LATEX_FOOTER = r"""
-\bibliographystyle{IEEEtran}
+\bibliographystyle{plain}
 \bibliography{../references/references}
 
 \end{document}
@@ -264,6 +275,25 @@ def convert_markdown_to_latex(markdown: str) -> str:
     return "\n".join(output).strip() + "\n"
 
 
+def convert_abstract_section(markdown: str) -> str:
+    """Convert the abstract Markdown section into a LaTeX abstract block."""
+    body_lines = []
+    for line in markdown.splitlines():
+        if re.match(r"^#\s+Abstract\s*$", line.strip(), flags=re.IGNORECASE):
+            continue
+        body_lines.append(line)
+    body = convert_markdown_to_latex("\n".join(body_lines)).strip()
+    if not body:
+        body = "TODO: Write the abstract after the framework and illustrative study are stable."
+    return "\n".join([
+        r"\begin{abstract}",
+        body,
+        r"\end{abstract}",
+        r"\keywords{LLM-based code review; automated code review; evaluation framework; problematic comments; context quality; LLM-as-a-Judge}",
+        "",
+    ])
+
+
 def read_order(order_file: Path) -> list[Path]:
     base_dir = order_file.parent
     sections = []
@@ -285,7 +315,10 @@ def build_latex(order_file: Path, output_file: Path) -> None:
     for section_path in sections:
         markdown = section_path.read_text(encoding="utf-8")
         parts.append(f"% Source: {section_path.relative_to(REPO_ROOT)}\n")
-        parts.append(convert_markdown_to_latex(markdown))
+        if section_path.name.startswith("00-abstract"):
+            parts.append(convert_abstract_section(markdown))
+        else:
+            parts.append(convert_markdown_to_latex(markdown))
         parts.append("\n")
     parts.append(LATEX_FOOTER)
 
