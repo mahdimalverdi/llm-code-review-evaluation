@@ -17,6 +17,13 @@ Supported table metadata syntax:
     | Column A | Column B |
     | --- | --- |
     | Value A | Value B |
+
+    Long tables can be requested explicitly:
+    <!-- table: caption="Caption text" label="tab:example" longtable="true" -->
+
+    The script also promotes tables to longtable automatically when they are
+    long enough or wide enough that a floating tabularx table is likely to be
+    hard to read or impossible to keep on one page.
 """
 
 from __future__ import annotations
@@ -47,6 +54,7 @@ LATEX_HEADER = rf"""\documentclass[12pt]{{article}}
 \usepackage{{booktabs}}
 \usepackage{{cite}}
 \usepackage{{float}}
+\usepackage{{longtable}}
 \usepackage{{microtype}}
 \usepackage{{tabularx}}
 \usepackage{{url}}
@@ -145,8 +153,11 @@ SPECIAL_CHARS = {
     "^": r"\textasciicircum{}",
 }
 
+LONGTABLE_ROW_THRESHOLD = 6
+LONGTABLE_COLUMN_THRESHOLD = 4
+
 TABLE_METADATA_PATTERN = re.compile(r"^<!--\s*table:\s*(.*?)\s*-->\s*$")
-TABLE_ATTRIBUTE_PATTERN = re.compile(r"(caption|label)\s*=\s*(['\"])(.*?)\2")
+TABLE_ATTRIBUTE_PATTERN = re.compile(r"(caption|label|longtable)\s*=\s*(['\"])(.*?)\2")
 RAW_LATEX_INLINE_PATTERN = re.compile(r"\\(?:ref|autoref|pageref)\{[^}]+\}")
 
 
@@ -268,7 +279,121 @@ def table_column_spec(column_count: int) -> str:
     ragged = r">{\raggedright\arraybackslash}"
     if column_count == 3:
         return rf"@{{}}{ragged}p{{0.23\linewidth}}{ragged}X{ragged}X@{{}}"
-    return "@{}" + ragged + "X" * column_count + "@{}"
+    return "@{}" + "".join(ragged + "X" for _ in range(column_count)) + "@{}"
+
+
+def longtable_column_spec(column_count: int) -> str:
+    """Return a page-breakable longtable column specification."""
+    ragged = r">{\raggedright\arraybackslash}"
+    if column_count == 2:
+        widths = [0.34, 0.58]
+    elif column_count == 3:
+        widths = [0.22, 0.34, 0.34]
+    elif column_count == 4:
+        widths = [0.20, 0.23, 0.23, 0.23]
+    elif column_count == 5:
+        widths = [0.15, 0.17, 0.19, 0.23, 0.18]
+    else:
+        width = min(0.92 / max(column_count, 1), 0.18)
+        widths = [width] * column_count
+    columns = "".join(rf"{ragged}p{{{width:.2f}\textwidth}}" for width in widths)
+    return rf"@{{}}{columns}@{{}}"
+
+
+def metadata_longtable_setting(metadata: dict[str, str] | None) -> bool | None:
+    """Return explicit longtable metadata, or None when not configured."""
+    if not metadata or "longtable" not in metadata:
+        return None
+    value = metadata["longtable"].strip().lower()
+    if value in {"1", "true", "yes", "y"}:
+        return True
+    if value in {"0", "false", "no", "n"}:
+        return False
+    return None
+
+
+def should_use_longtable(body_row_count: int, column_count: int, metadata: dict[str, str] | None) -> bool:
+    """Return true when a Markdown table should be rendered as a breakable longtable."""
+    explicit_setting = metadata_longtable_setting(metadata)
+    if explicit_setting is not None:
+        return explicit_setting
+    return body_row_count > LONGTABLE_ROW_THRESHOLD or column_count >= LONGTABLE_COLUMN_THRESHOLD
+
+
+def format_latex_table_row(cells: list[str], *, bold: bool = False) -> str:
+    """Format one row of table cells as LaTeX."""
+    if bold:
+        converted_cells = [r"\textbf{" + convert_inline_markdown(cell) + "}" for cell in cells]
+    else:
+        converted_cells = [convert_inline_markdown(cell) for cell in cells]
+    return " & ".join(converted_cells) + r" \\"
+
+
+def convert_table_to_tabularx(rows: list[list[str]], caption: str | None, label: str | None) -> list[str]:
+    """Convert normalized rows into a floating tabularx table."""
+    column_spec = table_column_spec(len(rows[0]))
+    output = [r"\begin{table}[H]", r"\centering"]
+    if caption:
+        output.append(r"\caption{" + convert_inline_markdown(caption) + "}")
+    if label:
+        output.append(r"\label{" + label + "}")
+    output.extend([
+        r"\footnotesize",
+        r"\renewcommand{\arraystretch}{1.18}",
+        rf"\begin{{tabularx}}{{\linewidth}}{{{column_spec}}}",
+        r"\toprule",
+        format_latex_table_row(rows[0], bold=True),
+        r"\midrule",
+    ])
+    for row in rows[1:]:
+        output.append(format_latex_table_row(row))
+    output.extend([r"\bottomrule", r"\end{tabularx}", r"\end{table}", ""])
+    return output
+
+
+def convert_table_to_longtable(rows: list[list[str]], caption: str | None, label: str | None) -> list[str]:
+    """Convert normalized rows into a page-breakable longtable."""
+    column_count = len(rows[0])
+    column_spec = longtable_column_spec(column_count)
+    header_row = format_latex_table_row(rows[0], bold=True)
+    output = [
+        r"\begingroup",
+        r"\footnotesize",
+        r"\renewcommand{\arraystretch}{1.18}",
+        rf"\begin{{longtable}}{{{column_spec}}}",
+    ]
+
+    if caption:
+        caption_line = r"\caption{" + convert_inline_markdown(caption) + "}"
+        if label:
+            caption_line += r"\label{" + label + "}"
+        output.append(caption_line + r" \")
+
+    output.extend([
+        r"\toprule",
+        header_row,
+        r"\midrule",
+        r"\endfirsthead",
+    ])
+
+    if caption:
+        output.append(r"\caption[]{" + convert_inline_markdown(caption) + r" (continued)} \")
+    output.extend([
+        r"\toprule",
+        header_row,
+        r"\midrule",
+        r"\endhead",
+        r"\midrule",
+        rf"\multicolumn{{{column_count}}}{{r}}{{Continued on next page}} \",
+        r"\endfoot",
+        r"\bottomrule",
+        r"\endlastfoot",
+    ])
+
+    for row in rows[1:]:
+        output.append(format_latex_table_row(row))
+    output.extend([r"\end{longtable}", r"\endgroup", ""])
+    return output
 
 
 def convert_markdown_table_to_latex(table_lines: list[str], metadata: dict[str, str] | None) -> list[str]:
@@ -288,29 +413,12 @@ def convert_markdown_table_to_latex(table_lines: list[str], metadata: dict[str, 
         return []
 
     column_count = len(rows[0])
-    column_spec = table_column_spec(column_count)
     caption = metadata.get("caption") if metadata else None
     label = metadata.get("label") if metadata else None
 
-    output = [r"\begin{table}[H]", r"\centering"]
-    if caption:
-        output.append(r"\caption{" + convert_inline_markdown(caption) + "}")
-    if label:
-        output.append(r"\label{" + label + "}")
-    output.extend([
-        r"\footnotesize",
-        r"\renewcommand{\arraystretch}{1.18}",
-        rf"\begin{{tabularx}}{{\linewidth}}{{{column_spec}}}",
-        r"\toprule",
-    ])
-
-    header_cells = [r"\textbf{" + convert_inline_markdown(cell) + "}" for cell in rows[0]]
-    output.append(" & ".join(header_cells) + r" \\")
-    output.append(r"\midrule")
-    for row in rows[1:]:
-        output.append(" & ".join(convert_inline_markdown(cell) for cell in row) + r" \\")
-    output.extend([r"\bottomrule", r"\end{tabularx}", r"\end{table}", ""])
-    return output
+    if should_use_longtable(len(rows) - 1, column_count, metadata):
+        return convert_table_to_longtable(rows, caption, label)
+    return convert_table_to_tabularx(rows, caption, label)
 
 
 def convert_markdown_to_latex(markdown: str) -> str:
