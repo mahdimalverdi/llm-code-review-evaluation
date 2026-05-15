@@ -53,6 +53,22 @@ Paper selection
   → taxonomy + framework + trade-off matrix
 ```
 
+## Writing Style
+
+All English research prose in this repository should follow:
+
+```text
+docs/academic-writing-style.md
+```
+
+The main writing rule is to use clear, precise, measured academic English. Drafts should synthesize evidence rather than list papers, avoid promotional or inflated language, define important terms, and support literature-based claims with citation keys from `references/references.bib`.
+
+Agent-specific editing instructions are also available in:
+
+```text
+AGENTS.md
+```
+
 ## What This Is Not
 
 This project should not be positioned as:
@@ -87,6 +103,13 @@ matrices/
   paper-pool.md
   cross-paper-synthesis.md
 
+references/
+  references.bib
+  README.md
+
+docs/
+  academic-writing-style.md
+
 drafts/
   methodology.md
   introduction.md
@@ -106,14 +129,17 @@ Use these files as the main working sources:
 | `synthesis/context-quality.md` | Context-quality dimensions, context failure types, and gating implications. |
 | `synthesis/trade-off-framework.md` | Trade-off matrix for filtering, gating, context expansion, and human escalation. |
 | `synthesis/research-gap.md` | Main gap statement and research positioning. |
+| `references/references.bib` | Central bibliography database for all drafts. |
+| `docs/academic-writing-style.md` | Academic English writing rules for research prose. |
 
 ## Current Status
 
 - Paper notes exist for **P01–P50**.
 - `matrices/paper-pool.md` is aligned with the spreadsheet metadata after the latest cleanup pass.
 - `matrices/cross-paper-synthesis.md` is the canonical cross-paper synthesis and covers **P01–P50**.
+- `references/references.bib` contains entries for **P01–P50**, based on the spreadsheet metadata.
 - Temporary synthesis files for P37–P41 and P42–P50 were removed after their content was merged into canonical synthesis/matrix files.
-- Remaining cleanup: add checked BibTeX entries and do PDF-level verification for lower-confidence paper notes.
+- Remaining cleanup: replace `TODO_PUBLISHER_BIBTEX` entries with official publisher-exported BibTeX and do PDF-level verification for lower-confidence paper notes.
 
 ## Core Working Rule
 
@@ -131,8 +157,8 @@ Our perspective
 
 ## Next Steps
 
-- Add checked BibTeX entries for cited papers.
+- Replace `TODO_PUBLISHER_BIBTEX` entries with official publisher-exported BibTeX.
 - Deep-read P39 and P40 because they directly strengthen usefulness and context-quality arguments.
 - Deep-read P49 if context consistency becomes a core part of the framework.
-- Update draft sections from the canonical synthesis files.
+- Update draft sections from the canonical synthesis files using `docs/academic-writing-style.md`.
 - Decide whether to add a small illustrative mini-validation using 20–50 generated review comments.
