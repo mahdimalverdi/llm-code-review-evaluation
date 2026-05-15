@@ -1,17 +1,16 @@
-# LLM Code Review Evaluation
+# LLM Code Review Mitigation Evaluation
 
-This repository contains paper notes and synthesis material for a research project on **trade-off-aware evaluation of LLM-generated code review comments**.
+This repository contains paper notes, synthesis material, and manuscript drafts for a research project on **empirical evaluation of mitigation strategies for problematic LLM-generated code review comments**.
 
-The project is not just a literature-summary workspace. Its goal is to synthesize evidence from recent LLM-based code review studies and derive:
+The current paper direction is:
 
-1. a taxonomy of problematic generated review comments;
-2. an evaluation framework for generated review comments;
-3. a context-quality model for code review automation;
-4. and a trade-off matrix for filtering, gating, aggregation, and human-in-the-loop decisions.
+> Reducing Problematic LLM-Generated Code Review Comments: An Empirical Study of Mitigation Trade-offs
+
+The project studies how different mitigation strategies reduce problematic review comments and what trade-offs they introduce in useful-feedback preservation, review coverage, human escalation, context quality, and computational cost.
 
 ## Main Research Question
 
-> How can we evaluate LLM-generated code review comments in a trade-off-aware way that accounts for context quality, problematic comment types, and the balance between reducing harmful comments and preserving useful feedback?
+> Which mitigation strategies reduce which types of problematic LLM-generated code review comments, and what useful feedback, review coverage, human effort, and computational cost are lost or introduced in the process?
 
 ## Current Research Roadmap
 
@@ -21,56 +20,70 @@ The current direction is documented in:
 docs/research-roadmap.md
 ```
 
-This roadmap records the revised framing after supervisor feedback. The project should no longer be treated as a comparison of several mitigation strategies. The comparison of strategies may support the paper, but the main contribution should be:
+The project should be treated as a **small controlled empirical study**, supported by a targeted literature review, an operational taxonomy, and a trade-off-aware evaluation framework.
+
+The strongest framing is not:
 
 ```text
-operational taxonomy
-+ trade-off-aware evaluation framework
+framework only
+or
+method A beats method B
+```
+
+The stronger framing is:
+
+```text
+representative mitigation strategies
++ shared review instances
++ operational taxonomy
 + human annotation protocol
-+ small annotated evidence layer
-+ concrete insights about error reduction, useful-feedback preservation, and cost
++ error-reduction metrics
++ useful-feedback preservation metrics
++ review coverage, escalation, and cost analysis
 ```
 
 ## Working Research Questions
 
 | RQ | Question | Expected Output |
 |---|---|---|
-| RQ1 | What types of problematic comments occur in LLM-generated code review, and how can they be operationally annotated? | Operational taxonomy and annotation guideline |
-| RQ2 | Which evaluation dimensions are needed to assess problematic comments beyond technical correctness? | Multi-dimensional evaluation matrix |
-| RQ3 | How do common mitigation strategies trade off error reduction against useful-feedback preservation, review coverage, human effort, and computational cost? | Trade-off framework and measurable trade-off dimensions |
-| RQ4 | How does context quality affect the occurrence, detection, and mitigation of problematic review comments? | Context-quality layer and context-failure analysis |
-| RQ5 | What framework can guide trade-off-aware evaluation of LLM-generated code review comments? | Final evaluation framework |
+| RQ1 | What types of problematic comments occur in LLM-generated code review? | Label distribution and refined operational taxonomy |
+| RQ2 | Which mitigation strategies reduce which types of problematic comments? | Strategy-by-failure-type comparison |
+| RQ3 | How do mitigation strategies affect useful-feedback preservation, review coverage, human escalation, and execution cost? | Trade-off matrix and preservation/cost metrics |
+| RQ4 | Does combining context-quality control with post-generation verification produce a better trade-off than either strategy alone? | Hybrid-strategy analysis, if included |
+| RQ5 | How does context quality or context inconsistency affect mitigation success? | Context-quality analysis and context-dependent failure patterns |
 
 ## Research Focus
 
 This project studies:
 
-- LLM-based code review comment generation and evaluation;
-- hallucination and unsupported claims in generated review comments;
-- context quality, reviewability, and context misalignment;
-- problematic, low-value, or non-actionable review comments;
-- human annotation, user-study, production-feedback, and LLM-as-a-judge protocols;
-- trade-offs between reducing harmful comments and preserving useful comments;
-- filtering, gating, aggregation, RAG, static-analysis hybrids, and human-in-the-loop mechanisms;
-- cost, latency, reviewer overhead, human verification, and workflow impact.
+- LLM-generated code review comments;
+- problematic, unsupported, irrelevant, non-actionable, low-value, or misleading comments;
+- mitigation strategies such as robust prompting, context-quality gates, post-generation verification, and hybrid designs;
+- trade-offs between reducing harmful comments and preserving useful feedback;
+- context quality, reviewability, and context inconsistency;
+- human annotation, agreement reporting, and evaluator validity;
+- cost, latency, reviewer overhead, human escalation, and review coverage.
 
 ## Methodological Positioning
 
-The project should be framed as a **focused evidence synthesis**, not as a generic survey or a benchmark/model paper.
+The project should be framed as a **controlled empirical comparison of representative mitigation strategies**.
 
 The working pipeline is:
 
 ```text
-Paper selection
-  → structured coding using the template
-  → extraction of evaluation dimensions
-  → extraction of problematic comment types
-  → extraction of context-quality dimensions
-  → extraction of trade-offs
-  → cross-paper synthesis
-  → taxonomy + framework + trade-off matrix
-  → annotation guideline + small annotated evidence layer
+Targeted literature review
+  → operational taxonomy
+  → annotation guideline and evaluation schema
+  → dataset and sample selection
+  → baseline comment generation
+  → mitigation strategy application
+  → human annotation
+  → error-reduction analysis
+  → useful-feedback preservation and cost analysis
+  → empirical findings about mitigation trade-offs
 ```
+
+The targeted literature review and taxonomy are important, but they support the empirical study. They are not the whole contribution by themselves.
 
 ## Writing Style
 
@@ -80,7 +93,7 @@ All English research prose in this repository should follow:
 docs/academic-writing-style.md
 ```
 
-The main writing rule is to use clear, precise, measured academic English. Drafts should synthesize evidence rather than list papers, avoid promotional or inflated language, define important terms, and support literature-based claims with citation keys from `references/references.bib`.
+The main writing rule is to use clear, precise, measured academic English. Drafts should avoid inflated claims, define important terms, separate evidence from interpretation, and align the strength of claims with the size and quality of the empirical study.
 
 Agent-specific editing instructions are also available in:
 
@@ -96,12 +109,13 @@ This project should not be positioned as:
 - just another benchmark leaderboard;
 - just another hallucination detector;
 - just another RAG/context expansion method;
-- just a generic survey of LLMs for software engineering;
-- a small empirical method-comparison paper whose main contribution is choosing a winning strategy.
+- a generic survey of LLMs for software engineering;
+- a framework-only paper without empirical grounding;
+- or a method-comparison paper whose only result is choosing a winner.
 
-The stronger framing is:
+The intended contribution is:
 
-> a framework-oriented synthesis of LLM-based code review evaluation, focused on context quality, problematic comment types, trade-off-aware evaluation, and a carefully annotated evidence layer.
+> an empirical trade-off analysis of mitigation strategies for problematic LLM-generated code review comments, supported by an operational taxonomy and reproducible annotation protocol.
 
 ## Repository Structure
 
@@ -131,10 +145,19 @@ docs/
   academic-writing-style.md
   research-roadmap.md
 
-drafts/
-  methodology.md
-  introduction.md
-  related-work.md
+drafts/paper/sections/
+  00-abstract.md
+  01-introduction.md
+  02-background.md
+  03-related-work.md
+  04-methodology.md
+  05-operational-taxonomy.md
+  06-framework.md
+  07-illustrative-study.md
+  08-findings.md
+  09-discussion.md
+  10-threats-to-validity.md
+  11-conclusion.md
 ```
 
 ## Canonical Files
@@ -143,14 +166,15 @@ Use these files as the main working sources:
 
 | File | Purpose |
 |---|---|
-| `docs/research-roadmap.md` | Current project direction after supervisor feedback. |
-| `matrices/paper-pool.md` | Compact inventory of all papers and their role in the project. |
-| `matrices/cross-paper-synthesis.md` | Main cross-paper argument map and gap synthesis. |
-| `synthesis/evaluation-dimensions.md` | Evaluation dimensions for generated review comments and review workflows. |
+| `docs/research-roadmap.md` | Current project direction and Q1-oriented empirical framing. |
+| `drafts/paper/sections/00-abstract.md` | Current manuscript abstract. |
+| `drafts/paper/sections/01-introduction.md` | Main problem framing and contributions. |
+| `drafts/paper/sections/04-methodology.md` | Controlled empirical study design. |
+| `matrices/paper-pool.md` | Compact inventory of papers and their role in the project. |
+| `matrices/cross-paper-synthesis.md` | Cross-paper argument map and gap synthesis. |
 | `synthesis/problematic-comment-taxonomy.md` | Failure types for generated comments, context, workflow, and evaluators. |
 | `synthesis/context-quality.md` | Context-quality dimensions, context failure types, and gating implications. |
 | `synthesis/trade-off-framework.md` | Trade-off matrix for filtering, gating, context expansion, and human escalation. |
-| `synthesis/research-gap.md` | Main gap statement and research positioning. |
 | `references/references.bib` | Central bibliography database for all drafts. |
 | `docs/academic-writing-style.md` | Academic English writing rules for research prose. |
 
@@ -160,15 +184,27 @@ Use these files as the main working sources:
 - `matrices/paper-pool.md` is aligned with the spreadsheet metadata after the latest cleanup pass.
 - `matrices/cross-paper-synthesis.md` is the canonical cross-paper synthesis and covers **P01–P50**.
 - `references/references.bib` contains entries for **P01–P50**, based on the spreadsheet metadata.
-- `docs/research-roadmap.md` records the revised paper direction after supervisor feedback.
-- Temporary synthesis files for P37–P41 and P42–P50 were removed after their content was merged into canonical synthesis/matrix files.
+- The manuscript has been reframed toward an empirical mitigation-trade-off study.
+- The title, abstract, introduction, methodology, taxonomy, framework, and empirical evaluation design have been updated to match the current direction.
 - Remaining cleanup: replace `TODO_PUBLISHER_BIBTEX` entries with official publisher-exported BibTeX and do PDF-level verification for lower-confidence paper notes.
 
 ## Core Working Rule
 
-Each paper should be analyzed using the Markdown template. The analysis should extract evidence for the framework, not merely summarize the paper.
+Every empirical claim should be tied to a measurable artifact:
 
-For each paper, we explicitly separate:
+```text
+annotation label
+or
+strategy output
+or
+failure-type distribution
+or
+preservation/coverage metric
+or
+cost/escalation metric
+```
+
+For literature-based claims, separate:
 
 ```text
 Reported evidence
@@ -180,10 +216,21 @@ Our perspective
 
 ## Next Steps
 
-- Create `synthesis/core-claim.md`.
-- Update `synthesis/research-gap.md` and `drafts/methodology.md` according to `docs/research-roadmap.md`.
 - Create `method/annotation-guideline.md`.
 - Create `method/evaluation-schema.md`.
-- Create `synthesis/final-framework.md`.
-- Create `drafts/introduction.md`.
+- Decide the dataset and sampling plan.
+- Decide the generation model and prompts.
+- Define the implementation details for the mitigation strategies.
+- Create metric-computation scripts.
+- Run a small pilot annotation.
 - Replace core `TODO_PUBLISHER_BIBTEX` entries with official publisher-exported BibTeX.
+
+## Current Priority
+
+The next work should not be adding more papers. The next work should be making the empirical study executable.
+
+Recommended next step:
+
+```text
+Choose the dataset and create the annotation guideline/evaluation schema.
+```
