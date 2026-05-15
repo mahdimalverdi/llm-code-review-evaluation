@@ -2,7 +2,9 @@
 
 The empirical comparison requires labels that distinguish different kinds of problematic generated comments. A single binary label such as correct or incorrect is not enough because a generated review comment can fail in several ways. It may be technically wrong, unsupported by the available context, irrelevant to the changed code, too vague to act on, or valid but too low-value to justify reviewer attention. It may also contain a useful signal while being unsuitable to show directly. This section defines the operational taxonomy used to annotate generated comments, compare mitigation strategies, and interpret trade-offs.
 
-The taxonomy is operational rather than only descriptive. Each label is intended to support three tasks: human annotation, strategy-by-failure-type comparison, and mitigation-decision analysis. The labels are derived from the targeted literature review, the cross-paper synthesis, and pilot inspection of generated comments. The taxonomy is intentionally smaller than the full failure inventory in the synthesis notes: highly specialized cases such as security-specific, performance-specific, static-analysis-specific, and evaluator-specific failures are handled as optional sublayers or decision modifiers unless they directly affect the generated comment being annotated.
+The taxonomy is operational rather than only descriptive. Each label is intended to support three tasks: human annotation, strategy-by-failure-type comparison, and mitigation-decision analysis. The initial labels are derived from the targeted literature review and the cross-paper synthesis. The taxonomy is intentionally smaller than the full failure inventory in the synthesis notes: highly specialized cases such as security-specific, performance-specific, static-analysis-specific, and evaluator-specific failures are handled as optional sublayers or decision modifiers unless they directly affect the generated comment being annotated.
+
+<!-- TODO: After the pilot annotation round, update this paragraph to report which labels were added, merged, removed, or clarified based on pilot inspection of generated comments. -->
 
 ## Design Principles
 
@@ -115,14 +117,18 @@ This mapping supports the decision-confusion analysis in Section 4. For example,
 
 ## Link to the Empirical Evaluation
 
-The taxonomy is used in four parts of the empirical evaluation.
+The taxonomy is designed to be used in four parts of the empirical evaluation.
 
-First, it measures the baseline distribution of problematic comments. Second, it supports strategy-by-failure-type comparison: each mitigation strategy can be evaluated by which categories it reduces. Third, it enables preservation analysis by identifying useful comments that were wrongly suppressed, comments that should have been rewritten, and context-dependent cases that should have been escalated rather than shown or removed. Fourth, it explains the decision-confusion analysis by linking each incorrect strategy decision to a failure label.
+First, it will measure the baseline distribution of problematic comments. Second, it will support strategy-by-failure-type comparison: each mitigation strategy can be evaluated by which categories it reduces. Third, it will enable preservation analysis by identifying useful comments that are wrongly suppressed, comments that should be rewritten, and context-dependent cases that should be escalated rather than shown or removed. Fourth, it will explain the decision-confusion analysis by linking each incorrect strategy decision to a failure label.
 
-The taxonomy therefore functions as a measurement instrument for the empirical study. It is not the final result by itself. Its value is tested by whether annotators can apply the labels consistently and whether the labels reveal trade-offs that a single correctness or acceptance score would miss.
+<!-- TODO: After the empirical comparison is run, replace this planned-use paragraph with a report of how the taxonomy was actually applied, including any labels that were merged or revised during annotation. -->
+
+The taxonomy therefore functions as a planned measurement instrument for the empirical study. It is not the final result by itself. Its value should be tested by whether annotators can apply the labels consistently and whether the labels reveal trade-offs that a single correctness or acceptance score would miss.
 
 ## Pilot Refinement and Reliability Checks
 
 The pilot annotation round should test whether the taxonomy is usable by annotators. The pilot should identify labels that overlap too much, labels that annotators interpret inconsistently, and failure types that are missing from the core taxonomy. After the pilot, label definitions should be revised before the final annotation sample.
 
 Reliability should be assessed on key labels, not only on the final mitigation decision. At minimum, the study should report agreement on problematic-comment presence, primary failure label, usefulness, actionability, and recommended mitigation decision when feasible. Disagreements should be treated as evidence about difficult judgment cases rather than only as noise. For example, repeated disagreement between unsupported and context-dependent labels may indicate that the available context is insufficient or that the annotation guideline needs clearer evidence requirements.
+
+<!-- TODO: After pilot annotation, report pilot size, annotator background, labels revised, agreement problems, and any taxonomy changes made before the final annotation sample. -->
