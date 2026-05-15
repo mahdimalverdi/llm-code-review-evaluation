@@ -1,6 +1,22 @@
 # Background and Motivation
 
-This section introduces the concepts that motivate the proposed taxonomy and framework. It first positions modern code review as a socio-technical practice. It then explains how code review automation evolved before and after the rise of large language models. Finally, it motivates why evaluating generated review comments requires a trade-off-aware view rather than a single quality score.
+This section introduces the concepts that motivate the proposed taxonomy and framework. It first defines the key terms used throughout the paper. It then positions modern code review as a socio-technical practice, explains how code review automation evolved before and after the rise of large language models, and motivates why evaluating generated review comments requires a trade-off-aware view rather than a single quality score.
+
+## Key Concepts
+
+We use **modern code review** to refer to the lightweight, asynchronous, and tool-mediated review process in which developers submit code changes, reviewers inspect them, and the review discussion continues until the change is accepted, revised, or abandoned [@p37_sadowski2018_google_mcr; @p38_bacchelli2013_expectations_mcr; @p51_davila2021_mcr_slr_taxonomy]. In this paper, modern code review is treated as a socio-technical practice rather than only a defect-detection activity.
+
+A **generated review comment** is a natural-language review comment produced by an automated system, usually an LLM-based review assistant, for a code change under review. Such a comment may point to a defect, request a refactoring, ask for clarification, suggest a fix, or raise a maintainability, design, testing, security, or process concern. We treat generated review comments as workflow interventions, not merely as text outputs.
+
+A **problematic generated review comment** is a generated comment that may harm or weaken the review process, or whose value is uncertain under the available evidence. This includes comments that are technically incorrect, unsupported by the available context, irrelevant to the change, linked to the wrong location, non-actionable, misleading, low-value, or useful only after rewriting or escalation. A problematic comment is therefore not always simply a wrong comment; it can also be a comment whose usefulness, grounding, or appropriate handling is unclear.
+
+**Context quality** refers to whether the information available to the generator or evaluator is sufficient, relevant, and coherent enough to judge the comment. This context may include the local diff, surrounding code, file-level or project-level information, specifications, documentation, issue descriptions, previous review discussion, and runtime assumptions. A generated comment may be valid under one context boundary and unsupported or impossible to judge under another.
+
+A **mitigation decision** is the action taken after a generated comment is produced. In this paper, we focus on four decision types: show the comment, suppress it, rewrite it, or escalate it for human review. These decisions create trade-offs. For example, suppressing unsupported comments may reduce noise, but it may also remove weak signals that could have helped a reviewer.
+
+**Dataset validity** refers to whether an evaluation instance contains a review-relevant, contextually judgeable, and correctly linked target. An instance can be invalid if the reference comment is unclear from the provided context, does not ask for a code-review-relevant action, was ignored by the later code revision, or is linked to the wrong code [@p52_tufano2021_automating_code_review_activities; @p53_tufano2024_code_review_automation_strengths_weaknesses].
+
+**Evaluator validity** refers to whether the evaluation method reliably measures the intended quality dimension. Human evaluators can disagree or apply labels inconsistently, while LLM-based evaluators can be sensitive to prompts, answer order, verbosity, model choice, and task framing [@m04_zheng2023_llm_judge; @p29_wang2025_human_evaluators; @p31_jiang2025_codejudgebench; @p32_zhao2026_bias_loop; @p33_he2025_llmjudge_se].
 
 ## Modern Code Review
 
