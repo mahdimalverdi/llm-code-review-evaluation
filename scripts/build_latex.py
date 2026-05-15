@@ -58,7 +58,15 @@ LATEX_HEADER = rf"""\documentclass[12pt]{{article}}
 }}
 
 \title{{\textbf{{{TITLE}}}}}
-\author{{TODO: Author Name(s)\\TODO: Affiliation\\TODO: Email}}
+\author{{%
+Mahdi Malverdi\\
+\url{{m.malverdi@mail.sbu.ac.ir}}\\
+\url{{https://www.linkedin.com/in/mahdi-malverdi-996b1787/}}
+\and
+Hassan Haghighi\\
+\url{{h_haghighi@sbu.ac.ir}}\\
+\url{{https://www.linkedin.com/in/hassan-haghighi-b197311ab}}
+}}
 \date{{}}
 
 \begin{{document}}
