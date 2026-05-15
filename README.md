@@ -13,15 +13,33 @@ The project is not just a literature-summary workspace. Its goal is to synthesiz
 
 > How can we evaluate LLM-generated code review comments in a trade-off-aware way that accounts for context quality, problematic comment types, and the balance between reducing harmful comments and preserving useful feedback?
 
+## Current Research Roadmap
+
+The current direction is documented in:
+
+```text
+docs/research-roadmap.md
+```
+
+This roadmap records the revised framing after supervisor feedback. The project should no longer be treated as a comparison of several mitigation strategies. The comparison of strategies may support the paper, but the main contribution should be:
+
+```text
+operational taxonomy
++ trade-off-aware evaluation framework
++ human annotation protocol
++ small annotated evidence layer
++ concrete insights about error reduction, useful-feedback preservation, and cost
+```
+
 ## Working Research Questions
 
 | RQ | Question | Expected Output |
 |---|---|---|
-| RQ1 | What types of problematic comments appear in LLM-generated code review? | Problematic-comment taxonomy |
-| RQ2 | How is context quality defined, used, or ignored in current LLM-based code review evaluation? | Context-quality model |
-| RQ3 | Which evaluation dimensions are covered or missing in current studies? | Evaluation-dimension matrix |
-| RQ4 | What trade-offs arise when generated review comments are filtered, gated, aggregated, or enriched with context? | Trade-off matrix |
-| RQ5 | What should a trade-off-aware evaluation framework for LLM-generated code review comments include? | Final framework |
+| RQ1 | What types of problematic comments occur in LLM-generated code review, and how can they be operationally annotated? | Operational taxonomy and annotation guideline |
+| RQ2 | Which evaluation dimensions are needed to assess problematic comments beyond technical correctness? | Multi-dimensional evaluation matrix |
+| RQ3 | How do common mitigation strategies trade off error reduction against useful-feedback preservation, review coverage, human effort, and computational cost? | Trade-off framework and measurable trade-off dimensions |
+| RQ4 | How does context quality affect the occurrence, detection, and mitigation of problematic review comments? | Context-quality layer and context-failure analysis |
+| RQ5 | What framework can guide trade-off-aware evaluation of LLM-generated code review comments? | Final evaluation framework |
 
 ## Research Focus
 
@@ -51,6 +69,7 @@ Paper selection
   → extraction of trade-offs
   → cross-paper synthesis
   → taxonomy + framework + trade-off matrix
+  → annotation guideline + small annotated evidence layer
 ```
 
 ## Writing Style
@@ -77,11 +96,12 @@ This project should not be positioned as:
 - just another benchmark leaderboard;
 - just another hallucination detector;
 - just another RAG/context expansion method;
-- just a generic survey of LLMs for software engineering.
+- just a generic survey of LLMs for software engineering;
+- a small empirical method-comparison paper whose main contribution is choosing a winning strategy.
 
 The stronger framing is:
 
-> a framework-oriented synthesis of LLM-based code review evaluation, focused on context quality, problematic comment types, and trade-off-aware evaluation.
+> a framework-oriented synthesis of LLM-based code review evaluation, focused on context quality, problematic comment types, trade-off-aware evaluation, and a carefully annotated evidence layer.
 
 ## Repository Structure
 
@@ -109,6 +129,7 @@ references/
 
 docs/
   academic-writing-style.md
+  research-roadmap.md
 
 drafts/
   methodology.md
@@ -122,6 +143,7 @@ Use these files as the main working sources:
 
 | File | Purpose |
 |---|---|
+| `docs/research-roadmap.md` | Current project direction after supervisor feedback. |
 | `matrices/paper-pool.md` | Compact inventory of all papers and their role in the project. |
 | `matrices/cross-paper-synthesis.md` | Main cross-paper argument map and gap synthesis. |
 | `synthesis/evaluation-dimensions.md` | Evaluation dimensions for generated review comments and review workflows. |
@@ -138,6 +160,7 @@ Use these files as the main working sources:
 - `matrices/paper-pool.md` is aligned with the spreadsheet metadata after the latest cleanup pass.
 - `matrices/cross-paper-synthesis.md` is the canonical cross-paper synthesis and covers **P01–P50**.
 - `references/references.bib` contains entries for **P01–P50**, based on the spreadsheet metadata.
+- `docs/research-roadmap.md` records the revised paper direction after supervisor feedback.
 - Temporary synthesis files for P37–P41 and P42–P50 were removed after their content was merged into canonical synthesis/matrix files.
 - Remaining cleanup: replace `TODO_PUBLISHER_BIBTEX` entries with official publisher-exported BibTeX and do PDF-level verification for lower-confidence paper notes.
 
@@ -157,8 +180,10 @@ Our perspective
 
 ## Next Steps
 
-- Replace `TODO_PUBLISHER_BIBTEX` entries with official publisher-exported BibTeX.
-- Deep-read P39 and P40 because they directly strengthen usefulness and context-quality arguments.
-- Deep-read P49 if context consistency becomes a core part of the framework.
-- Update draft sections from the canonical synthesis files using `docs/academic-writing-style.md`.
-- Decide whether to add a small illustrative mini-validation using 20–50 generated review comments.
+- Create `synthesis/core-claim.md`.
+- Update `synthesis/research-gap.md` and `drafts/methodology.md` according to `docs/research-roadmap.md`.
+- Create `method/annotation-guideline.md`.
+- Create `method/evaluation-schema.md`.
+- Create `synthesis/final-framework.md`.
+- Create `drafts/introduction.md`.
+- Replace core `TODO_PUBLISHER_BIBTEX` entries with official publisher-exported BibTeX.
