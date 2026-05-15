@@ -1,23 +1,24 @@
 # Methodology
 
-This study uses a framework-oriented focused evidence synthesis, supported by an illustrative empirical evaluation of representative mitigation strategies. The goal is not to conduct an exhaustive systematic literature review, build a new leaderboard benchmark, or identify a universally best code-review assistant. Instead, the method is designed to answer a narrower question: how can problematic LLM-generated code review comments be identified, categorized, and evaluated together with the costs and trade-offs of reducing them?
+This study is designed as a small controlled empirical comparison of mitigation strategies for problematic LLM-generated code review comments. The goal is not to conduct a broad survey of LLMs for software engineering, to build a leaderboard benchmark, or to identify one universally best review assistant. Instead, the study asks a narrower empirical question: when a review assistant produces potentially problematic comments, which mitigation strategies reduce which kinds of problems, and what do they cost in useful feedback, review coverage, human effort, and computation?
 
-The study has two connected layers. The first layer synthesizes evidence from prior work to derive an operational taxonomy of problematic comments and a trade-off-aware evaluation framework. The second layer applies the taxonomy and framework to a small annotated evidence layer in which several representative mitigation strategies are compared on the same sample. This empirical layer is intended to make the framework concrete and test whether the labels and trade-off dimensions can be applied consistently. It should not be interpreted as a broad claim about model superiority.
+The literature synthesis and taxonomy are therefore supporting components, not the primary identity of the paper. A focused review of prior work is used to define the failure categories, evaluation dimensions, and representative mitigation strategies. The main methodological object is the comparative evaluation: the same code-review instances are processed under a small set of representative strategies, the resulting comments and decisions are annotated, and the strategies are compared through both error-reduction and preservation metrics.
 
-This framing follows the initial research goal of comparing error-reduction strategies while keeping the scope controlled. The comparison is not a search for one winning strategy across all conditions. Rather, it asks which kinds of problematic comments each strategy reduces, which useful comments it may remove, how much review coverage it preserves, and what human or computational cost it introduces.
+This design follows the paper's central motivation: reducing problematic comments is not sufficient by itself. A strategy can remove unsupported, irrelevant, or non-actionable comments while also removing useful weak signals, decreasing automatic review coverage, increasing latency, or shifting the burden to human reviewers. The study therefore evaluates mitigation as a trade-off, not as a single success/failure outcome.
 
 ## Study Design
 
-The methodology consists of four parts:
+The study has five stages:
 
-1. a focused evidence synthesis over a curated paper pool;
-2. construction of an operational taxonomy of problematic generated review comments;
-3. design of a trade-off-aware evaluation framework;
-4. an illustrative annotated study comparing representative mitigation strategies.
+1. a targeted literature review to define failure categories, evaluation dimensions, and strategy families;
+2. construction and refinement of an operational taxonomy of problematic generated review comments;
+3. selection of a shared evaluation sample and generation of baseline review comments;
+4. application of several representative mitigation strategies to the same sample;
+5. human annotation and trade-off analysis of the resulting comments and mitigation decisions.
 
-The evidence synthesis provides the conceptual basis for the taxonomy, evaluation dimensions, and mitigation categories. The annotated study provides a concrete test of the framework on generated review comments. The two layers are intentionally connected: the literature synthesis identifies what should be measured, while the annotated study shows how these dimensions can be measured and where trade-offs appear in practice.
+The unit of analysis is a generated review comment for a code change under review. Each instance contains a code change and, where available, review-relevant textual context such as a commit message, pull-request description, issue description, previous discussion, surrounding code, or retrieved project context. The same base instances are used across strategies so that observed differences are attributable to the mitigation strategy rather than to different input distributions.
 
-The unit of analysis is a generated review comment for a code change under review. Each instance may include the code diff, surrounding code or project context where available, textual context such as a commit message or pull-request description, the generated comment, and any mitigation output produced before the comment is shown to a developer.
+The study is intentionally bounded. A feasible initial version uses one primary dataset, one main generation model, a fixed set of prompts and settings, a small number of representative mitigation strategies, and a few hundred annotated comments. The purpose is to obtain interpretable empirical findings about mitigation trade-offs, not to make broad model-ranking claims.
 
 ## Research Questions
 
@@ -26,93 +27,155 @@ The study is guided by five research questions.
 <!-- table: caption="Research questions and expected outputs." label="tab:methodology-rqs" -->
 | RQ | Question | Expected output |
 | --- | --- | --- |
-| RQ1 | What types of problematic comments occur in LLM-generated code review? | Operational taxonomy and label definitions. |
+| RQ1 | What types of problematic comments occur in LLM-generated code review? | Distribution of problematic-comment types and refined taxonomy labels. |
 | RQ2 | Which mitigation strategies reduce which types of problematic comments? | Strategy-by-failure-type comparison. |
-| RQ3 | What trade-offs do mitigation strategies introduce in useful-feedback preservation, review coverage, human effort, and computational cost? | Trade-off matrix and metric definitions. |
-| RQ4 | How does context quality affect the occurrence, detection, and mitigation of problematic comments? | Context-quality layer and context-failure analysis. |
-| RQ5 | How can these signals be integrated into a framework for show, suppress, rewrite, or escalate decisions? | Trade-off-aware evaluation framework. |
+| RQ3 | How do mitigation strategies affect useful-feedback preservation, review coverage, human escalation, and execution cost? | Trade-off matrix and preservation/cost metrics. |
+| RQ4 | Does combining context-quality control with post-generation verification produce a better trade-off than either strategy alone? | Hybrid-strategy analysis, if the combined strategy is included. |
+| RQ5 | How does context quality or context inconsistency affect mitigation success? | Context-quality analysis and context-dependent failure patterns. |
 
-RQ1 and RQ4 are primarily supported by the evidence synthesis and annotation labels. RQ2 and RQ3 require the illustrative empirical comparison. RQ5 integrates both layers into the final framework.
+RQ1 defines the problem space. RQ2 and RQ3 form the core empirical comparison. RQ4 tests whether a combined strategy improves the trade-off when feasible. RQ5 connects the empirical results back to the context-quality motivation of the paper.
 
-## Paper Selection and Coding
+## Targeted Literature Review and Initial Operationalization
 
-The evidence synthesis is based on a curated paper pool maintained in `matrices/paper-pool.md`. The pool includes core work on LLM-based code review, automated review-comment generation, hallucination and grounding, context-aware review, production review assistants, benchmark construction, data curation, human-centered code review, static-analysis-guided feedback, secure review, and LLM-as-a-Judge evaluation.
+Before running the empirical comparison, we conduct a targeted review of closely related work. This review is not intended to be a full systematic literature review. Its role is to support the empirical design by identifying the main categories of problematic comments, the main strategy families for reducing them, and the evaluation dimensions needed to interpret the results.
 
-A paper is included when it provides evidence for at least one of the following concerns: evaluation of generated review comments, problematic comment types, context quality, review-comment usefulness, mitigation or filtering mechanisms, human or production feedback, data and reference quality, cost and workflow impact, or evaluator validity. A paper is excluded when it focuses only on general code generation, program repair, or model performance without evidence relevant to review-comment evaluation.
+The paper pool is maintained in `matrices/paper-pool.md`. Papers are included when they provide evidence about LLM-based code review evaluation, generated review comments, hallucination or grounding, context-aware review, human or production feedback, data and reference quality, filtering or verification, static-analysis-guided review, or LLM-as-a-Judge evaluation. Papers are excluded when they only address general code generation, program repair, or model performance without evidence relevant to review-comment evaluation.
 
-Each paper is coded using the repository analysis template in `templates/paper-analysis-template.md`. For each paper, we extract the study type, contribution type, dataset or evaluation setting, input context, generated or evaluated artifact, evaluation metrics, human or automated judging protocol, reported limitations, observed or implied failure types, context-quality assumptions, mitigation strategies, cost or workflow indicators, and evidence relevant to the research questions.
+Each paper is coded using `templates/paper-analysis-template.md`. For each paper, we extract the evaluated artifact, input context, model or system setting, evaluation dimensions, failure types, mitigation mechanisms, human or automated judging protocol, cost or workflow indicators, and stated limitations. Extracted claims are marked as `Reported`, `Inferred`, or `Our perspective` so that the synthesis does not attribute our interpretation to individual papers.
 
-To avoid overstating the evidence, extracted claims are marked using interpretation labels. `Reported` means the paper states the claim explicitly. `Inferred` means the claim is reconstructed from examples, tables, results, or study design. `Our perspective` means the claim is part of our synthesis or critique. This distinction is important because the framework combines evidence reported by prior work with analytical interpretation across studies.
+The output of this review is an initial operational vocabulary. The review identifies candidate problematic-comment types such as unsupported or hallucinated comments, irrelevant comments, wrong-location comments, incorrect technical claims, invalid fix suggestions, false positives, non-actionable comments, low-value comments, and context-dependent cases. It also identifies strategy families according to their intervention point: before generation, during generation, after generation, and before display to the user.
 
-## Cross-Paper Synthesis
+## Operational Taxonomy Construction
 
-After individual coding, papers are compared across recurring dimensions rather than summarized one by one. The synthesis asks what each line of work evaluates, what context it assumes, what failure types it exposes, what mitigation decision it supports, what cost or workflow effect it measures, and what validity risks remain.
+The taxonomy is constructed to support annotation in the empirical study. It is not meant to be only a conceptual list of possible problems. Each label should help annotators decide whether a generated comment is problematic, what kind of problem it has, and what mitigation decision is appropriate.
 
-The cross-paper synthesis proceeds in three steps. First, we identify recurring evaluation dimensions such as correctness, relevance, grounding, usefulness, actionability, specificity, review coverage, cost, human effort, workflow impact, and evaluator validity. Second, we identify recurring problematic-comment types such as unsupported claims, hallucinated issues, irrelevant comments, wrong-location comments, incorrect technical assumptions, invalid fix suggestions, non-actionable comments, low-value comments, and context-dependent cases. Third, we identify missing links between dimensions, especially cases where prior work measures error reduction but not useful-feedback preservation, or evaluates generated comments without evaluating context quality or evaluator reliability.
+The initial taxonomy is derived from three sources: failure types reported in prior work, failure types inferred from examples and evaluation rubrics, and failure types observed during pilot inspection of generated comments. After the pilot round, labels are refined to reduce overlap and clarify borderline cases.
 
-The output of this synthesis is a set of framework layers that connect input and context quality, generated-comment quality, problematic-comment type, usefulness and actionability, mitigation decision, cost and workflow impact, dataset validity, and evaluator validity.
+Each taxonomy category should include a definition, inclusion criteria, exclusion criteria, and decision notes. For example, an unsupported claim is a comment that makes a factual or causal claim not supported by the available context. A non-actionable comment is one where the developer cannot determine a concrete next step. A low-value comment may be technically correct but not worth reviewer attention. A useful-but-not-directly-acceptable comment contains a useful signal but should be rewritten, softened, grounded, or escalated before being shown.
 
-## Taxonomy Construction
+The taxonomy separates failure types from evaluation dimensions. Correctness, grounding, usefulness, actionability, and severity are dimensions. Unsupported claim, wrong cause, invalid fix suggestion, irrelevant comment, and low-value nitpick are failure types. This separation is needed because a comment can be correct but low-value, useful but weakly grounded, or relevant but not directly actionable.
 
-The operational taxonomy is derived from three sources: failure types explicitly reported in prior work, failure types inferred from examples and evaluation rubrics, and failure types needed to analyze mitigation trade-offs. The taxonomy is operational because each category is intended to support annotation, not only conceptual discussion.
+## Dataset and Sample Selection
 
-Each taxonomy category should include a definition, inclusion criteria, exclusion criteria, ambiguous cases, and likely mitigation decisions. For example, an unsupported comment may be suppressed if it makes a strong claim without evidence, rewritten if it contains a useful but overstated concern, or escalated if it raises a potentially important issue that cannot be judged with the available context. Similarly, a low-value comment may be technically correct but still not worth showing if it consumes reviewer attention without improving the review outcome.
+The dataset should contain code changes and enough review-relevant context to generate and evaluate comments. Candidate sources include existing code review comment generation datasets, pull-request-level review benchmarks, or code changes paired with commit messages, pull-request descriptions, issue descriptions, and review discussion. The key selection criterion is not dataset size alone, but whether the instances are judgeable and support comparison across strategies.
 
-The taxonomy separates problematic-comment types from evaluation dimensions. Grounding, correctness, usefulness, and actionability are evaluation dimensions. Unsupported claims, incorrect technical assumptions, wrong-location comments, and non-actionable comments are failure types. This separation allows the analysis to capture cases where a comment is correct but low-value, useful but weakly grounded, or relevant but not directly actionable.
+Each selected instance should ideally include:
 
-## Mitigation Strategies
+- the code diff or changed file region;
+- surrounding code or project context where available;
+- textual context such as a commit message or pull-request description;
+- enough information to judge whether a generated comment is grounded, useful, and actionable.
 
-The empirical layer compares a small set of representative mitigation strategies. The set is intentionally limited so that the study remains feasible and the same samples can be evaluated across strategies. The initial strategies are:
+If the selected dataset already contains generated comments from prior systems, those comments may be used as input artifacts. Otherwise, comments are generated using a fixed base model and fixed prompt. The same dataset split, model configuration, decoding settings, and prompts are used throughout the final evaluation. Prompt or strategy tuning should happen only during pilot development, not on the final evaluation sample.
 
-<!-- table: caption="Representative mitigation strategies used in the illustrative comparison." label="tab:methodology-strategies" -->
-| Strategy | Intervention point | Role in the study |
+A practical initial setup is one primary dataset, one main generation model, four or five strategies, and approximately 100--300 annotated generated comments. If resources are limited, the first study may use a smaller pilot and report the results as exploratory. The empirical claims should match the sample size and should avoid broad generalization across all models, languages, repositories, or review settings.
+
+## Compared Mitigation Strategies
+
+The study compares a limited number of representative strategies. These strategies are chosen to represent different intervention points rather than to exhaust all possible systems.
+
+<!-- table: caption="Representative mitigation strategies for the empirical comparison." label="tab:methodology-strategies" -->
+| Strategy | Intervention point | Description |
 | --- | --- | --- |
-| Baseline LLM reviewer | Generation time | Produces review comments using a fixed base prompt and the available input context. |
-| Robust prompting | Generation time | Uses a more constrained prompt that asks the model to avoid unsupported claims and provide actionable comments. |
-| Context-quality gate | Before generation or before evaluation | Skips, downgrades, or routes instances whose available context is insufficient, inconsistent, or difficult to judge. |
-| Post-generation verification | After generation and before display | Checks generated comments for support, relevance, actionability, or risk before they are shown. |
-| Hybrid gate plus verifier | Before and after generation | Combines context-quality gating with post-generation verification to examine whether the trade-off improves. |
+| Baseline LLM reviewer | Generation | Generates review comments using a fixed base prompt and the available context. |
+| Robust prompting | Generation | Uses a constrained prompt that asks the model to avoid unsupported claims, focus on actionable feedback, and avoid low-value comments. |
+| Context-quality gate | Before generation or before display | Detects insufficient, inconsistent, or weak context and skips, downgrades, or escalates uncertain instances. |
+| Post-generation verification | After generation | Checks a generated comment for support, relevance, correctness, actionability, or risk before showing it. |
+| Hybrid gate plus verifier | Before and after generation | Combines context-quality control with post-generation verification to test whether the trade-off improves. |
 
-Depending on data and implementation feasibility, a retrieval-augmented context strategy may be added as an optional strategy. If added, it should be treated as a context-enrichment strategy rather than as a separate model-comparison track. The study should keep the number of strategies small enough to support careful annotation and trade-off analysis.
+A retrieval-augmented context strategy may be added if implementation time allows and the dataset supports retrieval. If included, it should be treated as a context-enrichment strategy and evaluated with the same trade-off metrics, including cost and added context noise.
 
-## Data and Sample Selection
-
-The study should use a dataset that contains, or can be linked to, code changes and review-relevant textual context. Candidate data sources include existing code review comment generation datasets, pull-request-level code review benchmarks, or code changes paired with commit messages, pull-request descriptions, and review discussions. The minimum requirement is that each instance should contain a code change and enough surrounding information to generate or evaluate a review comment.
-
-If the selected dataset already includes generated comments, those comments may be used as candidate artifacts. If it does not, comments are generated using a fixed model, fixed decoding settings, and documented prompts. The same base sample should be used across mitigation strategies so that differences can be attributed to the strategy rather than to different input distributions.
-
-A feasible initial study can use one primary dataset, one main generation model, a small number of representative strategies, and approximately 100--300 generated comments for human annotation. A smaller pilot sample should be labeled first to refine the taxonomy and annotation guideline. Any claims based on this sample should be framed as illustrative rather than broadly generalizable.
+The baseline is not expected to be the best strategy. It provides the reference point for measuring how many problematic comments appear without additional mitigation. Robust prompting tests whether generation-time constraints are enough. The context-quality gate tests whether preventing or routing low-context cases reduces problematic comments. Post-generation verification tests whether checking comments after generation improves quality before display. The hybrid strategy tests whether pre-generation and post-generation controls complement each other.
 
 ## Generation and Mitigation Procedure
 
-For each selected code-change instance, the baseline system generates a review comment using a fixed prompt and input context. The robust-prompting strategy uses the same input but adds constraints intended to reduce unsupported, vague, or non-actionable comments. The context-quality gate evaluates whether the available input context is sufficient and coherent enough for review-comment generation or judgment. The post-generation verifier evaluates the generated comment before display. The hybrid strategy applies both context gating and post-generation verification.
+For each code-review instance, the baseline strategy generates a review comment using the fixed model and base prompt. Other strategies either change the generation prompt, add a pre-generation or pre-display context-quality decision, verify the generated comment, or combine these interventions.
 
-The output of each strategy is mapped to one of the mitigation decisions used in the framework: show, suppress, rewrite, or escalate. `Show` means the comment is suitable to present as review feedback. `Suppress` means it should not be shown because it is harmful, unsupported, irrelevant, or too low-value. `Rewrite` means the comment contains a useful signal but should be clarified, softened, grounded, or made more actionable before display. `Escalate` means the comment raises a potentially important issue that requires human judgment or additional context.
+Each strategy produces both an output comment and a mitigation decision. The four decision labels are:
 
-All prompts, model settings, verifier rules, gating criteria, and retrieval settings, if any, should be documented. The settings should be fixed before running the final evaluation sample to avoid tuning on the evaluation data.
+- `show`: the comment is suitable to present as review feedback;
+- `suppress`: the comment should not be shown because it is unsupported, incorrect, irrelevant, too low-value, or harmful;
+- `rewrite`: the comment contains a useful signal but needs clarification, grounding, softening, or actionability improvements;
+- `escalate`: the comment raises a potentially important issue that requires human judgment or additional context.
 
-## Annotation Protocol
+The same sample is processed by all strategies where feasible. This paired design enables within-sample comparison. For example, the analysis can ask whether the verifier suppresses comments that annotators consider useful, whether the context-quality gate reduces context-dependent failures, or whether robust prompting reduces non-actionable comments without lowering review coverage.
 
-The annotation protocol is designed to evaluate both generated comments and mitigation decisions. The unit of annotation is a generated review comment together with the code change and available context. Annotators label the comment, the context, and the recommended mitigation decision.
+All prompts, model settings, gating rules, verifier prompts or rules, static-analysis settings, retrieval settings, and thresholds should be documented. Final evaluation settings should be fixed before processing the final sample.
 
-The main labels include problematic-comment type, technical correctness, grounding, relevance, usefulness, actionability, value or severity, context quality, dataset validity, evaluator confidence, and mitigation decision. Labels should allow annotators to distinguish comments that are incorrect, unsupported, irrelevant, non-actionable, low-value, useful but not directly acceptable, or impossible to judge with the available context.
+## Human Annotation Protocol
 
-Before full annotation, annotators should label a pilot subset. The pilot is used to refine definitions, identify ambiguous cases, calibrate decision rules, and improve the annotation guideline. At least two annotators with software-engineering experience should label the pilot and a substantial subset of the final sample when feasible. Inter-annotator agreement should be reported for categorical labels using Cohen's kappa for two annotators or Krippendorff's alpha when the design includes missing labels or more than two annotators. Percentage agreement may be reported as a descriptive supplement, but it should not replace chance-corrected agreement.
+The annotation protocol evaluates generated comments, available context, and mitigation decisions. Annotators see the code change, available context, generated comment, and any strategy-specific decision. The annotation guideline defines the labels and decision rules.
 
-Disagreements should be resolved through discussion or adjudication. The final annotation table should preserve the initial labels, resolved label, and disagreement reason where useful. This is especially important for borderline cases such as comments that are technically plausible but weakly grounded, correct but low-value, useful but not directly acceptable, or dependent on missing context.
+The main annotation labels include:
 
-## Metrics and Trade-Off Analysis
+- problematic-comment type;
+- technical correctness;
+- grounding or evidential support;
+- relevance to the change;
+- usefulness;
+- actionability;
+- value or severity;
+- context quality;
+- dataset validity;
+- recommended mitigation decision;
+- annotator confidence.
 
-The study reports both error-reduction metrics and preservation metrics. Error-reduction metrics include the overall rate of problematic comments, the rate of each problematic-comment type, the rate of unsupported or hallucinated comments, the rate of irrelevant comments, the rate of non-actionable comments, and the rate of invalid fix suggestions. Preservation metrics include useful comments retained, useful comments wrongly suppressed, review coverage retained after filtering, comments rewritten rather than suppressed, and comments escalated to humans.
+The protocol should distinguish correctness, usefulness, and actionability. A comment can be technically correct but practically low-value. A comment can be useful but not directly acceptable as a review comment. A comment can be impossible to judge because the available context is insufficient.
 
-Cost and workflow metrics should also be reported where feasible. These include the number of model calls, approximate token cost, latency proxies, human verification effort, escalation rate, and the amount of review feedback removed by each strategy. These metrics are important because a strategy that reduces problematic comments may still be undesirable if it removes too much useful feedback, reduces coverage, or shifts too much effort to humans.
+Before full annotation, annotators label a pilot subset. The pilot is used to refine taxonomy labels, clarify ambiguous cases, calibrate mitigation decisions, and revise the annotation guideline. At least two annotators with software-engineering experience should label the pilot and a substantial subset of the final sample when feasible.
 
-The analysis compares strategies by failure type and by trade-off dimension. A strategy should not be described as simply better because it removes more comments. It should be described in terms of what it removes, what it preserves, what it wrongly suppresses, what it escalates, and what cost it adds. This is the main reason the study separates technical correctness, usefulness, actionability, context quality, and mitigation decision.
+Inter-annotator agreement should be reported separately for key label groups when possible. Cohen's kappa can be used for two annotators and categorical labels. Krippendorff's alpha can be used when there are missing labels or more than two annotators. Percentage agreement may be reported as a descriptive supplement, but it should not replace chance-corrected agreement.
+
+Disagreements are resolved through discussion or adjudication. The final dataset should preserve the initial annotator labels, resolved labels, and disagreement notes where useful. This is especially important for borderline cases such as useful-but-weakly-grounded comments, correct-but-low-value comments, and context-dependent comments.
+
+## Metrics
+
+The study reports both error-reduction metrics and trade-off metrics.
+
+Error-reduction metrics include:
+
+- overall problematic-comment rate;
+- rate of each problematic-comment type;
+- unsupported or hallucinated comment rate;
+- irrelevant comment rate;
+- wrong-location or wrong-cause rate;
+- invalid fix suggestion rate;
+- non-actionable comment rate;
+- low-value comment rate.
+
+Preservation and workflow metrics include:
+
+- useful comments retained;
+- useful comments wrongly suppressed;
+- review coverage retained after filtering;
+- comments rewritten rather than suppressed;
+- human escalation rate;
+- context-dependent comments routed correctly;
+- human annotation or verification effort;
+- number of model calls;
+- approximate token cost;
+- latency proxy where measurable.
+
+The study should not report only a single quality score. A strategy that removes many comments may look good under an error-rate metric but bad under useful-feedback preservation or coverage. Conversely, a strategy that preserves many useful comments may still require too much human escalation or computational cost.
+
+## Analysis Plan
+
+The analysis compares strategies along three axes.
+
+First, it compares the distribution of problematic-comment types produced or retained by each strategy. This answers which strategies are effective for unsupported claims, irrelevant comments, non-actionable comments, invalid fix suggestions, and low-value comments.
+
+Second, it compares preservation and coverage. This asks how many useful comments each strategy keeps, how many useful comments it wrongly suppresses, and how much automatic review coverage remains after filtering or escalation.
+
+Third, it compares cost and effort. This includes additional model calls, verifier calls, retrieval cost if applicable, human escalation rate, and annotation or verification effort. These measures are used to avoid presenting a high-cost strategy as better only because it reduces more problematic comments.
+
+If the hybrid strategy is included, it is analyzed as a trade-off case rather than as an assumed improvement. The analysis should ask whether combining a context-quality gate with post-generation verification reduces complementary failure types or merely increases cost and suppression.
+
+Context quality is analyzed as a moderator. The study should compare high-context and low-context instances where possible, and should examine whether certain failures occur more often when the available context is incomplete, inconsistent, stale, or too broad.
 
 ## Reproducibility and Scope Control
 
-To support reproducibility, the repository should include the paper pool, coding template, annotation guideline, evaluation schema, prompts, model settings, generated outputs where licensing permits, and metric-computation scripts. If proprietary models or closed datasets are used, the study should still document prompts, settings, sampling decisions, and annotation procedures as precisely as possible.
+To support reproducibility, the repository should include the paper pool, coding template, annotation guideline, evaluation schema, prompts, model settings, generated outputs where licensing permits, and scripts for computing metrics. If closed models or restricted datasets are used, the study should still document prompts, settings, sampling decisions, and annotation procedures as precisely as possible.
 
-Several scope limits are intentional. The empirical layer is small and illustrative. It uses a limited number of datasets, models, and mitigation strategies. It is not designed to establish broad model rankings. Its purpose is to evaluate whether the taxonomy and framework reveal trade-offs that would be hidden by simple correctness, acceptance, or hallucination metrics.
+The main scope risk is that the work becomes too broad: too many datasets, too many models, too many strategies, or too many evaluation dimensions. The initial study therefore keeps the design limited. It should use a small set of representative strategies and a sample size that supports careful annotation.
 
-The main threats to validity are incomplete paper selection, rapidly changing recent work, possible preprint changes, limited annotation sample size, annotator disagreement, sensitivity to prompt and model settings, and evaluator bias if LLM-as-a-Judge is used. These threats are mitigated by transparent inclusion criteria, explicit coding labels, pilot annotation, agreement reporting, preserved disagreement notes, fixed evaluation settings, and careful separation between reported evidence, inferred interpretation, and our own synthesis.
+The main threats to validity are incomplete literature coverage, possible changes in recent preprints, dataset limitations, small sample size, annotator disagreement, sensitivity to prompts and model settings, and possible evaluator bias if LLM-as-a-Judge is used. These threats are mitigated by transparent inclusion criteria, fixed evaluation settings, pilot annotation, agreement reporting, preserved disagreement notes, and conservative interpretation of results.
