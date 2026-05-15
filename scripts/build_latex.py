@@ -72,6 +72,44 @@ LATEX_FOOTER = r"""
 \end{document}
 """
 
+UNICODE_TEXT_REPLACEMENTS = {
+    "“": "``",
+    "”": "''",
+    "‘": "`",
+    "’": "'",
+    "–": "--",
+    "—": "---",
+    "‑": "-",
+    "‐": "-",
+    "−": "-",
+    "…": r"\ldots{}",
+    "→": r"$\rightarrow$",
+    "←": r"$\leftarrow$",
+    "⇒": r"$\Rightarrow$",
+    "≤": r"$\leq$",
+    "≥": r"$\geq$",
+    "×": r"$\times$",
+}
+
+UNICODE_VERBATIM_REPLACEMENTS = {
+    "“": '"',
+    "”": '"',
+    "‘": "'",
+    "’": "'",
+    "–": "-",
+    "—": "--",
+    "‑": "-",
+    "‐": "-",
+    "−": "-",
+    "…": "...",
+    "→": "->",
+    "←": "<-",
+    "⇒": "=>",
+    "≤": "<=",
+    "≥": ">=",
+    "×": "x",
+}
+
 SPECIAL_CHARS = {
     "&": r"\&",
     "%": r"\%",
@@ -85,8 +123,23 @@ SPECIAL_CHARS = {
 }
 
 
+def normalize_text_unicode(text: str) -> str:
+    """Replace common Unicode punctuation with pdflatex-friendly text."""
+    for source, target in UNICODE_TEXT_REPLACEMENTS.items():
+        text = text.replace(source, target)
+    return text
+
+
+def normalize_verbatim_unicode(text: str) -> str:
+    """Replace Unicode characters that break listings under pdflatex."""
+    for source, target in UNICODE_VERBATIM_REPLACEMENTS.items():
+        text = text.replace(source, target)
+    return text
+
+
 def escape_latex(text: str) -> str:
     """Escape LaTeX special characters outside generated LaTeX commands."""
+    text = normalize_text_unicode(text)
     return "".join(SPECIAL_CHARS.get(char, char) for char in text)
 
 
@@ -217,7 +270,7 @@ def convert_markdown_to_latex(markdown: str) -> str:
             continue
 
         if in_code_block:
-            output.append(html.unescape(line))
+            output.append(normalize_verbatim_unicode(html.unescape(line)))
             continue
 
         if not line.strip():
@@ -267,7 +320,7 @@ def convert_markdown_to_latex(markdown: str) -> str:
             if not in_table_block:
                 output.append(r"\begin{lstlisting}")
                 in_table_block = True
-            output.append(line)
+            output.append(normalize_verbatim_unicode(line))
             continue
 
         paragraph.append(line.strip())
