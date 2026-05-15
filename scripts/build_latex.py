@@ -11,6 +11,12 @@ Usage:
 Output:
     build/paper.tex
     build/references.bib
+
+Supported table metadata syntax:
+    <!-- table: caption="Caption text" label="tab:example" -->
+    | Column A | Column B |
+    | --- | --- |
+    | Value A | Value B |
 """
 
 from __future__ import annotations
@@ -35,7 +41,10 @@ LATEX_HEADER = rf"""\documentclass[12pt]{{article}}
 \usepackage[utf8]{{inputenc}}
 \usepackage[a4paper,margin=1in]{{geometry}}
 \usepackage{{amsmath}}
+\usepackage{{array}}
+\usepackage{{booktabs}}
 \usepackage{{cite}}
+\usepackage{{tabularx}}
 \usepackage{{url}}
 \usepackage{{listings}}
 \usepackage{{xcolor}}
@@ -132,6 +141,10 @@ SPECIAL_CHARS = {
     "^": r"\textasciicircum{}",
 }
 
+TABLE_METADATA_PATTERN = re.compile(r"^<!--\s*table:\s*(.*?)\s*-->\s*$")
+TABLE_ATTRIBUTE_PATTERN = re.compile(r"(caption|label)\s*=\s*(['\"])(.*?)\2")
+RAW_LATEX_INLINE_PATTERN = re.compile(r"\\(?:ref|autoref|pageref)\{[^}]+\}")
+
 
 def normalize_text_unicode(text: str) -> str:
     """Replace common Unicode punctuation with pdflatex-friendly text."""
@@ -174,7 +187,7 @@ def convert_inline_markdown(text: str) -> str:
     """Convert a small subset of inline Markdown to LaTeX."""
     placeholders: dict[str, str] = {}
 
-    def protect(pattern: str, repl_func):
+    def protect(pattern: str, repl_func) -> None:
         nonlocal text
 
         def repl(match: re.Match[str]) -> str:
@@ -185,6 +198,7 @@ def convert_inline_markdown(text: str) -> str:
         text = re.sub(pattern, repl, text)
 
     protect(r"\[((?:@[^\]]+?)(?:;\s*@[^\]]+?)*)\]", citation_to_latex)
+    protect(RAW_LATEX_INLINE_PATTERN.pattern, lambda m: m.group(0))
     protect(r"`([^`]+)`", lambda m: r"\texttt{" + escape_latex(m.group(1)) + "}")
 
     text = escape_latex(text)
@@ -213,6 +227,80 @@ def heading_to_latex(line: str) -> str | None:
     return rf"\paragraph{{{title}}}"
 
 
+def parse_table_metadata(line: str) -> dict[str, str] | None:
+    """Parse optional Markdown table metadata from an HTML comment."""
+    match = TABLE_METADATA_PATTERN.match(line.strip())
+    if not match:
+        return None
+    metadata = {key: value for key, _, value in TABLE_ATTRIBUTE_PATTERN.findall(match.group(1))}
+    return metadata
+
+
+def split_markdown_table_row(line: str) -> list[str]:
+    """Split a simple Markdown table row into cells."""
+    stripped = line.strip()
+    if stripped.startswith("|"):
+        stripped = stripped[1:]
+    if stripped.endswith("|"):
+        stripped = stripped[:-1]
+    return [cell.strip() for cell in stripped.split("|")]
+
+
+def is_table_separator(cells: list[str]) -> bool:
+    """Return true for Markdown table separator rows such as --- or :---:."""
+    return bool(cells) and all(re.fullmatch(r":?-{3,}:?", cell.strip()) for cell in cells)
+
+
+def normalize_table_rows(rows: list[list[str]]) -> list[list[str]]:
+    """Pad rows so the LaTeX table has a consistent column count."""
+    if not rows:
+        return []
+    column_count = max(len(row) for row in rows)
+    return [row + [""] * (column_count - len(row)) for row in rows]
+
+
+def convert_markdown_table_to_latex(table_lines: list[str], metadata: dict[str, str] | None) -> list[str]:
+    """Convert a simple Markdown table to a labeled LaTeX table."""
+    parsed_rows = [split_markdown_table_row(line) for line in table_lines]
+    parsed_rows = [row for row in parsed_rows if row]
+    if len(parsed_rows) < 2:
+        return [r"\begin{lstlisting}", *[normalize_verbatim_unicode(line) for line in table_lines], r"\end{lstlisting}", ""]
+
+    header = parsed_rows[0]
+    body_rows = parsed_rows[1:]
+    if body_rows and is_table_separator(body_rows[0]):
+        body_rows = body_rows[1:]
+
+    rows = normalize_table_rows([header, *body_rows])
+    if not rows:
+        return []
+
+    column_count = len(rows[0])
+    column_spec = "@{}" + ">{\\raggedright\\arraybackslash}X" * column_count + "@{}"
+    caption = metadata.get("caption") if metadata else None
+    label = metadata.get("label") if metadata else None
+
+    output = [r"\begin{table}[t]", r"\centering"]
+    if caption:
+        output.append(r"\caption{" + convert_inline_markdown(caption) + "}")
+    if label:
+        output.append(r"\label{" + label + "}")
+    output.extend([
+        r"\small",
+        r"\renewcommand{\arraystretch}{1.18}",
+        rf"\begin{{tabularx}}{{\linewidth}}{{{column_spec}}}",
+        r"\toprule",
+    ])
+
+    header_cells = [r"\textbf{" + convert_inline_markdown(cell) + "}" for cell in rows[0]]
+    output.append(" & ".join(header_cells) + r" \\")
+    output.append(r"\midrule")
+    for row in rows[1:]:
+        output.append(" & ".join(convert_inline_markdown(cell) for cell in row) + r" \\")
+    output.extend([r"\bottomrule", r"\end{tabularx}", r"\end{table}", ""])
+    return output
+
+
 def convert_markdown_to_latex(markdown: str) -> str:
     """Convert repository Markdown draft sections into rough LaTeX."""
     lines = markdown.splitlines()
@@ -220,8 +308,9 @@ def convert_markdown_to_latex(markdown: str) -> str:
     in_code_block = False
     in_itemize = False
     in_enumerate = False
-    in_table_block = False
     paragraph: list[str] = []
+    table_lines: list[str] = []
+    pending_table_metadata: dict[str, str] | None = None
 
     def flush_paragraph() -> None:
         nonlocal paragraph
@@ -241,35 +330,43 @@ def convert_markdown_to_latex(markdown: str) -> str:
             output.append("")
             in_enumerate = False
 
-    def close_table_block() -> None:
-        nonlocal in_table_block
-        if in_table_block:
-            output.append(r"\end{lstlisting}")
-            output.append("")
-            in_table_block = False
+    def flush_table() -> None:
+        nonlocal table_lines, pending_table_metadata
+        if table_lines:
+            output.extend(convert_markdown_table_to_latex(table_lines, pending_table_metadata))
+            table_lines = []
+            pending_table_metadata = None
 
     for raw_line in lines:
         line = raw_line.rstrip()
 
-        if in_table_block and not line.lstrip().startswith("|"):
-            close_table_block()
+        if table_lines and not line.lstrip().startswith("|"):
+            flush_table()
+
+        table_metadata = parse_table_metadata(line)
+        if table_metadata is not None:
+            flush_paragraph()
+            close_lists()
+            flush_table()
+            pending_table_metadata = table_metadata
+            continue
 
         if line.strip().startswith("<!--"):
             flush_paragraph()
             close_lists()
-            close_table_block()
+            flush_table()
             continue
 
         if line.strip().startswith(">"):
             flush_paragraph()
             close_lists()
-            close_table_block()
+            flush_table()
             continue
 
         if line.strip().startswith("```"):
             flush_paragraph()
             close_lists()
-            close_table_block()
+            flush_table()
             if in_code_block:
                 output.append(r"\end{lstlisting}")
                 output.append("")
@@ -286,14 +383,14 @@ def convert_markdown_to_latex(markdown: str) -> str:
         if not line.strip():
             flush_paragraph()
             close_lists()
-            close_table_block()
+            flush_table()
             continue
 
         heading = heading_to_latex(line)
         if heading is not None:
             flush_paragraph()
             close_lists()
-            close_table_block()
+            flush_table()
             output.append(heading)
             output.append("")
             continue
@@ -301,7 +398,7 @@ def convert_markdown_to_latex(markdown: str) -> str:
         bullet_match = re.match(r"^[-*]\s+(.*)$", line)
         if bullet_match:
             flush_paragraph()
-            close_table_block()
+            flush_table()
             if in_enumerate:
                 output.append(r"\end{enumerate}")
                 in_enumerate = False
@@ -314,7 +411,7 @@ def convert_markdown_to_latex(markdown: str) -> str:
         enum_match = re.match(r"^\d+\.\s+(.*)$", line)
         if enum_match:
             flush_paragraph()
-            close_table_block()
+            flush_table()
             if in_itemize:
                 output.append(r"\end{itemize}")
                 in_itemize = False
@@ -327,17 +424,14 @@ def convert_markdown_to_latex(markdown: str) -> str:
         if line.lstrip().startswith("|"):
             flush_paragraph()
             close_lists()
-            if not in_table_block:
-                output.append(r"\begin{lstlisting}")
-                in_table_block = True
-            output.append(normalize_verbatim_unicode(line))
+            table_lines.append(line)
             continue
 
         paragraph.append(line.strip())
 
     flush_paragraph()
     close_lists()
-    close_table_block()
+    flush_table()
 
     return "\n".join(output).strip() + "\n"
 
