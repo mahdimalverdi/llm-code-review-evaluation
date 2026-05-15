@@ -1,36 +1,41 @@
 # Background and Motivation
 
-TODO: Write this section before expanding the framework.
-
-This section should prepare the reader without jumping directly into the proposed taxonomy.
-
-Suggested structure:
+This section introduces the concepts that motivate the proposed taxonomy and framework. It first positions modern code review as a socio-technical practice. It then explains how code review automation evolved before and after the rise of large language models. Finally, it motivates why evaluating generated review comments requires a trade-off-aware view rather than a single quality score.
 
 ## Modern Code Review
 
-- Code review as defect detection, maintainability, knowledge sharing, and coordination.
-- Why review comments are not only technical assertions.
-- Key citations: [@p37_sadowski2018_google_mcr; @p38_bacchelli2013_expectations_mcr; @p39_bosu2015_useful_reviews].
+Modern code review is usually lightweight, asynchronous, and tool-mediated. A developer submits a change, one or more reviewers inspect it, and the discussion continues until the change is accepted, revised, or abandoned. Although defect detection is one important goal, modern code review has broader functions. It supports knowledge sharing, maintainability, team awareness, shared ownership, and coordination around design and implementation decisions [@p37_sadowski2018_google_mcr; @p38_bacchelli2013_expectations_mcr; @p39_bosu2015_useful_reviews; @p51_davila2021_mcr_slr_taxonomy].
+
+This broader role matters for evaluation. A review comment is not only a technical assertion about a changed line. It can also be a request for clarification, a maintainability concern, a design suggestion, or a signal that a change is difficult to understand. For example, a comment may not identify a concrete defect, but it may still be useful if it helps the author simplify a change or document an implicit assumption. Conversely, a technically correct comment may be low-value if it points out a trivial issue, repeats an obvious fact, or distracts from more important review concerns [@p39_bosu2015_useful_reviews; @p40_ram2018_reviewability].
+
+The reviewability of a change also affects the value and interpretation of review comments. Large, unfocused, poorly described, or context-poor changes can be harder to review, even if the changed code is not necessarily incorrect. This means that comment quality and context quality are connected. If the available context is incomplete, a reviewer or an automated assistant may produce comments that are uncertain, overly generic, or difficult to validate [@p40_ram2018_reviewability; @p51_davila2021_mcr_slr_taxonomy].
+
+## Code Review Automation Before LLMs
+
+Automating code review activities predates the current wave of large language models. Earlier work studied how review-related tasks could be supported or automated, such as generating review comments, recommending changes, or assisting reviewers and authors during the review process [@p52_tufano2021_automating_code_review_activities]. This line of work is important because it shows that the core motivation is not new: teams want to reduce review effort, increase feedback quality, and make review workflows more scalable.
+
+At the same time, earlier work also shows that automation should not be judged only by aggregate performance numbers. A technique may perform well on average while still failing on important cases. It may produce suggestions that are syntactically plausible but not useful, or it may handle some categories of review tasks better than others. This motivates qualitative failure analysis in addition to quantitative scores [@p53_tufano2024_code_review_automation_strengths_weaknesses]. For this paper, that point is central: evaluation should expose where an automated review method succeeds, where it fails, and what kind of review value is lost or preserved.
 
 ## LLM-Based Code Review Assistance
 
-- Generated review comments.
-- Review-comment classification.
-- Retrieval/context-augmented review.
-- Specification-grounded review.
-- Industrial systems and user studies.
+Large language models changed the scale and flexibility of code review automation. LLM-based systems can generate natural-language review comments, explain code changes, suggest fixes, classify review feedback, and combine generated feedback with information from static analyzers or security-oriented prompts [@p14_li2022_codereviewer; @p19_nguyen2025_fine_grained_classification; @p21_peng2025_icodereviewer; @p22_jaoua2025_static_analyzers]. These capabilities make LLMs attractive as review assistants because they can operate over code, text, and review context at the same time.
 
-## Why Evaluation Is Difficult
+Recent work has also moved from isolated code snippets toward richer review settings. Some studies evaluate pull-request-level feedback, context-enriched review, retrieval-augmented generation, specification-grounded review, and production or user-study settings [@p03_tantithamthavorn2026_rovodev; @p04_kumar2026_swe_prbench; @p06_hu2025_contextcrbench; @p07_olewicki2024_revmate; @p11_zhang2025_laura; @p12_wang2025_sgcr]. This shift is important. A review comment often depends on more than the local diff. It may require knowledge of surrounding code, project conventions, issue descriptions, specifications, previous review discussion, or runtime assumptions.
 
-- Multiple valid comments may exist for the same change.
-- Human reference comments are incomplete and noisy.
-- A comment can be correct but low value.
-- A comment can be useful but not directly acceptable.
-- A comment can be plausible but unsupported.
+However, richer context does not automatically solve evaluation. Additional context can improve grounding, but it can also introduce noise, increase cost, and make it harder to determine which evidence supports a generated comment. A comment may be correct under one context boundary and unsupported under another. This is why this paper treats context quality as an evaluation dimension rather than as a fixed input setting [@p06_hu2025_contextcrbench; @p11_zhang2025_laura; @p12_wang2025_sgcr; @p49_lee2025_metamon].
+
+## Why Review Comment Evaluation Is Difficult
+
+Evaluating generated review comments is difficult because there is rarely a single correct comment for a code change. Human reference comments are useful, but they are incomplete and noisy. Reviewers may focus on different issues, express feedback at different levels of detail, or leave no comment even when a change has reviewable concerns. A generated comment can therefore be useful without matching a reference comment in wording or location [@p01_lu2025_deepcrceval; @p08_liu2025_too_noisy; @p18_bensghaier2025_curated_reviews].
+
+The reverse is also true. A generated comment can look fluent and relevant while being unsupported by the available context. It may infer a bug that is not present, cite a missing condition that is actually handled elsewhere, suggest an invalid fix, or point to the wrong location. Such comments can be harmful because they consume reviewer attention and may reduce trust in the assistant [@p02_tantithamthavorn2026_hallujudge; @p35_mcaleese2024_llm_critics].
+
+Usefulness is also not identical to correctness. A correct comment can be too vague, too minor, or too hard to act on. A partially grounded comment may still be useful if it highlights a real uncertainty that should be checked. A comment may be unsuitable to show directly but useful after rewriting, routing, or escalation to a human reviewer. These cases are difficult to capture with binary labels such as correct/incorrect or accepted/rejected [@p10_sun2025_bitsai_cr; @p19_nguyen2025_fine_grained_classification; @p39_bosu2015_useful_reviews].
+
+LLM-based evaluators add another layer of difficulty. They can scale evaluation and reduce manual effort, but they are not neutral measurement devices. Their judgments can depend on prompts, answer order, model choice, verbosity, and task framing. For this reason, LLM-as-a-Judge should be treated as a measurement instrument that needs calibration and validation, not as a replacement for ground truth [@m04_zheng2023_llm_judge; @p29_wang2025_human_evaluators; @p31_jiang2025_codejudgebench; @p32_zhao2026_bias_loop; @p33_he2025_llmjudge_se].
 
 ## Trade-Offs as the Main Motivation
 
-- Error reduction vs useful-feedback preservation.
-- More context vs noise and cost.
-- Filtering vs review coverage.
-- LLM-as-a-Judge scalability vs evaluator validity.
+The main motivation of this paper is that evaluation decisions in LLM-based code review involve trade-offs. A filter that removes unsupported comments may reduce hallucinations, but it may also remove uncertain comments that would have been useful to a reviewer. A retrieval component may improve grounding, but it can increase latency, cost, and context noise. A relevance filter may reduce reviewer burden, but it may also reduce review coverage. An LLM-based judge may make evaluation scalable, but it can introduce measurement bias.
+
+These trade-offs mean that evaluation should not stop at reporting whether a method improves a single score. A better evaluation should ask which errors are reduced, which useful signals are preserved, which comments are suppressed or rewritten, what cost is introduced, and how reliable the evaluator is. This framing leads to the two core artifacts developed in the rest of the paper: an operational taxonomy of problematic generated review comments, and a trade-off-aware evaluation framework that connects comment quality, context quality, usefulness, cost, mitigation decisions, workflow impact, and evaluator validity.
