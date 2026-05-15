@@ -1,14 +1,3 @@
 # Abstract
 
-TODO: Write after the framework and illustrative study are stable.
-
-The abstract should briefly cover:
-
-1. the evaluation problem in LLM-generated code review comments;
-2. the gap in current evaluation practice;
-3. the operational taxonomy;
-4. the trade-off-aware evaluation framework;
-5. the annotated evidence layer;
-6. the main findings or expected findings.
-
-Recommended length: 150–250 words.
+Large language model (LLM) assistants can generate code review comments that appear fluent but are unsupported, irrelevant, technically incorrect, non-actionable, or too low-value to justify reviewer attention. Existing evaluations often report whether generated comments are correct, useful, accepted, or less hallucinatory, but they rarely examine the trade-offs introduced by mitigation strategies. A strategy that reduces problematic comments may also suppress useful weak signals, reduce automatic review coverage, increase human escalation, or add computational cost. This paper presents a small controlled empirical study of representative mitigation strategies for problematic LLM-generated code review comments. We compare a baseline LLM reviewer, robust prompting, a context-quality gate, post-generation verification, and a hybrid gate-plus-verifier design on a shared set of review instances. To support the comparison, we develop an operational taxonomy of problematic comments and an annotation protocol that separates correctness, grounding, relevance, usefulness, actionability, context quality, and mitigation decision. The study evaluates strategies using both error-reduction metrics and preservation metrics, including useful comments retained, useful comments wrongly suppressed, review coverage, human escalation, and cost proxies. The expected contribution is not a universal winning strategy, but evidence about which interventions reduce which failure types and what hidden costs accompany those reductions. The results aim to inform more realistic evaluation of LLM-based code review tools by treating mitigation as a trade-off-aware workflow decision rather than a single quality score.
