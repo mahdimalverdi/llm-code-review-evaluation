@@ -6,11 +6,11 @@ This document records the current research direction for the paper. It should be
 
 The paper should be framed as:
 
-> a small controlled empirical study of mitigation strategies for problematic LLM-generated code review comments, supported by an operational taxonomy and a trade-off-aware evaluation framework.
+> a planned controlled empirical study of mitigation strategies for problematic LLM-generated code review comments, supported by an operational taxonomy and a trade-off-aware evaluation framework.
 
 The main goal is not to choose one universally best method. The main goal is to understand which mitigation strategies reduce which kinds of problematic comments and what trade-offs they introduce in useful-feedback preservation, review coverage, human escalation, and computational cost.
 
-This framing is stronger for a Q1 journal submission than a framework-only paper because it provides empirical evidence, annotation-based validation, and practical implications for tool builders and evaluation designers.
+This framing is stronger for a Q1 journal submission than a framework-only paper, but it will only become submission-ready after the empirical execution is completed: dataset selection, strategy implementation, annotation, agreement reporting, result tables, and findings.
 
 ## Working Title
 
@@ -18,13 +18,38 @@ This framing is stronger for a Q1 journal submission than a framework-only paper
 Reducing Problematic LLM-Generated Code Review Comments: An Empirical Study of Mitigation Trade-offs
 ```
 
-This title foregrounds the empirical contribution and the trade-off problem. The taxonomy and framework remain important, but they support the empirical comparison rather than replacing it.
+This title foregrounds the intended empirical contribution and the trade-off problem. The taxonomy and framework remain important, but they support the empirical comparison rather than replacing it.
+
+## Current Execution Status
+
+The manuscript is currently a design-stage draft. The following pieces are drafted or partially drafted:
+
+- targeted literature review;
+- related-work synthesis;
+- initial operational taxonomy;
+- trade-off-aware evaluation framework;
+- methodology and planned empirical design;
+- planned findings placeholders.
+
+The following pieces are still TODO:
+
+- choose the dataset and sampling frame;
+- implement or define the mitigation strategies precisely;
+- generate or collect strategy outputs;
+- create the annotation guideline and evaluation schema;
+- run pilot annotation;
+- revise taxonomy based on pilot annotation;
+- run final annotation;
+- compute agreement statistics;
+- compute error-reduction, preservation, coverage, escalation, and cost metrics;
+- replace planned findings with actual results;
+- revise abstract, introduction, discussion, threats, and conclusion in result-oriented language.
 
 ## Central Claim
 
 Current evaluations of LLM-generated code review comments are fragmented. They often measure correctness, usefulness, hallucination, context enrichment, acceptance, or evaluator quality separately. However, mitigation strategies should be evaluated by both what they remove and what they lose.
 
-This project addresses that gap by comparing representative mitigation strategies on a shared set of review instances and measuring:
+This project is designed to address that gap by comparing representative mitigation strategies on a shared set of review instances and measuring:
 
 - problematic-comment reduction;
 - failure-type-specific effects;
@@ -110,7 +135,7 @@ The annotation protocol should include:
 
 ### Contribution 5 — Empirical Findings
 
-The paper should report a small number of concrete findings. The strongest findings will likely concern trade-offs, not simple wins.
+The paper should report a small number of concrete findings after the study is run. The strongest findings will likely concern trade-offs, not simple wins.
 
 Candidate findings to test:
 
