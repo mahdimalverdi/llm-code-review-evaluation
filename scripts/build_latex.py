@@ -60,12 +60,14 @@ LATEX_HEADER = rf"""\documentclass[12pt]{{article}}
 \title{{\textbf{{{TITLE}}}}}
 \author{{%
 Mahdi Malverdi\\
-\url{{m.malverdi@mail.sbu.ac.ir}}\\
-\url{{https://www.linkedin.com/in/mahdi-malverdi-996b1787/}}
+Department of Computer Science and Engineering\\
+Shahid Beheshti University, Tehran, Iran\\
+\url{{m.malverdi@mail.sbu.ac.ir}}
 \and
 Hassan Haghighi\\
-\url{{h_haghighi@sbu.ac.ir}}\\
-\url{{https://www.linkedin.com/in/hassan-haghighi-b197311ab}}
+Department of Computer Science and Engineering\\
+Shahid Beheshti University, Tehran, Iran\\
+\url{{h_haghighi@sbu.ac.ir}}
 }}
 \date{{}}
 
