@@ -1,32 +1,36 @@
 # Methodology Draft
 
 > [!NOTE]
-> This is the working methodology for our paper. The method should be framed as a **focused evidence synthesis** that derives a taxonomy, evaluation framework, and trade-off matrix for LLM-generated code review comments.
+> This is the working methodology for the paper. The method should be framed as a **framework-oriented focused evidence synthesis** supported by an operational taxonomy and a small annotated evidence layer. It should not be framed as a benchmark paper or a comparison of several mitigation methods.
 
-## Method Type
+## 1. Method Type
 
-We do not frame this work as a simple narrative review or as a benchmark/model paper. The method is a focused evidence synthesis of recent studies on LLM-based code review evaluation.
+This study uses a focused evidence synthesis to analyze how current work evaluates LLM-generated code review comments and where those evaluations remain incomplete. The synthesis is used to derive an operational taxonomy, a multi-dimensional evaluation framework, and a trade-off matrix.
 
-The purpose is to synthesize evidence from existing studies and derive:
+The study is not intended to be a full systematic literature review unless the search and screening protocol is expanded. It is also not intended to be a large-scale benchmark or a model-performance comparison. The empirical component, if included, should be framed as an illustrative annotated study that supports the taxonomy and framework.
 
-1. a taxonomy of problematic LLM-generated code review comments;
-2. a set of evaluation dimensions for generated review comments;
-3. a context-quality model for code review automation;
-4. a trade-off matrix for filtering, gating, aggregation, and human-in-the-loop decisions.
+The method has four connected parts:
 
-## Research Questions
+1. focused evidence synthesis over the selected paper pool;
+2. construction of an operational taxonomy of problematic comments;
+3. design of a multi-dimensional, trade-off-aware evaluation framework;
+4. a small annotated evidence layer to test whether the taxonomy can be applied consistently.
+
+## 2. Research Questions
 
 | RQ | Question | Output |
 |---|---|---|
-| RQ1 | What types of problematic comments appear in LLM-generated code review? | Problematic-comment taxonomy |
-| RQ2 | How is context quality defined, used, or ignored in current LLM-based code review evaluation? | Context-quality model |
-| RQ3 | Which evaluation dimensions are covered or missing in current studies? | Evaluation-dimension matrix |
-| RQ4 | What trade-offs arise when generated review comments are filtered, gated, aggregated, or enriched with context? | Trade-off matrix |
-| RQ5 | What should a trade-off-aware evaluation framework for LLM-generated code review comments include? | Final framework |
+| RQ1 | What types of problematic comments occur in LLM-generated code review, and how can they be operationally annotated? | Operational taxonomy and annotation guideline |
+| RQ2 | Which evaluation dimensions are needed to assess problematic comments beyond technical correctness? | Multi-dimensional evaluation matrix |
+| RQ3 | How do common mitigation strategies trade off error reduction against useful-feedback preservation, review coverage, human effort, and computational cost? | Trade-off framework and measurable trade-off dimensions |
+| RQ4 | How does context quality affect the occurrence, detection, and mitigation of problematic review comments? | Context-quality layer and context-failure analysis |
+| RQ5 | What framework can guide trade-off-aware evaluation of LLM-generated code review comments? | Final evaluation framework |
 
-## Paper Selection Strategy
+## 3. Paper Selection Strategy
 
-We conduct a focused literature review of recent papers on LLM-based code review evaluation. We prioritize papers that include at least one of the following:
+We conduct a focused literature review of recent and foundational papers related to LLM-based code review evaluation, automated code review, human-centered code review, LLM-as-a-Judge evaluation, and adjacent evidence on security, static analysis, context consistency, and non-functional quality.
+
+We prioritize papers that include at least one of the following:
 
 - evaluation of generated code review comments;
 - hallucination, unsupported-claim, or context-alignment analysis;
@@ -34,7 +38,8 @@ We conduct a focused literature review of recent papers on LLM-based code review
 - human/user-study evaluation of generated review comments;
 - cost, latency, reviewer-overhead, or workflow-related metrics;
 - filtering, gating, aggregation, or LLM-as-a-Judge mechanisms;
-- context selection, retrieval, or context-enrichment mechanisms for code review.
+- context selection, retrieval, or context-enrichment mechanisms for code review;
+- human-centered evidence on code review usefulness, reviewability, or workflow value.
 
 ### Inclusion Criteria
 
@@ -44,22 +49,38 @@ A paper is included if it satisfies at least one of these criteria:
 - It proposes or evaluates a benchmark for code review automation.
 - It studies hallucination, grounding, or context alignment in generated review comments.
 - It reports human, user-study, or production signals for LLM-based code review.
-- It discusses context, retrieval, or project-level information for code review.
-- It evaluates filtering, gating, judging, or aggregation of generated comments.
+- It discusses context, retrieval, specification, static analysis, or project-level information for code review.
+- It evaluates filtering, gating, judging, aggregation, routing, or human escalation of generated comments.
+- It provides foundational evidence on human code review usefulness, reviewability, or workflow value.
+- It provides relevant evidence about evaluator validity, LLM-as-a-Judge bias, or measurement reliability.
 
 ### Exclusion Criteria
 
 A paper is excluded if:
 
-- it studies general code generation without code review evaluation;
+- it studies general code generation without relevance to code review evaluation;
 - it studies program repair or bug fixing without review comments or review workflow;
 - it only proposes a model without evaluation dimensions relevant to review comments;
-- it is too far from LLM-based code review or automated code review;
-- it provides no usable evidence for taxonomy, context quality, evaluation dimensions, or trade-offs.
+- it is too far from LLM-based code review, automated code review, or evaluation methodology;
+- it provides no usable evidence for taxonomy, context quality, evaluation dimensions, evaluator validity, or trade-offs.
 
-## Coding Protocol
+### Paper Pool
 
-Each paper is coded using the repository paper-analysis template.
+The working paper pool is maintained in:
+
+```text
+matrices/paper-pool.md
+```
+
+The current synthesis is based on the P01–P50 paper pool. The paper pool includes both core papers and background/adjacent papers. Core papers provide direct evidence about LLM-based code review evaluation, while adjacent papers support specific framework dimensions such as human review usefulness, evaluator validity, security review, static-analysis-guided feedback, context consistency, or non-functional quality.
+
+## 4. Coding Protocol
+
+Each paper is coded using the repository paper-analysis template:
+
+```text
+templates/paper-analysis-template.md
+```
 
 For each paper, we extract:
 
@@ -74,12 +95,13 @@ For each paper, we extract:
 - covered and missing evaluation dimensions;
 - explicitly defined and inferred problematic comment types;
 - context-quality dimensions and context failure types;
-- filtering, gating, aggregation, or escalation trade-offs;
+- filtering, gating, aggregation, routing, verification, or escalation trade-offs;
+- evaluator-validity concerns when LLM-as-a-Judge is used;
 - limitations from the paper’s perspective;
 - limitations from our perspective;
-- evidence relevant to our research questions.
+- evidence relevant to the research questions.
 
-## Coding Labels
+## 5. Coding Labels
 
 We use the following labels to separate evidence from interpretation:
 
@@ -92,15 +114,15 @@ We use the following labels to separate evidence from interpretation:
 | `Not applicable` | The field does not fit the paper. |
 | `Partially` | The paper touches the dimension but does not operationalize it clearly. |
 
-This distinction is important because our framework should not overclaim what individual papers actually report.
+This distinction is important because the framework should not overclaim what individual papers actually report.
 
-## Cross-Paper Synthesis Process
+## 6. Cross-Paper Synthesis Process
 
-After coding individual papers, we synthesize them in three steps.
+After coding individual papers, we synthesize the evidence in four steps.
 
 ### Step 1 — Within-paper extraction
 
-Each paper is analyzed using the template. Evidence is extracted for taxonomy, context quality, evaluation dimensions, and trade-offs.
+Each paper is analyzed using the template. Evidence is extracted for evaluation dimensions, problematic comment types, context quality, evaluator validity, and trade-offs.
 
 ### Step 2 — Cross-paper comparison
 
@@ -109,16 +131,32 @@ We compare papers across recurring dimensions:
 - what they evaluate;
 - what context they provide;
 - what failure types they observe;
-- what human or production signals they use;
+- what human, annotation, or production signals they use;
 - what costs or workflow effects they measure;
+- how they use LLM-as-a-Judge or human evaluators;
 - which dimensions they omit.
 
-### Step 3 — Framework construction
+### Step 3 — Gap synthesis
+
+We identify gaps that recur across papers, especially missing links between:
+
+```text
+error reduction
+useful-feedback preservation
+review coverage
+human effort
+computational cost
+context quality
+evaluator validity
+mitigation decision
+```
+
+### Step 4 — Framework construction
 
 We derive a framework that connects:
 
 ```text
-Context Quality
+Input / Context Quality
       ↓
 Generated Review Comment
       ↓
@@ -126,16 +164,186 @@ Problematic Comment Type
       ↓
 Evaluation Dimension
       ↓
-Mitigation Strategy
+Mitigation Decision
       ↓
 Trade-off / Cost / Workflow Impact
+      ↓
+Evaluator Validity
 ```
 
-## Main Analytical Distinctions
+## 7. Taxonomy Construction
+
+The taxonomy is derived from three sources:
+
+1. failure types explicitly reported in the reviewed papers;
+2. failure types inferred from examples, evaluation criteria, and limitations;
+3. failure types needed to operationalize trade-off-aware evaluation.
+
+The taxonomy is intended to be operational. Each category should eventually include:
+
+- a definition;
+- inclusion criteria;
+- exclusion criteria;
+- positive examples;
+- negative examples;
+- ambiguous cases;
+- links to evaluation dimensions;
+- likely mitigation decisions.
+
+Candidate high-level categories include:
+
+| Category | Description |
+|---|---|
+| Unsupported or hallucinated comment | The comment makes a claim not supported by the available diff or context. |
+| Irrelevant comment | The comment is unrelated to the reviewed change. |
+| Incorrect technical claim | The comment is technically wrong. |
+| Wrong location or wrong cause | The comment identifies the wrong line, location, or causal explanation. |
+| Non-actionable comment | The developer cannot determine what to do next. |
+| Low-value nitpick | The comment may be valid but is not worth reviewer attention. |
+| Invalid fix suggestion | The suggested fix does not solve the issue or may introduce a regression. |
+| Context-dependent case | The comment cannot be judged reliably without more context. |
+| Useful but not directly acceptable | The comment is not directly applicable but still provides useful insight. |
+
+The current taxonomy draft lives in:
+
+```text
+synthesis/problematic-comment-taxonomy.md
+```
+
+## 8. Evaluation Framework Construction
+
+The evaluation framework is built to avoid collapsing all quality concerns into a single score. It should separate at least seven layers:
+
+1. **Input/context quality**  
+   Relevance, completeness, specificity, consistency, freshness, reviewability, provenance, behavioral evidence, attention load, and cost.
+
+2. **Generated-comment quality**  
+   Correctness, relevance, grounding, specificity, explanation quality, usefulness, and actionability.
+
+3. **Problematic-comment type**  
+   The failure category assigned to the comment, if any.
+
+4. **Usefulness and actionability**  
+   Whether the comment provides value to the developer and whether it supports a concrete next step.
+
+5. **Mitigation decision**  
+   Whether the comment should be shown, suppressed, rewritten, aggregated, or escalated.
+
+6. **Cost and workflow impact**  
+   Computational cost, latency, human verification cost, reviewer overhead, review coverage, trust, and socio-technical review value.
+
+7. **Evaluator validity**  
+   Whether the evaluator or judge used to assess the comment is reliable, calibrated, and robust to prompt or order effects.
+
+## 9. Annotation Protocol
+
+The paper should include a small annotation layer to support the taxonomy and framework. This is important because using an existing dataset without a new annotation layer may leave the contribution too abstract.
+
+### Annotation Goals
+
+The annotation should answer:
+
+- Can the taxonomy be applied consistently?
+- Which problematic comment types appear in the sample?
+- Which comments are useful but not directly acceptable?
+- Which comments require more context to judge?
+- What decisions would an evaluator make: show, suppress, rewrite, or escalate?
+- What disagreements occur between annotators?
+
+### Suggested Sample
+
+A minimum viable sample should contain approximately 100–200 generated review comments. If resources are limited, a smaller pilot can be used first.
+
+The sample may come from:
+
+- an existing code review benchmark;
+- generated comments over a controlled subset of code changes;
+- comments collected from prior work, if licensing permits;
+- or a hybrid of existing samples plus newly generated comments.
+
+### Annotators
+
+The preferred setup is at least two annotators with software engineering experience.
+
+If only one annotator is available for the first pass, the paper should not overclaim annotation reliability. A second annotator should be added for at least a subset to estimate agreement.
+
+### Pilot Round
+
+Before full annotation, annotators should label a pilot subset. The pilot should be used to:
+
+- refine label definitions;
+- identify ambiguous cases;
+- improve decision rules;
+- align annotators on borderline examples.
+
+### Agreement Reporting
+
+The study should report inter-annotator agreement where feasible. Possible metrics include:
+
+- Cohen’s kappa for two annotators and categorical labels;
+- Krippendorff’s alpha when labels are missing or more annotators are involved;
+- percentage agreement as a supplementary descriptive metric.
+
+Agreement should be reported separately for different label groups when possible, because technical correctness, usefulness, actionability, and decision labels may have different ambiguity levels.
+
+### Conflict Resolution
+
+Disagreements should be resolved through discussion or adjudication. The final dataset should preserve:
+
+- annotator 1 label;
+- annotator 2 label;
+- final resolved label;
+- disagreement reason where useful.
+
+The detailed annotation guideline should be stored in:
+
+```text
+method/annotation-guideline.md
+```
+
+The evaluation schema should be stored in:
+
+```text
+method/evaluation-schema.md
+```
+
+## 10. Annotated Evidence Layer
+
+The annotated evidence layer should support the framework rather than become the main identity of the paper. It can be framed as an illustrative study.
+
+The layer should report:
+
+- label distribution across problematic-comment types;
+- distribution of show/suppress/rewrite/escalate decisions;
+- examples of useful but not directly acceptable comments;
+- examples of context-dependent comments;
+- disagreement patterns between annotators;
+- observed trade-offs between error reduction and useful-feedback preservation;
+- basic cost indicators if mitigation strategies are evaluated.
+
+The study should avoid claiming general model superiority unless the experimental design is expanded substantially.
+
+## 11. Trade-off Analysis
+
+For each mitigation strategy or evaluation decision, the analysis should ask:
+
+| Question | Purpose |
+|---|---|
+| What failure type does it reduce? | Error-reduction effect |
+| What useful feedback might it suppress? | Useful-feedback preservation |
+| What review coverage is preserved or lost? | Coverage effect |
+| What additional human effort is required? | Human cost |
+| What additional model calls or latency are required? | Computational cost |
+| When should the system escalate to a human? | Risk control |
+| How reliable is the evaluator? | Evaluator validity |
+
+The paper should avoid presenting a mitigation strategy as simply better unless these trade-offs are reported.
+
+## 12. Main Analytical Distinctions
 
 ### Evaluation dimensions vs problematic comment types
 
-We keep evaluation dimensions and failure types separate.
+Evaluation dimensions and failure types should remain separate.
 
 Examples of evaluation dimensions:
 
@@ -164,108 +372,17 @@ Examples of problematic comment types:
 
 ### Context quantity vs context quality
 
-We distinguish context quantity from context quality.
-
-More context can increase available evidence, but it can also increase:
-
-- noise;
-- token cost;
-- latency;
-- attention dilution;
-- irrelevant retrieved material;
-- inconsistent signals.
-
-Therefore, context is treated as an evaluation object, not just an input configuration.
+More context can increase available evidence, but it can also increase noise, token cost, latency, attention dilution, irrelevant retrieved material, or inconsistent signals. Therefore, context is treated as an evaluation object, not only an input configuration.
 
 ### Acceptance vs usefulness
 
-We distinguish reviewer acceptance from usefulness.
-
-A generated comment may be:
-
-- accepted directly;
-- edited before acceptance;
-- rejected but still useful as a development or review tip;
-- correct but low-priority;
-- incorrect but still draws attention to a valid area;
-- irrelevant and harmful.
-
-This distinction is necessary for human-centered evaluation.
+Reviewer acceptance and usefulness should be separated. A generated comment may be rejected but still useful as a development or review tip. Conversely, a comment may be accepted but still be low-value or harmful in broader workflow terms.
 
 ### Filtering success vs useful-feedback preservation
 
-A filter or gate should not only be evaluated by how many problematic comments it removes. It should also be evaluated by:
+A filter or gate should not only be evaluated by how many problematic comments it removes. It should also be evaluated by how many useful comments it wrongly removes, how much cost it adds, how it affects review coverage, and whether it creates reviewer trust or overreliance issues.
 
-- how many useful comments it wrongly removes;
-- how much cost or latency it adds;
-- how it affects review coverage;
-- whether it creates reviewer trust or overreliance issues;
-- when it should escalate to a human.
-
-## Candidate Framework Components
-
-The final framework should include:
-
-1. **Context-quality assessment**
-   - relevance;
-   - completeness;
-   - specificity;
-   - consistency;
-   - groundability;
-   - locality;
-   - freshness;
-   - attention load;
-   - cost.
-
-2. **Problematic-comment taxonomy**
-   - hallucination/unsupported claim;
-   - context misalignment;
-   - factual incorrectness;
-   - non-actionability;
-   - vagueness;
-   - low-value nitpick;
-   - missed issue;
-   - wrong-location/wrong-type assumption;
-   - poor value-to-time ratio.
-
-3. **Evaluation dimensions**
-   - correctness;
-   - relevance;
-   - grounding;
-   - usefulness;
-   - actionability;
-   - specificity;
-   - issue coverage;
-   - acceptance;
-   - downstream revision;
-   - reviewer overhead;
-   - cost/latency;
-   - workflow impact.
-
-4. **Trade-off matrix**
-   - context enrichment;
-   - RAG/retrieval;
-   - hallucination gate;
-   - actionability gate;
-   - LLM-as-a-Judge;
-   - human escalation;
-   - multi-review aggregation;
-   - live reviewer inspection.
-
-## Optional Mini-Validation
-
-If we decide to strengthen the paper, we can add a small validation step.
-
-Possible design:
-
-- sample 20–50 generated review comments from available papers or benchmarks;
-- label them using our taxonomy;
-- map each label to evaluation dimensions and likely mitigation strategies;
-- show that a single quality score is insufficient to explain the different failure modes and trade-offs.
-
-This should be framed as an illustrative validation, not a large empirical benchmark.
-
-## Threats to Validity
+## 13. Threats to Validity
 
 Potential threats:
 
@@ -275,6 +392,9 @@ Potential threats:
 - industrial studies may use proprietary data;
 - inferred taxonomy items may depend on our interpretation;
 - human feedback and benchmark ground truth are imperfect;
+- the annotation sample may be too small to generalize;
+- annotators may disagree on usefulness and actionability;
+- generated comments may depend on one model or prompt setup;
 - LLM-as-a-Judge results may introduce evaluator bias.
 
 Mitigation:
@@ -283,13 +403,17 @@ Mitigation:
 - label claims as `Reported`, `Inferred`, or `Our perspective`;
 - separate paper limitations from our critique;
 - keep a transparent paper pool and cross-paper synthesis matrix;
-- update synthesis files after every 3–5 papers.
+- use a pilot annotation round;
+- report inter-annotator agreement;
+- preserve disagreement notes;
+- avoid claiming broad model superiority from an illustrative sample;
+- treat LLM-as-a-Judge as a measurement instrument rather than ground truth.
 
-## Current Methodological Positioning
+## 14. Current Methodological Positioning
 
 The paper should be positioned as:
 
-> a framework-oriented evidence synthesis of LLM-based code review evaluation, focused on context quality, problematic comment types, and trade-off-aware evaluation.
+> a framework-oriented focused evidence synthesis of LLM-based code review evaluation, supported by an operational taxonomy, an annotation protocol, and a small annotated evidence layer.
 
 It should not be positioned as:
 
@@ -297,4 +421,14 @@ It should not be positioned as:
 - a new leaderboard benchmark;
 - only a hallucination detector;
 - only a RAG/context retrieval method;
-- a generic survey of LLMs for software engineering.
+- a generic survey of LLMs for software engineering;
+- or a small method-comparison paper whose main result is a winning strategy.
+
+## 15. Next Methodology Tasks
+
+- [ ] Create `method/annotation-guideline.md`.
+- [ ] Create `method/evaluation-schema.md`.
+- [ ] Create `synthesis/final-framework.md`.
+- [ ] Decide the initial dataset and sampling plan.
+- [ ] Define the pilot annotation size.
+- [ ] Decide whether LLM-as-a-Judge is used only as support or also as one evaluated instrument.
