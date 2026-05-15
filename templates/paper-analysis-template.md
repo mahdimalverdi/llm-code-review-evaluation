@@ -13,6 +13,7 @@
 Before marking this paper as completed, make sure every item below is checked.
 
 - [ ] All bibliographic fields are filled.
+- [ ] Citation key is added and matches `references/references.bib`.
 - [ ] The one-sentence summary is written in a precise and non-generic way.
 - [ ] The paper’s main goal is separated from our interpretation of its contribution.
 - [ ] All reported research questions are listed, or `Not reported` is written explicitly.
@@ -56,6 +57,28 @@ Use these labels consistently.
 > [!IMPORTANT]
 > Do not leave important fields empty. If the paper does not say something, write `Not reported`. Empty fields make cross-paper synthesis unreliable.
 
+## Citation Rule
+
+All BibTeX entries must live in:
+
+```text
+references/references.bib
+```
+
+Paper notes should contain only the citation key. Do not paste local BibTeX blocks into individual paper notes, because duplicated BibTeX becomes stale.
+
+Citation-key convention:
+
+```text
+pXX_firstauthorYYYY_shortslug
+```
+
+Example:
+
+```text
+p40_ram2018_reviewability
+```
+
 ## Our Research Questions
 
 Use these as the coding lens while reading each paper.
@@ -83,17 +106,14 @@ Use these as the coding lens while reading each paper.
 | Publication type | `Journal | Conference | Workshop | Preprint | Industrial report | Benchmark paper | Case study | User study | Survey` |
 | Link |  |
 | DOI / arXiv |  |
+| Citation key | `pXX_firstauthorYYYY_shortslug` |
 | Code / artifact | `Reported | Not reported | Partially reported` |
 
 ### Citation Note
 
 - [ ] This paper should be cited in the final report.
-- [ ] Citation format has been checked.
-- [ ] BibTeX entry has been collected.
-
-```bibtex
-% Paste BibTeX here if available.
-```
+- [ ] Citation key exists in `references/references.bib`.
+- [ ] Citation format has been checked against official publisher metadata.
 
 ## 2. One-Sentence Summary
 
@@ -291,6 +311,12 @@ Mark inferred items explicitly.
 - [ ] Comment that depends on missing project context
 - [ ] Technically plausible but unsupported comment
 - [ ] Comment with poor value-to-time ratio
+- [ ] Stale-context-based comment
+- [ ] Documentation-code inconsistency
+- [ ] Unsupported rationale
+- [ ] Invalid repair suggestion
+- [ ] Security false alarm
+- [ ] Unsupported efficiency claim
 
 ### Does the Paper Separate Correctness, Usefulness, and Actionability?
 
@@ -313,6 +339,9 @@ Mark inferred items explicitly.
 | Groundability |  |  |
 | Locality |  |  |
 | Freshness |  |  |
+| Reviewability |  |  |
+| Provenance |  |  |
+| Behavioral evidence |  |  |
 | Attention load |  |  |
 | Cost / token budget |  |  |
 | Context availability vs context usability |  |  |
@@ -326,8 +355,12 @@ Mark inferred items explicitly.
 - [ ] Irrelevant retrieved context
 - [ ] Excessive context / attention dilution
 - [ ] Contradictory PR metadata and diff
+- [ ] Stale documentation or examples
+- [ ] Documentation-code behavior mismatch
 - [ ] Unsupported inference from partial context
 - [ ] Generated claim not grounded in provided context
+- [ ] Tool/static-analysis output misinterpreted
+- [ ] AI-generated context without provenance or verification
 
 ## 11. Trade-off Extraction
 
@@ -340,6 +373,8 @@ Mark inferred items explicitly.
 | RAG / retrieval |  |  |  |
 | Hallucination gate |  |  |  |
 | Actionability gate |  |  |  |
+| Reviewability gate |  |  |  |
+| Context-consistency check |  |  |  |
 | LLM-as-a-Judge |  |  |  |
 | Human escalation |  |  |  |
 | Multi-review aggregation |  |  |  |
@@ -378,7 +413,25 @@ Mark inferred items explicitly.
 
 
 
-## 13. Key Findings of the Paper
+## 13. LLM-as-a-Judge / Evaluator Validity
+
+Fill this section when the paper uses or studies LLM-as-a-Judge.
+
+| Check | Value / Notes |
+|---|---|
+| Judge model(s) |  |
+| Evaluation type | `pointwise | pairwise | listwise | rubric scoring | classification | other` |
+| Judge rubric |  |
+| Answer rate / parseability |  |
+| Repeated-run consistency |  |
+| A/B order sensitivity |  |
+| Prompt perturbation check |  |
+| Judge-choice sensitivity |  |
+| Source-model sensitivity |  |
+| Human agreement / calibration |  |
+| Known limitations |  |
+
+## 14. Key Findings of the Paper
 
 | Finding | Summary | Evidence / Metric | Importance for us |
 |---|---|---|---|
@@ -388,11 +441,11 @@ Mark inferred items explicitly.
 | Finding 4 |  |  |  |
 | Finding 5 |  |  |  |
 
-## 14. Limitations from the Paper’s Own Perspective
+## 15. Limitations from the Paper’s Own Perspective
 
 - 
 
-## 15. Limitations from Our Perspective
+## 16. Limitations from Our Perspective
 
 > [!WARNING]
 > This section is our critique. Do not present it as a claim made by the paper.
@@ -405,7 +458,7 @@ Mark inferred items explicitly.
 
 
 
-## 16. Relevance to Our Paper
+## 17. Relevance to Our Paper
 
 ### Useful For
 
@@ -436,7 +489,7 @@ Mark inferred items explicitly.
 
 
 
-## 17. Extracted Evidence for Our Argument
+## 18. Extracted Evidence for Our Argument
 
 | Argument Need | Evidence from this paper | Label |
 |---|---|---|
@@ -448,8 +501,9 @@ Mark inferred items explicitly.
 | Need for context-quality evaluation |  | `Reported | Inferred | Our perspective` |
 | Need for trade-off-aware evaluation |  | `Reported | Inferred | Our perspective` |
 | Need for useful-feedback preservation metric |  | `Reported | Inferred | Our perspective` |
+| Need for evaluator-validity checks |  | `Reported | Inferred | Our perspective` |
 
-## 18. Final Assessment
+## 19. Final Assessment
 
 | Field | Value |
 |---|---|
@@ -473,11 +527,11 @@ Mark inferred items explicitly.
 ## Follow-up TODOs
 
 - [ ] Verify bibliographic metadata.
+- [ ] Verify citation key exists in `references/references.bib`.
 - [ ] Verify dataset/study size and composition.
 - [ ] Verify model list and prompting setup.
 - [ ] Verify exact metrics and results.
 - [ ] Extract 1–3 short cite-worthy statements.
-- [ ] Add BibTeX.
 - [ ] Update `matrices/cross-paper-synthesis.md`.
 - [ ] Update `synthesis/evaluation-dimensions.md`.
 - [ ] Update `synthesis/problematic-comment-taxonomy.md`.
