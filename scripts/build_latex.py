@@ -40,7 +40,7 @@ DEFAULT_OUTPUT_FILE = REPO_ROOT / "build" / "paper.tex"
 REFERENCES_FILE = REPO_ROOT / "references" / "references.bib"
 BUILD_REFERENCES_FILE_NAME = "references.bib"
 
-TITLE = "Evaluating Problematic LLM-Generated Code Review Comments: An Operational Taxonomy and a Trade-off-Aware Framework"
+TITLE = "Reducing Problematic LLM-Generated Code Review Comments: An Empirical Study of Mitigation Trade-offs"
 
 LATEX_HEADER = rf"""\documentclass[12pt]{{article}}
 
