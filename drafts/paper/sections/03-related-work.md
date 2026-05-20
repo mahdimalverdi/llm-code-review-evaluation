@@ -4,9 +4,9 @@ The closest work to this paper does not come from a single literature stream. Co
 
 The gap we focus on is therefore a decision-level gap. Prior work has made strong progress on individual pieces: richer quality rubrics, hallucination checks, PR-level benchmarks, context-aware generation, industrial filters, data curation, human-in-the-loop studies, static-analysis hybrids, and LLM-as-a-Judge protocols. What is still less developed is a paired comparison of mitigation strategies on the same review instances, where we can see not only which errors are removed but also which useful comments are lost, which cases are escalated, and which costs are introduced.
 
-Figure \ref{fig:related-work-decision-map} summarizes this positioning. The literature streams reviewed in this section provide different evaluation signals: comment quality, grounding, benchmark realism, data validity, workflow value, mitigation evidence, and evaluator reliability. Our concern is how those signals combine when a review assistant must decide whether a generated comment should be shown, rewritten, suppressed, escalated, or treated only as internal evidence.
+Figure \ref{fig:related-work-coverage-map} summarizes this positioning as a coverage map. The literature streams reviewed in this section provide different evaluation signals: comment quality, grounding, benchmark realism, data validity, workflow value, mitigation evidence, and evaluator reliability. Our concern is how those signals combine when a review assistant must decide whether a generated comment should be shown, rewritten, suppressed, escalated, or treated only as internal evidence.
 
-<!-- figure: path="figures/related-work-decision-map.png" caption="From related-work streams to comment-level mitigation decisions." label="fig:related-work-decision-map" width="0.98\linewidth" -->
+<!-- figure: path="figures/related-work-coverage-map.tex" caption="Related-work coverage map for comment-level mitigation evaluation. Darker cells indicate stronger focus in prior work; the final row summarizes the integrated decision-level perspective studied in this paper." label="fig:related-work-coverage-map" -->
 
 The rest of this section follows that decision pipeline: review purpose, metrics, context, data quality, usefulness, failure types, mitigation strategies, evaluator validity, and specialized evidence needs.
 
