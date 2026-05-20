@@ -2,13 +2,15 @@
 
 This study is designed as a controlled empirical comparison of mitigation strategies for problematic LLM-generated code review comments. The goal is not to conduct a broad survey of LLMs for software engineering, to build a leaderboard benchmark, or to identify one universally best review assistant. Instead, the study asks a narrower empirical question: when a review assistant produces potentially problematic comments, which mitigation strategies reduce which kinds of problems, and what do they cost in useful feedback, review coverage, human effort, and computation?
 
-The literature synthesis and taxonomy are therefore supporting components, not the primary identity of the paper. A focused review of prior work is used to define the failure categories, evaluation dimensions, and representative mitigation strategies. The main methodological object is the planned comparative evaluation: the same code-review instances will be processed under a bounded set of representative strategies, the resulting comments and decisions will be annotated, and the strategies will be compared through both error-reduction and preservation metrics.
+The methodology follows a bounded empirical-software-engineering design: the research questions, units of analysis, comparison conditions, annotation constructs, reliability checks, scope limits, and reproducibility artifacts are made explicit before the final analysis [@m05_paulralph2020]. Because the study involves LLM-based systems, the design also treats model versions, prompts, context construction, verifier behavior, human validation, and limitations as reportable methodological objects rather than incidental implementation details [@m06_sebastianbaltes2025].
+
+The literature synthesis and taxonomy are therefore supporting components, not the primary identity of the paper. A focused review of prior work is used to define the failure categories, evaluation dimensions, and representative mitigation strategies. The main methodological object is the comparative evaluation: the same code-review instances are processed under a bounded set of representative strategies, the resulting comments and decisions are annotated, and the strategies are compared through both error-reduction and preservation metrics.
 
 This design follows the paper's central motivation: reducing problematic comments is not sufficient by itself. A strategy can remove unsupported, irrelevant, or non-actionable comments while also removing useful weak signals, decreasing automatic review coverage, increasing latency, or shifting the burden to human reviewers. The study therefore evaluates mitigation as a trade-off, not as a single success/failure outcome.
 
 ## Study Design
 
-The study has five planned stages:
+The study has five stages:
 
 1. a targeted literature review to define failure categories, evaluation dimensions, and strategy families;
 2. construction and pilot refinement of an operational taxonomy of problematic generated review comments;
@@ -37,9 +39,9 @@ RQ1 defines the problem space. RQ2 and RQ3 form the core empirical comparison. R
 
 ## Targeted Literature Review and Initial Operationalization
 
-Before running the empirical comparison, we conduct a targeted review of closely related work. This review is not intended to be a full systematic literature review. Its role is to support the empirical design by identifying the main categories of problematic comments, the main strategy families for reducing them, and the evaluation dimensions needed to interpret the results.
+Before running the empirical comparison, we conduct a targeted review of closely related work. This review is not presented as a full systematic literature review. Its role is narrower: to make the empirical design traceable by identifying the failure types, evaluation dimensions, mitigation strategy families, and methodological risks that must be operationalized in the study. The search and selection procedure is therefore structured enough to reduce cherry-picking, but it is scoped to the design needs of this empirical study rather than to exhaustive coverage of all LLM-for-software-engineering research [@m08_claeswohlin2020; @m09_claeswohlin2023].
 
-We compile a curated study corpus of papers that provide evidence about LLM-based code review evaluation, generated review comments, hallucination or grounding, context-aware review, human or production feedback, data and reference quality, filtering or verification, static-analysis-guided review, or LLM-as-a-Judge evaluation. We exclude papers that address only general code generation, program repair, or model performance without evidence relevant to review-comment evaluation.
+The review begins from seed studies on LLM-based code review evaluation, generated review comments, hallucination or grounding, context-aware review, human and production feedback, data and reference quality, filtering or verification, static-analysis-guided review, and LLM-as-a-Judge evaluation. Additional studies are added when they provide direct evidence for at least one design component: a failure category, a context-quality dimension, a mitigation decision, an annotation label, an evaluation metric, a workflow cost, or an evaluator-validity risk. Studies are excluded when they address only general code generation, program repair, or model performance without evidence relevant to generated review-comment evaluation.
 
 Each paper is coded with a structured extraction form. For each paper, we extract the evaluated artifact, input context, model or system setting, evaluation dimensions, failure types, mitigation mechanisms, human or automated judging protocol, cost or workflow indicators, and stated limitations. Extracted claims are marked as reported evidence, inferred interpretation, or our synthesis perspective so that the synthesis does not attribute our interpretation to individual papers.
 
@@ -49,7 +51,9 @@ The output of this review is an initial operational vocabulary. The review ident
 
 The taxonomy is constructed to support annotation in the empirical study. It is not meant to be only a conceptual list of possible problems. Each label should help annotators decide whether a generated comment is problematic, what kind of problem it has, and what mitigation decision is appropriate.
 
-The initial taxonomy is derived from failure types reported in prior work and failure types inferred from examples and evaluation rubrics. During the pilot round, labels should be refined to reduce overlap, clarify borderline cases, and add missing categories if the generated comments reveal failure modes not covered by the initial taxonomy.
+The taxonomy is developed through an empirical-to-conceptual iteration. The initial dimensions are derived from the targeted review, prior code-review taxonomies, evaluation rubrics, and examples of generated comments. These dimensions are then refined during pilot annotation until the labels are sufficiently clear, non-redundant, and useful for the study's decision task. This follows the general logic of taxonomy development: categories should be grounded in empirical observations, connected to a clear purpose, and refined until they satisfy explicit ending conditions such as label clarity, mutual usefulness, and sufficient coverage for the intended analysis [@m01_nickerson2013_taxonomy].
+
+The annotation-oriented parts of the taxonomy are also informed by content-analysis practice. Each category should define the coding unit, inclusion criteria, exclusion criteria, and decision notes so that annotators can apply the labels consistently across comments and instances [@m03_krippendorff2018_content_analysis].
 
 <!-- TODO: After pilot annotation, replace the planned refinement description with concrete details: pilot size, label changes, merged categories, removed labels, and unresolved ambiguity. -->
 
@@ -114,7 +118,7 @@ Each strategy produces both an output comment and a mitigation decision. The fou
 
 The same sample is processed by all strategies where feasible. This paired design enables within-sample comparison. For example, the analysis can ask whether the verifier suppresses comments that annotators consider useful, whether the context-quality gate reduces context-dependent failures, or whether robust prompting reduces non-actionable comments without lowering review coverage.
 
-All prompts, model settings, gating rules, verifier prompts or rules, static-analysis settings, retrieval settings, and thresholds should be documented. Final evaluation settings should be fixed before processing the final sample.
+All prompts, model settings, gating rules, verifier prompts or rules, static-analysis settings, retrieval settings, and thresholds should be documented. Final evaluation settings should be fixed before processing the final sample. Reporting should also identify the role played by the LLM in each stage: generation, verification, rewriting, judging, or annotation support. This distinction is needed because an LLM used as a generator and an LLM used as a judge create different validity risks [@m06_sebastianbaltes2025; @m04_zheng2023_llm_judge].
 
 ## Human Annotation Protocol
 
@@ -138,7 +142,7 @@ The protocol should distinguish correctness, usefulness, and actionability. A co
 
 Before full annotation, annotators label a pilot subset. The pilot is used to refine taxonomy labels, clarify ambiguous cases, calibrate mitigation decisions, and revise the annotation guideline. At least two annotators with software-engineering experience should label the pilot and a substantial subset of the final sample when feasible.
 
-Inter-annotator agreement should be reported separately for key label groups when possible. Cohen's kappa can be used for two annotators and categorical labels. Krippendorff's alpha can be used when there are missing labels or more than two annotators. Percentage agreement may be reported as a descriptive supplement, but it should not replace chance-corrected agreement.
+Inter-annotator agreement should be reported separately for key label groups when possible. Cohen's kappa can be used for two annotators and categorical labels [@m02_cohen1960_kappa]. Krippendorff's alpha is appropriate when there are missing labels, more than two annotators, or variable annotation coverage, and software-engineering qualitative research provides practical guidance for using such agreement measures in coding studies [@m07_angelgonzalezprieto2020]. Percentage agreement may be reported as a descriptive supplement, but it should not replace chance-corrected agreement.
 
 Disagreements are resolved through discussion or adjudication. The final dataset should preserve the initial annotator labels, resolved labels, and disagreement notes where useful. This is especially important for borderline cases such as useful-but-weakly-grounded comments, correct-but-low-value comments, and context-dependent comments.
 
@@ -231,10 +235,10 @@ Context quality is analyzed as a moderator. The study should compare high-contex
 
 ## Reproducibility and Scope Control
 
-To support reproducibility, the replication package should include the study corpus, coding form, annotation guideline, evaluation schema, prompts, model settings, generated outputs where licensing permits, and scripts for computing metrics. If closed models or restricted datasets are used, the study should still document prompts, settings, sampling decisions, and annotation procedures as precisely as possible.
+To support reproducibility, the replication package should include the study corpus, coding form, annotation guideline, evaluation schema, prompts, model settings, generated outputs where licensing permits, and scripts for computing metrics. If closed models or restricted datasets are used, the study should still document prompts, settings, sampling decisions, and annotation procedures as precisely as possible. This reporting should cover not only the final prompt text, but also the model role, model version, temperature or decoding settings, context construction, tool use, and any human validation or adjudication steps [@m06_sebastianbaltes2025].
 
 The main scope risk is that the work becomes too broad: too many datasets, too many models, too many strategies, or too many evaluation dimensions. The initial study therefore keeps the design limited. It should use a bounded set of representative strategies and a sample size that supports careful annotation.
 
-The main threats to validity are incomplete literature coverage, possible changes in recent preprints, dataset limitations, sample size limits, annotator disagreement, sensitivity to prompts and model settings, and possible evaluator bias if LLM-as-a-Judge is used. These threats are mitigated by transparent inclusion criteria, fixed evaluation settings, pilot annotation, agreement reporting, preserved disagreement notes, and conservative interpretation of results.
+The main threats to validity are incomplete literature coverage, possible changes in recent preprints, dataset limitations, sample size limits, annotator disagreement, sensitivity to prompts and model settings, and possible evaluator bias if LLM-as-a-Judge is used. These threats are mitigated by transparent inclusion criteria, fixed evaluation settings, pilot annotation, agreement reporting, preserved disagreement notes, and conservative interpretation of results. The study should report these threats as design constraints rather than as after-the-fact caveats, following empirical software-engineering reporting expectations [@m05_paulralph2020].
 
 <!-- TODO: After the study is executed, update reproducibility details with the actual artifacts released, files withheld for licensing/privacy reasons, and exact replication package structure. -->
