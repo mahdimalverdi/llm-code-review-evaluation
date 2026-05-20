@@ -18,17 +18,9 @@ Dataset validity asks whether the evaluation instance itself supports a fair jud
 
 Evaluator validity asks whether the evaluation method measures the intended dimension reliably. Human evaluators can disagree or apply labels inconsistently. LLM-based evaluators add another source of risk because their judgments can change with the prompt, answer order, verbosity, model choice, or task framing [@m04_zheng2023_llm_judge; @p29_wang2025_human_evaluators; @p31_jiang2025_codejudgebench; @p32_zhao2026_bias_loop; @p33_he2025_llmjudge_se].
 
-The point of these distinctions is practical: they prevent us from blaming the model for every evaluation failure. Sometimes the model is wrong; sometimes the context, dataset, decision policy, or evaluator is the weaker link. Table \ref{tab:key-concepts} summarizes the concepts and their role in the rest of the paper.
+The point of these distinctions is practical: they prevent us from blaming the model for every evaluation failure. Sometimes the model is wrong; sometimes the context, dataset, decision policy, or evaluator is the weaker link. Figure \ref{fig:evaluation-pipeline-concepts} summarizes how these concepts interact across the evaluation pipeline.
 
-<!-- table: caption="Key concepts used in the proposed taxonomy and evaluation design." label="tab:key-concepts" -->
-| Concept | Meaning in this paper | Why it matters for evaluation |
-| --- | --- | --- |
-| Generated review comment | Automated natural-language review feedback for a code change. | It is the artifact being judged and may affect the review workflow. |
-| Problematic generated review comment | Umbrella term for comments that are wrong, unsupported, irrelevant, non-actionable, low-value, or uncertain. | It defines the scope that the operational taxonomy later makes concrete. |
-| Context quality | Sufficiency, relevance, and coherence of the information available to judge a comment. | It determines whether a comment is grounded, unsupported, or impossible to judge. |
-| Mitigation decision | The action taken on a generated comment: show, suppress, rewrite, or escalate. | It turns evaluation from passive scoring into a workflow decision. |
-| Dataset validity | Whether an evaluation instance is review-relevant, judgeable, and correctly linked. | It separates model failures from invalid or misleading evaluation targets. |
-| Evaluator validity | Whether the human or LLM-based evaluator reliably measures the intended dimension. | It keeps measurement bias separate from comment quality. |
+<!-- figure: path="figures/evaluation-pipeline.tex" caption="Conceptual pipeline for evaluating LLM-generated code review comments. The generated comment is only one part of the evaluation problem: dataset validity, context quality, evaluator validity, and mitigation trade-offs can each affect the final decision." label="fig:evaluation-pipeline-concepts" -->
 
 ## Why Generated Review Comments Are Difficult to Evaluate
 
