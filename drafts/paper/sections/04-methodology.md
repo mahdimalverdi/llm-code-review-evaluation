@@ -8,6 +8,8 @@ The literature synthesis and taxonomy are therefore supporting components, not t
 
 This design follows the paper's central motivation: reducing problematic comments is not sufficient by itself. A strategy can remove unsupported, irrelevant, or non-actionable comments while also removing useful weak signals, decreasing automatic review coverage, increasing latency, or shifting the burden to human reviewers. The study therefore evaluates mitigation as a trade-off, not as a single success/failure outcome.
 
+At the current manuscript stage, this section specifies the study protocol and the reporting commitments for the empirical evaluation. Fields marked as planned protocol elements, such as dataset identity, search counts, prompts, thresholds, annotator background, and agreement statistics, must be replaced with executed-study details before the paper is submitted as a completed empirical study. Until those fields are filled, the methodology should be read as an executable design rather than as a report of completed results.
+
 ## Study Design
 
 The study has five stages:
@@ -288,9 +290,9 @@ Context quality is analyzed as an exploratory moderator. The study compares high
 
 ## Reproducibility and Scope Control
 
-To support reproducibility, the replication package includes the study corpus, coding form, annotation guideline, evaluation schema, prompts, model settings, generated outputs where licensing permits, and scripts for computing metrics. If closed models or restricted datasets are used, the study still documents prompts, settings, sampling decisions, and annotation procedures as precisely as possible. This reporting covers not only the final prompt text, but also the model role, model version, temperature or decoding settings, context construction, tool use, and any human validation or adjudication steps [@m06_sebastianbaltes2025].
+To support reproducibility, the final replication package will include the study corpus, coding form, annotation guideline, evaluation schema, prompts, model settings, generated outputs where licensing permits, and scripts for computing metrics. If closed models or restricted datasets are used, the study will still document prompts, settings, sampling decisions, and annotation procedures as precisely as possible. This reporting will cover not only the final prompt text, but also the model role, model version, temperature or decoding settings, context construction, tool use, and any human validation or adjudication steps [@m06_sebastianbaltes2025].
 
-The main scope risk is that the work becomes too broad: too many datasets, too many models, too many strategies, or too many evaluation dimensions. The initial study therefore keeps the design limited. It uses a bounded set of representative strategies and a sample size that supports careful annotation.
+The main scope risk is that the work becomes too broad: too many datasets, too many models, too many strategies, or too many evaluation dimensions. The initial study therefore keeps the design limited. It is designed to use a bounded set of representative strategies and a sample size that supports careful annotation.
 
 The main threats to validity are incomplete literature coverage, possible changes in recent preprints, dataset limitations, sample size limits, annotator disagreement, sensitivity to prompts and model settings, and possible evaluator bias if LLM-as-a-Judge is used. These threats are mitigated by transparent inclusion criteria, fixed evaluation settings, pilot annotation, agreement reporting, preserved disagreement notes, and conservative interpretation of results. The study reports these threats as design constraints rather than as after-the-fact caveats, following empirical software-engineering reporting expectations [@m05_paulralph2020]. Evaluator-related threats are especially important because recent work shows that LLM judges can be useful but sensitive to task framing, judge choice, bias, and calibration [@p29_wang2025_human_evaluators; @p31_jiang2025_codejudgebench; @p32_zhao2026_bias_loop; @p33_he2025_llmjudge_se; @p36_li2024_llms_as_judges].
 
