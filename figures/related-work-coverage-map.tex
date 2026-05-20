@@ -1,142 +1,131 @@
 \resizebox{0.98\linewidth}{!}{%
 \begin{tikzpicture}[
   font=\sffamily\footnotesize,
-  header/.style={font=\sffamily\bfseries\footnotesize, align=center, text width=2.05cm},
-  rowlabel/.style={font=\sffamily\footnotesize, align=right, text width=2.55cm},
-  celltext/.style={font=\sffamily\scriptsize, align=center},
-  legendtext/.style={font=\sffamily\footnotesize, anchor=west},
+  header/.style={font=\sffamily\bfseries\footnotesize, align=center, text width=1.9cm},
+  rowlabel/.style={font=\sffamily\footnotesize, align=right, text width=2.9cm},
+  symbol/.style={font=\sffamily\Large, align=center},
+  legend/.style={font=\sffamily\footnotesize, anchor=west},
 ]
 
-\definecolor{primaryFocus}{gray}{0.18}
-\definecolor{partialFocus}{gray}{0.58}
-\definecolor{limitedFocus}{gray}{0.92}
-\definecolor{gridLine}{gray}{0.55}
+\definecolor{gridLine}{gray}{0.68}
+\definecolor{rowShade}{gray}{0.97}
+\definecolor{paperShade}{gray}{0.91}
+\definecolor{primaryFocus}{gray}{0.10}
+\definecolor{partialFocus}{gray}{0.48}
+\definecolor{limitedFocus}{gray}{0.78}
 
-\def\cellw{1.75}
-\def\cellh{0.88}
-\def\xstart{3.0}
+\def\cellw{1.55}
+\def\cellh{0.74}
+\def\xstart{3.15}
 \def\ystart{0}
 
-% Column headers.
-\node[header] at (3.875, 0.55) {Quality};
-\node[header] at (5.625, 0.55) {Grounding};
-\node[header] at (7.375, 0.55) {Benchmark\\realism};
-\node[header] at (9.125, 0.55) {Data\\validity};
-\node[header] at (10.875, 0.55) {Workflow\\value};
-\node[header] at (12.625, 0.55) {Mitigation};
-\node[header] at (14.375, 0.55) {Evaluator\\validity};
-\node[header] at (16.125, 0.55) {Decision\\level};
+% Keep a stable bounding box so headers are never clipped by resizebox.
+\path[use as bounding box] (0.0,1.35) rectangle (16.25,-7.35);
 
-% Row labels.
-\node[rowlabel] at (1.25, -0.45) {Quality rubrics};
-\node[rowlabel] at (1.25, -1.33) {Grounding /\\context};
-\node[rowlabel] at (1.25, -2.21) {Benchmarks};
-\node[rowlabel] at (1.25, -3.09) {Data quality};
-\node[rowlabel] at (1.25, -3.97) {Human workflow};
-\node[rowlabel] at (1.25, -4.85) {Mitigation /\\filtering};
-\node[rowlabel] at (1.25, -5.73) {LLM-as-a-Judge};
-\node[rowlabel] at (1.25, -6.61) {This paper};
-
-% Helper macro: x index, y index, color.
-\newcommand{\focuscell}[3]{%
+% Helper macros.
+\newcommand{\gridcell}[2]{%
   \pgfmathsetmacro{\x}{\xstart + (#1) * \cellw}%
   \pgfmathsetmacro{\y}{\ystart - (#2) * \cellh}%
-  \draw[draw=gridLine, line width=0.35pt, fill=#3] (\x,\y) rectangle ++(\cellw,-\cellh);%
+  \draw[draw=gridLine, line width=0.35pt, fill=white] (\x,\y) rectangle ++(\cellw,-\cellh);%
 }
 
-% Header row cells.
-\foreach \c in {0,...,7} {\focuscell{\c}{-1}{white}}
+\newcommand{\rowscell}[2]{%
+  \pgfmathsetmacro{\x}{\xstart + (#1) * \cellw}%
+  \pgfmathsetmacro{\y}{\ystart - (#2) * \cellh}%
+  \draw[draw=gridLine, line width=0.35pt, fill=rowShade] (\x,\y) rectangle ++(\cellw,-\cellh);%
+}
 
+\newcommand{\paperscell}[2]{%
+  \pgfmathsetmacro{\x}{\xstart + (#1) * \cellw}%
+  \pgfmathsetmacro{\y}{\ystart - (#2) * \cellh}%
+  \draw[draw=gridLine, line width=0.35pt, fill=paperShade] (\x,\y) rectangle ++(\cellw,-\cellh);%
+}
+
+\newcommand{\markcell}[3]{%
+  \pgfmathsetmacro{\x}{\xstart + (#1 + 0.5) * \cellw}%
+  \pgfmathsetmacro{\y}{\ystart - (#2 + 0.5) * \cellh}%
+  \node[symbol, text=#3] at (\x,\y) {#3};%
+}
+
+\newcommand{\primary}[2]{%
+  \pgfmathsetmacro{\x}{\xstart + (#1 + 0.5) * \cellw}%
+  \pgfmathsetmacro{\y}{\ystart - (#2 + 0.5) * \cellh}%
+  \node[symbol, text=primaryFocus] at (\x,\y) {$\bullet$};%
+}
+\newcommand{\partial}[2]{%
+  \pgfmathsetmacro{\x}{\xstart + (#1 + 0.5) * \cellw}%
+  \pgfmathsetmacro{\y}{\ystart - (#2 + 0.5) * \cellh}%
+  \node[symbol, text=partialFocus] at (\x,\y) {$\circledast$};%
+}
+\newcommand{\limited}[2]{%
+  \pgfmathsetmacro{\x}{\xstart + (#1 + 0.5) * \cellw}%
+  \pgfmathsetmacro{\y}{\ystart - (#2 + 0.5) * \cellh}%
+  \node[symbol, text=limitedFocus] at (\x,\y) {$\circ$};%
+}
+
+% Column headers.
+\foreach \c in {0,...,7} {\gridcell{\c}{-1}}
+\node[header] at (3.925, 0.37) {Quality};
+\node[header] at (5.475, 0.37) {Grounding};
+\node[header] at (7.025, 0.37) {Benchmark\\realism};
+\node[header] at (8.575, 0.37) {Data\\validity};
+\node[header] at (10.125, 0.37) {Workflow\\value};
+\node[header] at (11.675, 0.37) {Mitigation};
+\node[header] at (13.225, 0.37) {Evaluator\\validity};
+\node[header] at (14.775, 0.37) {Decision\\level};
+
+% Row labels.
+\node[rowlabel] at (1.55, -0.37) {Quality rubrics};
+\node[rowlabel] at (1.55, -1.11) {Grounding /\\context};
+\node[rowlabel] at (1.55, -1.85) {Benchmarks};
+\node[rowlabel] at (1.55, -2.59) {Data quality};
+\node[rowlabel] at (1.55, -3.33) {Human workflow};
+\node[rowlabel] at (1.55, -4.07) {Mitigation /\\filtering};
+\node[rowlabel] at (1.55, -4.81) {LLM-as-a-Judge};
+\node[rowlabel, font=\sffamily\bfseries\footnotesize] at (1.55, -5.55) {This paper};
+
+% Grid body. The final row is shaded to distinguish the paper's integrated view.
+\foreach \r in {0,...,6} {
+  \foreach \c in {0,...,7} {\rowscell{\c}{\r}}
+}
+\foreach \c in {0,...,7} {\paperscell{\c}{7}}
+
+% Coverage marks.
 % Row 1: Quality rubrics.
-\focuscell{0}{0}{primaryFocus}
-\focuscell{1}{0}{limitedFocus}
-\focuscell{2}{0}{limitedFocus}
-\focuscell{3}{0}{limitedFocus}
-\focuscell{4}{0}{partialFocus}
-\focuscell{5}{0}{limitedFocus}
-\focuscell{6}{0}{limitedFocus}
-\focuscell{7}{0}{limitedFocus}
+\primary{0}{0}\limited{1}{0}\limited{2}{0}\limited{3}{0}\partial{4}{0}\limited{5}{0}\limited{6}{0}\limited{7}{0}
 
 % Row 2: Grounding/context.
-\focuscell{0}{1}{partialFocus}
-\focuscell{1}{1}{primaryFocus}
-\focuscell{2}{1}{partialFocus}
-\focuscell{3}{1}{limitedFocus}
-\focuscell{4}{1}{limitedFocus}
-\focuscell{5}{1}{partialFocus}
-\focuscell{6}{1}{limitedFocus}
-\focuscell{7}{1}{limitedFocus}
+\partial{0}{1}\primary{1}{1}\partial{2}{1}\limited{3}{1}\limited{4}{1}\partial{5}{1}\limited{6}{1}\limited{7}{1}
 
 % Row 3: Benchmarks.
-\focuscell{0}{2}{partialFocus}
-\focuscell{1}{2}{partialFocus}
-\focuscell{2}{2}{primaryFocus}
-\focuscell{3}{2}{limitedFocus}
-\focuscell{4}{2}{limitedFocus}
-\focuscell{5}{2}{limitedFocus}
-\focuscell{6}{2}{limitedFocus}
-\focuscell{7}{2}{limitedFocus}
+\partial{0}{2}\partial{1}{2}\primary{2}{2}\limited{3}{2}\limited{4}{2}\limited{5}{2}\limited{6}{2}\limited{7}{2}
 
 % Row 4: Data quality.
-\focuscell{0}{3}{limitedFocus}
-\focuscell{1}{3}{limitedFocus}
-\focuscell{2}{3}{partialFocus}
-\focuscell{3}{3}{primaryFocus}
-\focuscell{4}{3}{limitedFocus}
-\focuscell{5}{3}{limitedFocus}
-\focuscell{6}{3}{limitedFocus}
-\focuscell{7}{3}{limitedFocus}
+\limited{0}{3}\limited{1}{3}\partial{2}{3}\primary{3}{3}\limited{4}{3}\limited{5}{3}\limited{6}{3}\limited{7}{3}
 
 % Row 5: Human workflow.
-\focuscell{0}{4}{partialFocus}
-\focuscell{1}{4}{limitedFocus}
-\focuscell{2}{4}{limitedFocus}
-\focuscell{3}{4}{limitedFocus}
-\focuscell{4}{4}{primaryFocus}
-\focuscell{5}{4}{partialFocus}
-\focuscell{6}{4}{limitedFocus}
-\focuscell{7}{4}{partialFocus}
+\partial{0}{4}\limited{1}{4}\limited{2}{4}\limited{3}{4}\primary{4}{4}\partial{5}{4}\limited{6}{4}\partial{7}{4}
 
 % Row 6: Mitigation/filtering.
-\focuscell{0}{5}{partialFocus}
-\focuscell{1}{5}{partialFocus}
-\focuscell{2}{5}{limitedFocus}
-\focuscell{3}{5}{limitedFocus}
-\focuscell{4}{5}{partialFocus}
-\focuscell{5}{5}{primaryFocus}
-\focuscell{6}{5}{limitedFocus}
-\focuscell{7}{5}{partialFocus}
+\partial{0}{5}\partial{1}{5}\limited{2}{5}\limited{3}{5}\partial{4}{5}\primary{5}{5}\limited{6}{5}\partial{7}{5}
 
 % Row 7: LLM-as-a-Judge.
-\focuscell{0}{6}{limitedFocus}
-\focuscell{1}{6}{limitedFocus}
-\focuscell{2}{6}{limitedFocus}
-\focuscell{3}{6}{limitedFocus}
-\focuscell{4}{6}{limitedFocus}
-\focuscell{5}{6}{limitedFocus}
-\focuscell{6}{6}{primaryFocus}
-\focuscell{7}{6}{partialFocus}
+\limited{0}{6}\limited{1}{6}\limited{2}{6}\limited{3}{6}\limited{4}{6}\limited{5}{6}\primary{6}{6}\partial{7}{6}
 
 % Row 8: This paper.
-\focuscell{0}{7}{primaryFocus}
-\focuscell{1}{7}{primaryFocus}
-\focuscell{2}{7}{partialFocus}
-\focuscell{3}{7}{primaryFocus}
-\focuscell{4}{7}{primaryFocus}
-\focuscell{5}{7}{primaryFocus}
-\focuscell{6}{7}{primaryFocus}
-\focuscell{7}{7}{primaryFocus}
+\primary{0}{7}\primary{1}{7}\partial{2}{7}\primary{3}{7}\primary{4}{7}\primary{5}{7}\primary{6}{7}\primary{7}{7}
 
-% Outer border.
-\draw[draw=black, line width=0.6pt] (\xstart,0.88) rectangle ++(8*\cellw,-9*\cellh);
+% Borders and separators.
+\draw[draw=black, line width=0.6pt] (\xstart,0.74) rectangle ++(8*\cellw,-9*\cellh);
+\draw[draw=black, line width=0.6pt] (\xstart,-5.18) -- ++(8*\cellw,0);
 
 % Legend.
-\draw[fill=primaryFocus, draw=gridLine] (12.1,-7.95) rectangle ++(0.35,-0.28);
-\node[legendtext] at (12.55,-8.09) {Primary focus};
-\draw[fill=partialFocus, draw=gridLine] (12.1,-8.38) rectangle ++(0.35,-0.28);
-\node[legendtext] at (12.55,-8.52) {Partial focus};
-\draw[fill=limitedFocus, draw=gridLine] (12.1,-8.81) rectangle ++(0.35,-0.28);
-\node[legendtext] at (12.55,-8.95) {Limited or indirect focus};
+\node[symbol, text=primaryFocus] at (11.0,-6.55) {$\bullet$};
+\node[legend] at (11.28,-6.55) {primary focus};
+\node[symbol, text=partialFocus] at (12.95,-6.55) {$\circledast$};
+\node[legend] at (13.23,-6.55) {partial focus};
+\node[symbol, text=limitedFocus] at (14.82,-6.55) {$\circ$};
+\node[legend] at (15.10,-6.55) {limited or indirect};
 
 \end{tikzpicture}%
 }
