@@ -20,7 +20,7 @@ Evaluator validity asks whether the evaluation method measures the intended dime
 
 The point of these distinctions is practical: they prevent us from blaming the model for every evaluation failure. Sometimes the model is wrong; sometimes the context, dataset, decision policy, or evaluator is the weaker link. Figure \ref{fig:evaluation-pipeline-concepts} summarizes how these concepts interact across the evaluation pipeline.
 
-<!-- figure: path="figures/evaluation-pipeline.tex" caption="Conceptual pipeline for evaluating LLM-generated code review comments. The generated comment is only one part of the evaluation problem: dataset validity, context quality, evaluator validity, and mitigation trade-offs can each affect the final decision." label="fig:evaluation-pipeline-concepts" -->
+<!-- figure: path="figures/evaluation-pipeline-concepts.png" caption="Conceptual pipeline for evaluating LLM-generated code review comments. The generated comment is only one part of the evaluation problem: dataset validity, context quality, evaluator validity, and mitigation trade-offs can each affect the final decision." label="fig:evaluation-pipeline-concepts" width="0.95\linewidth" -->
 
 ## Why Generated Review Comments Are Difficult to Evaluate
 
