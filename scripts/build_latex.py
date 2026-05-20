@@ -2,7 +2,7 @@
 r"""Build a single LaTeX journal-style manuscript from Markdown sections.
 
 This script is intentionally lightweight. It supports the Markdown subset used in
-`drafts/paper/sections/` and converts it into a single LaTeX file. It is not a
+``drafts/paper/sections/`` and converts it into a single LaTeX file. It is not a
 full Markdown or Pandoc replacement.
 
 Usage:
@@ -18,12 +18,13 @@ Supported table metadata syntax:
     | --- | --- |
     | Value A | Value B |
 
-    Long tables can be requested explicitly:
-    <!-- table: caption="Caption text" label="tab:example" longtable="true" -->
+Supported figure metadata syntax:
+    <!-- figure: path="figures/example.tex" caption="Caption text" label="fig:example" -->
+    <!-- figure: path="figures/example.png" caption="Caption text" label="fig:example" width="0.9\\linewidth" -->
 
-    The script also promotes tables to longtable automatically when they are
-    long enough or wide enough that a floating tabularx table is likely to be
-    hard to read or impossible to keep on one page.
+    Files ending in ``.tex`` are included with ``\input`` and are expected to
+    contain figure body code such as TikZ. Other files are included with
+    ``\includegraphics``.
 """
 
 from __future__ import annotations
@@ -54,12 +55,15 @@ LATEX_HEADER = rf"""\documentclass[12pt]{{article}}
 \usepackage{{booktabs}}
 \usepackage{{cite}}
 \usepackage{{float}}
+\usepackage{{graphicx}}
 \usepackage{{longtable}}
 \usepackage{{microtype}}
 \usepackage{{tabularx}}
 \usepackage{{url}}
 \usepackage{{listings}}
 \usepackage{{xcolor}}
+\usepackage{{tikz}}
+\usetikzlibrary{{arrows.meta,fit,positioning}}
 \usepackage[hidelinks]{{hyperref}}
 
 \linespread{{1.08}}
@@ -158,36 +162,29 @@ LONGTABLE_COLUMN_THRESHOLD = 4
 LATEX_LINEBREAK = r" \\"
 
 TABLE_METADATA_PATTERN = re.compile(r"^<!--\s*table:\s*(.*?)\s*-->\s*$")
-TABLE_ATTRIBUTE_PATTERN = re.compile(r"(caption|label|longtable)\s*=\s*(['\"])(.*?)\2")
+FIGURE_METADATA_PATTERN = re.compile(r"^<!--\s*figure:\s*(.*?)\s*-->\s*$")
+ATTRIBUTE_PATTERN = re.compile(r"(caption|label|longtable|path|width)\s*=\s*(['\"])(.*?)\2")
 RAW_LATEX_INLINE_PATTERN = re.compile(r"\\(?:ref|autoref|pageref)\{[^}]+\}")
 
 
 def normalize_text_unicode(text: str) -> str:
-    """Replace common Unicode punctuation with pdflatex-friendly text."""
     for source, target in UNICODE_TEXT_REPLACEMENTS.items():
         text = text.replace(source, target)
     return text
 
 
 def normalize_verbatim_unicode(text: str) -> str:
-    """Replace Unicode characters that break listings under pdflatex."""
     for source, target in UNICODE_VERBATIM_REPLACEMENTS.items():
         text = text.replace(source, target)
     return text
 
 
 def escape_latex(text: str) -> str:
-    """Escape LaTeX special characters outside generated LaTeX commands."""
     text = normalize_text_unicode(text)
     return "".join(SPECIAL_CHARS.get(char, char) for char in text)
 
 
 def citation_to_latex(match: re.Match[str]) -> str:
-    r"""Convert one Pandoc-style citation group to a LaTeX \cite command.
-
-    Example:
-        [@a; @b] -> \cite{a,b}
-    """
     body = match.group(1)
     keys = []
     for part in body.split(";"):
@@ -200,7 +197,6 @@ def citation_to_latex(match: re.Match[str]) -> str:
 
 
 def convert_inline_markdown(text: str) -> str:
-    """Convert a small subset of inline Markdown to LaTeX."""
     placeholders: dict[str, str] = {}
 
     def protect(pattern: str, repl_func) -> None:
@@ -224,7 +220,6 @@ def convert_inline_markdown(text: str) -> str:
     for key, value in placeholders.items():
         text = text.replace(escape_latex(key), value)
         text = text.replace(key, value)
-
     return text
 
 
@@ -243,17 +238,53 @@ def heading_to_latex(line: str) -> str | None:
     return rf"\paragraph{{{title}}}"
 
 
-def parse_table_metadata(line: str) -> dict[str, str] | None:
-    """Parse optional Markdown table metadata from an HTML comment."""
-    match = TABLE_METADATA_PATTERN.match(line.strip())
+def parse_metadata(line: str, pattern: re.Pattern[str]) -> dict[str, str] | None:
+    match = pattern.match(line.strip())
     if not match:
         return None
-    metadata = {key: value for key, _, value in TABLE_ATTRIBUTE_PATTERN.findall(match.group(1))}
-    return metadata
+    return {key: value for key, _, value in ATTRIBUTE_PATTERN.findall(match.group(1))}
+
+
+def parse_table_metadata(line: str) -> dict[str, str] | None:
+    return parse_metadata(line, TABLE_METADATA_PATTERN)
+
+
+def parse_figure_metadata(line: str) -> dict[str, str] | None:
+    return parse_metadata(line, FIGURE_METADATA_PATTERN)
+
+
+def latex_input_path(path_value: str) -> str:
+    """Return a LaTeX path relative to build/paper.tex."""
+    path = Path(path_value)
+    if path.is_absolute() or ".." in path.parts:
+        raise ValueError(f"Unsafe figure path: {path_value}")
+    return "../" + path.as_posix()
+
+
+def convert_figure_to_latex(metadata: dict[str, str]) -> list[str]:
+    figure_path = metadata.get("path")
+    if not figure_path:
+        raise ValueError("Figure metadata must include a path attribute.")
+
+    caption = metadata.get("caption")
+    label = metadata.get("label")
+    width = metadata.get("width", r"0.98\linewidth")
+    latex_path = latex_input_path(figure_path)
+
+    output = [r"\begin{figure}[H]", r"\centering"]
+    if figure_path.lower().endswith(".tex"):
+        output.append(r"\input{" + latex_path + "}")
+    else:
+        output.append(r"\includegraphics[width=" + width + "]{" + latex_path + "}")
+    if caption:
+        output.append(r"\caption{" + convert_inline_markdown(caption) + "}")
+    if label:
+        output.append(r"\label{" + label + "}")
+    output.extend([r"\end{figure}", ""])
+    return output
 
 
 def split_markdown_table_row(line: str) -> list[str]:
-    """Split a simple Markdown table row into cells."""
     stripped = line.strip()
     if stripped.startswith("|"):
         stripped = stripped[1:]
@@ -263,12 +294,10 @@ def split_markdown_table_row(line: str) -> list[str]:
 
 
 def is_table_separator(cells: list[str]) -> bool:
-    """Return true for Markdown table separator rows such as --- or :---:."""
     return bool(cells) and all(re.fullmatch(r":?-{3,}:?", cell.strip()) for cell in cells)
 
 
 def normalize_table_rows(rows: list[list[str]]) -> list[list[str]]:
-    """Pad rows so the LaTeX table has a consistent column count."""
     if not rows:
         return []
     column_count = max(len(row) for row in rows)
@@ -276,7 +305,6 @@ def normalize_table_rows(rows: list[list[str]]) -> list[list[str]]:
 
 
 def table_column_spec(column_count: int) -> str:
-    """Return a readable tabularx column specification."""
     ragged = r">{\raggedright\arraybackslash}"
     if column_count == 3:
         return rf"@{{}}{ragged}p{{0.23\linewidth}}{ragged}X{ragged}X@{{}}"
@@ -284,7 +312,6 @@ def table_column_spec(column_count: int) -> str:
 
 
 def longtable_column_spec(column_count: int) -> str:
-    """Return a page-breakable longtable column specification."""
     ragged = r">{\raggedright\arraybackslash}"
     if column_count == 2:
         widths = [0.34, 0.58]
@@ -302,7 +329,6 @@ def longtable_column_spec(column_count: int) -> str:
 
 
 def metadata_longtable_setting(metadata: dict[str, str] | None) -> bool | None:
-    """Return explicit longtable metadata, or None when not configured."""
     if not metadata or "longtable" not in metadata:
         return None
     value = metadata["longtable"].strip().lower()
@@ -314,7 +340,6 @@ def metadata_longtable_setting(metadata: dict[str, str] | None) -> bool | None:
 
 
 def should_use_longtable(body_row_count: int, column_count: int, metadata: dict[str, str] | None) -> bool:
-    """Return true when a Markdown table should be rendered as a breakable longtable."""
     explicit_setting = metadata_longtable_setting(metadata)
     if explicit_setting is not None:
         return explicit_setting
@@ -322,7 +347,6 @@ def should_use_longtable(body_row_count: int, column_count: int, metadata: dict[
 
 
 def format_latex_table_row(cells: list[str], *, bold: bool = False) -> str:
-    """Format one row of table cells as LaTeX."""
     if bold:
         converted_cells = [r"\textbf{" + convert_inline_markdown(cell) + "}" for cell in cells]
     else:
@@ -331,7 +355,6 @@ def format_latex_table_row(cells: list[str], *, bold: bool = False) -> str:
 
 
 def convert_table_to_tabularx(rows: list[list[str]], caption: str | None, label: str | None) -> list[str]:
-    """Convert normalized rows into a floating tabularx table."""
     column_spec = table_column_spec(len(rows[0]))
     output = [r"\begin{table}[H]", r"\centering"]
     if caption:
@@ -353,7 +376,6 @@ def convert_table_to_tabularx(rows: list[list[str]], caption: str | None, label:
 
 
 def convert_table_to_longtable(rows: list[list[str]], caption: str | None, label: str | None) -> list[str]:
-    """Convert normalized rows into a page-breakable longtable."""
     column_count = len(rows[0])
     column_spec = longtable_column_spec(column_count)
     header_row = format_latex_table_row(rows[0], bold=True)
@@ -363,20 +385,12 @@ def convert_table_to_longtable(rows: list[list[str]], caption: str | None, label
         r"\renewcommand{\arraystretch}{1.18}",
         rf"\begin{{longtable}}{{{column_spec}}}",
     ]
-
     if caption:
         caption_line = r"\caption{" + convert_inline_markdown(caption) + "}"
         if label:
             caption_line += r"\label{" + label + "}"
         output.append(caption_line + LATEX_LINEBREAK)
-
-    output.extend([
-        r"\toprule",
-        header_row,
-        r"\midrule",
-        r"\endfirsthead",
-    ])
-
+    output.extend([r"\toprule", header_row, r"\midrule", r"\endfirsthead"])
     if caption:
         output.append(r"\caption[]{" + convert_inline_markdown(caption) + r" (continued)}" + LATEX_LINEBREAK)
     output.extend([
@@ -390,7 +404,6 @@ def convert_table_to_longtable(rows: list[list[str]], caption: str | None, label
         r"\bottomrule",
         r"\endlastfoot",
     ])
-
     for row in rows[1:]:
         output.append(format_latex_table_row(row))
     output.extend([r"\end{longtable}", r"\endgroup", ""])
@@ -398,32 +411,26 @@ def convert_table_to_longtable(rows: list[list[str]], caption: str | None, label
 
 
 def convert_markdown_table_to_latex(table_lines: list[str], metadata: dict[str, str] | None) -> list[str]:
-    """Convert a simple Markdown table to a labeled LaTeX table."""
     parsed_rows = [split_markdown_table_row(line) for line in table_lines]
     parsed_rows = [row for row in parsed_rows if row]
     if len(parsed_rows) < 2:
         return [r"\begin{lstlisting}", *[normalize_verbatim_unicode(line) for line in table_lines], r"\end{lstlisting}", ""]
-
     header = parsed_rows[0]
     body_rows = parsed_rows[1:]
     if body_rows and is_table_separator(body_rows[0]):
         body_rows = body_rows[1:]
-
     rows = normalize_table_rows([header, *body_rows])
     if not rows:
         return []
-
     column_count = len(rows[0])
     caption = metadata.get("caption") if metadata else None
     label = metadata.get("label") if metadata else None
-
     if should_use_longtable(len(rows) - 1, column_count, metadata):
         return convert_table_to_longtable(rows, caption, label)
     return convert_table_to_tabularx(rows, caption, label)
 
 
 def convert_markdown_to_latex(markdown: str) -> str:
-    """Convert repository Markdown draft sections into rough LaTeX."""
     lines = markdown.splitlines()
     output: list[str] = []
     in_code_block = False
@@ -470,6 +477,14 @@ def convert_markdown_to_latex(markdown: str) -> str:
             close_lists()
             flush_table()
             pending_table_metadata = table_metadata
+            continue
+
+        figure_metadata = parse_figure_metadata(line)
+        if figure_metadata is not None:
+            flush_paragraph()
+            close_lists()
+            flush_table()
+            output.extend(convert_figure_to_latex(figure_metadata))
             continue
 
         if line.strip().startswith("<!--"):
@@ -553,12 +568,10 @@ def convert_markdown_to_latex(markdown: str) -> str:
     flush_paragraph()
     close_lists()
     flush_table()
-
     return "\n".join(output).strip() + "\n"
 
 
 def convert_abstract_section(markdown: str) -> str:
-    """Convert the abstract Markdown section into a LaTeX abstract block."""
     body_lines = []
     for line in markdown.splitlines():
         if re.match(r"^#\s+Abstract\s*$", line.strip(), flags=re.IGNORECASE):
@@ -588,7 +601,6 @@ def read_order(order_file: Path) -> list[Path]:
 
 
 def copy_references(output_file: Path) -> None:
-    """Copy references.bib next to the generated paper.tex for reliable BibTeX resolution."""
     if not REFERENCES_FILE.exists():
         raise FileNotFoundError(f"Missing bibliography file: {REFERENCES_FILE}")
     output_file.parent.mkdir(parents=True, exist_ok=True)
@@ -621,18 +633,8 @@ def build_latex(order_file: Path, output_file: Path) -> None:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--order-file",
-        type=Path,
-        default=DEFAULT_ORDER_FILE,
-        help="Path to section order file.",
-    )
-    parser.add_argument(
-        "--output-file",
-        type=Path,
-        default=DEFAULT_OUTPUT_FILE,
-        help="Path to generated LaTeX output.",
-    )
+    parser.add_argument("--order-file", type=Path, default=DEFAULT_ORDER_FILE, help="Path to section order file.")
+    parser.add_argument("--output-file", type=Path, default=DEFAULT_OUTPUT_FILE, help="Path to generated LaTeX output.")
     return parser.parse_args()
 
 
