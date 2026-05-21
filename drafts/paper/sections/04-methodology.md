@@ -1,6 +1,6 @@
 # Methodology
 
-This study develops and evaluates a bounded empirical protocol for analyzing mitigation strategies for problematic LLM-generated code review comments. The aim is narrower than a general survey of LLMs for software engineering and different from a leaderboard-style benchmark. Rather than ranking models, the study asks how different mitigation strategies change the fate of generated review comments that may be unsupported, irrelevant, non-actionable, low-value, or otherwise risky to show.
+This section specifies a bounded empirical protocol for evaluating mitigation strategies for problematic LLM-generated code review comments. The aim is narrower than a general survey of LLMs for software engineering and different from a leaderboard-style benchmark. Rather than ranking models, the study asks how different mitigation strategies change the fate of generated review comments that may be unsupported, irrelevant, non-actionable, low-value, or otherwise risky to show.
 
 The central methodological concern is trade-off-aware evaluation. A mitigation strategy may reduce problematic comments, but it may also suppress weak yet useful feedback, reduce automatic review coverage, increase latency, or shift additional work to human reviewers. For this reason, the study evaluates mitigation not as a single success/failure outcome, but as a set of linked decisions involving error reduction, useful-feedback preservation, review coverage, human effort, computational cost, and evaluator validity.
 
@@ -8,7 +8,7 @@ The study follows a bounded empirical-software-engineering design. The research 
 
 The literature synthesis and taxonomy serve as design inputs for the empirical protocol. They define the failure categories, evaluation dimensions, and representative mitigation families used in the comparison. The main object of analysis is a paired comparison: the same review instances are processed under a bounded set of mitigation strategies, the resulting comments and decisions are annotated, and the strategies are compared through both error-reduction and useful-feedback-preservation measures.
 
-At this draft stage, execution-specific fields such as dataset identity, search counts, prompt text, thresholds, annotator background, and agreement statistics are treated as protocol commitments. In the final manuscript, these placeholders must be replaced with executed-study details before the work is presented as a completed empirical study.
+At this draft stage, execution-specific fields such as dataset identity, search counts, prompt text, thresholds, annotator background, and agreement statistics are treated as protocol commitments. In the final manuscript, these placeholders must be replaced with executed-study details before the work is presented as a completed empirical study. If any of these fields cannot be completed, the corresponding claim is reported as exploratory and the limitation is stated before the results are interpreted.
 
 ## Study Design
 
@@ -67,6 +67,8 @@ To keep this targeted review auditable, the executed study records the metadata 
 | Selection counts | Number of initially identified, screened, excluded, and included studies. |
 | Stopping rule | Saturation point or snowballing rule used to stop adding papers. |
 
+The final manuscript reports the actual values for all fields in Table \ref{tab:methodology-review-protocol}. If a field cannot be reconstructed, the review is described as a transparent targeted review rather than as systematic evidence, and the missing field is reported as a threat to validity. No paper is added to the evidence base after final annotation begins unless the addition is logged and the affected design choice is explicitly rechecked.
+
 For each included paper, the extraction records the evaluated artifact, input context, model or system setting, evaluation dimensions, failure types, mitigation mechanisms, human or automated judging protocol, cost or workflow indicators, and stated limitations. During extraction, reported evidence is separated from study interpretation. This distinction matters because some constructs used in this paper, such as useful-feedback preservation or decision-level mitigation, are synthesized across papers rather than always named directly by the original studies.
 
 The review produces the initial operational vocabulary used in the rest of the study. Candidate failure labels include unsupported or hallucinated comments, irrelevant comments, wrong-location comments, incorrect technical claims, invalid fix suggestions, false positives, non-actionable comments, low-value comments, and context-dependent cases. These labels are grounded in prior review-comment evaluation, hallucination, data-quality, and comment-classification work [@p01_lu2025_deepcrceval; @p02_tantithamthavorn2026_hallujudge; @p08_liu2025_too_noisy; @p18_bensghaier2025_curated_reviews; @p19_nguyen2025_fine_grained_classification; @p41_widyasari2025_explaining_explanations]. The same review also identifies strategy families by intervention point: before generation, during generation, after generation, and before display to the user.
@@ -111,13 +113,13 @@ Table \ref{tab:methodology-dataset-protocol} records the sample-selection decisi
 | Exclusion criteria | Instances that cannot be legally reused, cannot be judged from available context, are duplicates, are non-code-only changes, or contain insufficient language/context support. |
 | Sampling plan | Random or stratified sampling by repository, language, change size, context availability, or baseline-problem likelihood. |
 | Pilot/final separation | Pilot instances are not reused for final evaluation after prompt, taxonomy, or threshold tuning. |
-| Sample-size rationale | Number of review instances, generated comments, double-annotated comments, and rationale for descriptive or inferential analysis. |
+| Sample-size rationale | Number of review instances, generated comments, double-annotated comments, per-failure-type counts, and rationale for descriptive or inferential analysis. |
 
 For every retained instance, the study records the code diff or changed region, available surrounding code, textual context such as commit message or pull-request description, and any additional context supplied to a strategy. Instances are excluded when the available material is insufficient to judge the generated comment, when the change is not review-relevant code, when reuse is not allowed by the dataset license, or when duplicate instances would distort the paired comparison.
 
 If the selected dataset already contains generated review comments from prior systems, those comments may be used as input artifacts when they match the study's unit of analysis. Otherwise, baseline comments are generated using a fixed model and fixed prompt. In both cases, prompt or strategy tuning is limited to the pilot stage. The final evaluation sample is processed only after the dataset split, model configuration, decoding settings, prompts, thresholds, and strategy rules have been fixed.
 
-The planned initial setup uses one primary dataset, one main generation model, four or five representative strategies, and approximately 100--300 annotated generated comments. This sample size is intended to support interpretable descriptive and paired trade-off analysis rather than broad model-ranking claims. Failure-type subgroups with small counts are treated as qualitative or exploratory evidence rather than as stable estimates. If the executed study uses a smaller sample, the results are reported as exploratory and the claims are narrowed accordingly.
+The planned initial setup uses one primary dataset, one main generation model, four or five representative strategies, and approximately 100--300 annotated generated comments. This sample size is intended to support interpretable descriptive and paired trade-off analysis rather than broad model-ranking claims. Failure-type subgroups with small counts are treated as qualitative or exploratory evidence rather than as stable estimates. The executed study reports the count of generated comments and retained decisions for each strategy, each major failure type, each context-quality group, and the double-annotated subset. If the executed study uses a smaller sample, the results are reported as exploratory and the claims are narrowed accordingly.
 
 ## Compared Mitigation Strategies
 
@@ -146,6 +148,8 @@ The final implementation of each strategy is documented using the operational te
 | Fixed settings | Model name, model version, temperature, decoding settings, retrieval depth, analyzer version, and threshold values. |
 | Cost unit | Number of generation calls, verifier calls, retrieval calls, analyzer calls, token count, or latency proxy. |
 | Failure mode | Known way the strategy may remove useful feedback, expose unsafe feedback, or increase human effort. |
+
+Thresholds, prompts, and routing rules are calibrated only on the pilot subset and then locked before the final sample is processed. Any post-hoc change is reported as a protocol deviation and the affected comparison is labeled exploratory. For the context-quality gate, the executed study reports the exact context labels, the rule that maps those labels to continue, skip, or escalate, and whether the gate is applied before generation or only before display. For post-generation verification, the executed study reports the verifier prompt or rule, the evidence fields inspected by the verifier, and the mapping from verifier output to `show`, `rewrite`, `suppress`, or `escalate`.
 
 A retrieval-augmented context strategy may be added only if the dataset supports retrieval and the retrieval setting can be fixed before final execution. If included, it is treated as a context-enrichment strategy and evaluated with the same trade-off metrics, including cost and added context noise [@p11_zhang2025_laura; @p16_icoz2026_context_aware; @p20_hong2025_rag_reviewer].
 
@@ -198,7 +202,7 @@ The main annotation labels include:
 
 The protocol distinguishes correctness, usefulness, and actionability. A comment can be technically correct but practically low-value. A comment can be useful but not directly acceptable as a review comment. A comment can be impossible to judge because the available context is insufficient. These distinctions are consistent with review-specific evaluation rubrics, curated-review studies, comment-classification work, and human-centered review-assistance studies [@p01_lu2025_deepcrceval; @p18_bensghaier2025_curated_reviews; @p19_nguyen2025_fine_grained_classification; @p07_olewicki2024_revmate; @p28_heander2025_support_not_automation].
 
-The human reference decision is derived from the annotation labels using the mapping in Table \ref{tab:methodology-human-decision-map}. Annotators may override the default mapping when the rationale explains why the case is exceptional. Figure \ref{fig:human-annotation-decision-mapping} shows how comment-level judgments flow into the human reference decision and then into decision-confusion analysis.
+The human reference decision is derived from the annotation labels using the mapping in Table \ref{tab:methodology-human-decision-map}. Annotators may override the default mapping only when they record a rationale and the case is reviewed during adjudication. All overrides are flagged in the annotation dataset and analyzed separately from rule-conforming decisions. Figure \ref{fig:human-annotation-decision-mapping} shows how comment-level judgments flow into the human reference decision and then into decision-confusion analysis.
 
 <!-- table: caption="Human annotation mapping from labels to mitigation decisions." label="tab:methodology-human-decision-map" -->
 | Human reference decision | Default conditions |
@@ -212,11 +216,11 @@ The human reference decision is derived from the annotation labels using the map
 
 Annotation is performed in two phases to reduce bias. In the first phase, annotators judge comment quality, failure type, usefulness, actionability, grounding, and context quality while being blinded to the mitigation strategy whenever feasible. In the second phase, annotators evaluate or resolve the appropriate mitigation decision. Strategy identifiers and model-generated verifier labels are not shown during initial quality labeling unless they are required for the specific decision task. If full blinding is not feasible, the executed study reports what information was visible to annotators.
 
-Before full annotation, annotators label a pilot subset. The pilot is used to refine taxonomy labels, clarify ambiguous cases, calibrate mitigation decisions, and revise the annotation guideline. At least two annotators with software-engineering experience label the pilot and a substantial subset of the final sample when feasible. The final paper reports annotator background in terms of software-engineering experience, code-review experience, programming-language familiarity, and prior exposure to LLM-based tools.
+Before full annotation, annotators label a pilot subset. The pilot is used to refine taxonomy labels, clarify ambiguous cases, calibrate mitigation decisions, and revise the annotation guideline. At least two annotators with software-engineering experience label the pilot and a substantial subset of the final sample when feasible. The planned minimum is double annotation for all pilot items and for at least 30\% of final-sample comments, or for all final-sample comments when the sample contains 150 comments or fewer. If this minimum cannot be met, the executed study reports agreement descriptively and narrows claims that depend on reliability. The final paper reports annotator background in terms of software-engineering experience, code-review experience, programming-language familiarity, and prior exposure to LLM-based tools.
 
 Inter-annotator agreement is reported separately for key label groups when possible. Cohen's kappa can be used for two annotators and categorical labels [@m02_cohen1960_kappa]. Krippendorff's alpha is appropriate when there are missing labels, more than two annotators, or variable annotation coverage, and software-engineering qualitative research provides practical guidance for using such agreement measures in coding studies [@m07_angelgonzalezprieto2020]. Percentage agreement is reported as a descriptive supplement because chance-corrected agreement can be unstable when labels are rare or highly imbalanced.
 
-Agreement is not reported as a single global number. The executed study reports agreement separately for at least the main problematic type, usefulness, actionability, grounding, context quality, and final mitigation decision when sample size allows. It also reports labels with low agreement, frequent disagreement pairs, and examples of ambiguous cases. Disagreements are resolved through discussion or adjudication. The final dataset preserves the initial annotator labels, resolved labels, and disagreement notes where useful.
+Agreement is not reported as a single global number. The executed study reports agreement separately for at least the main problematic type, usefulness, actionability, grounding, context quality, and final mitigation decision when sample size allows. It also reports labels with low agreement, frequent disagreement pairs, and examples of ambiguous cases. Disagreements are resolved through discussion or adjudication. The adjudication procedure identifies whether the adjudicator is one of the original annotators or a third reviewer. The final dataset preserves the initial annotator labels, resolved labels, override flags, adjudication notes, and disagreement notes where useful.
 
 ## Operational Measures
 
@@ -233,9 +237,11 @@ The study operationalizes each construct through explicit labels, counts, or rat
 | Unsafe exposure | `# shown comments judged suppress or escalate / # shown comments`. | Strategy decision compared with resolved annotation. |
 | Recoverable feedback loss | `# comments suppressed by a strategy but judged rewrite / # comments judged rewrite`. | Strategy decision compared with resolved annotation. |
 | Human escalation rate | `# instances routed to human review or additional context / # review instances`. | Strategy decision. |
-| Context-quality effect | Difference in strategy metrics between high-context and low-context or inconsistent-context instances. | Context-quality label plus strategy metrics. |
+| Context-quality effect | Difference in primary and secondary strategy metrics between high-context, low-context, and inconsistent-context instances. | Context-quality label plus strategy metrics. |
 | Computational cost | Model calls, verifier calls, retrieval calls, analyzer calls, approximate token count, or latency proxy per instance. | Execution log or cost proxy. |
 | Evaluator reliability | Agreement on key labels such as problematic type, usefulness, actionability, grounding, context quality, and mitigation decision. | Annotator labels and agreement statistics. |
+
+A **useful candidate comment** is any generated comment whose resolved human annotation marks it as useful or potentially useful, including comments assigned the reference decision `show` or `rewrite`. This definition intentionally includes recoverable comments because one purpose of the study is to distinguish feedback that should be removed from feedback that should be preserved through rewriting. Context-quality effects are computed only for metrics that have enough instances in each subgroup; otherwise, they are reported as qualitative patterns.
 
 These measures make the trade-off explicit. A strategy can improve the problematic-comment rate while worsening useful-feedback preservation or review coverage. Conversely, a strategy can preserve more useful comments while requiring more escalation or computational cost.
 
@@ -255,7 +261,14 @@ This analysis is important because it captures costs that are invisible in a bin
 
 ## Metrics
 
-The study reports both error-reduction metrics and trade-off metrics.
+The study reports primary, secondary, and exploratory metrics so that the strength of each claim matches the amount of evidence available.
+
+<!-- table: caption="Metric priority and interpretation." label="tab:methodology-metric-priority" -->
+| Metric group | Metrics | Interpretation |
+| --- | --- | --- |
+| Primary | Problematic-comment rate, useful-feedback preservation, review coverage, unsafe exposure. | Used to answer the main trade-off questions in RQ2 and RQ3. |
+| Secondary | Failure-type rates, recoverable feedback loss, false suppression, human escalation rate, computational cost. | Used to explain how and why strategy trade-offs differ. |
+| Exploratory | Context-quality effects, low-frequency failure-type comparisons, hybrid-strategy subgroup effects. | Interpreted conservatively and reported with qualitative examples when counts are small. |
 
 Error-reduction metrics include:
 
@@ -295,13 +308,15 @@ Third, it compares strategy decisions against resolved annotation decisions usin
 
 Fourth, it compares cost and effort. This includes additional model calls, verifier calls, retrieval cost if applicable, human escalation rate, and annotation or verification effort. These measures are used to avoid presenting a high-cost strategy as better only because it reduces more problematic comments.
 
+The primary analysis is the paired comparison of strategy decisions and outcomes on the shared evaluation sample. Primary metrics are always reported with counts and denominators. Secondary and exploratory metrics are reported only when their denominators are visible and their uncertainty or sparsity is acknowledged.
+
 If the sample size permits, paired comparisons use uncertainty estimates such as confidence intervals or bootstrap intervals. For paired binary outcomes, tests such as McNemar's test or paired bootstrap comparisons may be used when their assumptions are reasonable. If the sample is small or a failure-type subgroup has few observations, the analysis remains primarily descriptive and pairs quantitative summaries with qualitative examples.
 
 If the hybrid strategy is included, it is analyzed as a secondary trade-off case rather than as an assumed improvement. The analysis asks whether combining a context-quality gate with post-generation verification reduces complementary failure types or merely increases cost, false suppression, and escalation.
 
 Context quality is analyzed as an exploratory moderator. The study compares high-context and low-context instances where possible, and examines whether certain failures occur more often when the available context is incomplete, inconsistent, stale, or too broad. This moderator analysis is motivated by prior evidence that review quality depends on available context, reviewability, retrieved evidence, specifications, static-analysis signals, and possible documentation-code inconsistencies [@p06_hu2025_contextcrbench; @p11_zhang2025_laura; @p12_wang2025_sgcr; @p22_jaoua2025_static_analyzers; @p40_ram2018_reviewability; @p49_lee2025_metamon].
 
-Qualitative examples are selected using explicit criteria rather than as anecdotal support. The executed study reports examples that illustrate common failure types, disagreement cases, false suppression, unsafe exposure, recoverable feedback loss, and context-dependent decisions. Examples are used to explain mechanisms behind the metrics, not to replace the quantitative comparison.
+Qualitative examples are selected using explicit criteria rather than as anecdotal support. The executed study reports at least one example for each common failure type, each major decision-confusion error, and each low-agreement label where licensing permits. Examples are selected from resolved annotations after metric computation, and the selection rule is reported before the examples are interpreted. Examples are used to explain mechanisms behind the metrics, not to replace the quantitative comparison.
 
 ## Reproducibility and Scope Control
 
