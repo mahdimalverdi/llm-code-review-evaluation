@@ -1,34 +1,34 @@
 # Methodology
 
-This study is designed as a controlled empirical comparison of mitigation strategies for problematic LLM-generated code review comments. The goal is not to conduct a broad survey of LLMs for software engineering, to build a leaderboard benchmark, or to identify one universally best review assistant. Instead, the study asks a narrower empirical question: when a review assistant produces potentially problematic comments, which mitigation strategies reduce which kinds of problems, and what do they cost in useful feedback, review coverage, human effort, and computation?
+This study evaluates mitigation strategies for problematic LLM-generated code review comments through a controlled empirical comparison. The aim is deliberately narrower than a general survey of LLMs for software engineering or a leaderboard-style benchmark. We focus on a practical review-assistance question: when a generated review comment may be unsupported, irrelevant, non-actionable, or otherwise risky to show, which mitigation strategy changes the outcome, and what does that change cost in useful feedback, review coverage, human effort, and computation?
 
-The methodology follows a bounded empirical-software-engineering design: the research questions, units of analysis, comparison conditions, annotation constructs, reliability checks, scope limits, and reproducibility artifacts are made explicit before the final analysis [@m05_paulralph2020]. Because the study involves LLM-based systems, the design also treats model versions, prompts, context construction, verifier behavior, human validation, and limitations as reportable methodological objects rather than incidental implementation details [@m06_sebastianbaltes2025].
+The study follows a bounded empirical-software-engineering design. The research questions, units of analysis, comparison conditions, annotation constructs, reliability checks, scope limits, and reproducibility artifacts are specified before the final analysis [@m05_paulralph2020]. Because the evaluated systems use LLMs, the design also treats model versions, prompts, context construction, verifier behavior, human validation, and limitations as methodological objects that must be reported rather than as incidental implementation details [@m06_sebastianbaltes2025].
 
-The literature synthesis and taxonomy are therefore supporting components, not the primary identity of the paper. A focused review of prior work is used to define the failure categories, evaluation dimensions, and representative mitigation strategies. The main methodological object is the comparative evaluation: the same code-review instances are processed under a bounded set of representative strategies, the resulting comments and decisions are annotated, and the strategies are compared through both error-reduction and preservation metrics.
+The literature synthesis and taxonomy support the empirical comparison, but they are not the paper's main endpoint. The focused review defines the failure categories, evaluation dimensions, and representative strategy families. The central methodological object is the paired comparison: the same review instances are processed under a bounded set of mitigation strategies, the resulting comments and decisions are annotated, and the strategies are compared through both error-reduction and useful-feedback-preservation measures.
 
-This design follows the paper's central motivation: reducing problematic comments is not sufficient by itself. A strategy can remove unsupported, irrelevant, or non-actionable comments while also removing useful weak signals, decreasing automatic review coverage, increasing latency, or shifting the burden to human reviewers. The study therefore evaluates mitigation as a trade-off, not as a single success/failure outcome.
+This design follows the paper's central motivation: reducing problematic comments is not sufficient by itself. A strategy can remove unsupported or non-actionable comments while also removing weak but useful signals, decreasing automatic review coverage, increasing latency, or shifting the burden to human reviewers. The evaluation therefore treats mitigation as a trade-off rather than as a single success/failure outcome.
 
-At the current manuscript stage, this section specifies the study protocol and the reporting commitments for the empirical evaluation. Fields marked as planned protocol elements, such as dataset identity, search counts, prompts, thresholds, annotator background, and agreement statistics, must be replaced with executed-study details before the paper is submitted as a completed empirical study. Until those fields are filled, the methodology should be read as an executable design rather than as a report of completed results.
+Some execution-specific fields are still reported as protocol commitments at this manuscript stage. Dataset identity, search counts, prompt text, thresholds, annotator background, and agreement statistics must be replaced with executed-study details before the paper is submitted as a completed empirical study. Until then, the section should be read as an executable empirical protocol with explicit reporting commitments.
 
 ## Study Design
 
-The study has five stages:
+The study proceeds in five stages:
 
-1. a targeted literature review to define failure categories, evaluation dimensions, and strategy families;
-2. construction and pilot refinement of an operational taxonomy of problematic generated review comments;
-3. selection of a shared evaluation sample and generation of baseline review comments;
-4. application of several representative mitigation strategies to the same sample;
-5. human annotation and trade-off analysis of the resulting comments and mitigation decisions.
+1. conducting a targeted literature review to define failure categories, evaluation dimensions, and strategy families;
+2. constructing and pilot-refining an operational taxonomy of problematic generated review comments;
+3. selecting a shared evaluation sample and generating baseline review comments;
+4. applying representative mitigation strategies to the same sample;
+5. annotating the resulting comments and decisions, then analyzing mitigation trade-offs.
 
 The study uses two related units of analysis. The **review instance** is the unit for coverage, escalation, context-quality, and cost analysis. A review instance contains a code change and, where available, review-relevant textual context such as a commit message, pull-request description, issue description, previous discussion, surrounding code, or retrieved project context. The **generated review comment** is the unit for comment-quality, failure-type, usefulness, actionability, and grounding analysis. This distinction is necessary because some strategies may produce no comment for an instance and instead suppress, defer, or escalate it. The same base review instances are used across strategies so that observed differences are attributable to the mitigation strategy rather than to different input distributions.
 
 This unit structure is consistent with prior work on generated review comments, pull-request-level review benchmarks, context-enriched review datasets, and code-review automation datasets [@p01_lu2025_deepcrceval; @p04_kumar2026_swe_prbench; @p05_zeng2025_swrbench; @p06_hu2025_contextcrbench; @p14_li2022_codereviewer; @p52_tufano2021_automating_code_review_activities].
 
-The study is intentionally bounded. The planned initial version uses one primary dataset, one main generation model, fixed prompts and settings, a limited number of representative mitigation strategies, and a few hundred annotated comments. The purpose is to obtain interpretable empirical findings about mitigation trade-offs, not to make broad model-ranking claims.
+The empirical scope is intentionally bounded. The initial version uses one primary dataset, one main generation model, fixed prompts and settings, a limited set of representative mitigation strategies, and a few hundred annotated comments. This scope is chosen to make the comparison interpretable. The study is not intended to rank all review models or generalize across all programming languages, repositories, or review workflows.
 
 ## Research Questions
 
-The study is guided by five research questions. RQ1--RQ3 are the primary questions. RQ4 is secondary because it depends on whether the hybrid strategy is implemented in the final experiment. RQ5 is exploratory because context-quality moderation may require more data than the main comparison.
+The research questions follow the trade-off structure of the study. RQ1 defines the failure space, RQ2 compares mitigation effects by failure type, and RQ3 measures the preservation and cost side of mitigation. RQ4 is secondary because it depends on whether the hybrid strategy is implemented in the final experiment. RQ5 is exploratory because context-quality moderation may require more data than the main comparison.
 
 <!-- table: caption="Research questions, priority, and expected outputs." label="tab:methodology-rqs" -->
 | RQ | Priority | Question | Expected output |
@@ -39,7 +39,7 @@ The study is guided by five research questions. RQ1--RQ3 are the primary questio
 | RQ4 | Secondary | Does combining context-quality control with post-generation verification produce a better trade-off than either strategy alone? | Hybrid-strategy analysis, if the combined strategy is included. |
 | RQ5 | Exploratory | How does context quality or context inconsistency affect mitigation success? | Context-quality analysis and context-dependent failure patterns. |
 
-RQ1 defines the problem space. RQ2 and RQ3 form the core empirical comparison. RQ4 is reported only if the hybrid condition is implemented with the same documentation and fixed settings as the other strategies. RQ5 is reported as a moderator analysis and is interpreted conservatively, especially if the number of low-context or inconsistent-context instances is small.
+RQ1 is analyzed before comparing strategies so that the study first establishes what kinds of failures appear in the sample. RQ2 and RQ3 then form the core paired comparison. RQ4 is reported only if the hybrid condition is implemented with the same documentation and fixed settings as the other strategies. RQ5 is treated as a moderator analysis and interpreted conservatively, especially if the number of low-context or inconsistent-context instances is small.
 
 ## Targeted Literature Review and Initial Operationalization
 
