@@ -87,9 +87,11 @@ The taxonomy separates failure types from evaluation dimensions. Correctness, gr
 
 ## Dataset and Sample Selection
 
-The dataset must contain code changes and enough review-relevant context to generate and evaluate comments. Candidate sources include existing code review comment generation datasets, pull-request-level review benchmarks, or code changes paired with commit messages, pull-request descriptions, issue descriptions, and review discussion. The key selection criterion is not dataset size alone, but whether the instances are judgeable and support comparison across strategies. This criterion is motivated by the difference between reference-comment generation datasets, PR-level benchmarks, context-enriched benchmarks, and comprehension-oriented review tasks [@p14_li2022_codereviewer; @p52_tufano2021_automating_code_review_activities; @p04_kumar2026_swe_prbench; @p05_zeng2025_swrbench; @p06_hu2025_contextcrbench; @p17_lin2025_codereviewqa].
+The evaluation sample is selected for judgeability and paired comparison, not for dataset size alone. Each retained instance must contain a code change and enough review-relevant context to judge grounding, relevance, usefulness, and actionability. This requirement is important because mitigation strategies can only be compared fairly when the same underlying instance can be assessed across baseline generation, filtering, rewriting, suppression, and escalation decisions.
 
-The final dataset choice will be reported through a fixed selection protocol rather than as an informal convenience choice.
+The dataset is chosen from sources that support review-comment evaluation: existing code-review comment generation datasets, pull-request-level review benchmarks, or code changes paired with commit messages, pull-request descriptions, issue descriptions, and review discussion. This choice is guided by the differences among reference-comment generation datasets, PR-level review benchmarks, context-enriched benchmarks, and comprehension-oriented review tasks [@p14_li2022_codereviewer; @p52_tufano2021_automating_code_review_activities; @p04_kumar2026_swe_prbench; @p05_zeng2025_swrbench; @p06_hu2025_contextcrbench; @p17_lin2025_codereviewqa]. The selected source is documented with its version, license constraints, instance definition, and available context fields so that the comparison can be reproduced.
+
+Table \ref{tab:methodology-dataset-protocol} records the sample-selection decisions that must be fixed before final evaluation. Its purpose is to make the dataset choice auditable: the reader should be able to see what was included, what was excluded, how pilot instances were separated from the final sample, and why the sample size supports the level of claim made in the paper.
 
 <!-- table: caption="Dataset and sample-selection protocol." label="tab:methodology-dataset-protocol" -->
 | Design element | Planned specification |
@@ -105,16 +107,11 @@ The final dataset choice will be reported through a fixed selection protocol rat
 
 <!-- TODO: Replace this planned protocol with the actual dataset name, dataset version, instance definition, programming languages, inclusion/exclusion counts, sampling method, pilot/final split, licensing constraints, and sample-size rationale. -->
 
-Each selected instance should ideally include:
+For every retained instance, the study records the code diff or changed region, available surrounding code, textual context such as commit message or pull-request description, and any additional context supplied to a strategy. Instances are excluded when the available material is insufficient to judge the generated comment, when the change is not review-relevant code, when reuse is not allowed by the dataset license, or when duplicate instances would distort the paired comparison.
 
-- the code diff or changed file region;
-- surrounding code or project context where available;
-- textual context such as a commit message or pull-request description;
-- enough information to judge whether a generated comment is grounded, useful, and actionable.
+If the selected dataset already contains generated review comments from prior systems, those comments may be used as input artifacts when they match the study's unit of analysis. Otherwise, baseline comments are generated using a fixed model and fixed prompt. In both cases, prompt or strategy tuning is limited to the pilot stage. The final evaluation sample is processed only after the dataset split, model configuration, decoding settings, prompts, thresholds, and strategy rules have been fixed.
 
-If the selected dataset already contains generated comments from prior systems, those comments may be used as input artifacts. Otherwise, comments are generated using a fixed base model and fixed prompt. The same dataset split, model configuration, decoding settings, and prompts are used throughout the final evaluation. Prompt or strategy tuning happens only during pilot development, not on the final evaluation sample.
-
-A practical initial setup is one primary dataset, one main generation model, four or five strategies, and approximately 100--300 annotated generated comments. If resources are limited, the first study may use a smaller pilot and report the results as exploratory. The empirical claims must match the sample size and must avoid broad generalization across all models, languages, repositories, or review settings.
+The planned initial setup uses one primary dataset, one main generation model, four or five representative strategies, and approximately 100--300 annotated generated comments. This sample size is intended to support interpretable descriptive and paired trade-off analysis rather than broad model-ranking claims. If the executed study uses a smaller sample, the results are reported as exploratory and the claims are narrowed accordingly.
 
 ## Compared Mitigation Strategies
 
