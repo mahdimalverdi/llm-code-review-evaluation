@@ -21,6 +21,10 @@ The study is organized into six connected stages:
 5. applying the compared strategies to the same review instances wherever feasible;
 6. annotating the resulting comments and decisions, then analyzing mitigation trade-offs.
 
+Figure \ref{fig:methodology-protocol-overview} summarizes this sequence and shows how the design moves from evidence synthesis to a paired trade-off analysis on shared review instances.
+
+<!-- figure: path="figures/methodology_protocol_overview.tex" caption="Overview of the bounded empirical protocol used to evaluate mitigation strategies for problematic LLM-generated code review comments." label="fig:methodology-protocol-overview" -->
+
 The study uses two related units of analysis. The **review instance** is the unit for coverage, escalation, context-quality, and cost analysis. A review instance contains a code change and, where available, review-relevant textual context such as a commit message, pull-request description, issue description, previous discussion, surrounding code, or retrieved project context. The **generated review comment** is the unit for comment-quality, failure-type, usefulness, actionability, and grounding analysis. This distinction is necessary because some strategies may produce no comment for an instance and instead suppress, defer, or escalate it.
 
 The same base review instances are used across strategies so that observed differences are attributable to the mitigation strategy rather than to different input distributions. This unit structure is consistent with prior work on generated review comments, pull-request-level review benchmarks, context-enriched review datasets, and code-review automation datasets [@p01_lu2025_deepcrceval; @p04_kumar2026_swe_prbench; @p05_zeng2025_swrbench; @p06_hu2025_contextcrbench; @p14_li2022_codereviewer; @p52_tufano2021_automating_code_review_activities].
@@ -194,7 +198,7 @@ The main annotation labels include:
 
 The protocol distinguishes correctness, usefulness, and actionability. A comment can be technically correct but practically low-value. A comment can be useful but not directly acceptable as a review comment. A comment can be impossible to judge because the available context is insufficient. These distinctions are consistent with review-specific evaluation rubrics, curated-review studies, comment-classification work, and human-centered review-assistance studies [@p01_lu2025_deepcrceval; @p18_bensghaier2025_curated_reviews; @p19_nguyen2025_fine_grained_classification; @p07_olewicki2024_revmate; @p28_heander2025_support_not_automation].
 
-The human reference decision is derived from the annotation labels using the mapping in Table \ref{tab:methodology-human-decision-map}. Annotators may override the default mapping when the rationale explains why the case is exceptional.
+The human reference decision is derived from the annotation labels using the mapping in Table \ref{tab:methodology-human-decision-map}. Annotators may override the default mapping when the rationale explains why the case is exceptional. Figure \ref{fig:human-annotation-decision-mapping} shows how comment-level judgments flow into the human reference decision and then into decision-confusion analysis.
 
 <!-- table: caption="Human annotation mapping from labels to mitigation decisions." label="tab:methodology-human-decision-map" -->
 | Human reference decision | Default conditions |
@@ -203,6 +207,8 @@ The human reference decision is derived from the annotation labels using the map
 | `rewrite` | The comment contains a useful signal, but the wording, scope, grounding, severity, or actionability must be improved before display; no new unverified factual claim is required to make it acceptable. |
 | `suppress` | The comment is incorrect, unsupported, irrelevant, harmful, too low-value, misleading, or not worth preserving even through rewriting. |
 | `escalate` | The comment may point to an important issue, but safe judgment requires human expertise, additional project context, security/performance validation, or resolution of low annotator confidence. |
+
+<!-- figure: path="figures/human_annotation_decision_mapping.tex" caption="Human annotation flow from comment-level judgments to reference mitigation decisions and decision-confusion outcomes." label="fig:human-annotation-decision-mapping" -->
 
 Annotation is performed in two phases to reduce bias. In the first phase, annotators judge comment quality, failure type, usefulness, actionability, grounding, and context quality while being blinded to the mitigation strategy whenever feasible. In the second phase, annotators evaluate or resolve the appropriate mitigation decision. Strategy identifiers and model-generated verifier labels are not shown during initial quality labeling unless they are required for the specific decision task. If full blinding is not feasible, the executed study reports what information was visible to annotators.
 
