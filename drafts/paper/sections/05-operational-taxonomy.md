@@ -65,6 +65,8 @@ Secondary modifiers capture details that are important for analysis but too fine
 | Modifier | Use when | Typical parent label |
 | --- | --- | --- |
 | Wrong API, type, or framework assumption | The comment assumes an incorrect API contract, return type, framework behavior, version, configuration, or runtime invariant. | Incorrect technical claim. |
+| Wrong location | The comment points to the wrong line, hunk, file, component, or changed region while the underlying concern may still be valid. | Wrong location or wrong cause. |
+| Wrong causal explanation | The comment identifies a plausible issue but explains the cause incorrectly or attributes the problem to the wrong mechanism. | Wrong location or wrong cause. |
 | Stale or contradictory context | The comment relies on documentation, retrieved evidence, examples, or assumptions that are stale or inconsistent with the code. | Unsupported or context-dependent comment. |
 | Weak rationale | The comment identifies a possible concern but gives a vague, generic, or unsupported explanation of why it matters. | Non-actionable or weakly explained comment. |
 | Workflow-friction risk | The comment is likely to increase reviewer or author burden without improving correctness, maintainability, understanding, or decision quality. | Low-value or redundant comment. |
@@ -85,11 +87,13 @@ A **context-dependent or insufficient-context comment** should be used when the 
 
 An **incorrect technical claim** should be used when the comment is demonstrably false under the available code, API, language semantics, or configuration. If the falsehood comes from an incorrect API, type, framework, version, or runtime assumption, use **wrong API, type, or framework assumption** as a secondary modifier. If the claim cannot be judged, use context-dependent rather than incorrect.
 
-A **wrong location or wrong cause** label should be used when the underlying concern may be valid but the comment points to the wrong file, hunk, line, component, or causal explanation. This label is especially important for rewrite decisions because the useful signal may be preserved after correction.
+A **wrong location or wrong cause** label should be used when the underlying concern may be valid but the comment points to the wrong file, hunk, line, component, or causal explanation. Use **wrong location** when the target is misplaced, and **wrong causal explanation** when the target may be relevant but the explanation of why it matters is wrong. This label is especially important for rewrite decisions because the useful signal may be preserved after correction.
 
 A **non-actionable or weakly explained comment** should be used when the author cannot infer a clear next step or cannot understand why the concern matters. It should not be used for high-level design comments that are intentionally exploratory but still actionable as discussion prompts. Those comments may receive the **recoverable signal** modifier if they need reframing rather than removal.
 
 A **low-value or redundant comment** should be used when the comment is technically acceptable but not worth showing under normal review-noise constraints. It should not be used for comments that are false, unsupported, or irrelevant; those labels take priority. If the issue is mainly the expected burden on reviewers or authors, use **workflow-friction risk** as a modifier rather than as a core label.
+
+An **invalid fix suggestion** should be used when the comment's proposed change is the main unsafe or misleading element. If the comment also contains a demonstrably false explanation about current behavior, assign **incorrect technical claim** as the core label and use the invalid-fix information as a modifier or note. If the concern is valid but the proposed implementation is unsafe, assign **invalid fix suggestion** as the core label and add **recoverable signal** when the concern can be preserved.
 
 A **recoverable signal** modifier should be used when suppressing the comment would lose a useful concern, but showing it as written would be inappropriate. This modifier is central to the preservation analysis because it identifies cases where rewrite or escalation may be better than suppression.
 
@@ -105,11 +109,28 @@ Some label boundaries are expected to be difficult in pilot annotation. Table \r
 | Unsupported or hallucinated claim vs. context-dependent or insufficient-context comment | The comment makes an overconfident claim without support in the available evidence. | The missing evidence is central enough that the annotator cannot judge whether the claim is valid. |
 | Incorrect technical claim vs. context-dependent or insufficient-context comment | The available code, API, configuration, or semantics shows that the claim is false. | The available evidence is insufficient to determine whether the claim is true or false. |
 | Incorrect technical claim vs. wrong location or wrong cause | The underlying technical concern is false. | The concern may be valid, but the comment points to the wrong place or gives the wrong causal explanation. |
+| Incorrect technical claim vs. invalid fix suggestion | The explanation of the current behavior, API, type, or semantics is demonstrably false. | The concern may be valid, but the proposed fix is unsafe, behavior-changing, or does not solve the issue. |
 | Non-actionable or weakly explained comment vs. recoverable signal modifier | The concern is too vague or weak to preserve without substantial inference. | A useful signal is present, but it needs rewriting, softening, grounding, or clarification before display. |
 | Low-value or redundant comment vs. irrelevant or out-of-scope comment | The comment is related to the change but too minor, redundant, or not worth reviewer attention. | The comment is not meaningfully related to the reviewed change or belongs outside the current review scope. |
 | Specialized evidence required modifier vs. context-dependent or insufficient-context comment | The concern belongs to a high-impact domain that needs stronger evidence than ordinary feedback. | The main issue is that required project, API, runtime, or cross-file context is missing. |
 
 The executed study should report examples for the most frequent boundary disagreements and update the annotation guideline if annotators use a different decision rule during pilot annotation.
+
+## Illustrative Boundary Examples
+
+Table \ref{tab:taxonomy-boundary-examples} provides compact examples of how the taxonomy should be applied. These examples are illustrative rather than empirical results; the final annotation guideline should replace or extend them with examples observed during pilot annotation.
+
+<!-- table: caption="Illustrative examples for difficult taxonomy boundaries." label="tab:taxonomy-boundary-examples" longtable="true" -->
+| Boundary | Illustrative comment pattern | Preferred label or modifier | Rationale |
+| --- | --- | --- | --- |
+| Unsupported vs. context-dependent | "This change will break retries" when no retry path or runtime behavior is available in the supplied context. | Unsupported or hallucinated claim, with overconfident phrasing if stated as certain. | The comment asserts a concrete failure without evidence in the available context. |
+| Unsupported vs. context-dependent | "This may break retries, but the retry configuration is not shown." | Context-dependent or insufficient-context comment. | The comment explicitly depends on missing evidence and should be routed for more context. |
+| Incorrect claim vs. invalid fix | "This function returns null, so replace the caller with a null check" when the shown signature is non-nullable. | Incorrect technical claim. | The explanation of current behavior is false, so the fix rests on a false premise. |
+| Invalid fix vs. recoverable signal | "Use a global cache here" for a valid repeated-work concern when the global cache would introduce stale data. | Invalid fix suggestion with recoverable signal. | The performance concern may be useful, but the proposed fix is unsafe. |
+| Non-actionable vs. recoverable signal | "This is risky" without naming the risk, affected path, or suggested next step. | Non-actionable or weakly explained comment. | The signal is too vague to preserve without substantial inference. |
+| Non-actionable vs. recoverable signal | "This may make the error path harder to debug; consider preserving the original exception context." | Recoverable signal, usually rewrite if wording or grounding is weak. | The concern and possible next step are identifiable even if the comment needs refinement. |
+| Wrong location vs. wrong cause | The comment flags the changed caller, but the actual issue is in the callee contract shown nearby. | Wrong location modifier. | The concern may be valid, but the target is misplaced. |
+| Wrong cause vs. incorrect claim | The comment flags the right line but attributes the issue to caching when the visible cause is input validation. | Wrong causal explanation modifier. | The concern may be located correctly, but the explanation is misleading. |
 
 ## Decision Rules for Ambiguous Cases
 
