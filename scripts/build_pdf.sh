@@ -21,6 +21,31 @@ if [[ ! -f build/references.bib ]]; then
   exit 1
 fi
 
+# Render draft TODO markers as visible red boxes in the generated PDF.
+# In Markdown, write them as plain paragraphs starting with: DRAFTTODO:
+python3 - <<'PY'
+from pathlib import Path
+import re
+
+tex_path = Path("build/paper.tex")
+content = tex_path.read_text(encoding="utf-8")
+pattern = re.compile(r"^DRAFTTODO:\s*(.*)$", re.MULTILINE)
+
+def render(match: re.Match[str]) -> str:
+    text = match.group(1)
+    return "\n".join([
+        r"\begin{center}",
+        r"\fcolorbox{red}{red!4}{%",
+        r"\begin{minipage}{0.93\linewidth}",
+        r"\textbf{\textcolor{red}{TODO:}} " + text,
+        r"\end{minipage}%",
+        r"}",
+        r"\end{center}",
+    ])
+
+tex_path.write_text(pattern.sub(render, content), encoding="utf-8")
+PY
+
 cd build
 
 # Defensively remove auxiliary files immediately before the first LaTeX pass.
