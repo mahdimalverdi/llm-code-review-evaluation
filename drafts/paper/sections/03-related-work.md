@@ -8,6 +8,17 @@ Figure \ref{fig:related-work-coverage-map} summarizes this positioning as a cove
 
 <!-- figure: path="figures/related-work-coverage-map.tex" caption="Related-work coverage map for comment-level mitigation evaluation. Darker cells indicate stronger focus in prior work; the final row summarizes the integrated decision-level perspective studied in this paper." label="fig:related-work-coverage-map" -->
 
+Table \ref{tab:related-work-synthesis} gives a compact synthesis of the literature streams and the remaining gap addressed by this study.
+
+<!-- table: caption="Compact synthesis of the main related-work streams and the gap addressed in this paper." label="tab:related-work-synthesis" -->
+| Literature stream | Main contribution | Remaining gap |
+| --- | --- | --- |
+| Review automation and generation | Shows how LLMs can generate, transform, or support code review comments. | Limited direct comparison of mitigation decisions on the same review instances. |
+| Benchmarks and evaluation rubrics | Improves measurement of comment quality, realism, and evaluation criteria. | Limited connection between quality scores and workflow actions such as show, suppress, rewrite, or escalate. |
+| Grounding and context-aware review | Studies how project context, retrieval, or evidence affect generated feedback. | Limited analysis of preservation, coverage, and mitigation cost under paired strategy comparison. |
+| Human-centered and workflow studies | Highlights review usefulness, developer expectations, trust, and workflow relevance. | Limited integration of these workflow concerns into controlled mitigation evaluation. |
+| Evaluator-validity and LLM-as-a-Judge work | Examines the strengths and risks of human and LLM-based evaluation. | Limited use of evaluator-validity concerns inside a trade-off-aware mitigation framework. |
+
 The rest of this section follows that decision pipeline: review purpose, metrics, context, data quality, usefulness, failure types, mitigation strategies, evaluator validity, and specialized evidence needs.
 
 ## Human Code Review and Review Automation Foundations
