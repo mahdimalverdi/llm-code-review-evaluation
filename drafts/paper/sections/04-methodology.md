@@ -1,12 +1,12 @@
 # Methodology
 
-This section specifies a bounded empirical protocol for evaluating mitigation strategies for problematic LLM-generated code review comments. The aim is narrower than a general survey of LLMs for software engineering and different from a leaderboard-style benchmark. Rather than ranking models, the study asks how different mitigation strategies change the fate of generated review comments that may be unsupported, irrelevant, non-actionable, low-value, or otherwise risky to show.
+This section specifies a bounded empirical protocol for evaluating mitigation decisions for problematic LLM-generated code review comments. The aim is narrower than a general survey of LLMs for software engineering and different from a leaderboard-style benchmark. Rather than ranking models or mitigation tools, the study asks how representative mitigation families expose trade-offs in the fate of generated review comments that may be unsupported, irrelevant, non-actionable, low-value, or otherwise risky to show.
 
 The central methodological concern is trade-off-aware evaluation. A mitigation strategy may reduce problematic comments, but it may also suppress weak yet useful feedback, reduce automatic review coverage, increase latency, or shift additional work to human reviewers. For this reason, the study evaluates mitigation not as a single success/failure outcome, but as a set of linked decisions involving error reduction, useful-feedback preservation, review coverage, human effort, computational cost, and evaluator validity.
 
 The study follows a bounded empirical-software-engineering design. The research questions, units of analysis, comparison conditions, annotation constructs, reliability checks, scope limits, and reproducibility artifacts are specified before the final analysis [@m05_paulralph2020]. Because the evaluated systems use LLMs, the design treats model versions, prompts, context construction, verifier behavior, human validation, and limitations as methodological objects that must be reported rather than as incidental implementation details [@m06_sebastianbaltes2025].
 
-The literature synthesis and taxonomy serve as design inputs for the empirical protocol. They define the failure categories, evaluation dimensions, and representative mitigation families used in the comparison. The main object of analysis is a paired comparison: the same review instances are processed under a bounded set of mitigation strategies, the resulting comments and decisions are annotated, and the strategies are compared through both error-reduction and useful-feedback-preservation measures.
+The literature synthesis and taxonomy serve as design inputs for the empirical protocol. They define the failure categories, evaluation dimensions, and representative mitigation families used as evaluation probes. The main object of analysis is not a winning strategy but a paired trade-off view: the same review instances are processed under a bounded set of intervention families, the resulting comments and decisions are annotated, and the framework is used to examine both error reduction and useful-feedback preservation.
 
 At this draft stage, execution-specific fields such as dataset identity, search counts, prompt text, thresholds, annotator background, and agreement statistics are treated as protocol commitments. In the final manuscript, these placeholders must be replaced with executed-study details before the work is presented as a completed empirical study. If any of these fields cannot be completed, the corresponding claim is reported as exploratory and the limitation is stated before the results are interpreted.
 
@@ -18,7 +18,7 @@ The study is organized into six connected stages:
 2. constructing and pilot-refining an operational taxonomy of problematic generated review comments;
 3. selecting a shared evaluation sample with enough code and textual context for human judgment;
 4. fixing the generation, gating, verification, rewriting, and escalation rules before final execution;
-5. applying the compared strategies to the same review instances wherever feasible;
+5. applying the representative mitigation families to the same review instances wherever feasible;
 6. annotating the resulting comments and decisions, then analyzing mitigation trade-offs.
 
 Figure \ref{fig:methodology-protocol-overview} summarizes this sequence and shows how the design moves from evidence synthesis to a paired trade-off analysis on shared review instances.
@@ -27,23 +27,23 @@ Figure \ref{fig:methodology-protocol-overview} summarizes this sequence and show
 
 The study uses two related units of analysis. The **review instance** is the unit for coverage, escalation, context-quality, and cost analysis. A review instance contains a code change and, where available, review-relevant textual context such as a commit message, pull-request description, issue description, previous discussion, surrounding code, or retrieved project context. The **generated review comment** is the unit for comment-quality, failure-type, usefulness, actionability, and grounding analysis. This distinction is necessary because some strategies may produce no comment for an instance and instead suppress, defer, or escalate it.
 
-The same base review instances are used across strategies so that observed differences are attributable to the mitigation strategy rather than to different input distributions. This unit structure is consistent with prior work on generated review comments, pull-request-level review benchmarks, context-enriched review datasets, and code-review automation datasets [@p01_lu2025_deepcrceval; @p04_kumar2026_swe_prbench; @p05_zeng2025_swrbench; @p06_hu2025_contextcrbench; @p14_li2022_codereviewer; @p52_tufano2021_automating_code_review_activities].
+The same base review instances are used across strategies so that observed differences are attributable to the mitigation family rather than to different input distributions. This unit structure is consistent with prior work on generated review comments, pull-request-level review benchmarks, context-enriched review datasets, and code-review automation datasets [@p01_lu2025_deepcrceval; @p04_kumar2026_swe_prbench; @p05_zeng2025_swrbench; @p06_hu2025_contextcrbench; @p14_li2022_codereviewer; @p52_tufano2021_automating_code_review_activities].
 
-The empirical scope is intentionally bounded. The initial version uses one primary dataset, one main generation model, fixed prompts and settings, a limited set of representative mitigation strategies, and a few hundred annotated comments. This scope is chosen to make the comparison interpretable. The study is not intended to rank all review models or generalize across all programming languages, repositories, or review workflows.
+The empirical scope is intentionally bounded. The initial version uses one primary dataset, one main generation model, fixed prompts and settings, a limited set of representative mitigation families, and a few hundred annotated comments. This scope is chosen to make the trade-off analysis interpretable. The study is not intended to rank all review models or generalize across all programming languages, repositories, or review workflows.
 
 ## Research Questions
 
-The research questions follow the trade-off structure of the study. RQ1 defines the failure space. RQ2 compares mitigation effects by failure type. RQ3 measures the preservation, coverage, escalation, and cost side of mitigation. RQ4 treats context quality as an exploratory moderator rather than as a primary causal claim.
+The research questions follow the trade-off structure of the study. RQ1 defines the failure space. RQ2 examines how representative intervention families expose different error-reduction and rerouting patterns. RQ3 measures the preservation, coverage, escalation, and cost side of mitigation. RQ4 treats context quality as an exploratory moderator rather than as a primary causal claim.
 
 <!-- table: caption="Research questions, priority, and expected outputs." label="tab:methodology-rqs" -->
 | RQ | Priority | Question | Expected output |
 | --- | --- | --- | --- |
 | RQ1 | Primary | What types of problematic comments occur in LLM-generated code review under the selected evaluation setting? | Distribution of problematic-comment types, examples, and refined taxonomy labels. |
-| RQ2 | Primary | Which mitigation strategies reduce or reroute which types of problematic comments? | Strategy-by-failure-type comparison and decision-confusion analysis. |
-| RQ3 | Primary | How do mitigation strategies affect useful-feedback preservation, review coverage, human escalation, and execution cost? | Trade-off matrix and preservation, coverage, escalation, and cost metrics. |
+| RQ2 | Primary | How do representative mitigation families expose different error-reduction, rerouting, and preservation trade-offs across problematic-comment types? | Strategy-by-failure-type trade-off profile and decision-confusion analysis. |
+| RQ3 | Primary | How do mitigation decisions affect useful-feedback preservation, review coverage, human escalation, and execution cost? | Trade-off matrix and preservation, coverage, escalation, and cost metrics. |
 | RQ4 | Exploratory | How does context quality or context inconsistency appear to affect mitigation behavior and annotation difficulty? | Context-quality subgroup summaries, disagreement patterns, and qualitative examples. |
 
-RQ1 is analyzed before comparing strategies so that the study first establishes what kinds of failures appear in the sample. RQ2 and RQ3 form the core paired comparison. The hybrid strategy, if included, is evaluated under RQ2 and RQ3 rather than promoted to a separate primary research question. RQ4 is interpreted conservatively, especially if the number of low-context or inconsistent-context instances is small.
+RQ1 is analyzed before comparing intervention behavior so that the study first establishes what kinds of failures appear in the sample. RQ2 and RQ3 form the core trade-off analysis. The hybrid family, if included, is evaluated under RQ2 and RQ3 rather than promoted to a separate primary research question or treated as an assumed improvement. RQ4 is interpreted conservatively, especially if the number of low-context or inconsistent-context instances is small.
 
 ## Targeted Literature Review and Initial Operationalization
 
@@ -121,13 +121,13 @@ If the selected dataset already contains generated review comments from prior sy
 
 The planned initial setup uses one primary dataset, one main generation model, four or five representative strategies, and approximately 100--300 annotated generated comments. This sample size is intended to support interpretable descriptive and paired trade-off analysis rather than broad model-ranking claims. Failure-type subgroups with small counts are treated as qualitative or exploratory evidence rather than as stable estimates. The executed study reports the count of generated comments and retained decisions for each strategy, each major failure type, each context-quality group, and the double-annotated subset. If the executed study uses a smaller sample, the results are reported as exploratory and the claims are narrowed accordingly.
 
-## Compared Mitigation Strategies
+## Representative Mitigation Families as Evaluation Probes
 
-The study compares a limited number of representative strategies. These strategies are chosen to represent different intervention points rather than to exhaust all possible systems. The strategy set reflects common intervention families in recent work: prompt- or generation-time control, context enrichment or context gating, post-generation verification, static-analysis or specification grounding, reward or preference-based filtering, and human-centered escalation [@p02_tantithamthavorn2026_hallujudge; @p03_tantithamthavorn2026_rovodev; @p10_sun2025_bitsai_cr; @p11_zhang2025_laura; @p12_wang2025_sgcr; @p20_hong2025_rag_reviewer; @p22_jaoua2025_static_analyzers; @p24_bensghaier2025_reward_models; @p28_heander2025_support_not_automation].
+The study uses a limited number of representative mitigation families. These families are selected to stress-test the evaluation framework across different intervention points, not to exhaust all possible systems or identify a universal winner. The strategy set reflects common intervention families in recent work: prompt- or generation-time control, context enrichment or context gating, post-generation verification, static-analysis or specification grounding, reward or preference-based filtering, and human-centered escalation [@p02_tantithamthavorn2026_hallujudge; @p03_tantithamthavorn2026_rovodev; @p10_sun2025_bitsai_cr; @p11_zhang2025_laura; @p12_wang2025_sgcr; @p20_hong2025_rag_reviewer; @p22_jaoua2025_static_analyzers; @p24_bensghaier2025_reward_models; @p28_heander2025_support_not_automation].
 
-The default comparison includes five conditions. If implementation constraints require dropping a condition, the executed study reports the change before the results section and narrows the corresponding claims.
+The default probe set includes five conditions. If implementation constraints require dropping a condition, the executed study reports the change before the results section and narrows the corresponding claims.
 
-<!-- table: caption="Representative mitigation strategies for the empirical comparison." label="tab:methodology-strategies" -->
+<!-- table: caption="Representative mitigation families used as evaluation probes." label="tab:methodology-strategies" -->
 | Strategy | Intervention point | Operational rule | Main risk measured |
 | --- | --- | --- | --- |
 | Baseline LLM reviewer | Generation | Generate a review comment using a fixed base prompt and available context; generated comments are treated as shown candidates unless no comment is produced. | Exposes unsupported, irrelevant, non-actionable, or low-value comments. |
@@ -136,9 +136,9 @@ The default comparison includes five conditions. If implementation constraints r
 | Post-generation verification | After generation | Check the generated comment against the available context; map the verifier result to `show`, `rewrite`, `suppress`, or `escalate`. | May falsely suppress useful comments or over-trust weakly grounded comments. |
 | Hybrid gate plus verifier | Before and after generation | Apply the context-quality gate first, then verify generated comments for the instances that continue past the gate. | May improve safety but compound cost, false suppression, and escalation. |
 
-The final implementation of each strategy is documented using the operational template in Table \ref{tab:methodology-strategy-spec}. A strategy is not considered comparable unless these fields are fixed before the final sample is processed.
+The final implementation of each mitigation family is documented using the operational template in Table \ref{tab:methodology-strategy-spec}. A family is not considered interpretable as a probe unless these fields are fixed before the final sample is processed.
 
-<!-- table: caption="Operational specification required for each mitigation strategy." label="tab:methodology-strategy-spec" -->
+<!-- table: caption="Operational specification required for each mitigation family." label="tab:methodology-strategy-spec" -->
 | Field | Required specification |
 | --- | --- |
 | Input | Code, textual context, retrieved context, static-analysis signal, generated comment, or strategy-specific metadata. |
@@ -151,9 +151,9 @@ The final implementation of each strategy is documented using the operational te
 
 Thresholds, prompts, and routing rules are calibrated only on the pilot subset and then locked before the final sample is processed. Any post-hoc change is reported as a protocol deviation and the affected comparison is labeled exploratory. For the context-quality gate, the executed study reports the exact context labels, the rule that maps those labels to continue, skip, or escalate, and whether the gate is applied before generation or only before display. For post-generation verification, the executed study reports the verifier prompt or rule, the evidence fields inspected by the verifier, and the mapping from verifier output to `show`, `rewrite`, `suppress`, or `escalate`.
 
-A retrieval-augmented context strategy may be added only if the dataset supports retrieval and the retrieval setting can be fixed before final execution. If included, it is treated as a context-enrichment strategy and evaluated with the same trade-off metrics, including cost and added context noise [@p11_zhang2025_laura; @p16_icoz2026_context_aware; @p20_hong2025_rag_reviewer].
+A retrieval-augmented context family may be added only if the dataset supports retrieval and the retrieval setting can be fixed before final execution. If included, it is treated as a context-enrichment family and evaluated with the same trade-off metrics, including cost and added context noise [@p11_zhang2025_laura; @p16_icoz2026_context_aware; @p20_hong2025_rag_reviewer].
 
-The baseline is not expected to be the best strategy. It provides the reference point for measuring how many problematic comments appear without additional mitigation. Robust prompting tests whether generation-time constraints are enough. The context-quality gate tests whether preventing or routing low-context cases reduces problematic comments. Post-generation verification tests whether checking comments after generation improves quality before display. The hybrid strategy tests whether pre-generation and post-generation controls complement each other.
+The baseline is not a candidate winner. It provides the reference point for measuring how many problematic comments appear without additional mitigation. Robust prompting tests whether generation-time constraints change the trade-off profile. The context-quality gate tests whether preventing or routing low-context cases improves safety at the cost of coverage. Post-generation verification tests whether checking comments after generation improves grounding while risking false suppression. The hybrid family tests whether pre-generation and post-generation controls expose complementary benefits or merely compound cost, suppression, and escalation.
 
 ## Paired Comparison Design
 
@@ -243,7 +243,7 @@ The study operationalizes each construct through explicit labels, counts, or rat
 
 A **useful candidate comment** is any generated comment whose resolved human annotation marks it as useful or potentially useful, including comments assigned the reference decision `show` or `rewrite`. This definition intentionally includes recoverable comments because one purpose of the study is to distinguish feedback that should be removed from feedback that should be preserved through rewriting. Context-quality effects are computed only for metrics that have enough instances in each subgroup; otherwise, they are reported as qualitative patterns.
 
-These measures make the trade-off explicit. A strategy can improve the problematic-comment rate while worsening useful-feedback preservation or review coverage. Conversely, a strategy can preserve more useful comments while requiring more escalation or computational cost.
+These measures make the trade-off explicit. A strategy can improve the problematic-comment rate while worsening useful-feedback preservation or review coverage. Conversely, a strategy can preserve more useful feedback while exposing more weakly grounded comments or increasing human escalation. The analysis therefore interprets metrics together rather than ranking strategies by one score.
 
 ## Decision-Confusion Analysis
 
