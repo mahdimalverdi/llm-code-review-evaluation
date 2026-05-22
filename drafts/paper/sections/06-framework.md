@@ -2,9 +2,9 @@
 
 The planned empirical study compares mitigation strategies, but the comparison needs a framework that prevents misleading conclusions. A strategy that removes more generated comments is not necessarily better. It may remove harmful comments, but it may also remove useful feedback, reduce review coverage, increase latency, or route too many cases to human reviewers. This section defines the trade-off-aware evaluation framework that will be used to interpret the empirical results once the study is executed.
 
-The framework connects six layers: input and context quality, generated-comment quality, problematic-comment type, mitigation decision, preservation and coverage, and cost and evaluator validity. These layers turn evaluation from passive scoring into a workflow decision problem.
+DRAFTTODO: After running the empirical study, revise this opening to summarize how the framework was actually used in the analysis and whether any framework layers needed to be revised.
 
-<!-- TODO: After running the empirical study, update this opening to summarize how the framework was actually used in the analysis and whether any layers needed to be revised. -->
+The framework connects six layers: input and context quality, generated-comment quality, problematic-comment type, mitigation decision, preservation and coverage, and cost and evaluator validity. These layers turn evaluation from passive scoring into a workflow decision problem.
 
 ## Framework Overview
 
@@ -67,4 +67,4 @@ For each strategy, the planned analysis reports a trade-off profile rather than 
 
 This design makes it possible to compare strategies without assuming that one strategy is universally best. Robust prompting may reduce non-actionable comments but leave unsupported claims. Post-generation verification may reduce unsupported comments but wrongly suppress useful weak signals. A context-quality gate may reduce context-dependent failures but lower coverage. A hybrid strategy may improve safety while adding cost and escalation burden. The framework is designed to make these trade-offs visible.
 
-<!-- TODO: After empirical analysis, replace the hypothetical strategy examples with the actual observed trade-off profiles and note any framework dimensions that were unmeasurable or revised. -->
+DRAFTTODO: After empirical analysis, replace the hypothetical strategy examples with the actual observed trade-off profiles and note any framework dimensions that were unmeasurable or revised.
