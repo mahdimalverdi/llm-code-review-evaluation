@@ -23,6 +23,12 @@ fi
 
 cd build
 
+# Defensively remove auxiliary files immediately before the first LaTeX pass.
+# This protects manual rebuilds where an old paper.aux may have survived outside
+# the normal clean path.
+rm -f paper.aux paper.bbl paper.blg paper.brf paper.fdb_latexmk paper.fls \
+  paper.lof paper.log paper.lot paper.out paper.toc
+
 # Use an explicit, deterministic LaTeX/BibTeX sequence instead of relying on
 # latexmk's dependency detection. This keeps citation and reference resolution
 # predictable across local TeX installations.
