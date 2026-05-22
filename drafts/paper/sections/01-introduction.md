@@ -22,4 +22,6 @@ The study is intentionally bounded. It uses a targeted literature review to defi
 
 In this design-stage version, the paper contributes three connected artifacts. The first is an initial taxonomy for problematic LLM-generated review comments. The second is a trade-off-aware evaluation schema for error reduction, useful-feedback preservation, review coverage, human escalation, computational cost, context quality, and evaluator validity. The third is a controlled comparison protocol for representative mitigation strategies on shared review instances. Together, these artifacts frame mitigation as a workflow decision problem rather than a binary filtering problem.
 
+<!-- figure: path="figures/introduction_contribution_flow.tex" caption="How the paper moves from problematic LLM-generated review comments to design artifacts and, after execution, to empirical evidence." label="fig:introduction-contribution-flow" -->
+
 DRAFTTODO: After running the empirical study, revise this introduction to report the actual sample, strategies executed, annotation setup, and main empirical findings. Replace proposed, planned, and design-stage contribution language with result-oriented claims where appropriate.
