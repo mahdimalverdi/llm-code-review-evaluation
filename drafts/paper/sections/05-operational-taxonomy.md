@@ -22,18 +22,11 @@ Fifth, it is designed for annotator use. Each category should have a definition,
 
 ## Label Architecture
 
-The annotation uses five kinds of labels: core failure labels, secondary modifiers, evaluation-dimension labels, mitigation-decision labels, and confidence labels.
+The annotation uses five kinds of labels: core failure labels, secondary modifiers, evaluation-dimension labels, mitigation-decision labels, and confidence labels. Figure \ref{fig:taxonomy-label-architecture} summarizes their roles.
+
+<!-- figure: path="figures/taxonomy_label_architecture.tex" caption="Label architecture used in the operational taxonomy." label="fig:taxonomy-label-architecture" -->
 
 The **core failure label** captures the dominant reason a comment should not be shown as-is. The **secondary modifiers** capture additional details that matter for interpretation, cost, or mitigation but should not usually become the primary class. For example, a comment may have the core label **Incorrect technical claim** and the secondary modifier **wrong API, type, or framework assumption**. Evaluation-dimension labels record graded or categorical judgments such as correctness, grounding, usefulness, actionability, severity, and context quality. Mitigation-decision labels record the human reference action used for decision-confusion analysis.
-
-<!-- table: caption="Label architecture used in the operational taxonomy." label="tab:taxonomy-label-architecture" -->
-| Label type | Purpose | Example |
-| --- | --- | --- |
-| Core failure label | Dominant reason the comment should not be shown as-is. | Unsupported or hallucinated claim. |
-| Secondary modifier | Additional detail relevant to interpretation, mitigation, or cost. | Wrong API assumption; recoverable signal; specialized evidence required. |
-| Evaluation-dimension label | Judgment dimension used to compare comments and decisions. | Grounding, usefulness, actionability, severity. |
-| Mitigation-decision label | Recommended action before the comment reaches the user. | Show, suppress, rewrite, escalate. |
-| Confidence label | Annotator confidence in the judgment under the available context. | High, medium, low. |
 
 This architecture avoids forcing all information into a single class. It also supports the decision-confusion analysis described in the methodology: a strategy decision can be compared with the resolved human reference decision, while the taxonomy explains the reason for disagreement.
 
@@ -101,7 +94,9 @@ A **specialized evidence required** modifier should be used when the comment con
 
 ## Boundary Rules for Common Ambiguities
 
-Some label boundaries are expected to be difficult in pilot annotation. Table \ref{tab:taxonomy-boundary-rules} records the intended decision rule for the most important ambiguous pairs. The annotation guideline should expand these rules with concrete examples and counterexamples.
+Some label boundaries are expected to be difficult in pilot annotation. Figure \ref{fig:taxonomy-boundary-logic} summarizes the main decision logic, and Table \ref{tab:taxonomy-boundary-rules} records the intended decision rule for the most important ambiguous pairs. The annotation guideline should expand these rules with concrete examples and counterexamples.
+
+<!-- figure: path="figures/taxonomy_boundary_logic.tex" caption="Summary of the main boundary logic used to separate common ambiguous taxonomy cases." label="fig:taxonomy-boundary-logic" -->
 
 <!-- table: caption="Boundary rules for common annotation ambiguities." label="tab:taxonomy-boundary-rules" longtable="true" -->
 | Ambiguous pair | Use the first label when | Use the second label when |
