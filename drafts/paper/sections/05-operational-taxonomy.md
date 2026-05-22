@@ -143,19 +143,19 @@ A comment that requires specialized evidence but is weakly grounded should not b
 
 ## Mapping Failure Labels to Mitigation Decisions
 
-The taxonomy does not map labels mechanically to one decision. Instead, labels constrain the plausible decisions. Table \ref{tab:taxonomy-decision-mapping} summarizes the typical mapping. The final executed-study mapping must be reconciled with the human-decision mapping in the methodology and the annotation guideline.
+The taxonomy does not map labels mechanically to one decision. Instead, labels constrain the plausible decisions. Table \ref{tab:taxonomy-decision-mapping} summarizes this mapping in a compact form. The final executed-study mapping must be reconciled with the human-decision mapping in the methodology and the annotation guideline.
 
 <!-- table: caption="Typical mapping from core failure labels to mitigation decisions." label="tab:taxonomy-decision-mapping" longtable="true" -->
-| Core label | Show | Suppress | Rewrite | Escalate |
-| --- | --- | --- | --- | --- |
-| Unsupported or hallucinated claim | Rarely appropriate. | Appropriate when the claim has no useful signal. | Appropriate if a weaker, grounded concern remains. | Appropriate if the concern may be important but evidence is missing. |
-| Context-dependent or insufficient-context comment | Rarely appropriate without revision. | Appropriate when the concern is low-value. | Appropriate when uncertainty can be stated clearly. | Appropriate when judgment requires additional evidence. |
-| Incorrect technical claim | Not appropriate. | Usually appropriate. | Appropriate only if a correct related concern can be separated. | Rarely needed unless specialized evidence is required. |
-| Wrong location or wrong cause | Not appropriate without revision. | Appropriate if misleading and not recoverable. | Appropriate when the concern is valid but poorly localized or explained. | Appropriate when cause cannot be determined. |
-| Irrelevant or out-of-scope comment | Usually not appropriate. | Usually appropriate. | Rarely appropriate. | Appropriate if it should become a separate issue. |
-| Non-actionable or weakly explained comment | Not appropriate without revision. | Appropriate when the concern is weak. | Usually appropriate when the concern is useful. | Appropriate for high-level design or risk discussion. |
-| Invalid fix suggestion | Not appropriate without revision. | Appropriate for the fix suggestion. | Appropriate if the concern can be preserved without the fix. | Appropriate when validation is required. |
-| Low-value or redundant comment | Usually not appropriate. | Usually appropriate under normal noise constraints. | Appropriate if aggregation or concise rewriting preserves value. | Rarely appropriate. |
+| Core label | Decision to avoid | Usually preferred decision |
+| --- | --- | --- |
+| Unsupported or hallucinated claim | Showing a confident claim that lacks evidence. | Suppress when there is no useful signal; rewrite with uncertainty or escalate when the concern may be important. |
+| Context-dependent or insufficient-context comment | Showing the comment without revision or additional evidence. | Escalate or request more context; rewrite only when uncertainty can be stated clearly. |
+| Incorrect technical claim | Showing the false claim as review feedback. | Suppress; rewrite only when a correct related concern can be separated from the false claim. |
+| Wrong location or wrong cause | Showing the comment before correcting the target or explanation. | Rewrite if the concern is valid; suppress if it is misleading and not recoverable; escalate if the cause cannot be determined. |
+| Irrelevant or out-of-scope comment | Showing it as feedback on the current review. | Suppress in the current review; route as a separate issue only when it is plausibly valid and useful. |
+| Non-actionable or weakly explained comment | Showing vague feedback that the author cannot act on. | Rewrite when the concern is useful; suppress when the concern is weak or low-value. |
+| Invalid fix suggestion | Showing an unsafe or behavior-changing fix. | Remove or rewrite the fix while preserving the concern when possible; escalate when validation is required. |
+| Low-value or redundant comment | Showing ordinary review noise under normal settings. | Suppress or aggregate; show only when low-noise settings or review goals justify it. |
 
 This mapping supports the decision-confusion analysis in the methodology. For example, suppressing a comment with the **recoverable signal** modifier is counted differently from suppressing a comment labeled irrelevant. The former may be recoverable feedback loss, while the latter may be successful noise reduction.
 
