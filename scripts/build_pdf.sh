@@ -23,14 +23,16 @@ fi
 
 cd build
 
-if command -v latexmk >/dev/null 2>&1; then
-  latexmk -pdf -interaction=nonstopmode -halt-on-error paper.tex
-else
-  pdflatex -interaction=nonstopmode -halt-on-error paper.tex
-  bibtex paper
-  pdflatex -interaction=nonstopmode -halt-on-error paper.tex
-  pdflatex -interaction=nonstopmode -halt-on-error paper.tex
+# Use an explicit, deterministic LaTeX/BibTeX sequence instead of relying on
+# latexmk's dependency detection. This keeps citation and reference resolution
+# predictable across local TeX installations.
+pdflatex -interaction=nonstopmode -halt-on-error paper.tex
+if ! bibtex paper; then
+  echo "ERROR: BibTeX failed. Check build/paper.blg." >&2
+  exit 1
 fi
+pdflatex -interaction=nonstopmode -halt-on-error paper.tex
+pdflatex -interaction=nonstopmode -halt-on-error paper.tex
 
 cd "$REPO_ROOT"
 
