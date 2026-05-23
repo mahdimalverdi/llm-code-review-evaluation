@@ -32,7 +32,6 @@ from __future__ import annotations
 import argparse
 import html
 import re
-import shutil
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -40,6 +39,24 @@ DEFAULT_ORDER_FILE = REPO_ROOT / "drafts" / "paper" / "sections_order.txt"
 DEFAULT_OUTPUT_FILE = REPO_ROOT / "build" / "paper.tex"
 REFERENCES_FILE = REPO_ROOT / "references" / "references.bib"
 BUILD_REFERENCES_FILE_NAME = "references.bib"
+
+MONTH_NORMALIZATION = {
+    "january": "jan",
+    "february": "feb",
+    "march": "mar",
+    "april": "apr",
+    "may": "may",
+    "june": "jun",
+    "july": "jul",
+    "august": "aug",
+    "september": "sep",
+    "sept": "sep",
+    "october": "oct",
+    "november": "nov",
+    "december": "dec",
+}
+
+MONTH_FIELD_PATTERN = re.compile(r"^(\s*month\s*=\s*)([A-Za-z]+)(\s*,?\s*)$", re.MULTILINE)
 
 TITLE = "Reducing Problematic LLM-Generated Code Review Comments: An Empirical Study of Mitigation Trade-offs"
 
@@ -604,7 +621,31 @@ def copy_references(output_file: Path) -> None:
     if not REFERENCES_FILE.exists():
         raise FileNotFoundError(f"Missing bibliography file: {REFERENCES_FILE}")
     output_file.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(REFERENCES_FILE, output_file.parent / BUILD_REFERENCES_FILE_NAME)
+    bibliography = REFERENCES_FILE.read_text(encoding="utf-8")
+
+    def normalize_month(match: re.Match[str]) -> str:
+        prefix, value, suffix = match.groups()
+        normalized = MONTH_NORMALIZATION.get(value.strip().lower(), value)
+        return prefix + normalized + suffix
+
+    bibliography = MONTH_FIELD_PATTERN.sub(normalize_month, bibliography)
+    output_path = output_file.parent / BUILD_REFERENCES_FILE_NAME
+    output_path.write_text(bibliography, encoding="utf-8")
+
+    remaining_bad_months = sorted(
+        {
+            match.group(2)
+            for match in MONTH_FIELD_PATTERN.finditer(bibliography)
+            if match.group(2).strip().lower() not in {
+                "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"
+            }
+        }
+    )
+    if remaining_bad_months:
+        raise ValueError(
+            "Unsupported month values in bibliography after normalization: "
+            + ", ".join(remaining_bad_months)
+        )
 
 
 def build_latex(order_file: Path, output_file: Path) -> None:

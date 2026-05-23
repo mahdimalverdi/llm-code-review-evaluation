@@ -48,22 +48,85 @@ PY
 
 cd build
 
-# Defensively remove auxiliary files immediately before the first LaTeX pass.
-# This protects manual rebuilds where an old paper.aux may have survived outside
-# the normal clean path.
-rm -f paper.aux paper.bbl paper.blg paper.brf paper.fdb_latexmk paper.fls \
-  paper.lof paper.log paper.lot paper.out paper.toc
+run_pdflatex() {
+  local log_file="paper.log"
+  if pdflatex -interaction=nonstopmode -halt-on-error paper.tex; then
+    return 0
+  fi
 
-# Use an explicit, deterministic LaTeX/BibTeX sequence instead of relying on
-# latexmk's dependency detection. This keeps citation and reference resolution
-# predictable across local TeX installations.
-pdflatex -interaction=nonstopmode -halt-on-error paper.tex
-if ! bibtex paper; then
-  echo "ERROR: BibTeX failed. Check build/paper.blg." >&2
+  if [[ -f "$log_file" ]] && grep -q "File ended while scanning use of" "$log_file"; then
+    echo "WARN: pdflatex hit a transient aux read error; retrying once." >&2
+    pdflatex -interaction=nonstopmode -halt-on-error paper.tex
+    return $?
+  fi
+
+  echo "ERROR: pdflatex failed. Check build/paper.log if it is still present." >&2
+  return 1
+}
+
+prepare_aux_for_bibtex() {
+  local attempt
+  for attempt in 1 2 3; do
+    run_pdflatex
+
+    if [[ -s paper.aux ]] \
+      && grep -q '^\\citation{' paper.aux \
+      && grep -q '^\\bibdata{' paper.aux \
+      && grep -q '^\\bibstyle{' paper.aux; then
+      return 0
+    fi
+
+    echo "WARN: paper.aux is incomplete after pdflatex pass ${attempt}; rebuilding it." >&2
+    rm -f paper.aux paper.bbl paper.blg paper.brf paper.out paper.toc
+  done
+
+  echo "ERROR: paper.aux is still incomplete after repeated pdflatex passes." >&2
+  return 1
+}
+
+run_bibtex() {
+  if ! bibtex paper; then
+    echo "ERROR: BibTeX failed. Check build/paper.blg." >&2
+    return 1
+  fi
+
+  if [[ ! -s paper.bbl ]] || grep -Eq "I found no \\\\(citation|bibdata|bibstyle) command" paper.blg; then
+    echo "ERROR: BibTeX did not produce a usable bibliography. Check build/paper.aux and build/paper.blg." >&2
+    return 1
+  fi
+}
+
+build_pdf_pipeline() {
+  # Defensively remove auxiliary files immediately before the first LaTeX pass.
+  # This protects manual rebuilds where an old paper.aux may have survived
+  # outside the normal clean path.
+  rm -f paper.aux paper.bbl paper.blg paper.brf paper.fdb_latexmk paper.fls \
+    paper.lof paper.log paper.lot paper.out paper.toc
+
+  # Use an explicit, deterministic LaTeX/BibTeX sequence instead of relying on
+  # latexmk's dependency detection. This keeps citation and reference resolution
+  # predictable across local TeX installations.
+  prepare_aux_for_bibtex || return 1
+  run_bibtex || return 1
+  run_pdflatex || return 1
+  run_pdflatex || return 1
+  run_pdflatex || return 1
+}
+
+pipeline_succeeded=0
+for attempt in 1 2 3; do
+  if build_pdf_pipeline; then
+    pipeline_succeeded=1
+    break
+  fi
+
+  echo "WARN: LaTeX/BibTeX pipeline failed on attempt ${attempt}; retrying from a clean aux state." >&2
+done
+
+if [[ "$pipeline_succeeded" -ne 1 ]]; then
+  echo "ERROR: LaTeX/BibTeX pipeline failed after repeated clean attempts." >&2
   exit 1
 fi
-pdflatex -interaction=nonstopmode -halt-on-error paper.tex
-pdflatex -interaction=nonstopmode -halt-on-error paper.tex
 
 cd "$REPO_ROOT"
 
