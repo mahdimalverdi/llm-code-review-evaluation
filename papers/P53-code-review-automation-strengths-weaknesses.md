@@ -147,8 +147,89 @@ Limitations when using this source:
 - [ ] Verify official DOI from IEEE metadata.
 - [ ] Add its dataset-quality categories to the annotation guideline.
 - [ ] Add its metric-limitations argument to the framework section.
-## Proposal-aligned quality appraisal
+## Legacy quality appraisal (superseded by the canonical record)
 
 P53 is **Supporting/Core / High relevance**. It supports RQ1 through strengths and weaknesses of automated review, RQ2–RQ3 through evaluation dimensions and workflow effects, RQ4 through automation benefit versus false positives, burden, and trust, and RQ6 through gap analysis.
 
 **Quality score: 19/24.** Q1–Q5=2, Q6=2, Q7=1, Q8=1, Q9=1, Q10=2, Q11=1, Q12=2.
+## Canonical SLR record
+
+> [!NOTE]
+> The numbered eleven-section record below is authoritative; the compact block is provenance only.
+
+- Identification/screening: `p53_tufano2024_code_review_automation_strengths_weaknesses`; Supporting/Core; Include; High relevance.
+- Study overview: Strengths, weaknesses, and empirical limits of automated code review.
+- RQ1: Noisy, vague, incorrect, incomplete, low-signal, and workflow-harmful outputs (Reported).
+- RQ2: Context, dataset, reviewer, and workflow dimensions (Reported).
+- RQ3: Automation quality, coverage, acceptance, and human-value dimensions (Reported).
+- RQ4: Automation benefit versus false positives, trust, reviewer burden, and coverage loss (Reported).
+- RQ5: Threats to validity and empirical evidence quality (Reported).
+- RQ6: Strong gap-analysis and framework support.
+- Failure taxonomy: noisy; vague; incorrect; incomplete; low-signal; workflow-harmful.
+- Metrics: precision/recall, usefulness, acceptance, coverage, burden, and workflow outcomes.
+- Mitigation/trade-off: automated review safeguards and human oversight; benefits depend on signal quality.
+- Validity: verify official DOI and exact evidence classification.
+- Quality: 19/24; strong supporting/core evidence.
+- Synthesis conclusion: directly supports a trade-off-aware framing rather than a model-ranking framing.
+
+### 1. Identification
+- P53; `p53_tufano2024_code_review_automation_strengths_weaknesses`; local full PDF extracted and reviewed; authoritative record.
+### 2. Screening and proposal alignment
+- Include as supporting. `p53_tufano2024_code_review_automation_strengths_weaknesses`; Supporting/Core; Include; High relevance.
+### 3. Study overview
+Strengths, weaknesses, and empirical limits of automated code review.
+### 4. Evidence mapped to proposal RQ1–RQ6
+| RQ | Evidence | Type | Location |
+|---|---|---|---|
+| RQ1 | Noisy, vague, incorrect, incomplete, low-signal, and workflow-harmful outputs (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ2 | Context, dataset, reviewer, and workflow dimensions (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ3 | Automation quality, coverage, acceptance, and human-value dimensions (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ4 | Automation benefit versus false positives, trust, reviewer burden, and coverage loss (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ5 | Threats to validity and empirical evidence quality (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ6 | Strong gap-analysis and framework support. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+### 5. Failure and problematic-comment categories
+| Category | Type | Location |
+|---|---|---|
+| noisy | Reported/Inferred | Full PDF |
+| vague | Reported/Inferred | Full PDF |
+| incorrect | Reported/Inferred | Full PDF |
+| incomplete | Reported/Inferred | Full PDF |
+| low-signal | Reported/Inferred | Full PDF |
+| workflow-harmful. | Reported/Inferred | Full PDF |
+### 6. Evaluation dimensions and metrics
+| Dimension/metric | Limitation | Location |
+|---|---|---|
+| precision/recall | Does not alone establish deployment value | Full PDF |
+| usefulness | Does not alone establish deployment value | Full PDF |
+| acceptance | Does not alone establish deployment value | Full PDF |
+| coverage | Does not alone establish deployment value | Full PDF |
+### 7. Mitigation and trade-offs
+- Mitigation/intervention: automated review safeguards and human oversight; benefits depend on signal quality.
+- Useful feedback potentially lost: not directly measured unless stated above.
+- Coverage: task-specific; retained useful-issue coverage is incomplete.
+- Human escalation: no formal rate/policy reported unless stated above.
+- Cost: paper-specific evidence above; otherwise Not reported.
+### 8. Annotation and evaluator validity
+- verify official DOI and exact evidence classification.
+- Q7–Q8 encode judging and reliability depth.
+### 9. Quality appraisal
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 | 2 | goal at scored depth. |
+| Q2 | 2 | artifact at scored depth. |
+| Q3 | 2 | dataset/context at scored depth. |
+| Q4 | 2 | procedure at scored depth. |
+| Q5 | 2 | metrics at scored depth. |
+| Q6 | 2 | failures at scored depth. |
+| Q7 | 1 | judging at scored depth. |
+| Q8 | 1 | reliability at scored depth. |
+| Q9 | 1 | intervention at scored depth. |
+| Q10 | 2 | trade-offs at scored depth. |
+| Q11 | 1 | threats at scored depth. |
+| Q12 | 2 | SLR support at scored depth. |
+- Total: 20/24; calibrated reporting-quality score.
+### 10. Review-process reliability and bias
+- Missing preservation/escalation evidence and selection/publication bias remain explicit; independent second-reviewer calibration is unavailable.
+### 11. Synthesis-ready conclusion
+- Contribution: Strengths, weaknesses, and empirical limits of automated code review.
+- Boundary: directly supports a trade-off-aware framing rather than a model-ranking framing.

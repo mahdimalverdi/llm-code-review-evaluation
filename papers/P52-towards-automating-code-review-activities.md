@@ -114,8 +114,86 @@ Limitations when using this source:
 - [x] Map findings to Related Work and Framework.
 - [ ] Verify official DOI from IEEE metadata.
 - [ ] Decide whether this paper should be cited in Introduction or only Background/Related Work.
-## Proposal-aligned quality appraisal
+## Legacy quality appraisal (superseded by the canonical record)
 
 P52 is **Supporting / Medium–High relevance**. It supports RQ2–RQ4 through code-review activity decomposition, automation boundaries, human involvement, and workflow cost; RQ5 through methodology; and RQ6 through mitigation and workflow design. Direct LLM evidence is limited.
 
 **Quality score: 18/24.** Q1–Q5=2, Q6=1, Q7=1, Q8=1, Q9=1, Q10=2, Q11=1, Q12=2.
+## Canonical SLR record
+
+> [!NOTE]
+> The numbered eleven-section record below is authoritative; the compact block is provenance only.
+
+- Identification/screening: `p52_tufano2021_automating_code_review_activities`; Supporting; Include; Medium–High relevance.
+- Study overview: Decomposition and automation of code-review activities.
+- RQ1: Activity-specific omissions, incorrectness, and automation limitations (Reported/Our perspective).
+- RQ2: Code-change, review-task, and process context (Reported).
+- RQ3: Review-activity taxonomy and automation dimensions (Reported).
+- RQ4: Automation coverage versus human effort, quality, and accountability (Reported).
+- RQ5: Empirical-SE and workflow validity (Reported).
+- RQ6: Supports activity and mitigation-family design.
+- Failure taxonomy: missed activity; incorrect automation; context-insensitive automation; accountability gap.
+- Metrics: task performance, activity coverage, and process outcomes.
+- Mitigation/trade-off: activity automation; reduces effort but may lose human review value.
+- Validity: pre/current LLM boundary must be stated.
+- Quality: 18/24; supporting evidence.
+- Synthesis conclusion: supports mapping intervention points across the review workflow.
+
+### 1. Identification
+- P52; `p52_tufano2021_automating_code_review_activities`; local full PDF extracted and reviewed; authoritative record.
+### 2. Screening and proposal alignment
+- Include as supporting. `p52_tufano2021_automating_code_review_activities`; Supporting; Include; Medium–High relevance.
+### 3. Study overview
+Decomposition and automation of code-review activities.
+### 4. Evidence mapped to proposal RQ1–RQ6
+| RQ | Evidence | Type | Location |
+|---|---|---|---|
+| RQ1 | Activity-specific omissions, incorrectness, and automation limitations (Reported/Our perspective). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ2 | Code-change, review-task, and process context (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ3 | Review-activity taxonomy and automation dimensions (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ4 | Automation coverage versus human effort, quality, and accountability (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ5 | Empirical-SE and workflow validity (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ6 | Supports activity and mitigation-family design. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+### 5. Failure and problematic-comment categories
+| Category | Type | Location |
+|---|---|---|
+| missed activity | Reported/Inferred | Full PDF |
+| incorrect automation | Reported/Inferred | Full PDF |
+| context-insensitive automation | Reported/Inferred | Full PDF |
+| accountability gap. | Reported/Inferred | Full PDF |
+### 6. Evaluation dimensions and metrics
+| Dimension/metric | Limitation | Location |
+|---|---|---|
+| task performance | Does not alone establish deployment value | Full PDF |
+| activity coverage | Does not alone establish deployment value | Full PDF |
+| and process outcomes. | Does not alone establish deployment value | Full PDF |
+### 7. Mitigation and trade-offs
+- Mitigation/intervention: activity automation; reduces effort but may lose human review value.
+- Useful feedback potentially lost: not directly measured unless stated above.
+- Coverage: task-specific; retained useful-issue coverage is incomplete.
+- Human escalation: no formal rate/policy reported unless stated above.
+- Cost: paper-specific evidence above; otherwise Not reported.
+### 8. Annotation and evaluator validity
+- pre/current LLM boundary must be stated.
+- Q7–Q8 encode judging and reliability depth.
+### 9. Quality appraisal
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 | 2 | goal at scored depth. |
+| Q2 | 2 | artifact at scored depth. |
+| Q3 | 2 | dataset/context at scored depth. |
+| Q4 | 2 | procedure at scored depth. |
+| Q5 | 2 | metrics at scored depth. |
+| Q6 | 1 | failures at scored depth. |
+| Q7 | 1 | judging at scored depth. |
+| Q8 | 1 | reliability at scored depth. |
+| Q9 | 1 | intervention at scored depth. |
+| Q10 | 2 | trade-offs at scored depth. |
+| Q11 | 1 | threats at scored depth. |
+| Q12 | 2 | SLR support at scored depth. |
+- Total: 19/24; calibrated reporting-quality score.
+### 10. Review-process reliability and bias
+- Missing preservation/escalation evidence and selection/publication bias remain explicit; independent second-reviewer calibration is unavailable.
+### 11. Synthesis-ready conclusion
+- Contribution: Decomposition and automation of code-review activities.
+- Boundary: supports mapping intervention points across the review workflow.

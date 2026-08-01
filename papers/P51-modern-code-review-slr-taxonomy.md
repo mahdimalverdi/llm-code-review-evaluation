@@ -112,8 +112,84 @@ Limitations when using this source:
 - [x] Confirm final BibTeX from publisher export.
 - [ ] Add precise claims and citations to Background.
 - [ ] Add precise claims and citations to Methodology if useful.
-## Proposal-aligned quality appraisal
+## Legacy quality appraisal (superseded by the canonical record)
 
 P51 is **Supporting / High relevance**. It supports RQ1–RQ3 through a modern-code-review taxonomy, RQ4 through workflow and review-cost dimensions, RQ5 through review-study methodology, and RQ6 through taxonomy construction. It is not LLM-specific.
 
 **Quality score: 20/24.** Q1–Q5=2, Q6=2, Q7=1, Q8=1, Q9=0, Q10=1, Q11=2, Q12=2.
+## Canonical SLR record
+
+> [!NOTE]
+> The numbered eleven-section record below is authoritative; the compact block is provenance only.
+
+- Identification/screening: `p51_davila2021_mcr_slr_taxonomy`; Supporting; Include; High relevance.
+- Study overview: Systematic literature review and taxonomy of modern code review.
+- RQ1: Review-process, comment, and outcome categories from pre-LLM research (Reported).
+- RQ2: Review context, usefulness, quality, and workflow dimensions (Reported).
+- RQ3: Taxonomy and activity classification for review research (Reported).
+- RQ4: Review benefit versus effort, delay, and process cost (Reported).
+- RQ5: Direct methodological and taxonomy support.
+- RQ6: Strong support for taxonomy construction and SLR positioning.
+- Failure taxonomy: process friction, low-value feedback, review delay, and activity-specific failures.
+- Metrics: review outcomes, process measures, usefulness, and taxonomy frequencies.
+- Mitigation/trade-off: review practices and automation boundaries; no LLM gate.
+- Validity: secondary-study search/selection and coding reliability must be checked.
+- Quality: 20/24; high-value supporting SLR.
+- Synthesis conclusion: foundational vocabulary and justification for separating comment, context, workflow, and evaluator failures.
+
+### 1. Identification
+- P51; `p51_davila2021_mcr_slr_taxonomy`; local full PDF extracted and reviewed; authoritative record.
+### 2. Screening and proposal alignment
+- Include as supporting. `p51_davila2021_mcr_slr_taxonomy`; Supporting; Include; High relevance.
+### 3. Study overview
+Systematic literature review and taxonomy of modern code review.
+### 4. Evidence mapped to proposal RQ1–RQ6
+| RQ | Evidence | Type | Location |
+|---|---|---|---|
+| RQ1 | Review-process, comment, and outcome categories from pre-LLM research (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ2 | Review context, usefulness, quality, and workflow dimensions (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ3 | Taxonomy and activity classification for review research (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ4 | Review benefit versus effort, delay, and process cost (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ5 | Direct methodological and taxonomy support. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ6 | Strong support for taxonomy construction and SLR positioning. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+### 5. Failure and problematic-comment categories
+| Category | Type | Location |
+|---|---|---|
+| process friction, low-value feedback, review delay, and activity-specific failures. | Reported/Inferred | Full PDF |
+### 6. Evaluation dimensions and metrics
+| Dimension/metric | Limitation | Location |
+|---|---|---|
+| review outcomes | Does not alone establish deployment value | Full PDF |
+| process measures | Does not alone establish deployment value | Full PDF |
+| usefulness | Does not alone establish deployment value | Full PDF |
+| and taxonomy frequencies. | Does not alone establish deployment value | Full PDF |
+### 7. Mitigation and trade-offs
+- Mitigation/intervention: review practices and automation boundaries; no LLM gate.
+- Useful feedback potentially lost: not directly measured unless stated above.
+- Coverage: task-specific; retained useful-issue coverage is incomplete.
+- Human escalation: no formal rate/policy reported unless stated above.
+- Cost: paper-specific evidence above; otherwise Not reported.
+### 8. Annotation and evaluator validity
+- secondary-study search/selection and coding reliability must be checked.
+- Q7–Q8 encode judging and reliability depth.
+### 9. Quality appraisal
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 | 2 | goal at scored depth. |
+| Q2 | 2 | artifact at scored depth. |
+| Q3 | 2 | dataset/context at scored depth. |
+| Q4 | 2 | procedure at scored depth. |
+| Q5 | 2 | metrics at scored depth. |
+| Q6 | 2 | failures at scored depth. |
+| Q7 | 1 | judging at scored depth. |
+| Q8 | 1 | reliability at scored depth. |
+| Q9 | 0 | intervention at scored depth. |
+| Q10 | 1 | trade-offs at scored depth. |
+| Q11 | 2 | threats at scored depth. |
+| Q12 | 2 | SLR support at scored depth. |
+- Total: 19/24; calibrated reporting-quality score.
+### 10. Review-process reliability and bias
+- Missing preservation/escalation evidence and selection/publication bias remain explicit; independent second-reviewer calibration is unavailable.
+### 11. Synthesis-ready conclusion
+- Contribution: Systematic literature review and taxonomy of modern code review.
+- Boundary: foundational vocabulary and justification for separating comment, context, workflow, and evaluator failures.
