@@ -26,7 +26,6 @@
 | Code / artifact | Not applicable |
 
 ```bibtex
-% TODO: Add checked IEEE BibTeX.
 ```
 
 ## One-Sentence Summary
@@ -139,8 +138,90 @@ P38 is a core background source for arguing that useful code review feedback is 
 - [ ] Add checked IEEE BibTeX.
 - [ ] Extract cite-worthy claims about review outcomes beyond defect detection.
 - [ ] Map human-review outcomes to `synthesis/evaluation-dimensions.md`.
-## Proposal-aligned quality appraisal
+## Legacy proposal-aligned quality appraisal (superseded by the canonical record)
 
 P38 is **Supporting / High relevance**. It supports RQ2–RQ3 through reviewer expectations, outcomes, usefulness, and challenge dimensions; RQ4 through review benefits versus cost and burden; RQ5 through human/context validity; and RQ6 through workflow-oriented framework design. It is not an LLM mitigation experiment.
 
 **Quality score: 18/24.** Q1–Q5=2, Q6=1, Q7=1, Q8=1, Q9=0, Q10=2, Q11=1, Q12=2.
+## Canonical citation record
+
+Use citation key `p38_bacchelli2013_expectations_mcr` from `references/references.bib`; do not duplicate its BibTeX entry in this note.
+## Canonical SLR record
+
+> [!NOTE]
+> The numbered eleven-section record below is authoritative; the compact block is provenance only.
+
+- Identification/screening: `p38_bacchelli2013_expectations_mcr`; Supporting; Include; High relevance.
+- Study overview: Empirical study of expectations, outcomes, and challenges in modern code review.
+- RQ1: Unclear, low-value, or mismatch feedback and process challenges (Reported/Our perspective).
+- RQ2: Reviewer/author context, expectations, and interaction (Reported).
+- RQ3: Review outcomes, usefulness, communication, and process dimensions (Reported).
+- RQ4: Review benefit versus effort, delay, and coordination cost (Reported).
+- RQ5: Strong human-centered validity support.
+- RQ6: Supports workflow and evaluation-dimension design.
+- Failure taxonomy: unclear; low-value; expectation-mismatch; coordination-friction feedback.
+- Metrics: expectations, outcomes, challenges, review effort, and interaction.
+- Mitigation/trade-off: human review/process improvements; no LLM mitigation.
+- Validity: foundational context rather than generated-comment evidence.
+- Quality: 18/24; supporting evidence.
+- Synthesis conclusion: supports socio-technical dimensions often missed by model metrics.
+
+### 1. Identification
+- P38; `p38_bacchelli2013_expectations_mcr`; local full PDF; included; authoritative record.
+### 2. Screening and proposal alignment
+- Include as supporting. `p38_bacchelli2013_expectations_mcr`; Supporting; Include; High relevance.
+### 3. Study overview
+Empirical study of expectations, outcomes, and challenges in modern code review.
+### 4. Evidence mapped to proposal RQ1–RQ6
+| RQ | Evidence | Type | Location |
+|---|---|---|---|
+| RQ1 | Unclear, low-value, or mismatch feedback and process challenges (Reported/Our perspective). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ2 | Reviewer/author context, expectations, and interaction (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ3 | Review outcomes, usefulness, communication, and process dimensions (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ4 | Review benefit versus effort, delay, and coordination cost (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ5 | Strong human-centered validity support. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ6 | Supports workflow and evaluation-dimension design. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+### 5. Failure and problematic-comment categories
+| Category | Type | Location |
+|---|---|---|
+| unclear | Reported/Inferred | Full PDF |
+| low-value | Reported/Inferred | Full PDF |
+| expectation-mismatch | Reported/Inferred | Full PDF |
+| coordination-friction feedback. | Reported/Inferred | Full PDF |
+### 6. Evaluation dimensions and metrics
+| Dimension/metric | Limitation | Location |
+|---|---|---|
+| expectations | Not an end-to-end outcome | Full PDF |
+| outcomes | Not an end-to-end outcome | Full PDF |
+| challenges | Not an end-to-end outcome | Full PDF |
+| review effort | Not an end-to-end outcome | Full PDF |
+### 7. Mitigation and trade-offs
+- Mitigation/intervention: human review/process improvements; no LLM mitigation.
+- Useful feedback potentially lost: not directly measured unless stated above.
+- Coverage: partial; useful-issue retention after intervention is incomplete.
+- Human escalation: no formal rate/policy reported unless stated above.
+- Cost: paper-specific evidence above; otherwise Not reported.
+### 8. Annotation and evaluator validity
+- foundational context rather than generated-comment evidence.
+- Q7–Q8 encode judging and reliability depth.
+### 9. Quality appraisal
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 | 2 | goal at scored depth. |
+| Q2 | 2 | artifact at scored depth. |
+| Q3 | 2 | dataset/context at scored depth. |
+| Q4 | 2 | procedure at scored depth. |
+| Q5 | 2 | metrics at scored depth. |
+| Q6 | 1 | failures at scored depth. |
+| Q7 | 1 | judging at scored depth. |
+| Q8 | 1 | reliability at scored depth. |
+| Q9 | 0 | intervention at scored depth. |
+| Q10 | 2 | trade-offs at scored depth. |
+| Q11 | 1 | threats at scored depth. |
+| Q12 | 2 | SLR support at scored depth. |
+- Total: 18/24; reporting-quality score.
+### 10. Review-process reliability and bias
+- Missing preservation/escalation evidence and selection/publication bias remain explicit; second-reviewer calibration is unavailable.
+### 11. Synthesis-ready conclusion
+- Contribution: Empirical study of expectations, outcomes, and challenges in modern code review.
+- Boundary: supports socio-technical dimensions often missed by model metrics.

@@ -23,7 +23,6 @@
 | Artifact | Awesome list: `CSHaitao/Awesome-LLMs-as-Judges` |
 
 ```bibtex
-% TODO: Add checked arXiv BibTeX.
 ```
 
 ## One-Sentence Summary
@@ -192,8 +191,91 @@ P36 is a vocabulary and taxonomy source. It helps us name evaluator failure mode
 - [ ] Add adversarial judge attacks to threat model.
 - [ ] Add meta-evaluation metric table to methodology notes.
 - [ ] Use P33 as SE-specific source and P36 as general LLM-as-Judge taxonomy source.
-## Proposal-aligned quality appraisal
+## Legacy proposal-aligned quality appraisal (superseded by the canonical record)
 
 P36 is **Supporting / High relevance**. It supports RQ2–RQ3 through judge functionality, methodology, metrics, bias, and attack taxonomies; RQ4 through reliability/cost/robustness trade-offs; RQ5 through evaluator validity; and RQ6 through methodological vocabulary. It is broad rather than code-review-specific.
 
 **Quality score: 20/24.** Q1–Q5=2, Q6=1, Q7–Q8=2, Q9=0, Q10=2, Q11=1, Q12=2. Use P33 for SE-specific claims and P36 for general judge taxonomy.
+## Canonical citation record
+
+Use citation key `p36_li2024_llms_as_judges` from `references/references.bib`; do not duplicate its BibTeX entry in this note.
+## Canonical SLR record
+
+> [!NOTE]
+> The numbered eleven-section record below is authoritative; the compact block is provenance only.
+
+- Identification/screening: `p36_li2024_llms_as_judges`; Supporting; Include; High relevance.
+- Study overview: Broad survey of LLM-as-a-Judge functionality, methodology, metrics, bias, attacks, and future work.
+- RQ1: Evaluator failure and adversarial categories (Reported).
+- RQ2: Judge functions, metrics, bias, uncertainty, and robustness (Reported).
+- RQ3: Judge methodology and meta-evaluation (Reported).
+- RQ4: Reliability, scalability, adversarial robustness, and cost trade-offs (Reported).
+- RQ5: Strong evaluator-validity support.
+- RQ6: Strong general judge taxonomy support; P33 remains more SE-specific.
+- Failure taxonomy: position/verbosity/authority bias; prompt sensitivity; adversarial attacks; invalid output; calibration failure.
+- Metrics: agreement, consistency, calibration, robustness, uncertainty, and attack success.
+- Mitigation/trade-off: judge auditing and robustness; more checks increase cost and complexity.
+- Validity: broad cross-domain survey and limited review-specific evidence.
+- Quality: 20/24; strong supporting survey.
+- Synthesis conclusion: provides vocabulary for evaluator failures and meta-evaluation.
+
+### 1. Identification
+- P36; `p36_li2024_llms_as_judges`; local full PDF; included; authoritative record.
+### 2. Screening and proposal alignment
+- Include as supporting. `p36_li2024_llms_as_judges`; Supporting; Include; High relevance.
+### 3. Study overview
+Broad survey of LLM-as-a-Judge functionality, methodology, metrics, bias, attacks, and future work.
+### 4. Evidence mapped to proposal RQ1–RQ6
+| RQ | Evidence | Type | Location |
+|---|---|---|---|
+| RQ1 | Evaluator failure and adversarial categories (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ2 | Judge functions, metrics, bias, uncertainty, and robustness (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ3 | Judge methodology and meta-evaluation (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ4 | Reliability, scalability, adversarial robustness, and cost trade-offs (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ5 | Strong evaluator-validity support. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ6 | Strong general judge taxonomy support; P33 remains more SE-specific. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+### 5. Failure and problematic-comment categories
+| Category | Type | Location |
+|---|---|---|
+| position/verbosity/authority bias | Reported/Inferred | Full PDF |
+| prompt sensitivity | Reported/Inferred | Full PDF |
+| adversarial attacks | Reported/Inferred | Full PDF |
+| invalid output | Reported/Inferred | Full PDF |
+| calibration failure. | Reported/Inferred | Full PDF |
+### 6. Evaluation dimensions and metrics
+| Dimension/metric | Limitation | Location |
+|---|---|---|
+| agreement | Not an end-to-end outcome | Full PDF |
+| consistency | Not an end-to-end outcome | Full PDF |
+| calibration | Not an end-to-end outcome | Full PDF |
+| robustness | Not an end-to-end outcome | Full PDF |
+### 7. Mitigation and trade-offs
+- Mitigation/intervention: judge auditing and robustness; more checks increase cost and complexity.
+- Useful feedback potentially lost: not directly measured unless stated above.
+- Coverage: partial; useful-issue retention after intervention is incomplete.
+- Human escalation: no formal rate/policy reported unless stated above.
+- Cost: paper-specific evidence above; otherwise Not reported.
+### 8. Annotation and evaluator validity
+- broad cross-domain survey and limited review-specific evidence.
+- Q7–Q8 encode judging and reliability depth.
+### 9. Quality appraisal
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 | 2 | goal at scored depth. |
+| Q2 | 2 | artifact at scored depth. |
+| Q3 | 2 | dataset/context at scored depth. |
+| Q4 | 2 | procedure at scored depth. |
+| Q5 | 2 | metrics at scored depth. |
+| Q6 | 1 | failures at scored depth. |
+| Q7 | 2 | judging at scored depth. |
+| Q8 | 2 | reliability at scored depth. |
+| Q9 | 0 | intervention at scored depth. |
+| Q10 | 2 | trade-offs at scored depth. |
+| Q11 | 1 | threats at scored depth. |
+| Q12 | 2 | SLR support at scored depth. |
+- Total: 20/24; reporting-quality score.
+### 10. Review-process reliability and bias
+- Missing preservation/escalation evidence and selection/publication bias remain explicit; second-reviewer calibration is unavailable.
+### 11. Synthesis-ready conclusion
+- Contribution: Broad survey of LLM-as-a-Judge functionality, methodology, metrics, bias, attacks, and future work.
+- Boundary: provides vocabulary for evaluator failures and meta-evaluation.

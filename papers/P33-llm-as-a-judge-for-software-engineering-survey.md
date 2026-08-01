@@ -25,7 +25,6 @@
 | DOI / arXiv | DOI: 10.1145/3797276; arXiv:2510.24367 |
 
 ```bibtex
-% TODO: Add checked ACM BibTeX.
 ```
 
 ## One-Sentence Summary
@@ -169,8 +168,91 @@ P33 is useful for the related-work and evaluation-validity sections. It lets us 
 - [ ] Add rating indeterminacy / evaluator uncertainty / evaluator preferences to framework.
 - [ ] Add distribution-aware human alignment as a possible evaluation design.
 - [ ] Add tool-augmented and human-in-the-loop judge directions to synthesis.
-## Proposal-aligned quality appraisal
+## Legacy proposal-aligned quality appraisal (superseded by the canonical record)
 
 P33 is **Supporting / High relevance**. It supports RQ2–RQ3 through SE evaluator dimensions and judge methods, RQ4 through evaluator preference/cost/uncertainty trade-offs, RQ5 through validity and annotation issues, and RQ6 through methodological guidance. It is a survey, not a new code-review experiment.
 
 **Quality score: 20/24.** Q1–Q5=2, Q6=1, Q7–Q8=2, Q9=0, Q10=2, Q11=1, Q12=2. Use as synthesis/methodology evidence, not direct empirical evidence for comment-failure rates.
+## Canonical citation record
+
+Use citation key `p33_he2025_llmjudge_se` from `references/references.bib`; do not duplicate its BibTeX entry in this note.
+## Canonical SLR record
+
+> [!NOTE]
+> The numbered eleven-section record below is authoritative; the compact block is provenance only.
+
+- Identification/screening: `p33_he2025_llmjudge_se`; Supporting; Include; High relevance.
+- Study overview: SE-specific survey of LLM-as-a-Judge functionality, methodology, metrics, limitations, and roadmap.
+- RQ1: Judge/evaluator failure categories, not a primary generated-comment taxonomy (Reported).
+- RQ2: Artifact-specific evaluation dimensions, uncertainty, preferences, and validity (Reported).
+- RQ3: Judge method families and evaluator roles (Reported).
+- RQ4: Human/LLM collaboration, cost, uncertainty, and robustness trade-offs (Reported).
+- RQ5: Direct methodology and evaluator-validity support.
+- RQ6: Strong secondary support for annotation and judge design.
+- Failure taxonomy: bias; uncertainty; prompt sensitivity; weak calibration; human-LLM disagreement.
+- Metrics: agreement, calibration, uncertainty, robustness, and preference consistency.
+- Mitigation/trade-off: judge selection and human collaboration; scale versus reliability and oversight cost.
+- Validity: broad survey synthesis is not a single controlled experiment.
+- Quality: 20/24; high-quality supporting survey.
+- Synthesis conclusion: use as SE-specific evaluator methodology alongside primary studies.
+
+### 1. Identification
+- P33; `p33_he2025_llmjudge_se`; local full PDF; included; authoritative record.
+### 2. Screening and proposal alignment
+- Include as supporting. `p33_he2025_llmjudge_se`; Supporting; Include; High relevance.
+### 3. Study overview
+SE-specific survey of LLM-as-a-Judge functionality, methodology, metrics, limitations, and roadmap.
+### 4. Evidence mapped to proposal RQ1–RQ6
+| RQ | Evidence | Type | Location |
+|---|---|---|---|
+| RQ1 | Judge/evaluator failure categories, not a primary generated-comment taxonomy (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ2 | Artifact-specific evaluation dimensions, uncertainty, preferences, and validity (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ3 | Judge method families and evaluator roles (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ4 | Human/LLM collaboration, cost, uncertainty, and robustness trade-offs (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ5 | Direct methodology and evaluator-validity support. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ6 | Strong secondary support for annotation and judge design. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+### 5. Failure and problematic-comment categories
+| Category | Type | Location |
+|---|---|---|
+| bias | Reported/Inferred | Full PDF |
+| uncertainty | Reported/Inferred | Full PDF |
+| prompt sensitivity | Reported/Inferred | Full PDF |
+| weak calibration | Reported/Inferred | Full PDF |
+| human-LLM disagreement. | Reported/Inferred | Full PDF |
+### 6. Evaluation dimensions and metrics
+| Dimension/metric | Limitation | Location |
+|---|---|---|
+| agreement | Not an end-to-end outcome | Full PDF |
+| calibration | Not an end-to-end outcome | Full PDF |
+| uncertainty | Not an end-to-end outcome | Full PDF |
+| robustness | Not an end-to-end outcome | Full PDF |
+### 7. Mitigation and trade-offs
+- Mitigation/intervention: judge selection and human collaboration; scale versus reliability and oversight cost.
+- Useful feedback potentially lost: not directly measured unless stated above.
+- Coverage: partial; useful-issue retention after intervention is incomplete.
+- Human escalation: no formal rate/policy reported unless stated above.
+- Cost: paper-specific evidence above; otherwise Not reported.
+### 8. Annotation and evaluator validity
+- broad survey synthesis is not a single controlled experiment.
+- Q7–Q8 encode judging and reliability depth.
+### 9. Quality appraisal
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 | 2 | goal at scored depth. |
+| Q2 | 2 | artifact at scored depth. |
+| Q3 | 2 | dataset/context at scored depth. |
+| Q4 | 2 | procedure at scored depth. |
+| Q5 | 2 | metrics at scored depth. |
+| Q6 | 1 | failures at scored depth. |
+| Q7 | 2 | judging at scored depth. |
+| Q8 | 2 | reliability at scored depth. |
+| Q9 | 0 | intervention at scored depth. |
+| Q10 | 2 | trade-offs at scored depth. |
+| Q11 | 1 | threats at scored depth. |
+| Q12 | 2 | SLR support at scored depth. |
+- Total: 20/24; reporting-quality score.
+### 10. Review-process reliability and bias
+- Missing preservation/escalation evidence and selection/publication bias remain explicit; second-reviewer calibration is unavailable.
+### 11. Synthesis-ready conclusion
+- Contribution: SE-specific survey of LLM-as-a-Judge functionality, methodology, metrics, limitations, and roadmap.
+- Boundary: use as SE-specific evaluator methodology alongside primary studies.

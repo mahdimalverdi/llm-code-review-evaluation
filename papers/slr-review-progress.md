@@ -31,6 +31,7 @@
 | Calibration 1 | P01–P10 | Passed | Structural gate checked by `validate-note.sh`; reported sample sizes, agreement statistics, costs, and quality scores rechecked against the full local PDFs, including a second calibration of P04/P05/P08/P09 | 2026-08-02 |
 | Calibration 2 | P11–P20 | Passed | Canonical eleven-section records validated; Q1–Q12 totals recalculated consistently; compact extractions retained as provenance only | 2026-08-02 |
 | Calibration 3 | P21–P30 | Passed | Canonical eleven-section records validated; Q1–Q12 arithmetic corrected; P21 archived duplicate excluded from the study count | 2026-08-02 |
+| Calibration 4 | P31–P40 | Passed | Canonical records validated; supporting/core boundaries preserved; Q1–Q12 arithmetic corrected | 2026-08-02 |
 
 | ID | PDF | Note | Status | Decision | Relevance | Quality | Confidence | Unresolved items | Last reviewed |
 |---|---|---|---|---|---|---:|---|---|---|
@@ -67,13 +68,13 @@
 | P31 | `papers/pdfs/P31_CodeJudgeBench.pdf` | `papers/P31-codejudgebench.md` | Completed | Supporting | High | 21/24 | Medium | Verify benchmark protocol and judge metrics | 2026-08-01 |
 | P32 | `papers/pdfs/P32_Bias_in_the_Loop.pdf` | `papers/P32-bias-in-the-loop.md` | Completed | Supporting | High | 21/24 | Medium | Verify bias suite and reliability measures | 2026-08-01 |
 | P33 | `papers/pdfs/P33_LLM_as_a_Judge_for_Software_Engineering_Survey.pdf` | `papers/P33-llm-as-a-judge-for-software-engineering-survey.md` | Completed | Supporting | High | 20/24 | High | Verify survey coverage and taxonomy boundaries | 2026-08-01 |
-| P34 | `papers/pdfs/P34_From_Code_to_Courtroom.pdf` | `papers/P34-from-code-to-courtroom.md` | Completed | Supporting | Medium/High | 18/24 | Medium | Verify roadmap versus empirical evidence | 2026-08-01 |
-| P35 | `papers/pdfs/P35_LLM_Critics_Help_Catch_LLM_Bugs.pdf` | `papers/P35-llm-critics-help-catch-llm-bugs.md` | Completed | Supporting/Core | High | 20/24 | Medium | Verify transfer boundary to code review | 2026-08-01 |
+| P34 | `papers/pdfs/P34_From_Code_to_Courtroom.pdf` | `papers/P34-from-code-to-courtroom.md` | Completed | Supporting | Medium/High | 19/24 | High | Roadmap claims remain conceptual rather than deployment evidence | 2026-08-02 |
+| P35 | `papers/pdfs/P35_LLM_Critics_Help_Catch_LLM_Bugs.pdf` | `papers/P35-llm-critics-help-catch-llm-bugs.md` | Completed | Supporting/Core | High | 21/24 | High | Transfer from generated-code critique to PR review remains bounded | 2026-08-02 |
 | P36 | `papers/pdfs/P36_LLMs_as_Judges_Comprehensive_Survey.pdf` | `papers/P36-llms-as-judges-comprehensive-survey.md` | Completed | Supporting | High | 20/24 | High | Verify general judge taxonomy | 2026-08-01 |
 | P37 | `papers/pdfs/P37_modern_code_review_google.pdf` | `papers/P37-modern-code-review-google.md` | Completed | Supporting | High | 18/24 | Medium | Verify foundational workflow evidence | 2026-08-01 |
 | P38 | `papers/pdfs/P38_expectations_outcomes_challenges_modern_code_review.pdf` | `papers/P38-expectations-outcomes-challenges-modern-code-review.md` | Completed | Supporting | High | 18/24 | Medium | Verify study protocol and constructs | 2026-08-01 |
 | P39 | `papers/pdfs/P39_characteristics_useful_code_reviews.pdf` | `papers/P39-characteristics-useful-code-reviews.md` | Completed | Supporting | High | 20/24 | Medium | Verify usefulness dimensions and participants | 2026-08-01 |
-| P40 | `papers/pdfs/P40_code_change_reviewability.pdf` | `papers/P40-code-change-reviewability.md` | Completed | Supporting/Core | Medium/High | 19/24 | Medium | Verify reviewability measures and context | 2026-08-01 |
+| P40 | `papers/pdfs/P40_code_change_reviewability.pdf` | `papers/P40-code-change-reviewability.md` | Completed | Supporting/Core | Medium/High | 20/24 | High | Reviewability evidence is input-side and not LLM-specific | 2026-08-02 |
 | P41 | `papers/pdfs/P41_explanations_in_code_reviews.pdf` | `papers/P41-explaining-explanations-code-reviews.md` | Completed | Supporting | Medium | 17/24 | Medium | Verify explanation study and participant protocol | 2026-08-01 |
 | P42 | `papers/pdfs/P42_chatgpt_conversations_github_prs_issues.pdf` | `papers/P42-chatgpt-conversations-github-prs-issues.md` | Completed | Supporting | Low/Medium | 12/24 | Medium | Verify review-specific evidence boundary | 2026-08-01 |
 | P43 | `papers/pdfs/P43_llm_for_software_engineering_survey.pdf` | `papers/P43-llm-for-software-engineering-survey.md` | Completed | Supporting | Medium | 14/24 | Medium | Verify code-review coverage | 2026-08-01 |

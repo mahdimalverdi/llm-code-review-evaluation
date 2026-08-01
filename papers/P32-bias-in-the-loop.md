@@ -22,7 +22,6 @@
 | DOI / arXiv | arXiv:2604.16790 |
 
 ```bibtex
-% TODO: Add checked arXiv/ACM BibTeX.
 ```
 
 ## One-Sentence Summary
@@ -146,8 +145,92 @@ P32 is directly useful for the evaluator-validity section. It supports our claim
 - [ ] Add prompt-bias sensitivity to LLM-as-a-judge protocol checklist.
 - [ ] Add “high consistency can be consistently biased” to validity discussion.
 - [ ] Add A/B swap and controlled perturbation requirements to final framework.
-## Proposal-aligned quality appraisal
+## Legacy proposal-aligned quality appraisal (superseded by the canonical record)
 
 P32 is **Supporting/Core / High relevance**. It supports RQ2–RQ3 through evaluator bias, reliability, and robustness measures; RQ4 through bias-mitigation cost and validity trade-offs; RQ5 through annotation/evaluator validity; and RQ6 through judge-audit protocol design.
 
 **Quality score: 21/24.** Q1–Q8=2, Q9=0, Q10=2, Q11=1, Q12=2. Bias findings concern evaluators and should not be conflated with generated-comment failures.
+## Canonical citation record
+
+Use citation key `p32_zhao2026_bias_loop` from `references/references.bib`; do not duplicate its BibTeX entry in this note.
+## Canonical SLR record
+
+> [!NOTE]
+> The numbered eleven-section record below is authoritative; the compact block is provenance only.
+
+- Identification/screening: `p32_zhao2026_bias_loop`; Supporting; Include; High relevance.
+- Study overview: Bias suite and audit protocol for LLM-as-a-Judge in software engineering.
+- RQ1: Evaluator failures rather than generated-comment failures: authority, sentiment, position, verbosity, and prompt-perturbation effects (Reported).
+- RQ2: Judge validity and robustness dimensions (Reported).
+- RQ3: Bias and reliability metrics (Reported).
+- RQ4: Bias mitigation versus evaluation cost and residual uncertainty (Reported).
+- RQ5: Direct evaluator/annotation validity support.
+- RQ6: Strong judge-audit protocol support.
+- Failure taxonomy: position; verbosity; authority; sentiment; prompt sensitivity; answer-rate instability.
+- Metrics: agreement, consistency, perturbation sensitivity, answer rate, confidence/token shifts.
+- Mitigation/trade-off: bias auditing/mitigation; additional runs and cost may improve validity.
+- Validity: evaluator bias must be separated from comment-generation failure.
+- Quality: 21/24; high-quality supporting evidence.
+- Synthesis conclusion: every LLM judge used in the SLR framework requires bias and robustness checks.
+
+### 1. Identification
+- P32; `p32_zhao2026_bias_loop`; local full PDF; included; authoritative record.
+### 2. Screening and proposal alignment
+- Include as supporting. `p32_zhao2026_bias_loop`; Supporting; Include; High relevance.
+### 3. Study overview
+Bias suite and audit protocol for LLM-as-a-Judge in software engineering.
+### 4. Evidence mapped to proposal RQ1–RQ6
+| RQ | Evidence | Type | Location |
+|---|---|---|---|
+| RQ1 | Evaluator failures rather than generated-comment failures: authority, sentiment, position, verbosity, and prompt-perturbation effects (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ2 | Judge validity and robustness dimensions (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ3 | Bias and reliability metrics (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ4 | Bias mitigation versus evaluation cost and residual uncertainty (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ5 | Direct evaluator/annotation validity support. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ6 | Strong judge-audit protocol support. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+### 5. Failure and problematic-comment categories
+| Category | Type | Location |
+|---|---|---|
+| position | Reported/Inferred | Full PDF |
+| verbosity | Reported/Inferred | Full PDF |
+| authority | Reported/Inferred | Full PDF |
+| sentiment | Reported/Inferred | Full PDF |
+| prompt sensitivity | Reported/Inferred | Full PDF |
+| answer-rate instability. | Reported/Inferred | Full PDF |
+### 6. Evaluation dimensions and metrics
+| Dimension/metric | Limitation | Location |
+|---|---|---|
+| agreement | Not an end-to-end outcome | Full PDF |
+| consistency | Not an end-to-end outcome | Full PDF |
+| perturbation sensitivity | Not an end-to-end outcome | Full PDF |
+| answer rate | Not an end-to-end outcome | Full PDF |
+### 7. Mitigation and trade-offs
+- Mitigation/intervention: bias auditing/mitigation; additional runs and cost may improve validity.
+- Useful feedback potentially lost: not directly measured unless stated above.
+- Coverage: partial; useful-issue retention after intervention is incomplete.
+- Human escalation: no formal rate/policy reported unless stated above.
+- Cost: paper-specific evidence above; otherwise Not reported.
+### 8. Annotation and evaluator validity
+- evaluator bias must be separated from comment-generation failure.
+- Q7–Q8 encode judging and reliability depth.
+### 9. Quality appraisal
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 | 2 | goal at scored depth. |
+| Q2 | 2 | artifact at scored depth. |
+| Q3 | 2 | dataset/context at scored depth. |
+| Q4 | 2 | procedure at scored depth. |
+| Q5 | 2 | metrics at scored depth. |
+| Q6 | 2 | failures at scored depth. |
+| Q7 | 2 | judging at scored depth. |
+| Q8 | 2 | reliability at scored depth. |
+| Q9 | 0 | intervention at scored depth. |
+| Q10 | 2 | trade-offs at scored depth. |
+| Q11 | 1 | threats at scored depth. |
+| Q12 | 2 | SLR support at scored depth. |
+- Total: 21/24; reporting-quality score.
+### 10. Review-process reliability and bias
+- Missing preservation/escalation evidence and selection/publication bias remain explicit; second-reviewer calibration is unavailable.
+### 11. Synthesis-ready conclusion
+- Contribution: Bias suite and audit protocol for LLM-as-a-Judge in software engineering.
+- Boundary: every LLM judge used in the SLR framework requires bias and robustness checks.

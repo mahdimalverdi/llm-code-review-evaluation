@@ -26,7 +26,6 @@
 | Code / artifact | Not applicable |
 
 ```bibtex
-% TODO: Add checked IEEE BibTeX.
 ```
 
 ## One-Sentence Summary
@@ -150,8 +149,91 @@ P39 should be used as a core source for the usefulness dimension. It supports ou
 - [ ] Extract the paper's explicit useful-review characteristics.
 - [ ] Map useful-review characteristics to our evaluation dimensions.
 - [ ] Use this paper in `synthesis/evaluation-dimensions.md` and `synthesis/problematic-comment-taxonomy.md`.
-## Proposal-aligned quality appraisal
+## Legacy proposal-aligned quality appraisal (superseded by the canonical record)
 
 P39 is **Supporting / High relevance**. It supports RQ2–RQ3 through developer-centered usefulness, value-to-attention, learning, and maintainability dimensions; RQ4 through usefulness versus reviewer attention; RQ5 through human-centered validity; and RQ6 through evaluation-rubric design. It is not an LLM study.
 
 **Quality score: 20/24.** Q1–Q5=2, Q6=2, Q7=2, Q8=1, Q9=0, Q10=2, Q11=1, Q12=2.
+## Canonical citation record
+
+Use citation key `p39_bosu2015_useful_reviews` from `references/references.bib`; do not duplicate its BibTeX entry in this note.
+## Canonical SLR record
+
+> [!NOTE]
+> The numbered eleven-section record below is authoritative; the compact block is provenance only.
+
+- Identification/screening: `p39_bosu2015_useful_reviews`; Supporting; Include; High relevance.
+- Study overview: Empirical study of characteristics of useful code reviews at Microsoft.
+- RQ1: Non-useful, low-value, irrelevant, and attention-inefficient comments (Reported).
+- RQ2: Developer, change, and organizational context of usefulness (Reported).
+- RQ3: Usefulness, value-to-attention, learning, maintainability, and defect-finding dimensions (Reported).
+- RQ4: Useful feedback versus reviewer attention/time (Reported).
+- RQ5: Strong human-centered annotation and construct-validity support.
+- RQ6: Direct support for usefulness rubric and annotation protocol.
+- Failure taxonomy: non-useful; low-value; irrelevant; attention-inefficient; low learning/value feedback.
+- Metrics: usefulness, value-to-attention, reviewer time, and downstream value.
+- Mitigation/trade-off: usefulness-aware prioritization; may improve signal but require personalization/annotation.
+- Validity: human usefulness is not equivalent to correctness or actionability.
+- Quality: 20/24; strong supporting evidence.
+- Synthesis conclusion: foundational support for treating usefulness as distinct from correctness.
+
+### 1. Identification
+- P39; `p39_bosu2015_useful_reviews`; local full PDF; included; authoritative record.
+### 2. Screening and proposal alignment
+- Include as supporting. `p39_bosu2015_useful_reviews`; Supporting; Include; High relevance.
+### 3. Study overview
+Empirical study of characteristics of useful code reviews at Microsoft.
+### 4. Evidence mapped to proposal RQ1–RQ6
+| RQ | Evidence | Type | Location |
+|---|---|---|---|
+| RQ1 | Non-useful, low-value, irrelevant, and attention-inefficient comments (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ2 | Developer, change, and organizational context of usefulness (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ3 | Usefulness, value-to-attention, learning, maintainability, and defect-finding dimensions (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ4 | Useful feedback versus reviewer attention/time (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ5 | Strong human-centered annotation and construct-validity support. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ6 | Direct support for usefulness rubric and annotation protocol. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+### 5. Failure and problematic-comment categories
+| Category | Type | Location |
+|---|---|---|
+| non-useful | Reported/Inferred | Full PDF |
+| low-value | Reported/Inferred | Full PDF |
+| irrelevant | Reported/Inferred | Full PDF |
+| attention-inefficient | Reported/Inferred | Full PDF |
+| low learning/value feedback. | Reported/Inferred | Full PDF |
+### 6. Evaluation dimensions and metrics
+| Dimension/metric | Limitation | Location |
+|---|---|---|
+| usefulness | Not an end-to-end outcome | Full PDF |
+| value-to-attention | Not an end-to-end outcome | Full PDF |
+| reviewer time | Not an end-to-end outcome | Full PDF |
+| and downstream value. | Not an end-to-end outcome | Full PDF |
+### 7. Mitigation and trade-offs
+- Mitigation/intervention: usefulness-aware prioritization; may improve signal but require personalization/annotation.
+- Useful feedback potentially lost: not directly measured unless stated above.
+- Coverage: partial; useful-issue retention after intervention is incomplete.
+- Human escalation: no formal rate/policy reported unless stated above.
+- Cost: paper-specific evidence above; otherwise Not reported.
+### 8. Annotation and evaluator validity
+- human usefulness is not equivalent to correctness or actionability.
+- Q7–Q8 encode judging and reliability depth.
+### 9. Quality appraisal
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 | 2 | goal at scored depth. |
+| Q2 | 2 | artifact at scored depth. |
+| Q3 | 2 | dataset/context at scored depth. |
+| Q4 | 2 | procedure at scored depth. |
+| Q5 | 2 | metrics at scored depth. |
+| Q6 | 2 | failures at scored depth. |
+| Q7 | 2 | judging at scored depth. |
+| Q8 | 1 | reliability at scored depth. |
+| Q9 | 0 | intervention at scored depth. |
+| Q10 | 2 | trade-offs at scored depth. |
+| Q11 | 1 | threats at scored depth. |
+| Q12 | 2 | SLR support at scored depth. |
+- Total: 20/24; reporting-quality score.
+### 10. Review-process reliability and bias
+- Missing preservation/escalation evidence and selection/publication bias remain explicit; second-reviewer calibration is unavailable.
+### 11. Synthesis-ready conclusion
+- Contribution: Empirical study of characteristics of useful code reviews at Microsoft.
+- Boundary: foundational support for treating usefulness as distinct from correctness.
