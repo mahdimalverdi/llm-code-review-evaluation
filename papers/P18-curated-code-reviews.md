@@ -23,7 +23,6 @@
 | Artifact | CuREV replication package and Zenodo data |
 
 ```bibtex
-% TODO: Add checked MSR/arXiv BibTeX.
 ```
 
 ## One-Sentence Summary
@@ -132,8 +131,89 @@ P18 shows that the review comment itself is part of the evaluation context. Even
 - [ ] Add clarity/relevance/conciseness/civility to `synthesis/evaluation-dimensions.md`.
 - [ ] Add noisy-comment categories to taxonomy.
 - [ ] Add LLM-as-judge calibration and reformulation risks to trade-off framework.
-## Proposal-aligned quality appraisal
+## Legacy proposal-aligned quality appraisal (superseded by the canonical record)
 
 P18 is **Core / High relevance**. It supports RQ1 through noisy, unclear, uncivil, irrelevant, verbose, and non-informative comments; RQ2–RQ3 through curation and usefulness dimensions; RQ4 through curation/reformulation versus useful-intent preservation; and RQ5–RQ6 through annotation and mitigation design.
 
 **Quality score: 20/24.** Q1–Q7=2, Q8=1, Q9=2, Q10=1, Q11=1, Q12=2. Curation benefit should not be equated with zero risk of removing useful feedback.
+## Canonical citation record
+
+Use citation key `p18_bensghaier2025_curated_reviews` from `references/references.bib`; do not duplicate its BibTeX entry in this note.
+## Canonical SLR record
+
+> [!NOTE]
+> The numbered eleven-section record below is authoritative; the compact block is provenance only.
+
+- Identification/screening: `p18_bensghaier2025_curated_reviews`; Core; Include; High relevance.
+- Study overview: LLM-assisted curation/reformulation of code-review comments to improve training/evaluation data.
+- RQ1: Noisy, unclear, uncivil, irrelevant, verbose, and non-informative comments (Reported).
+- RQ2: Context and comment intent must be preserved during curation (Reported).
+- RQ3: Quality, usefulness, clarity, and curation outcomes (Reported).
+- RQ4: Noise reduction versus loss/change of useful intent (Reported/Our perspective).
+- RQ5: Annotation, curation reliability, and dataset validity are central.
+- RQ6: Strong taxonomy, annotation, and filtering support.
+- Failure taxonomy: noisy; unclear; uncivil; irrelevant; verbose; non-informative.
+- Metrics: curation quality and downstream generation/evaluation performance.
+- Mitigation/trade-off: cleaning/reformulation; may introduce rewriting errors or remove useful intent.
+- Validity: curation agreement and human checks require verification.
+- Quality: 20/24; strong core evidence with preservation gap.
+- Synthesis conclusion: directly motivates measuring useful-intent preservation during cleaning.
+
+### 1. Identification
+- P18; `p18_bensghaier2025_curated_reviews`; local full PDF; included; authoritative record.
+### 2. Screening and proposal alignment
+- Include as Core. `p18_bensghaier2025_curated_reviews`; Core; Include; High relevance.
+### 3. Study overview
+LLM-assisted curation/reformulation of code-review comments to improve training/evaluation data.
+### 4. Evidence mapped to proposal RQ1–RQ6
+| RQ | Evidence | Type | Location |
+|---|---|---|---|
+| RQ1 | Noisy, unclear, uncivil, irrelevant, verbose, and non-informative comments (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ2 | Context and comment intent must be preserved during curation (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ3 | Quality, usefulness, clarity, and curation outcomes (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ4 | Noise reduction versus loss/change of useful intent (Reported/Our perspective). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ5 | Annotation, curation reliability, and dataset validity are central. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ6 | Strong taxonomy, annotation, and filtering support. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+### 5. Failure and problematic-comment categories
+| Category | Type | Location |
+|---|---|---|
+| noisy | Reported/Inferred | Full PDF |
+| unclear | Reported/Inferred | Full PDF |
+| uncivil | Reported/Inferred | Full PDF |
+| irrelevant | Reported/Inferred | Full PDF |
+| verbose | Reported/Inferred | Full PDF |
+| non-informative. | Reported/Inferred | Full PDF |
+### 6. Evaluation dimensions and metrics
+| Dimension/metric | Limitation | Location |
+|---|---|---|
+| curation quality and downstream generation/evaluation performance. | Not an end-to-end outcome | Full PDF |
+### 7. Mitigation and trade-offs
+- Mitigation/intervention: cleaning/reformulation; may introduce rewriting errors or remove useful intent.
+- Useful feedback potentially lost: not directly measured unless stated above.
+- Coverage: partial; useful-issue retention after mitigation is incomplete.
+- Human escalation: no formal rate/policy reported.
+- Cost: paper-specific evidence above; otherwise Not reported.
+### 8. Annotation and evaluator validity
+- curation agreement and human checks require verification.
+- Q7–Q8 encode judging and reliability depth.
+### 9. Quality appraisal
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 | 2 | goal at scored depth. |
+| Q2 | 2 | artifact at scored depth. |
+| Q3 | 2 | dataset/context at scored depth. |
+| Q4 | 2 | procedure at scored depth. |
+| Q5 | 2 | metrics at scored depth. |
+| Q6 | 2 | failures at scored depth. |
+| Q7 | 2 | judging at scored depth. |
+| Q8 | 1 | reliability at scored depth. |
+| Q9 | 2 | intervention at scored depth. |
+| Q10 | 1 | trade-offs at scored depth. |
+| Q11 | 1 | threats at scored depth. |
+| Q12 | 2 | SLR support at scored depth. |
+- Total: 21/24; reporting-quality score.
+### 10. Review-process reliability and bias
+- Missing preservation/escalation evidence and selection/publication bias remain explicit; second-reviewer calibration is unavailable.
+### 11. Synthesis-ready conclusion
+- Contribution: LLM-assisted curation/reformulation of code-review comments to improve training/evaluation data.
+- Boundary: directly motivates measuring useful-intent preservation during cleaning.

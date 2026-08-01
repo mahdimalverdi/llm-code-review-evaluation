@@ -52,11 +52,10 @@
 ### Citation Note
 
 - [x] This paper should be cited in the final report.
-- [ ] Citation format has been checked.
+- [x] Citation key checked against `references/references.bib`.
 - [ ] BibTeX entry has been collected.
 
 ```bibtex
-% TODO: Paste BibTeX here after checking arXiv BibTeX.
 ```
 
 ## 2. One-Sentence Summary
@@ -450,8 +449,90 @@ P13 is highly relevant because it strengthens our argument that context augmenta
 - Important caution: BLEU improvement should not be equated with better review quality.
 
 </details>
-## Proposal-aligned quality appraisal
+## Legacy proposal-aligned quality appraisal (superseded by the canonical record)
 
 P13 is **Core / High relevance**. It supports RQ1 through generic, distracted, unclear, less-informative, and overconfident incorrect comments; RQ2–RQ3 through context augmentation and human evaluation; RQ4 through prompting/fine-tuning, context, metric, and resource trade-offs; and RQ6 through mitigation-family comparison.
 
 **Quality score: 21/24.** Q1–Q7=2, Q8=1, Q9–Q10=2, Q11=1, Q12=2. Automatic metric improvements must not be interpreted as equivalent to human-perceived usefulness.
+## Canonical citation record
+
+Use citation key `p13_haider2024_prompting_finetuning` from `references/references.bib`; do not duplicate its BibTeX entry in this note.
+## Canonical SLR record
+
+> [!NOTE]
+> The numbered eleven-section record below is authoritative; the compact block is provenance only.
+
+- Identification/screening: `p13_haider2024_prompting_finetuning`; Core; Include; High relevance.
+- Study overview: Compares prompting, fine-tuning, semantic context augmentation, automatic metrics, and professional human evaluation.
+- RQ1: Generic, distracted, unclear, less-informative, and overconfident incorrect comments (Reported).
+- RQ2: Call graph, code summary, semantic metadata, and context-window effects (Reported).
+- RQ3: BLEU/ROUGE-like metrics, information, relevance, explanation clarity, actionability, and human judgment (Reported).
+- RQ4: Prompting versus fine-tuning, context augmentation versus distraction, metric versus human judgment, and resource cost (Reported).
+- RQ5: Context usability and metric validity are explicit; annotation reliability requires verification.
+- RQ6: Strong mitigation-family comparison and trade-off support.
+- Failure taxonomy: generic; distracted; unclear; low-information; overconfident incorrect.
+- Metrics: automatic similarity metrics, human dimensions, cost/resource constraints.
+- Mitigation/trade-off: prompting, fine-tuning, and context augmentation; gains are model/context-dependent.
+- Validity: automatic metrics can disagree with professional judgments; no escalation/preservation measure.
+- Quality: 21/24; high-quality core evidence.
+- Synthesis conclusion: supports evaluating context and adaptation as trade-offs rather than unconditional improvements.
+
+### 1. Identification
+- P13; `p13_haider2024_prompting_finetuning`; local full PDF; included; authoritative record.
+### 2. Screening and proposal alignment
+- Include as Core. `p13_haider2024_prompting_finetuning`; Core; Include; High relevance.
+### 3. Study overview
+Compares prompting, fine-tuning, semantic context augmentation, automatic metrics, and professional human evaluation.
+### 4. Evidence mapped to proposal RQ1–RQ6
+| RQ | Evidence | Type | Location |
+|---|---|---|---|
+| RQ1 | Generic, distracted, unclear, less-informative, and overconfident incorrect comments (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ2 | Call graph, code summary, semantic metadata, and context-window effects (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ3 | BLEU/ROUGE-like metrics, information, relevance, explanation clarity, actionability, and human judgment (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ4 | Prompting versus fine-tuning, context augmentation versus distraction, metric versus human judgment, and resource cost (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ5 | Context usability and metric validity are explicit; annotation reliability requires verification. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ6 | Strong mitigation-family comparison and trade-off support. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+### 5. Failure and problematic-comment categories
+| Category | Type | Location |
+|---|---|---|
+| generic | Reported/Inferred | Full PDF |
+| distracted | Reported/Inferred | Full PDF |
+| unclear | Reported/Inferred | Full PDF |
+| low-information | Reported/Inferred | Full PDF |
+| overconfident incorrect. | Reported/Inferred | Full PDF |
+### 6. Evaluation dimensions and metrics
+| Dimension/metric | Limitation | Location |
+|---|---|---|
+| automatic similarity metrics | Not an end-to-end outcome | Full PDF |
+| human dimensions | Not an end-to-end outcome | Full PDF |
+| cost/resource constraints. | Not an end-to-end outcome | Full PDF |
+### 7. Mitigation and trade-offs
+- Mitigation/intervention: prompting, fine-tuning, and context augmentation; gains are model/context-dependent.
+- Useful feedback potentially lost: not directly measured unless stated above.
+- Coverage: partial; useful-issue retention after mitigation is incomplete.
+- Human escalation: no formal rate/policy reported.
+- Cost: paper-specific evidence above; otherwise Not reported.
+### 8. Annotation and evaluator validity
+- automatic metrics can disagree with professional judgments; no escalation/preservation measure.
+- Q7–Q8 encode judging and reliability depth.
+### 9. Quality appraisal
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 | 2 | goal at scored depth. |
+| Q2 | 2 | artifact at scored depth. |
+| Q3 | 2 | dataset/context at scored depth. |
+| Q4 | 2 | procedure at scored depth. |
+| Q5 | 2 | metrics at scored depth. |
+| Q6 | 2 | failures at scored depth. |
+| Q7 | 2 | judging at scored depth. |
+| Q8 | 1 | reliability at scored depth. |
+| Q9 | 2 | intervention at scored depth. |
+| Q10 | 2 | trade-offs at scored depth. |
+| Q11 | 1 | threats at scored depth. |
+| Q12 | 2 | SLR support at scored depth. |
+- Total: 22/24; reporting-quality score.
+### 10. Review-process reliability and bias
+- Missing preservation/escalation evidence and selection/publication bias remain explicit; second-reviewer calibration is unavailable.
+### 11. Synthesis-ready conclusion
+- Contribution: Compares prompting, fine-tuning, semantic context augmentation, automatic metrics, and professional human evaluation.
+- Boundary: supports evaluating context and adaptation as trade-offs rather than unconditional improvements.

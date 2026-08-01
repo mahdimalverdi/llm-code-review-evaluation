@@ -23,7 +23,6 @@
 | Artifact | GitHub: `RAG-Reviewer/RAG-Reviewer` |
 
 ```bibtex
-% TODO: Add checked arXiv BibTeX.
 ```
 
 ## One-Sentence Summary
@@ -170,8 +169,88 @@ P20 does not define a full harmful-comment taxonomy, but it identifies or implie
 - [ ] Add low-frequency-token coverage to `synthesis/evaluation-dimensions.md`.
 - [ ] Add pair-vs-singleton and k-vs-token-budget trade-offs to `synthesis/trade-off-framework.md`.
 - [ ] Add generic/high-frequency and LFGT-omission failure modes to taxonomy.
-## Proposal-aligned quality appraisal
+## Legacy proposal-aligned quality appraisal (superseded by the canonical record)
 
 P20 is **Core / High relevance**. It supports RQ1 through generic/high-frequency, low-frequency-token omission, IR rigidity, and incorrect-output categories; RQ2–RQ3 through retrieval/context augmentation; RQ4 through retrieval benefit versus distraction, cost, and rigidity; and RQ6 through mitigation-family design.
 
 **Quality score: 20/24.** Q1–Q7=2, Q8=1, Q9=2, Q10=1, Q11=1, Q12=2. Retrieval gains do not by themselves establish grounding, usefulness preservation, or workflow benefit.
+## Canonical citation record
+
+Use citation key `p20_hong2025_rag_reviewer` from `references/references.bib`; do not duplicate its BibTeX entry in this note.
+## Canonical SLR record
+
+> [!NOTE]
+> The numbered eleven-section record below is authoritative; the compact block is provenance only.
+
+- Identification/screening: `p20_hong2025_rag_reviewer`; Core; Include; High relevance.
+- Study overview: Retrieval-augmented code-review comment generation compared with generation and IR baselines.
+- RQ1: Generic/high-frequency comments, low-frequency-token omission, IR rigidity, and incorrect outputs (Reported).
+- RQ2: Retrieved exemplars and context relevance (Reported).
+- RQ3: Generation quality, retrieval, grounding, and baseline comparison (Reported).
+- RQ4: Retrieval benefit versus distraction, rigidity, context cost, and preservation (Reported/Our perspective).
+- RQ5: Retrieval/context validity and dataset quality (Reported).
+- RQ6: Strong mitigation-family and context-design support.
+- Failure taxonomy: generic; token omission; rigid retrieval; incorrect output; irrelevant retrieval.
+- Metrics: generation quality and comparative baseline performance.
+- Mitigation/trade-off: RAG/retrieval; can improve evidence but distract or impose cost.
+- Validity: no full workflow, escalation, or useful-feedback preservation measure.
+- Quality: 20/24; strong core context evidence.
+- Synthesis conclusion: supports retrieval as a trade-off choice, not a free improvement.
+
+### 1. Identification
+- P20; `p20_hong2025_rag_reviewer`; local full PDF; included; authoritative record.
+### 2. Screening and proposal alignment
+- Include as Core. `p20_hong2025_rag_reviewer`; Core; Include; High relevance.
+### 3. Study overview
+Retrieval-augmented code-review comment generation compared with generation and IR baselines.
+### 4. Evidence mapped to proposal RQ1–RQ6
+| RQ | Evidence | Type | Location |
+|---|---|---|---|
+| RQ1 | Generic/high-frequency comments, low-frequency-token omission, IR rigidity, and incorrect outputs (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ2 | Retrieved exemplars and context relevance (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ3 | Generation quality, retrieval, grounding, and baseline comparison (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ4 | Retrieval benefit versus distraction, rigidity, context cost, and preservation (Reported/Our perspective). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ5 | Retrieval/context validity and dataset quality (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ6 | Strong mitigation-family and context-design support. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+### 5. Failure and problematic-comment categories
+| Category | Type | Location |
+|---|---|---|
+| generic | Reported/Inferred | Full PDF |
+| token omission | Reported/Inferred | Full PDF |
+| rigid retrieval | Reported/Inferred | Full PDF |
+| incorrect output | Reported/Inferred | Full PDF |
+| irrelevant retrieval. | Reported/Inferred | Full PDF |
+### 6. Evaluation dimensions and metrics
+| Dimension/metric | Limitation | Location |
+|---|---|---|
+| generation quality and comparative baseline performance. | Not an end-to-end outcome | Full PDF |
+### 7. Mitigation and trade-offs
+- Mitigation/intervention: RAG/retrieval; can improve evidence but distract or impose cost.
+- Useful feedback potentially lost: not directly measured unless stated above.
+- Coverage: partial; useful-issue retention after mitigation is incomplete.
+- Human escalation: no formal rate/policy reported.
+- Cost: paper-specific evidence above; otherwise Not reported.
+### 8. Annotation and evaluator validity
+- no full workflow, escalation, or useful-feedback preservation measure.
+- Q7–Q8 encode judging and reliability depth.
+### 9. Quality appraisal
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 | 2 | goal at scored depth. |
+| Q2 | 2 | artifact at scored depth. |
+| Q3 | 2 | dataset/context at scored depth. |
+| Q4 | 2 | procedure at scored depth. |
+| Q5 | 2 | metrics at scored depth. |
+| Q6 | 2 | failures at scored depth. |
+| Q7 | 2 | judging at scored depth. |
+| Q8 | 1 | reliability at scored depth. |
+| Q9 | 2 | intervention at scored depth. |
+| Q10 | 1 | trade-offs at scored depth. |
+| Q11 | 1 | threats at scored depth. |
+| Q12 | 2 | SLR support at scored depth. |
+- Total: 21/24; reporting-quality score.
+### 10. Review-process reliability and bias
+- Missing preservation/escalation evidence and selection/publication bias remain explicit; second-reviewer calibration is unavailable.
+### 11. Synthesis-ready conclusion
+- Contribution: Retrieval-augmented code-review comment generation compared with generation and IR baselines.
+- Boundary: supports retrieval as a trade-off choice, not a free improvement.

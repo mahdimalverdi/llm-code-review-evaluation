@@ -23,7 +23,6 @@
 | Artifact | Hugging Face dataset: TomoMelb/CodeReviewQA |
 
 ```bibtex
-% TODO: Add checked ACL/arXiv BibTeX.
 ```
 
 ## One-Sentence Summary
@@ -146,8 +145,87 @@ P17 shows that even when code hunk and review comment are available, the model m
 - [ ] Add CTR/CL/SI to `synthesis/evaluation-dimensions.md`.
 - [ ] Add noisy/unfaithful example categories to taxonomy.
 - [ ] Add contamination-resistance and invariant testing to trade-off matrix.
-## Proposal-aligned quality appraisal
+## Legacy proposal-aligned quality appraisal (superseded by the canonical record)
 
 P17 is **Core / Medium–High relevance**. It supports RQ1 through noisy and unfaithful review-comment/data types; RQ2–RQ3 through question-answering and context use; and RQ5–RQ6 through dataset validity and annotation considerations.
 
 **Quality score: 19/24.** Q1–Q5=2, Q6=2, Q7=1, Q8=1, Q9=1, Q10=1, Q11=1, Q12=2. It is less direct evidence for mitigation trade-offs and deployment workflow effects.
+## Canonical citation record
+
+Use citation key `p17_lin2025_codereviewqa` from `references/references.bib`; do not duplicate its BibTeX entry in this note.
+## Canonical SLR record
+
+> [!NOTE]
+> The numbered eleven-section record below is authoritative; the compact block is provenance only.
+
+- Identification/screening: `p17_lin2025_codereviewqa`; Core; Include; Medium–High relevance.
+- Study overview: Code-review comprehension assessment using question-answering and review context.
+- RQ1: Noisy, unfaithful, and context-insufficient review-comment/data types (Reported).
+- RQ2: Review comprehension and context use are central (Reported).
+- RQ3: QA/comprehension dimensions and benchmark evaluation (Reported).
+- RQ4: Context and benchmark quality versus model performance; mitigation cost is limited.
+- RQ5: Dataset validity and annotation protocol are relevant.
+- RQ6: Supports benchmark and evaluator design.
+- Failure taxonomy: noisy; unfaithful; context-insufficient; misunderstanding.
+- Metrics: QA/comprehension and benchmark performance.
+- Mitigation/trade-off: context-aware comprehension evaluation; no deployment gate or escalation.
+- Validity: annotation/reliability and transfer to generated comments require verification.
+- Quality: 19/24; supporting/core benchmark evidence.
+- Synthesis conclusion: supports comprehension and context dimensions, not direct preservation analysis.
+
+### 1. Identification
+- P17; `p17_lin2025_codereviewqa`; local full PDF; included; authoritative record.
+### 2. Screening and proposal alignment
+- Include as Core. `p17_lin2025_codereviewqa`; Core; Include; Medium–High relevance.
+### 3. Study overview
+Code-review comprehension assessment using question-answering and review context.
+### 4. Evidence mapped to proposal RQ1–RQ6
+| RQ | Evidence | Type | Location |
+|---|---|---|---|
+| RQ1 | Noisy, unfaithful, and context-insufficient review-comment/data types (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ2 | Review comprehension and context use are central (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ3 | QA/comprehension dimensions and benchmark evaluation (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ4 | Context and benchmark quality versus model performance; mitigation cost is limited. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ5 | Dataset validity and annotation protocol are relevant. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ6 | Supports benchmark and evaluator design. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+### 5. Failure and problematic-comment categories
+| Category | Type | Location |
+|---|---|---|
+| noisy | Reported/Inferred | Full PDF |
+| unfaithful | Reported/Inferred | Full PDF |
+| context-insufficient | Reported/Inferred | Full PDF |
+| misunderstanding. | Reported/Inferred | Full PDF |
+### 6. Evaluation dimensions and metrics
+| Dimension/metric | Limitation | Location |
+|---|---|---|
+| QA/comprehension and benchmark performance. | Not an end-to-end outcome | Full PDF |
+### 7. Mitigation and trade-offs
+- Mitigation/intervention: context-aware comprehension evaluation; no deployment gate or escalation.
+- Useful feedback potentially lost: not directly measured unless stated above.
+- Coverage: partial; useful-issue retention after mitigation is incomplete.
+- Human escalation: no formal rate/policy reported.
+- Cost: paper-specific evidence above; otherwise Not reported.
+### 8. Annotation and evaluator validity
+- annotation/reliability and transfer to generated comments require verification.
+- Q7–Q8 encode judging and reliability depth.
+### 9. Quality appraisal
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 | 2 | goal at scored depth. |
+| Q2 | 2 | artifact at scored depth. |
+| Q3 | 2 | dataset/context at scored depth. |
+| Q4 | 2 | procedure at scored depth. |
+| Q5 | 2 | metrics at scored depth. |
+| Q6 | 2 | failures at scored depth. |
+| Q7 | 1 | judging at scored depth. |
+| Q8 | 1 | reliability at scored depth. |
+| Q9 | 1 | intervention at scored depth. |
+| Q10 | 1 | trade-offs at scored depth. |
+| Q11 | 1 | threats at scored depth. |
+| Q12 | 2 | SLR support at scored depth. |
+- Total: 19/24; reporting-quality score.
+### 10. Review-process reliability and bias
+- Missing preservation/escalation evidence and selection/publication bias remain explicit; second-reviewer calibration is unavailable.
+### 11. Synthesis-ready conclusion
+- Contribution: Code-review comprehension assessment using question-answering and review context.
+- Boundary: supports comprehension and context dimensions, not direct preservation analysis.

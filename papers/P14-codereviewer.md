@@ -52,11 +52,10 @@
 ### Citation Note
 
 - [x] This paper should be cited in the final report.
-- [ ] Citation format has been checked.
+- [x] Citation key checked against `references/references.bib`.
 - [ ] BibTeX entry has been collected.
 
 ```bibtex
-% TODO: Paste BibTeX here after checking ACM BibTeX.
 ```
 
 ## 2. One-Sentence Summary
@@ -443,8 +442,89 @@ P14 is foundational rather than directly aligned with our final contribution. It
 - Important caution: CodeReviewer is foundational, but its evaluation assumptions are exactly what our paper should critique and extend.
 
 </details>
-## Proposal-aligned quality appraisal
+## Legacy proposal-aligned quality appraisal (superseded by the canonical record)
 
 P14 is **Core / High relevance**. It supports RQ1 through generic, irrelevant, low-information, and low-relevance comments; RQ2–RQ3 through code-change representation and evaluation metrics; and RQ4–RQ6 through dataset, training, multilingual, and metric trade-offs.
 
 **Quality score: 19/24.** Q1–Q7=2, Q8=1, Q9=1, Q10=1, Q11=1, Q12=2. It is an important generation baseline but does not directly evaluate useful-feedback preservation, escalation, or deployment cost.
+## Canonical citation record
+
+Use citation key `p14_li2022_codereviewer` from `references/references.bib`; do not duplicate its BibTeX entry in this note.
+## Canonical SLR record
+
+> [!NOTE]
+> The numbered eleven-section record below is authoritative; the compact block is provenance only.
+
+- Identification/screening: `p14_li2022_codereviewer`; Core; Include; High relevance.
+- Study overview: Large-scale pretraining for automated code-review activities using code-change/comment data.
+- RQ1: Generic, irrelevant, low-information, low-relevance, and meaningless comments are discussed, but no complete taxonomy (Reported/Our perspective).
+- RQ2: Code-change representation, hunk granularity, and multilingual context (Reported).
+- RQ3: BLEU/ROUGE and code-review generation/quality estimation (Reported).
+- RQ4: Dataset noise, hunk simplification, multilingual coverage, training cost, and metric limitations (Reported).
+- RQ5: Dataset quality is relevant; annotation validity is limited.
+- RQ6: Strong baseline and benchmark-design support.
+- Failure taxonomy: generic; irrelevant; low-information; low-relevance; meaningless.
+- Metrics: lexical similarity and task performance; human usefulness is limited.
+- Mitigation/trade-off: pretraining and representation choices; no deployment gate or escalation.
+- Validity: reference comments and lexical metrics may be weak proxies.
+- Quality: 19/24; core baseline evidence with limited workflow validity.
+- Synthesis conclusion: useful as a generation baseline, not sufficient for trade-off-aware deployment evaluation.
+
+### 1. Identification
+- P14; `p14_li2022_codereviewer`; local full PDF; included; authoritative record.
+### 2. Screening and proposal alignment
+- Include as Core. `p14_li2022_codereviewer`; Core; Include; High relevance.
+### 3. Study overview
+Large-scale pretraining for automated code-review activities using code-change/comment data.
+### 4. Evidence mapped to proposal RQ1–RQ6
+| RQ | Evidence | Type | Location |
+|---|---|---|---|
+| RQ1 | Generic, irrelevant, low-information, low-relevance, and meaningless comments are discussed, but no complete taxonomy (Reported/Our perspective). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ2 | Code-change representation, hunk granularity, and multilingual context (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ3 | BLEU/ROUGE and code-review generation/quality estimation (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ4 | Dataset noise, hunk simplification, multilingual coverage, training cost, and metric limitations (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ5 | Dataset quality is relevant; annotation validity is limited. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ6 | Strong baseline and benchmark-design support. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+### 5. Failure and problematic-comment categories
+| Category | Type | Location |
+|---|---|---|
+| generic | Reported/Inferred | Full PDF |
+| irrelevant | Reported/Inferred | Full PDF |
+| low-information | Reported/Inferred | Full PDF |
+| low-relevance | Reported/Inferred | Full PDF |
+| meaningless. | Reported/Inferred | Full PDF |
+### 6. Evaluation dimensions and metrics
+| Dimension/metric | Limitation | Location |
+|---|---|---|
+| lexical similarity and task performance | Not an end-to-end outcome | Full PDF |
+| human usefulness is limited. | Not an end-to-end outcome | Full PDF |
+### 7. Mitigation and trade-offs
+- Mitigation/intervention: pretraining and representation choices; no deployment gate or escalation.
+- Useful feedback potentially lost: not directly measured unless stated above.
+- Coverage: partial; useful-issue retention after mitigation is incomplete.
+- Human escalation: no formal rate/policy reported.
+- Cost: paper-specific evidence above; otherwise Not reported.
+### 8. Annotation and evaluator validity
+- reference comments and lexical metrics may be weak proxies.
+- Q7–Q8 encode judging and reliability depth.
+### 9. Quality appraisal
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 | 2 | goal at scored depth. |
+| Q2 | 2 | artifact at scored depth. |
+| Q3 | 2 | dataset/context at scored depth. |
+| Q4 | 2 | procedure at scored depth. |
+| Q5 | 2 | metrics at scored depth. |
+| Q6 | 2 | failures at scored depth. |
+| Q7 | 2 | judging at scored depth. |
+| Q8 | 1 | reliability at scored depth. |
+| Q9 | 1 | intervention at scored depth. |
+| Q10 | 1 | trade-offs at scored depth. |
+| Q11 | 1 | threats at scored depth. |
+| Q12 | 2 | SLR support at scored depth. |
+- Total: 20/24; reporting-quality score.
+### 10. Review-process reliability and bias
+- Missing preservation/escalation evidence and selection/publication bias remain explicit; second-reviewer calibration is unavailable.
+### 11. Synthesis-ready conclusion
+- Contribution: Large-scale pretraining for automated code-review activities using code-change/comment data.
+- Boundary: useful as a generation baseline, not sufficient for trade-off-aware deployment evaluation.

@@ -26,7 +26,6 @@
 | Artifact | Zenodo replication package reported in paper |
 
 ```bibtex
-% TODO: Add checked IEEE BibTeX.
 ```
 
 ## One-Sentence Summary
@@ -142,8 +141,87 @@ P19 is not a harmful-comment paper, but its categories help separate high-value 
 - [ ] Add 17-category taxonomy to `synthesis/problematic-comment-taxonomy.md` as a usefulness-linked taxonomy layer.
 - [ ] Add flat-vs-hierarchical classification to `synthesis/trade-off-framework.md`.
 - [ ] Add comment-type/usefulness-category to `synthesis/evaluation-dimensions.md`.
-## Proposal-aligned quality appraisal
+## Legacy proposal-aligned quality appraisal (superseded by the canonical record)
 
 P19 is **Core / High relevance**. It supports RQ1 through 17 fine-grained review-comment categories; RQ2–RQ3 through usefulness-linked classification; and RQ5–RQ6 through taxonomy and annotation-protocol design. RQ4 is only indirectly supported because classification is not deployment mitigation.
 
 **Quality score: 19/24.** Q1–Q6=2, Q7=1, Q8=2, Q9=1, Q10=0, Q11=1, Q12=2. It does not measure cost, escalation, or useful-feedback preservation after filtering.
+## Canonical citation record
+
+Use citation key `p19_nguyen2025_fine_grained_classification` from `references/references.bib`; do not duplicate its BibTeX entry in this note.
+## Canonical SLR record
+
+> [!NOTE]
+> The numbered eleven-section record below is authoritative; the compact block is provenance only.
+
+- Identification/screening: `p19_nguyen2025_fine_grained_classification`; Core; Include; High relevance.
+- Study overview: LLM classification of review comments into 17 fine-grained categories linked to usefulness.
+- RQ1: Fine-grained useful and low-value/comment-type categories (Reported).
+- RQ2: Category/usefulness distinctions and comment context (Reported).
+- RQ3: Classification accuracy and category-level evaluation (Reported).
+- RQ4: Filtering/classification versus misclassification and useful-comment loss (Inferred gap).
+- RQ5: Annotation difficulty and inter-category ambiguity (Reported/Our perspective).
+- RQ6: Strong taxonomy and annotation-protocol support.
+- Failure taxonomy: 17 categories; low-value and useful-intent boundaries are central.
+- Metrics: category classification, macro/per-class performance, usefulness-linked analysis.
+- Mitigation/trade-off: classification/filtering; operational cost and preservation not measured.
+- Validity: category ambiguity and annotator agreement require verification.
+- Quality: 19/24; strong taxonomy evidence, limited deployment trade-offs.
+- Synthesis conclusion: supports fine-grained taxonomy but does not prove correctness or actionability.
+
+### 1. Identification
+- P19; `p19_nguyen2025_fine_grained_classification`; local full PDF; included; authoritative record.
+### 2. Screening and proposal alignment
+- Include as Core. `p19_nguyen2025_fine_grained_classification`; Core; Include; High relevance.
+### 3. Study overview
+LLM classification of review comments into 17 fine-grained categories linked to usefulness.
+### 4. Evidence mapped to proposal RQ1–RQ6
+| RQ | Evidence | Type | Location |
+|---|---|---|---|
+| RQ1 | Fine-grained useful and low-value/comment-type categories (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ2 | Category/usefulness distinctions and comment context (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ3 | Classification accuracy and category-level evaluation (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ4 | Filtering/classification versus misclassification and useful-comment loss (Inferred gap). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ5 | Annotation difficulty and inter-category ambiguity (Reported/Our perspective). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ6 | Strong taxonomy and annotation-protocol support. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+### 5. Failure and problematic-comment categories
+| Category | Type | Location |
+|---|---|---|
+| 17 categories | Reported/Inferred | Full PDF |
+| low-value and useful-intent boundaries are central. | Reported/Inferred | Full PDF |
+### 6. Evaluation dimensions and metrics
+| Dimension/metric | Limitation | Location |
+|---|---|---|
+| category classification | Not an end-to-end outcome | Full PDF |
+| macro/per-class performance | Not an end-to-end outcome | Full PDF |
+| usefulness-linked analysis. | Not an end-to-end outcome | Full PDF |
+### 7. Mitigation and trade-offs
+- Mitigation/intervention: classification/filtering; operational cost and preservation not measured.
+- Useful feedback potentially lost: not directly measured unless stated above.
+- Coverage: partial; useful-issue retention after mitigation is incomplete.
+- Human escalation: no formal rate/policy reported.
+- Cost: paper-specific evidence above; otherwise Not reported.
+### 8. Annotation and evaluator validity
+- category ambiguity and annotator agreement require verification.
+- Q7–Q8 encode judging and reliability depth.
+### 9. Quality appraisal
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 | 2 | goal at scored depth. |
+| Q2 | 2 | artifact at scored depth. |
+| Q3 | 2 | dataset/context at scored depth. |
+| Q4 | 2 | procedure at scored depth. |
+| Q5 | 2 | metrics at scored depth. |
+| Q6 | 2 | failures at scored depth. |
+| Q7 | 1 | judging at scored depth. |
+| Q8 | 2 | reliability at scored depth. |
+| Q9 | 1 | intervention at scored depth. |
+| Q10 | 0 | trade-offs at scored depth. |
+| Q11 | 1 | threats at scored depth. |
+| Q12 | 2 | SLR support at scored depth. |
+- Total: 19/24; reporting-quality score.
+### 10. Review-process reliability and bias
+- Missing preservation/escalation evidence and selection/publication bias remain explicit; second-reviewer calibration is unavailable.
+### 11. Synthesis-ready conclusion
+- Contribution: LLM classification of review comments into 17 fine-grained categories linked to usefulness.
+- Boundary: supports fine-grained taxonomy but does not prove correctness or actionability.

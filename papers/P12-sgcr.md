@@ -52,11 +52,10 @@
 ### Citation Note
 
 - [x] This paper should be cited in the final report.
-- [ ] Citation format has been checked.
+- [x] Citation key checked against `references/references.bib`.
 - [ ] BibTeX entry has been collected.
 
 ```bibtex
-% TODO: Paste BibTeX here after checking IEEE/arXiv BibTeX.
 ```
 
 ## 2. One-Sentence Summary
@@ -445,8 +444,91 @@ P12 is highly relevant because it gives a concrete industrial example of specifi
 - Important caution: adoption rate is powerful but must be treated as a proxy, not correctness.
 
 </details>
-## Proposal-aligned quality appraisal
+## Legacy proposal-aligned quality appraisal (superseded by the canonical record)
 
 P12 is **Core / High relevance**. It supports RQ1 through irrelevant, incorrect, inconsistent, generic, trivial, low-priority, hallucinated, and unexplained comments; RQ2 through domain grounding; RQ3–RQ4 through explicit/implicit paths, specification quality, and maintenance trade-offs; and RQ6 through grounded mitigation design.
 
 **Quality score: 21/24.** Q1–Q7=2, Q8=1, Q9–Q10=2, Q11=1, Q12=2. The reported improvement should not be treated as evidence of preserved useful feedback or reduced human escalation.
+## Canonical citation record
+
+Use citation key `p12_wang2025_sgcr` from `references/references.bib`; do not duplicate its BibTeX entry in this note.
+## Canonical SLR record
+
+> [!NOTE]
+> The numbered eleven-section record below is authoritative; the compact block is provenance only.
+
+- Identification/screening: `p12_wang2025_sgcr`; Core; Include; High relevance.
+- Study overview: Specification-grounded code review with explicit specification injection and implicit propose-and-verify discovery.
+- RQ1: Irrelevant, incorrect, inconsistent, generic, trivial, low-priority, hallucinated, and unexplained comments (Reported).
+- RQ2: Domain/specification grounding and context consistency (Reported).
+- RQ3: Adoption, grounding, specification adherence, and review quality dimensions (Reported).
+- RQ4: Explicit grounding versus implicit discovery, control versus coverage, and maintenance cost (Reported).
+- RQ5: Specification quality and context validity; annotation details require verification.
+- RQ6: Strong grounding mitigation and trade-off support.
+- Failure taxonomy: generic; irrelevant; hallucinated; inconsistent; unexplained; low-priority; domain-insensitive.
+- Metrics: adoption and comparative effectiveness; exact metric definitions require verification.
+- Mitigation/trade-off: specification-grounded prompting and verification; may cause checklist fixation or maintenance burden.
+- Validity: production/adoption is not equivalent to correctness or useful-feedback preservation.
+- Quality: 21/24; high-quality core evidence with partial reliability details.
+- Synthesis conclusion: supports explicit grounding while preserving the coverage/control trade-off.
+
+### 1. Identification
+- P12; `p12_wang2025_sgcr`; local full PDF; included; authoritative record.
+### 2. Screening and proposal alignment
+- Include as Core. `p12_wang2025_sgcr`; Core; Include; High relevance.
+### 3. Study overview
+Specification-grounded code review with explicit specification injection and implicit propose-and-verify discovery.
+### 4. Evidence mapped to proposal RQ1–RQ6
+| RQ | Evidence | Type | Location |
+|---|---|---|---|
+| RQ1 | Irrelevant, incorrect, inconsistent, generic, trivial, low-priority, hallucinated, and unexplained comments (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ2 | Domain/specification grounding and context consistency (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ3 | Adoption, grounding, specification adherence, and review quality dimensions (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ4 | Explicit grounding versus implicit discovery, control versus coverage, and maintenance cost (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ5 | Specification quality and context validity; annotation details require verification. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ6 | Strong grounding mitigation and trade-off support. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+### 5. Failure and problematic-comment categories
+| Category | Type | Location |
+|---|---|---|
+| generic | Reported/Inferred | Full PDF |
+| irrelevant | Reported/Inferred | Full PDF |
+| hallucinated | Reported/Inferred | Full PDF |
+| inconsistent | Reported/Inferred | Full PDF |
+| unexplained | Reported/Inferred | Full PDF |
+| low-priority | Reported/Inferred | Full PDF |
+| domain-insensitive. | Reported/Inferred | Full PDF |
+### 6. Evaluation dimensions and metrics
+| Dimension/metric | Limitation | Location |
+|---|---|---|
+| adoption and comparative effectiveness | Not an end-to-end outcome | Full PDF |
+| exact metric definitions require verification. | Not an end-to-end outcome | Full PDF |
+### 7. Mitigation and trade-offs
+- Mitigation/intervention: specification-grounded prompting and verification; may cause checklist fixation or maintenance burden.
+- Useful feedback potentially lost: not directly measured unless stated above.
+- Coverage: partial; useful-issue retention after mitigation is incomplete.
+- Human escalation: no formal rate/policy reported.
+- Cost: paper-specific evidence above; otherwise Not reported.
+### 8. Annotation and evaluator validity
+- production/adoption is not equivalent to correctness or useful-feedback preservation.
+- Q7–Q8 encode judging and reliability depth.
+### 9. Quality appraisal
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 | 2 | goal at scored depth. |
+| Q2 | 2 | artifact at scored depth. |
+| Q3 | 2 | dataset/context at scored depth. |
+| Q4 | 2 | procedure at scored depth. |
+| Q5 | 2 | metrics at scored depth. |
+| Q6 | 2 | failures at scored depth. |
+| Q7 | 2 | judging at scored depth. |
+| Q8 | 1 | reliability at scored depth. |
+| Q9 | 2 | intervention at scored depth. |
+| Q10 | 2 | trade-offs at scored depth. |
+| Q11 | 1 | threats at scored depth. |
+| Q12 | 2 | SLR support at scored depth. |
+- Total: 22/24; reporting-quality score.
+### 10. Review-process reliability and bias
+- Missing preservation/escalation evidence and selection/publication bias remain explicit; second-reviewer calibration is unavailable.
+### 11. Synthesis-ready conclusion
+- Contribution: Specification-grounded code review with explicit specification injection and implicit propose-and-verify discovery.
+- Boundary: supports explicit grounding while preserving the coverage/control trade-off.

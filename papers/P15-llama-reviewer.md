@@ -35,7 +35,6 @@
 | Code / artifact | Not verified in this pass |
 
 ```bibtex
-% TODO: Add checked IEEE/arXiv BibTeX.
 ```
 
 ## 2. One-Sentence Summary
@@ -195,8 +194,87 @@ The paper does not define a problematic-comment taxonomy, but it indirectly poin
 - [ ] Extract exact storage/parameter counts into trade-off framework.
 - [ ] Add LoRA/prefix tuning to mitigation strategy matrix.
 - [ ] Connect thresholding result to useful-feedback preservation and missed-diff cost.
-## Proposal-aligned quality appraisal
+## Legacy proposal-aligned quality appraisal (superseded by the canonical record)
 
 P15 is **Core / Medium–High relevance**. It supports RQ1 through generic and low-quality generation risks; RQ2–RQ3 through review-necessity prediction, generation, and refinement; and RQ4–RQ6 through parameter-efficient adaptation and task-performance trade-offs.
 
 **Quality score: 18/24.** Q1–Q5=2, Q6=1, Q7=2, Q8=1, Q9=2, Q10=1, Q11=1, Q12=2. It provides limited direct evidence about problematic-comment taxonomy and workflow consequences.
+## Canonical citation record
+
+Use citation key `p15_lu2023_llama_reviewer` from `references/references.bib`; do not duplicate its BibTeX entry in this note.
+## Canonical SLR record
+
+> [!NOTE]
+> The numbered eleven-section record below is authoritative; the compact block is provenance only.
+
+- Identification/screening: `p15_lu2023_llama_reviewer`; Core; Include; Medium–High relevance.
+- Study overview: Parameter-efficient LLaMA adaptation for review-necessity prediction, comment generation, and refinement.
+- RQ1: Generic and low-quality generated comments; no formal taxonomy (Reported/Our perspective).
+- RQ2: Review-task input and code-change context (Reported).
+- RQ3: Necessity prediction, generation, refinement, automatic metrics, and comparative performance (Reported).
+- RQ4: PEFT/resource efficiency versus quality and generalization (Reported).
+- RQ5: Dataset and evaluation validity are relevant but not deeply operationalized.
+- RQ6: Supports adaptation and mitigation-family comparison.
+- Failure taxonomy: generic; low-quality; unnecessary review; insufficiently informative.
+- Metrics: task performance and lexical/automatic metrics.
+- Mitigation/trade-off: parameter-efficient adaptation; compute savings versus human/workflow validity.
+- Validity: limited direct human usefulness and preservation evidence.
+- Quality: 18/24; relevant core study with incomplete taxonomy/workflow evidence.
+- Synthesis conclusion: supports model-adaptation trade-offs, not full comment-quality evaluation.
+
+### 1. Identification
+- P15; `p15_lu2023_llama_reviewer`; local full PDF; included; authoritative record.
+### 2. Screening and proposal alignment
+- Include as Core. `p15_lu2023_llama_reviewer`; Core; Include; Medium–High relevance.
+### 3. Study overview
+Parameter-efficient LLaMA adaptation for review-necessity prediction, comment generation, and refinement.
+### 4. Evidence mapped to proposal RQ1–RQ6
+| RQ | Evidence | Type | Location |
+|---|---|---|---|
+| RQ1 | Generic and low-quality generated comments; no formal taxonomy (Reported/Our perspective). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ2 | Review-task input and code-change context (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ3 | Necessity prediction, generation, refinement, automatic metrics, and comparative performance (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ4 | PEFT/resource efficiency versus quality and generalization (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ5 | Dataset and evaluation validity are relevant but not deeply operationalized. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ6 | Supports adaptation and mitigation-family comparison. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+### 5. Failure and problematic-comment categories
+| Category | Type | Location |
+|---|---|---|
+| generic | Reported/Inferred | Full PDF |
+| low-quality | Reported/Inferred | Full PDF |
+| unnecessary review | Reported/Inferred | Full PDF |
+| insufficiently informative. | Reported/Inferred | Full PDF |
+### 6. Evaluation dimensions and metrics
+| Dimension/metric | Limitation | Location |
+|---|---|---|
+| task performance and lexical/automatic metrics. | Not an end-to-end outcome | Full PDF |
+### 7. Mitigation and trade-offs
+- Mitigation/intervention: parameter-efficient adaptation; compute savings versus human/workflow validity.
+- Useful feedback potentially lost: not directly measured unless stated above.
+- Coverage: partial; useful-issue retention after mitigation is incomplete.
+- Human escalation: no formal rate/policy reported.
+- Cost: paper-specific evidence above; otherwise Not reported.
+### 8. Annotation and evaluator validity
+- limited direct human usefulness and preservation evidence.
+- Q7–Q8 encode judging and reliability depth.
+### 9. Quality appraisal
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 | 2 | goal at scored depth. |
+| Q2 | 2 | artifact at scored depth. |
+| Q3 | 2 | dataset/context at scored depth. |
+| Q4 | 2 | procedure at scored depth. |
+| Q5 | 2 | metrics at scored depth. |
+| Q6 | 1 | failures at scored depth. |
+| Q7 | 2 | judging at scored depth. |
+| Q8 | 1 | reliability at scored depth. |
+| Q9 | 2 | intervention at scored depth. |
+| Q10 | 1 | trade-offs at scored depth. |
+| Q11 | 1 | threats at scored depth. |
+| Q12 | 2 | SLR support at scored depth. |
+- Total: 20/24; reporting-quality score.
+### 10. Review-process reliability and bias
+- Missing preservation/escalation evidence and selection/publication bias remain explicit; second-reviewer calibration is unavailable.
+### 11. Synthesis-ready conclusion
+- Contribution: Parameter-efficient LLaMA adaptation for review-necessity prediction, comment generation, and refinement.
+- Boundary: supports model-adaptation trade-offs, not full comment-quality evaluation.

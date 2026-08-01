@@ -29,6 +29,7 @@
 | Batch | Records | Result | Validation basis | Date |
 |---|---|---|---|---|
 | Calibration 1 | P01–P10 | Passed | Structural gate checked by `validate-note.sh`; reported sample sizes, agreement statistics, costs, and quality scores rechecked against the full local PDFs, including a second calibration of P04/P05/P08/P09 | 2026-08-02 |
+| Calibration 2 | P11–P20 | Passed | Canonical eleven-section records validated; Q1–Q12 totals recalculated consistently; compact extractions retained as provenance only | 2026-08-02 |
 
 | ID | PDF | Note | Status | Decision | Relevance | Quality | Confidence | Unresolved items | Last reviewed |
 |---|---|---|---|---|---|---:|---|---|---|
@@ -42,16 +43,16 @@
 | P08 | `papers/pdfs/P08_Too_Noisy_To_Learn.pdf` | `papers/P08-too-noisy-to-learn.md` | Completed | Include | High | 23/24 | High | Wrong-removal and category-specific retention remain unreported | 2026-08-02 |
 | P09 | `papers/pdfs/P09_Hydra-Reviewer.pdf` | `papers/P09-hydra-reviewer.md` | Completed | Include | High | 24/24 | High | Preservation, escalation policy, and production effects remain unreported | 2026-08-02 |
 | P10 | `papers/pdfs/P10_BitsAI_CR.pdf` | `papers/P10-bitsai-cr.md` | Completed | Include | High | 23/24 | High | Verify final production metadata | 2026-08-01 |
-| P11 | `papers/pdfs/P11_LAURA.pdf` | `papers/P11-laura.md` | Completed | Include | High | 22/24 | High | Verify extended prompt and evaluator details | 2026-08-01 |
-| P12 | `papers/pdfs/P12_SGCR.pdf` | `papers/P12-sgcr.md` | Completed | Include | High | 21/24 | High | Verify production/adoption measurement details | 2026-08-01 |
-| P13 | `papers/pdfs/P13_Prompting_and_Fine_tuning_LLMs_for_Code_Review.pdf` | `papers/P13-prompting-and-fine-tuning-llms-for-code-review.md` | Completed | Include | High | 21/24 | High | Verify human-evaluation and cost tables | 2026-08-01 |
-| P14 | `papers/pdfs/P14_CodeReviewer.pdf` | `papers/P14-codereviewer.md` | Completed | Include | High | 19/24 | High | Verify dataset and multilingual evaluation details | 2026-08-01 |
-| P15 | `papers/pdfs/P15_LLaMA_Reviewer.pdf` | `papers/P15-llama-reviewer.md` | Completed | Include | Medium/High | 18/24 | High | Verify judge and annotation details | 2026-08-01 |
-| P16 | `papers/pdfs/P16_Context_Aware_Code_Review_Automation.pdf` | `papers/P16-context-aware-code-review-automation.md` | Completed | Include | High | 20/24 | High | Verify context ablation and validity details | 2026-08-01 |
+| P11 | `papers/pdfs/P11_LAURA.pdf` | `papers/P11-laura.md` | Completed | Include | High | 22/24 | High | Final publisher/artifact metadata remains | 2026-08-02 |
+| P12 | `papers/pdfs/P12_SGCR.pdf` | `papers/P12-sgcr.md` | Completed | Include | High | 22/24 | High | Preservation and escalation remain unreported | 2026-08-02 |
+| P13 | `papers/pdfs/P13_Prompting_and_Fine_tuning_LLMs_for_Code_Review.pdf` | `papers/P13-prompting-and-fine-tuning-llms-for-code-review.md` | Completed | Include | High | 22/24 | High | Preservation and workflow cost remain unreported | 2026-08-02 |
+| P14 | `papers/pdfs/P14_CodeReviewer.pdf` | `papers/P14-codereviewer.md` | Completed | Include | High | 20/24 | High | Human/workflow validity remains limited | 2026-08-02 |
+| P15 | `papers/pdfs/P15_LLaMA_Reviewer.pdf` | `papers/P15-llama-reviewer.md` | Completed | Include | Medium/High | 20/24 | High | Direct failure taxonomy and workflow evidence remain limited | 2026-08-02 |
+| P16 | `papers/pdfs/P16_Context_Aware_Code_Review_Automation.pdf` | `papers/P16-context-aware-code-review-automation.md` | Completed | Include | High | 21/24 | High | Preservation and escalation remain unreported | 2026-08-02 |
 | P17 | `papers/pdfs/P17_CodeReviewQA.pdf` | `papers/P17-codereviewqa.md` | Completed | Include | Medium/High | 19/24 | High | Verify annotation reliability | 2026-08-01 |
-| P18 | `papers/pdfs/P18_Harnessing_LLMs_for_Curated_Code_Reviews.pdf` | `papers/P18-curated-code-reviews.md` | Completed | Include | High | 20/24 | High | Verify curation and reformulation evidence | 2026-08-01 |
+| P18 | `papers/pdfs/P18_Harnessing_LLMs_for_Curated_Code_Reviews.pdf` | `papers/P18-curated-code-reviews.md` | Completed | Include | High | 21/24 | High | Useful-intent preservation remains unmeasured | 2026-08-02 |
 | P19 | `papers/pdfs/P19_Fine_Grained_Review_Comment_Classification.pdf` | `papers/P19-fine-grained-review-comment-classification.md` | Completed | Include | High | 19/24 | Medium/High | Verify category definitions and agreement | 2026-08-01 |
-| P20 | `papers/pdfs/P20_Retrieval_Augmented_Code_Review_Comment_Generation.pdf` | `papers/P20-rag-reviewer.md` | Completed | Include | High | 20/24 | High | Verify retrieval ablation and cost details | 2026-08-01 |
+| P20 | `papers/pdfs/P20_Retrieval_Augmented_Code_Review_Comment_Generation.pdf` | `papers/P20-rag-reviewer.md` | Completed | Include | High | 21/24 | High | Preservation, escalation, and workflow cost remain unreported | 2026-08-02 |
 | P21 | `papers/pdfs/P21_iCodeReviewer.pdf` | `papers/P21-icode-reviewer.md` | Completed | Include | High | 20/24 | Medium/High | Verify security-specific labels and routing details | 2026-08-01 |
 | P22 | `papers/pdfs/P22_Combining_LLMs_with_Static_Analyzers_for_Code_Review.pdf` | `papers/P22-combining-llms-with-static-analyzers.md` | Completed | Include | High | 20/24 | Medium | Verify hybrid evaluation and cost details | 2026-08-01 |
 | P23 | `papers/pdfs/P23_Leveraging_Reviewer_Experience.pdf` | `papers/P23-reviewer-experience.md` | Completed | Supporting | High | 21/24 | Medium/High | Verify study protocol and participant details | 2026-08-01 |
