@@ -2,6 +2,8 @@
 
 This log records the current local corpus. Counts from the original database search are not available and must not be fabricated.
 
+Future reproducible searches must be recorded row by row in `method/search-run-log.csv`. The empty data rows in that file are intentional: no historical database counts have been reconstructed.
+
 | Stage | Count | Status |
 |---|---:|---|
 | Local PDF records identified | 71 | Verified from `papers/pdfs/` |

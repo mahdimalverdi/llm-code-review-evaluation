@@ -4,6 +4,17 @@
 
 We conducted a targeted structured literature review inspired by software-engineering SLR guidance. The review follows question definition, study identification, eligibility assessment, quality appraisal, data extraction, thematic synthesis, and reporting. Taxonomy construction and reliability planning additionally draw on established taxonomy and agreement methods [@m01_nickerson2013_taxonomy; @m02_cohen1960_kappa; @m03_krippendorff2018_content_analysis]. The work is not presented as a fully reproducible SLR because the original database-specific search dates, queries, retrieval counts, deduplication counts, and title/abstract screening history were not preserved.
 
+### Goal definition
+
+Following a Goal--Question--Metric structure, the review goal is defined as follows:
+
+- **Purpose:** analyze and characterize;
+- **Issue:** evaluation and mitigation trade-offs;
+- **Object:** LLM-generated and automated code review comments and their evaluation instruments; and
+- **Viewpoint:** researchers and tool builders designing reliable code-review evaluation.
+
+The six review questions refine this goal, while the extraction fields identify the evidence required to answer each question.
+
 ## Review Questions
 
 | RQ | Question |
@@ -35,9 +46,25 @@ The proposal specified eight 0--2 criteria. The extraction workflow expanded the
 
 Each paper has one authoritative Markdown record derived from the local full text. Records contain bibliographic identity, screening decision, study design, RQ1--RQ6 evidence, Q1--Q12 appraisal, trade-off fields, evaluator-validity fields, evidence locations, and unresolved verification items. All 71 records pass the same eleven-section structural validator. This validation establishes completeness of form, not independent reviewer agreement.
 
+<!-- table: caption="Study-level data items and their use in the review." label="tab:data-items" -->
+| Data-item group | Fields | Use |
+|---|---|---|
+| Bibliographic | ID, citation key, title, year, venue, publication type | Corpus demographics |
+| Evidence weighting | evidence tier, decision, relevance, quality score, confidence | RQ6 and validity |
+| Review artifact | context types, evaluated artifact, evaluator types | RQ2 and RQ5 |
+| Failure coding | problematic-comment and related failure categories | RQ1 |
+| Evaluation coding | quality, workflow, cost, and evaluator-validity dimensions | RQ2 |
+| Mitigation coding | family and intervention point | RQ3 |
+| Trade-off reporting | preservation, coverage, escalation, and cost availability | RQ4 |
+| Method validity | annotation, limitations, and RQ evidence status | RQ5 and RQ6 |
+
+The complete field definitions and controlled labels are provided in the replication artifact `method/slr-data-dictionary.md`.
+
 ## Synthesis
 
-We used tabulation, thematic grouping, and framework mapping. We did not pool incompatible metrics. Findings were organized by failure type, evaluation dimension, mitigation intervention point, preservation and cost evidence, context and dataset validity, and evaluator risk. Paper IDs provide internal traceability; bibliography keys support publication-facing claims. Denominators are stated when counts are reported.
+We used tabulation, thematic grouping, and framework mapping. We did not pool incompatible metrics. Initial categories were derived during cross-paper synthesis and normalized into controlled vocabularies for failure types, evaluation dimensions, mitigation families, and context types. A deterministic script then projected the authoritative notes into one study-level CSV row per paper. The script searches the canonical numbered sections, records multi-valued controlled labels, and uses `NR` when the note does not contain enough evidence. The generated counts therefore describe coded evidence in the notes, not the prevalence of failures in deployed systems.
+
+The script also validates that P01--P71 occur exactly once, evidence tiers do not overlap, bibliography keys resolve, and quality scores are available. Findings were organized by research question. Paper IDs provide internal traceability, while bibliography keys support publication-facing claims. Every reported count uses the 71-record evidence pool as its denominator unless another denominator is stated.
 
 ## Protocol Deviations and Amendments
 

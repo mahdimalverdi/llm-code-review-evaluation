@@ -51,6 +51,7 @@ The 71-paper local corpus is an evidence pool, not automatically 71 equally weig
 - Duplicate P18 and P21 notes were consolidated and removed.
 - `matrices/cross-paper-synthesis.md` covers P01–P71.
 - The taxonomy, context model, evaluation dimensions, annotation guideline, evaluation schema, and trade-off framework are drafted.
+- `data/slr-extraction.csv` provides one reproducible study-level row for each P01–P71 record, and `data/slr-summary.md` reports generated demographics and RQ-level coding counts.
 - The original database queries, dates, retrieval counts, and title/abstract screening history remain unavailable.
 - Several synthesis files still require publication-facing citations and integration into the final RQ-oriented report.
 
@@ -72,6 +73,10 @@ The 71-paper local corpus is an evidence pool, not automatically 71 equally weig
 | `method/annotation-guideline.md` | Annotation definitions and decision rules |
 | `method/evaluation-schema.md` | Structured annotation and derived-metric schema |
 | `references/references.bib` | Single bibliography source |
+| `method/slr-data-dictionary.md` | RQ-linked data items and controlled coding vocabulary |
+| `data/slr-extraction.csv` | Generated study-level extraction dataset |
+| `data/slr-summary.md` | Generated demographics, quality, and RQ coding summaries |
+| `scripts/build_slr_dataset.py` | Rebuilds and validates the extraction dataset |
 
 ## Reporting Rules
 
@@ -86,9 +91,9 @@ The 71-paper local corpus is an evidence pool, not automatically 71 equally weig
 
 1. Re-run and document database searches if the course requires the formal SLR label.
 2. Freeze the final included set and evidence tier for each paper.
-3. Complete citation traceability in all synthesis prose.
-4. Produce RQ1–RQ6 result tables and narrative findings.
-5. Rewrite the manuscript as a review report rather than an unexecuted empirical study.
-6. Verify unresolved bibliographic metadata and lower-confidence extraction details.
+3. Manually audit ambiguous/high-impact codes in the generated extraction dataset.
+4. Complete citation traceability in all synthesis prose.
+5. Verify unresolved bibliographic metadata and lower-confidence extraction details.
+6. Conduct independent calibration on a sample of selection and extraction decisions.
 
 Any controlled mitigation experiment is future work that can use the taxonomy and framework developed here; it is not part of the current seminar deliverable.

@@ -81,6 +81,13 @@ when written to `build/paper.tex`.
 4. Inspect `build/paper.tex`.
 5. Later, compile the LaTeX file with a standard BibTeX workflow.
 
+Before building the paper after note or coding changes, regenerate the study-level review dataset:
+
+```bash
+python3 scripts/build_slr_dataset.py
+python3 scripts/build_pdf.py
+```
+
 ## Important Rule
 
 Do not manually edit `build/paper.tex`. It is generated from the Markdown section files.
