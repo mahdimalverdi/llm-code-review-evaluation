@@ -18,11 +18,11 @@ The current change set is not ready to be committed as a completed SLR extractio
 
 ### 1. Uniformity-gate failure
 
-Most notes contain a short appended block titled “Canonical SLR extraction (uniform re-review),” but the block is not the canonical eleven-section record required by `skills/slr-paper-reviewer/SKILL.md`. Common omissions are page/section locations for RQ evidence, one evidence note for each Q1–Q12 score, explicit useful-feedback preservation/coverage/escalation/cost fields, and review-process reliability fields. P01–P10 were reconstructed, content-calibrated against their full PDFs, and passed the validator on 2026-08-02. Their legacy quality sections are explicitly marked as superseded. P11–P71 remain subject to this blocker; legacy `Completed` statuses outside validated batches therefore overstate readiness.
+All 71 authoritative notes now contain the required eleven-section canonical record and pass `validate-note.sh`. Legacy compact extractions are retained as provenance and marked non-authoritative where applicable. This structural blocker is resolved; independent second-reviewer calibration remains a review-level limitation.
 
 ### 2. Provisional full-text verification
 
-P54–P71 retain provisional or low/medium-confidence extraction concerns. P54–P60 are explicitly marked in progress. P61–P71 have provisional quality scores despite legacy completed statuses. These records should not support final quantitative claims until checked against the full PDFs.
+No authoritative record remains provisional. Medium-confidence records retain explicit transfer, evaluator, or second-reviewer limitations and should be weighted accordingly in synthesis.
 
 ### 3. Duplicate note identities (partially resolved)
 
