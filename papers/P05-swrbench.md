@@ -51,11 +51,10 @@
 ### Citation Note
 
 - [x] This paper should be cited in the final report.
-- [ ] Citation format has been checked.
-- [ ] BibTeX entry has been collected.
+- [x] Citation key checked against `references/references.bib`.
+- [x] Canonical BibTeX entry exists in `references/references.bib`.
 
 ```bibtex
-% TODO: Paste BibTeX here after checking the final arXiv/BibTeX source.
 ```
 
 ## 2. One-Sentence Summary
@@ -382,7 +381,7 @@ SWRBench strengthens the benchmark-realism side of our framework while leaving r
 | Need for trade-off-aware evaluation | Aggregation improves F1 but may add cost/latency/filtering risk. | `Reported / Our perspective` |
 | Need for useful-feedback preservation metric | Aggregation filters invalid points but lost useful points not measured. | `Our perspective` |
 
-## 18. Quality Appraisal
+## 18. Legacy Quality Appraisal (superseded by the canonical record)
 
 | Criterion | Score | Evidence note |
 |---|---:|---|
@@ -441,3 +440,102 @@ P05 is high-priority because it directly supports PR-centric evaluation, full pr
 - Key synthesis point: full context is not automatically high-quality context.
 
 </details>
+## Canonical citation record
+
+Use citation key `p05_zeng2025_swrbench` from `references/references.bib`; do not duplicate its BibTeX entry in this note.
+## Canonical SLR record
+
+> [!NOTE]
+> The numbered eleven-section record below is authoritative for synthesis and quality scoring. Earlier compact/legacy appraisal material is retained only for provenance.
+
+### 1. Identification
+
+- Project ID: P05; citation key: `p05_zeng2025_swrbench`.
+- Source: local full PDF; included at full-text stage; no duplicate identified.
+
+### 2. Screening and proposal alignment
+
+- Decision: Include; Core; High relevance.
+- Rationale: PR-centric benchmark of functional and non-functional review issue coverage under repository context.
+- Deliverables: benchmark/evaluation design and trade-off framework.
+
+### 3. Study overview
+
+SWR-Bench is built from 1,000 manually verified open-source PRs and evaluates code-review systems at PR level. It emphasizes realistic repository context, multiple valid review points, and an evaluation procedure intended to move beyond single-reference comment similarity (benchmark construction and evaluation-method sections).
+
+### 4. Evidence mapped to proposal RQ1–RQ6
+
+| RQ | Evidence and interpretation | Type | Location |
+|---|---|---|---|
+| RQ1 | Missed functional/non-functional issues and invalid generated review points are observable benchmark failures. | Reported | Benchmark taxonomy and results sections |
+| RQ2 | Issue coverage, correctness/matching, and PR-level performance broaden evaluation beyond lexical similarity. | Reported | Evaluation method and study sections |
+| RQ3 | PR/repository context is a before-generation intervention; multiple-review aggregation is a generation/evaluation strategy. | Inferred | Method sections |
+| RQ4 | Broader context and aggregation can improve coverage but increase inference cost, redundancy, and invalid findings. | Reported/Inferred | Study and discussion sections |
+| RQ5 | Manual PR verification improves realism, while human-review ground truth remains potentially incomplete. | Reported/Our perspective | Benchmark construction and threats sections |
+| RQ6 | Direct support for PR-level benchmark design and coverage-sensitive evaluation. | Our perspective | Whole study |
+
+### 5. Failure and problematic-comment categories
+
+| Category | Definition/example | Type | Location |
+|---|---|---|---|
+| Missed functional issue | Failure to identify behavior-related review concern. | Reported | Taxonomy/results |
+| Missed non-functional issue | Failure to identify maintainability/style/performance concern. | Reported | Taxonomy/results |
+| Invalid review point | Generated concern is unsupported or incorrect. | Reported | Evaluation protocol |
+
+### 6. Evaluation dimensions and metrics
+
+| Dimension | Operationalization | Result/limitation | Location |
+|---|---|---|---|
+| Issue coverage | Recovery of verified review points | Reference set may be incomplete | Evaluation method |
+| Correctness/validity | Valid versus invalid generated points | Depends on evaluator protocol | Evaluation method |
+| Functional/non-functional breadth | Category-specific performance | Category prevalence affects estimates | Dataset/results |
+| Useful-feedback preservation | Not directly reported | Aggregation/filter loss cannot be estimated | Discussion |
+
+### 7. Mitigation and trade-offs
+
+- Mitigation: repository/PR context and multiple-review aggregation; before/during generation.
+- Reduces: missed cross-file issues and single-output incompleteness.
+- Useful feedback potentially lost: not measured; aggregation may suppress distinct minority findings.
+- Coverage: directly measured; human escalation: not reported.
+- Cost: larger context and repeated generations increase compute. The paper reports approximately USD 1.57 for a complete 1,000-PR SWR-Bench evaluation with Gemini-2.5-Flash; end-to-end generation costs for every reviewed ACR configuration are not consolidated.
+- New failures: redundancy, invalid review points, and context noise.
+
+### 8. Annotation and evaluator validity
+
+- Judge/annotator: manual PR verification plus benchmark evaluator.
+- Rubric: issue validity/matching and category coverage.
+- Reliability: five experienced computer-science graduate annotators manually verified candidate PRs, with each PR independently annotated by at least two annotators. A separate 100-report validation compares three human experts and two LLMs; pairwise hit agreement is 89.2%–94.9%, while type and severity agreement are lower.
+- Bias: open-source PR selection and incomplete human feedback.
+
+### 9. Quality appraisal
+
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 | 2 | Benchmark purpose and study questions are clear. |
+| Q2 | 2 | SWR-Bench and evaluated systems are specified. |
+| Q3 | 2 | 1,000 verified PRs and context are described. |
+| Q4 | 2 | Construction and evaluation procedures are understandable. |
+| Q5 | 2 | Coverage and validity measures are defined. |
+| Q6 | 2 | Missed and invalid issue categories are reported. |
+| Q7 | 2 | Dataset verification and the three-human/two-LLM evaluation protocol are described. |
+| Q8 | 2 | Independent double annotation, majority-vote LLM screening, and human–LLM agreement matrices provide explicit reliability checks. |
+| Q9 | 2 | Context/aggregation strategies are evaluated. |
+| Q10 | 2 | Precision/recall/F1 expose coverage versus false positives, and the paper reports the USD 1.57 judge-cost choice; useful-feedback preservation remains absent. |
+| Q11 | 1 | Limitations are discussed. |
+| Q12 | 2 | Strong support for benchmark and framework design. |
+
+- Total: 23/24; high-quality core evidence with residual severity-subjectivity and ground-truth-completeness limits.
+
+### 10. Review-process reliability and bias
+
+- Missing data: useful-feedback preservation, human escalation, and consolidated end-to-end generation cost across all ACR configurations; severity agreement remains comparatively weak.
+- Publication bias: benchmark includes selected open-source PRs and tested systems.
+- Selection uncertainty: low; extraction uncertainty: medium for annotator protocol.
+- Second reviewer unavailable; no duplicate identified.
+
+### 11. Synthesis-ready conclusion
+
+- Contribution: realistic PR-level coverage and validity evaluation.
+- Does not establish: that more context or aggregation preserves all useful comments or reduces operational cost.
+- Candidate claim: PR-level benchmarks should separate missed issues from invalid generated findings.
+- Follow-up: verify agreement and aggregation-cost details.

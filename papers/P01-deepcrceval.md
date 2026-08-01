@@ -60,7 +60,7 @@ The study investigates whether text-similarity metrics provide valid evaluations
 | RQ5 | The study explicitly examines contextual adequacy and reports that 45% of Tufano and 54% of CodeReviewer comments require out-of-method or out-of-hunk context. Dataset validity is central; annotation difficulty is reflected in the cost/time discussion. | Reported | pp. 50–52, 56 |
 | RQ6 | P01 directly supports the evaluation-dimension design, benchmark-validity analysis, human/LLM annotation comparison, and evaluator-cost analysis. It does not provide a complete mitigation trade-off protocol. | Reported / Our perspective | pp. 49–57 |
 
-## 5. Problematic-comment and failure categories
+## 5. Failure and problematic-comment categories
 
 ### Explicit categories or dimensions reported
 
@@ -126,6 +126,7 @@ The study reports 3% ideal comments in Tufano and 8% in CodeReviewer under its c
 - **Intervention point:** DeepCRCEval intervenes after generation as an evaluation instrument; LLM-Reviewer intervenes during generation through prompting.
 - **What it reduces:** reliance on lexical-overlap metrics and human evaluation burden.
 - **Useful-feedback preservation:** not measured.
+- **Useful feedback potentially lost:** not measured; use as a gate would require false-suppression labels.
 - **Review coverage:** not measured as a before/after mitigation outcome.
 - **Human escalation:** not measured.
 - **Operational cost:** human evaluators average 224.45 seconds and $0.62 for a single-comment evaluation, while LLM evaluators average 25.18 seconds and $0.06; for performance comparison, the reported figures are 752.65 seconds/$2.09 for humans and 68.69 seconds/$0.17 for LLMs (Table 4, p. 56).
@@ -149,7 +150,16 @@ The study reports 3% ideal comments in Tufano and 8% in CodeReviewer under its c
 | Q12 direct SLR support | 2 | Strong direct support for RQ1, RQ2, RQ5, and RQ6 |
 | **Total** | **21/24** | **High-quality core evidence** |
 
-## 10. Synthesis-ready conclusion
+## 10. Review-process reliability and bias
+
+- **Missing data:** The conference PDF does not fully expose every prompt and appendix detail used by the extended version.
+- **Publication-bias concern:** The study evaluates established public benchmarks and selected generators; negative or unpublished systems are not represented.
+- **Selection uncertainty:** Low; this is a direct core study.
+- **Extraction uncertainty:** Medium for extended-version prompt details, low for the reported tables and main findings.
+- **Second-reviewer check:** Not available for this SLR extraction.
+- **Duplicate handling:** Treat the conference paper as the primary record and the extended arXiv version as a companion, not a separate study.
+
+## 11. Synthesis-ready conclusion
 
 P01 is a high-relevance core study showing that code-review comment evaluation cannot rely on reference-text similarity alone when reference comments are inconsistent or poorly suited to automated review. Its strongest contribution to this SLR is the operationalization of nine comment-quality dimensions and the empirical treatment of benchmark validity, context adequacy, evaluator agreement, and evaluation cost. It provides only partial evidence for trade-off-aware mitigation: it quantifies human-versus-LLM evaluation efficiency, but does not measure useful-feedback preservation, review coverage, escalation, or suppression errors.
 

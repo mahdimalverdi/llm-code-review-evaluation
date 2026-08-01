@@ -52,11 +52,10 @@
 ### Citation Note
 
 - [x] This paper should be cited in the final report.
-- [ ] Citation format has been checked.
-- [ ] BibTeX entry has been collected.
+- [x] Citation key checked against `references/references.bib`.
+- [x] Canonical BibTeX entry exists in `references/references.bib`.
 
 ```bibtex
-% TODO: Paste BibTeX here after checking the final arXiv/BibTeX source.
 ```
 
 ## 2. One-Sentence Summary
@@ -388,7 +387,7 @@ SWE-PRBench is direct evidence that context expansion must be evaluated, not ass
 | Need for trade-off-aware evaluation | Context expansion adds evidence but can reduce quality. | `Reported / Our perspective` |
 | Need for useful-feedback preservation metric | Not measured. | `Our perspective` |
 
-## 18. Quality Appraisal
+## 18. Legacy Quality Appraisal (superseded by the canonical record)
 
 | Criterion | Score | Evidence note |
 |---|---:|---|
@@ -446,3 +445,103 @@ This paper is crucial because it empirically challenges naive context expansion 
 - Important contrast with P05/P06: full/enriched context may be needed, but quality/filtering matters.
 
 </details>
+## Canonical citation record
+
+Use citation key `p04_kumar2026_swe_prbench` from `references/references.bib`; do not duplicate its BibTeX entry in this note.
+## Canonical SLR record
+
+> [!NOTE]
+> The numbered eleven-section record below is authoritative for synthesis and quality scoring. Earlier compact/legacy appraisal material is retained only for provenance.
+
+### 1. Identification
+
+- Project ID: P04; citation key: `p04_kumar2026_swe_prbench`.
+- Source: local full PDF; included after full-text screening; no local duplicate identified.
+
+### 2. Screening and proposal alignment
+
+- Decision: Include; Core; High relevance.
+- Rationale: PR-level benchmark with explicit context configurations, issue taxonomy, judge validation, detection, and false-positive measurement.
+- Deliverables: evaluation framework, context-quality model, and trade-off analysis.
+
+### 3. Study overview
+
+SWE-PRBench contains 350 PRs selected from 700 candidates. It defines repository-quality and review-value filters, three context configurations, a difficulty taxonomy, and an LLM-judge protocol for matching generated findings to human review issues (Sections 3–6).
+
+### 4. Evidence mapped to proposal RQ1–RQ6
+
+| RQ | Evidence and interpretation | Type | Location |
+|---|---|---|---|
+| RQ1 | Missed human issues, fabricated findings, plausible unmatched findings, and context-induced errors are reported. | Reported | Sections 5.2, 6.4 |
+| RQ2 | Detection rate, FPR, issue matching, difficulty categories, and judge agreement operationalize correctness/coverage. | Reported | Sections 5.2–5.5, 6 |
+| RQ3 | Context configuration is a before-generation intervention; benchmark/judge design is post-generation evaluation. | Reported/Inferred | Sections 4–5 |
+| RQ4 | All evaluated models degrade as context expands from configuration A to C, showing a context-versus-noise/attention trade-off. | Reported | Sections 6.3–6.5; Figure 2 |
+| RQ5 | PR selection, contamination mitigation, incomplete human ground truth, and judge validation are treated explicitly. | Reported | Sections 3.1–3.6, 5.4–5.5 |
+| RQ6 | Direct benchmark and context-quality evidence; limited workflow/usefulness evidence. | Our perspective | Sections 3–6 |
+
+### 5. Failure and problematic-comment categories
+
+| Category | Definition/example | Type | Location |
+|---|---|---|---|
+| Missed issue | Model fails to recover a human-identified review issue. | Reported | Section 6 |
+| Fabricated issue | Generated finding is unsupported by the PR. | Reported | Section 6.4 |
+| Plausible unmatched issue | Potentially valid finding lacks human-reference support. | Reported | Judge rubric, Section 5.2 |
+| Context-induced failure | Additional context reduces detection or increases confusion. | Reported | Sections 6.3–6.5 |
+
+### 6. Evaluation dimensions and metrics
+
+| Dimension | Operationalization | Result/limitation | Location |
+|---|---|---|---|
+| Issue detection/coverage | Match against human review issues | Human ground truth may be incomplete | Sections 5.2–5.3 |
+| False positives | FPR for unsupported findings | Judge-dependent classification | Sections 5.2, 6 |
+| Context sensitivity | Performance across A/B/C configurations | More context consistently degrades models | Sections 4, 6.3 |
+| Judge validity | Rubric κ=0.75 and cross-judge validation | Substantial, not perfect agreement | Sections 5.4–5.5 |
+
+### 7. Mitigation and trade-offs
+
+- Mitigation: controlled context selection before generation and rubric-based evaluation after generation.
+- Reduces: irrelevant context exposure and unstructured issue matching.
+- Useful feedback potentially lost: narrower contexts may omit cross-file evidence; not directly measured.
+- Coverage: detection rate reported; human escalation: not reported.
+- Cost: repository context and judging increase tokens/compute; full cost accounting not reported.
+- New failures: context overload and judge disagreement.
+
+### 8. Annotation and evaluator validity
+
+- Judge/annotator: human PR feedback as reference plus validated LLM judge.
+- Rubric: issue-match classifications and scoring formula.
+- Reliability: κ=0.75 and cross-judge validation reported.
+- Bias: incomplete human issue set, repository selection, and judge dependence.
+
+### 9. Quality appraisal
+
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 | 2 | Benchmark goals and evaluation questions are explicit. |
+| Q2 | 2 | Benchmark, agents, and judge artifact are specified. |
+| Q3 | 2 | PR selection, taxonomy, and configurations are detailed. |
+| Q4 | 2 | Reproducibility section and protocol are provided. |
+| Q5 | 2 | Detection, FPR, scoring, and context comparisons are defined. |
+| Q6 | 2 | Miss/fabrication/context failures are reported. |
+| Q7 | 2 | Section 5.2 specifies the fixed judge, three-label rubric, matching constraints, thresholds, and released rubric. |
+| Q8 | 2 | Section 5.4 reports κ=0.75 on a blind stratified sample; Section 5.5 reports 78.7% cross-judge agreement and κ=0.616. |
+| Q9 | 2 | Three controlled context configurations are evaluated as a before-generation intervention. |
+| Q10 | 2 | The A>B>C context degradation and associated detection/FPR behavior directly measure a context-versus-noise trade-off, although preservation and deployment cost remain absent. |
+| Q11 | 1 | Threats are discussed with residual benchmark limitations. |
+| Q12 | 2 | Direct support for RQ1, RQ2, RQ4–RQ6. |
+
+- Total: 23/24; high-quality core benchmark evidence with incomplete human-reference ground truth.
+
+### 10. Review-process reliability and bias
+
+- Missing data: developer usefulness, escalation, end-to-end cost, and complete alternative-issue validation.
+- Publication bias: benchmark/model selection may favor accessible agents.
+- Selection uncertainty: low; extraction uncertainty: medium for ground-truth completeness.
+- Second reviewer unavailable; no duplicate identified.
+
+### 11. Synthesis-ready conclusion
+
+- Contribution: direct evidence that context quantity is not equivalent to context quality.
+- Does not establish: production usefulness or useful-feedback preservation.
+- Candidate claim: context interventions should report both issue coverage and false-positive behavior under controlled configurations.
+- Follow-up: verify final metadata and benchmark release details.

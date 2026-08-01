@@ -54,11 +54,10 @@
 ### Citation Note
 
 - [x] This paper should be cited in the final report.
-- [ ] Citation format has been checked.
-- [ ] BibTeX entry has been collected.
+- [x] Citation key checked against `references/references.bib`.
+- [x] Canonical BibTeX entry exists in `references/references.bib`.
 
 ```bibtex
-% TODO: Paste BibTeX here after checking the final citation source.
 ```
 
 ## 2. One-Sentence Summary
@@ -391,7 +390,7 @@ HalluJudge supports our framework’s grounding and gate components, but also re
 | Need for trade-off-aware evaluation | Effectiveness-cost trade-off covered, but useful-comment loss not. | `Our perspective` |
 | Need for useful-feedback preservation metric | Preference coverage partially covers this, but wrong removals are not directly evaluated. | `Our perspective` |
 
-## 18. Quality Appraisal
+## 18. Legacy Quality Appraisal (superseded by the canonical record)
 
 | Criterion | Score (0–2) | Evidence note |
 |---|---:|---|
@@ -451,3 +450,119 @@ This is a central paper for grounding, hallucination, and gate design. It is als
 - Key gap: what happens after the judge flags risk?
 
 </details>
+## Canonical citation record
+
+Use citation key `p02_tantithamthavorn2026_hallujudge` from `references/references.bib`; do not duplicate its BibTeX entry in this note.
+## Canonical SLR record
+
+> [!NOTE]
+> The numbered eleven-section record below is authoritative for synthesis and quality scoring. Earlier compact/legacy appraisal material is retained only for provenance.
+
+- Identification/screening: `p02_tantithamthavorn2026_hallujudge`; Core; Include; High relevance.
+- Study overview: Reference-free post-generation evaluation of whether generated review claims are supported by the code diff, using annotation and production-preference data.
+- RQ1: Unsupported, context-misaligned, wrong API/type, and hallucinated claims (Reported).
+- RQ2: Claim-to-diff support and context alignment (Reported).
+- RQ3: Direct and chain-of-thought judge strategies as post-generation gates (Reported).
+- RQ4: Detection effectiveness versus judge cost; useful-feedback preservation, coverage, and escalation are not measured (Reported/Our perspective).
+- RQ5: Human labels and production preferences; proprietary setting limits validity (Reported/Our perspective).
+- RQ6: Strong support for grounding gates, annotation, evaluator validity, and cost design (Reported/Our perspective).
+- Failure taxonomy: unsupported claim; context misalignment; wrong API/type assumption; false-positive gate decision.
+- Metrics: precision, recall, F1, preference coverage, token/API cost, consistency, and developer preference.
+- Mitigation/trade-off: post-generation grounding gate; reduces unsupported comments but may suppress broad/useful comments; escalation and coverage absent; judge bias is a new risk.
+- Validity: two annotators plus resolver per existing extraction; preference is not correctness; proprietary data limits transfer.
+- Quality: Q1–Q10=2, Q11=1, Q12=2; 23/24.
+- Synthesis conclusion: strong grounding-gate evidence; does not establish preservation, review coverage, or escalation policy.
+
+### 1. Identification
+
+- Project ID: P02
+- Citation key: `p02_li2025_hallujudge`
+- Source: local full PDF; included at full-text eligibility stage through targeted corpus assembly.
+- Duplicate/companion publication: none identified in the local corpus.
+
+### 2. Screening and proposal alignment
+
+- Decision: Include; Core; High relevance.
+- Rationale: evaluates hallucination detection for LLM-generated code-review comments and a post-generation safeguard.
+- Deliverables: taxonomy, annotation/evaluator protocol, mitigation design, and trade-off framework.
+
+### 3. Study overview
+
+HalluJudge compares direct, rubric-guided, multi-step, and tree-of-thought assessment strategies for detecting context-misaligned generated review comments. It uses a human-annotated dataset of 143 comments from 97 merged PRs across 14 projects and a production preference sample of 557 comments (Sections 3–5; Table 1).
+
+### 4. Evidence mapped to proposal RQ1–RQ6
+
+| RQ | Evidence and interpretation | Type | Location |
+|---|---|---|---|
+| RQ1 | Unsupported claims, wrong API/type assumptions, and context-misaligned comments are treated as hallucinations. | Reported | Sections 2.2, 3.2, 4.2 |
+| RQ2 | Detection quality is evaluated with classification metrics and human labels; strategy and judge choice affect validity. | Reported | Sections 4.3–5 |
+| RQ3 | HalluJudge is an after-generation, before-display grounding gate. | Reported/Inferred | Sections 3.1–3.4 |
+| RQ4 | The gate can reduce unsupported feedback, but useful-comment loss, retained coverage, escalation, and operational cost are not jointly measured. | Our perspective | Sections 5–6 |
+| RQ5 | Ground truth is built by human annotation; incomplete context and subjective alignment judgments remain validity concerns. | Reported/Inferred | Section 4.2.1; Section 6 |
+| RQ6 | Direct support for grounding taxonomy, judge protocol, and post-generation gating. | Our perspective | Sections 3–6 |
+
+### 5. Failure and problematic-comment categories
+
+| Category | Definition/example | Type | Location |
+|---|---|---|---|
+| Unsupported claim | A review assertion lacks evidence in the supplied change/context. | Reported | Sections 2.2, 3.2 |
+| Wrong API/type assumption | The comment assumes semantics not supported by the code. | Reported | Dataset examples; Section 4.2 |
+| Context misalignment | The comment conflicts with or is irrelevant to the available change context. | Reported | Sections 3.2, 4.2 |
+
+### 6. Evaluation dimensions and metrics
+
+| Dimension | Operationalization | Result/limitation | Location |
+|---|---|---|---|
+| Hallucination/grounding | Binary context alignment with precision, recall, and F1 | Strategy- and model-dependent | Tables 1–3; Section 5 |
+| Human agreement | Human annotation as reference | Limited sample and subjective boundary | Section 4.2.1 |
+| Developer preference | Production preference sample | Preference is not correctness | Section 4.2.2; Section 5 |
+| Useful-feedback preservation | Not reported | False suppression cannot be estimated | Section 6 |
+
+### 7. Mitigation and trade-offs
+
+- Mitigation: post-generation grounding assessment; intervention point: before display.
+- Reduces: unsupported/context-misaligned comments.
+- Useful feedback potentially lost: broad or valid comments judged unsupported; not measured.
+- Coverage effect: not reported; human escalation: not reported.
+- Cost: multiple reasoning strategies and stronger judges add inference cost; complete deployment cost is not reported.
+- New failures: judge bias, prompt sensitivity, and false-negative gating.
+
+### 8. Annotation and evaluator validity
+
+- Judge/annotator: human annotators plus multiple LLM judges and assessment strategies.
+- Rubric: context alignment/hallucination decision.
+- Reliability: human ground truth and strategy/model comparisons are reported; independent replication is unavailable.
+- Possible bias: internal enterprise sample, class imbalance, and judge-prompt sensitivity.
+
+### 9. Quality appraisal
+
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 | 2 | Explicit RQs and hypotheses. |
+| Q2 | 2 | HalluJudge strategies and artifact are specified. |
+| Q3 | 2 | PR/comment datasets and class composition are reported. |
+| Q4 | 2 | Prompts, strategies, models, and analysis are described. |
+| Q5 | 2 | Classification and preference measures are defined. |
+| Q6 | 2 | Hallucination categories and examples are reported. |
+| Q7 | 2 | Human and automated judging protocols are described. |
+| Q8 | 2 | Ground-truth and cross-strategy/model checks are provided. |
+| Q9 | 2 | Post-generation safeguard is evaluated. |
+| Q10 | 2 | Detection and preference tensions are empirically compared, though preservation is absent. |
+| Q11 | 1 | Limitations are discussed but deployment boundaries remain partial. |
+| Q12 | 2 | Directly supports RQ1–RQ6. |
+
+- Total: 23/24; high-quality core evidence.
+
+### 10. Review-process reliability and bias
+
+- Missing data: full operational cost, retained issue coverage, and escalation policy.
+- Publication bias: one industrial ecosystem and generated-comment pipeline.
+- Selection uncertainty: low; extraction uncertainty: medium for production details.
+- Second-reviewer check: unavailable. Duplicate handling: no duplicate identified.
+
+### 11. Synthesis-ready conclusion
+
+- Contribution: direct evidence for grounding-focused hallucination detection and before-display gating.
+- Does not establish: that gating preserves useful feedback or improves end-to-end review coverage.
+- Candidate claim: hallucination gates require false-suppression and evaluator-validity measurement alongside detection scores.
+- Follow-up: verify final publisher metadata and detailed cost reporting.

@@ -52,11 +52,10 @@
 ### Citation Note
 
 - [x] This paper should be cited in the final report.
-- [ ] Citation format has been checked.
-- [ ] BibTeX entry has been collected.
+- [x] Citation key checked against `references/references.bib`.
+- [x] Canonical BibTeX entry exists in `references/references.bib`.
 
 ```bibtex
-% TODO: Paste BibTeX here after checking the final citation source.
 ```
 
 ## 2. One-Sentence Summary
@@ -393,7 +392,7 @@ RovoDev connects quality-rubric papers like P01 with gate papers like P02 and ad
 | Need for trade-off-aware evaluation | Gates exist but useful-comment loss is not measured. | `Our perspective` |
 | Need for useful-feedback preservation metric | Gate ablations do not directly report useful comments removed. | `Our perspective` |
 
-## 18. Quality Appraisal
+## 18. Legacy Quality Appraisal (superseded by the canonical record)
 
 | Criterion | Score (0–2) | Evidence note |
 |---|---:|---|
@@ -452,3 +451,120 @@ This is a core industrial paper because it demonstrates large-scale real-world d
 - Good framework insight: combine controlled labels with workflow signals.
 
 </details>
+## Canonical citation record
+
+Use citation key `p03_tantithamthavorn2026_rovodev` from `references/references.bib`; do not duplicate its BibTeX entry in this note.
+## Canonical SLR record
+
+> [!NOTE]
+> The numbered eleven-section record below is authoritative for synthesis and quality scoring. Earlier compact/legacy appraisal material is retained only for provenance.
+
+- Identification/screening: `p03_tantithamthavorn2026_rovodev`; Core; Include; High relevance.
+- Study overview: Enterprise LLM reviewer combining PR/Jira/code context, generation, factuality and actionability gates, and online workflow evaluation.
+- RQ1: Vague, non-actionable, incorrect, context-missing, and low-value comments (Reported).
+- RQ2: PR, Jira, code-change, language/framework, and version context (Reported).
+- RQ3: Factuality, actionability, code resolution, cycle time, human-comment volume, alignment, feedback (Reported).
+- RQ4: Gate and workflow outcomes; useful-feedback preservation and escalation absent (Reported/Our perspective).
+- RQ5: Production/internal benchmark validity and proxy limitations (Reported/Our perspective).
+- RQ6: Strong support for production metrics, gates, context, and workflow design.
+- Failure taxonomy: vague; non-actionable; factually incorrect; context-missing; irrelevant; low-value.
+- Metrics: code resolution, PR cycle time, human comments/PR, alignment, LLM similarity, thumbs-up/down, factuality, actionability.
+- Mitigation/trade-off: post-generation factuality/actionability gates; possible loss of useful low-confidence comments; compute and reviewer-verification costs incomplete.
+- Validity: production feedback is not controlled inter-rater agreement; single-company and temporal confounding risks.
+- Quality: Q1–Q6=2, Q7–Q8=1, Q9=2, Q10=1, Q11–Q12=2; 21/24.
+- Synthesis conclusion: strong workflow evidence; proxies must remain separate from correctness/usefulness.
+
+### 1. Identification
+
+- Project ID: P03; citation key: `p03_li2025_rovodev`.
+- Source: local full PDF; full-text inclusion in the targeted corpus.
+- Duplicate/companion publication: none identified locally.
+
+### 2. Screening and proposal alignment
+
+- Decision: Include; Core; High relevance.
+- Rationale: production evaluation of generated review comments, quality gates, user reactions, and workflow outcomes.
+- Deliverables: mitigation design and trade-off framework, with supporting failure taxonomy.
+
+### 3. Study overview
+
+The paper describes Atlassian's RovoDev Code Reviewer and a staged deployment over 12 months, covering more than 2,000 repositories and 54,000 generated comments. The system gathers PR/Jira/repository context and applies factuality and actionability checks before comments are shown (Sections 3–5).
+
+### 4. Evidence mapped to proposal RQ1–RQ6
+
+| RQ | Evidence and interpretation | Type | Location |
+|---|---|---|---|
+| RQ1 | Vague, non-actionable, factually incorrect, context-missing, and low-value comments motivate quality checks. | Reported | Sections 3.2–3.3, 5.3 |
+| RQ2 | Resolution, reaction, cycle-time, comment-volume, and LLM-judge measures cover workflow value but not direct correctness uniformly. | Reported/Our perspective | Sections 4–5 |
+| RQ3 | Context collection occurs before/during generation; factuality/actionability checks occur after generation and before display. | Reported | Section 3 |
+| RQ4 | Quality checks reduce exposed noise but possible useful-comment suppression, gate recall, and verification burden are incompletely measured. | Inferred/Our perspective | Sections 4–5 |
+| RQ5 | Enterprise repository and Jira context improve grounding; private data and changing deployment conditions limit validity. | Reported/Inferred | Sections 3–4; threats discussion |
+| RQ6 | Direct production reference for workflow metrics, staged gating, and operational trade-offs. | Our perspective | Sections 3–5 |
+
+### 5. Failure and problematic-comment categories
+
+| Category | Definition/example | Type | Location |
+|---|---|---|---|
+| Factually incorrect | Claim conflicts with code or repository facts. | Reported | Section 3.2 |
+| Non-actionable | Comment does not give a usable next step. | Reported | Section 3.3 |
+| Vague/low-value | Feedback consumes attention without sufficient concrete value. | Reported/Inferred | Sections 4.3, 5.3 |
+| Missing context | Comment quality fails because relevant PR/project information is absent. | Reported | Sections 3, 5 |
+
+### 6. Evaluation dimensions and metrics
+
+| Dimension | Operationalization | Result/limitation | Location |
+|---|---|---|---|
+| Resolution/adoption | Whether developers resolve generated comments | Workflow proxy, not direct correctness | Section 4 |
+| Actionability/factuality | Pre-display quality checks and judge assessment | Gate accuracy details are partial | Sections 3.2–3.3 |
+| Workflow impact | PR cycle time and human-comment volume | Observational/confounded | Section 4 |
+| Developer feedback | Reactions and qualitative feedback | Self-selection possible | Section 4.3 |
+
+### 7. Mitigation and trade-offs
+
+- Mitigation: context enrichment plus factuality/actionability gates; intervention points: before generation and before display.
+- Reduces: incorrect and non-actionable comments.
+- Useful feedback potentially lost: low-confidence but valuable comments; not directly measured.
+- Coverage: comment/resolution volume reported, gate-level retained issue coverage not reported.
+- Human escalation: developers remain final reviewers; explicit escalation rate not reported.
+- Cost: production infrastructure and verification add latency/compute; complete cost accounting is absent.
+- New failures: proxy gaming, gate false negatives, and dependence on private context.
+
+### 8. Annotation and evaluator validity
+
+- Judge/annotator: developers in production and LLM-as-a-judge in benchmark analysis.
+- Rubric: factuality, actionability, similarity/resolution-related measures.
+- Reliability: large-scale telemetry improves ecological validity; judge calibration and causal identification remain partial.
+- Bias: adoption, organizational, and self-selection effects.
+
+### 9. Quality appraisal
+
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 | 2 | Goals and evaluation questions are clear. |
+| Q2 | 2 | RovoDev pipeline and checks are specified. |
+| Q3 | 2 | Deployment and benchmark populations are described. |
+| Q4 | 2 | System and staged evaluation are understandable. |
+| Q5 | 2 | Workflow and quality measures are defined. |
+| Q6 | 2 | Several comment-quality failures are explicit. |
+| Q7 | 1 | Developer and LLM judging are described with incomplete rubric detail. |
+| Q8 | 1 | Large-scale comparisons exist, but causal/reliability checks are limited. |
+| Q9 | 2 | Context and quality checks are evaluated. |
+| Q10 | 1 | Workflow tensions are measured, but preservation/cost are incomplete. |
+| Q11 | 2 | Limitations and deployment recommendations are discussed. |
+| Q12 | 2 | Direct support for framework and mitigation RQs. |
+
+- Total: 21/24; high-quality core evidence with causal and evaluator limitations.
+
+### 10. Review-process reliability and bias
+
+- Missing data: gate-level recall, false suppression, detailed cost, and escalation rate.
+- Publication bias: positive industrial deployments may be more likely to be reported.
+- Selection uncertainty: low; extraction uncertainty: medium for private-data details.
+- Second reviewer: unavailable. Duplicate handling: none identified.
+
+### 11. Synthesis-ready conclusion
+
+- Contribution: strong ecological evidence that production evaluation needs workflow and quality-gate measures.
+- Does not establish: causal correctness gains or preservation of useful comments.
+- Candidate claim: production telemetry should complement, not replace, direct comment-quality annotation.
+- Follow-up: verify final publisher metadata and gate ablations.

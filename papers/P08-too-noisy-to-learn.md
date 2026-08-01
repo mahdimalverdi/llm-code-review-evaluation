@@ -53,11 +53,10 @@
 ### Citation Note
 
 - [x] This paper should be cited in the final report.
-- [ ] Citation format has been checked.
-- [ ] BibTeX entry has been collected.
+- [x] Citation key checked against `references/references.bib`.
+- [x] Canonical BibTeX entry exists in `references/references.bib`.
 
 ```bibtex
-% TODO: Paste BibTeX here after checking IEEE/arXiv BibTeX.
 ```
 
 ## 2. One-Sentence Summary
@@ -397,7 +396,7 @@ P08 is the strongest source so far for treating data quality as part of code rev
 | Need for trade-off-aware evaluation | Cleaning improves quality but reduces training size and may remove useful comments. | `Reported / Our perspective` |
 | Need for useful-feedback preservation metric | Predicted-valid filtering needs recall/preservation metric, not precision alone. | `Our perspective` |
 
-## 18. Quality Appraisal
+## 18. Legacy Quality Appraisal (superseded by the canonical record)
 
 | Criterion | Score | Evidence note |
 |---|---:|---|
@@ -462,3 +461,105 @@ P08 is high-priority because it connects noisy code review data to generated-com
 - Important trade-off: precision-only cleaning is not enough; need useful-feedback preservation/recall.
 
 </details>
+## Canonical citation record
+
+Use citation key `p08_liu2025_too_noisy` from `references/references.bib`; do not duplicate its BibTeX entry in this note.
+## Canonical SLR record
+
+> [!NOTE]
+> The numbered eleven-section record below is authoritative for synthesis and quality scoring. Earlier compact/legacy appraisal material is retained only for provenance.
+
+### 1. Identification
+
+- Project ID: P08; citation key: `p08_zhou2025_noisy`.
+- Source: local full PDF; full-text inclusion; no duplicate identified.
+
+### 2. Screening and proposal alignment
+
+- Decision: Include; Core; High relevance.
+- Rationale: identifies noisy human review comments and evaluates LLM-based filtering before model training.
+- Deliverables: failure taxonomy, annotation protocol, and mitigation/preservation trade-off.
+
+### 3. Study overview
+
+The study manually labels benchmark comments as valid or noisy, evaluates LLM classifiers, and retrains review-comment generation models on cleaned data. The reviewed note records a 726-comment combined labeled sample with 452 valid and 274 noisy comments; the full paper provides the annotation guideline and replication-package route (method and experiment sections; guideline around Figure 3).
+
+### 4. Evidence mapped to proposal RQ1–RQ6
+
+| RQ | Evidence and interpretation | Type | Location |
+|---|---|---|---|
+| RQ1 | Noisy, vague, unclear, irrelevant, non-constructive, and low-information comments are distinguished from valid feedback. | Reported | Annotation guideline; method section |
+| RQ2 | Valid/noisy classification, informativeness, relevance, and downstream generation metrics are used. | Reported | Method/results sections |
+| RQ3 | LLM-based data cleaning intervenes before training/generation. | Reported | Cleaning pipeline |
+| RQ4 | Cleaning can improve learned output quality but may remove rare useful examples; wrong-removal is not directly measured. | Reported/Our perspective | Results/discussion |
+| RQ5 | Human labels expose benchmark-reference noise and annotation ambiguity; reliability evidence is partial. | Reported | Annotation method/threats |
+| RQ6 | Direct support for taxonomy coding, annotation guidance, and data-quality mitigation. | Our perspective | Whole study |
+
+### 5. Failure and problematic-comment categories
+
+| Category | Definition/example | Type | Location |
+|---|---|---|---|
+| Irrelevant | Comment does not address the code change. | Reported | Annotation guideline |
+| Unclear/vague | Comment lacks understandable, specific feedback. | Reported | Annotation guideline |
+| Non-constructive/non-actionable | Comment does not focus on improvement. | Reported | Guideline dimensions |
+| Low-information/noisy | Comment offers insufficient training or review value. | Reported/Inferred | Results/discussion |
+
+### 6. Evaluation dimensions and metrics
+
+| Dimension | Operationalization | Result/limitation | Location |
+|---|---|---|---|
+| Validity/noise | Human binary labels and classifier metrics | Boundary is subjective | Annotation/evaluation sections |
+| Relevance | Guideline and score/class label | Improved scores do not prove correctness | Guideline/results |
+| Informativeness | Human/LLM score | Judge dependence | Results |
+| Downstream generation | Standard generation metrics after cleaning | Proxy validity remains limited | Training results |
+| Preservation | Not directly reported | Wrong removals cannot be quantified | Discussion |
+
+### 7. Mitigation and trade-offs
+
+- Mitigation: LLM-based dataset filter before training.
+- Reduces: noisy/irrelevant/unclear training examples.
+- Useful feedback potentially lost: uncommon but valid comments misclassified as noise; not measured directly.
+- Coverage: retained training-set volume can be observed; review-issue coverage is not measured.
+- Human escalation: manual labeling/calibration is used; deployment escalation is not applicable/reported.
+- Cost: annotation, classification, and retraining cost; complete accounting not reported.
+- New failures: classifier bias and homogenized training targets.
+
+### 8. Annotation and evaluator validity
+
+- Judge/annotator: human-labeled subsets and evaluated LLM classifiers.
+- Rubric: relevance, clarity/constructiveness, and focus on improvement.
+- Reliability: two annotators independently label an initial sample, with κ improving from 0.57 to 0.83 after guideline discussion and a third annotator resolving remaining disagreements. Comment-quality annotation reports κ=0.71 for information and κ=0.42, later 0.60, for relevance.
+- Bias: benchmark language/project mix and circular LLM labeling.
+
+### 9. Quality appraisal
+
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 | 2 | Noise-identification and cleaning goals are clear. |
+| Q2 | 2 | Classifier/filter and retrained generators are specified. |
+| Q3 | 2 | Benchmark and labeled subsets are described. |
+| Q4 | 2 | Annotation, filtering, and retraining pipeline is understandable. |
+| Q5 | 2 | Classification and downstream metrics are defined. |
+| Q6 | 2 | Multiple noise/failure categories are explicit. |
+| Q7 | 2 | The paper describes annotator roles, independent rounds, guideline refinement, adjudication, and LLM classification. |
+| Q8 | 2 | Multiple Cohen's kappa values and disagreement-resolution procedures are reported for validity/noise and quality labels. |
+| Q9 | 2 | Data-cleaning mitigation is evaluated. |
+| Q10 | 2 | The paper measures data reduction, downstream quality, training efficiency, LLM-cleaning cost, and an estimated USD 25,600 manual-annotation alternative; wrong-removal remains absent. |
+| Q11 | 1 | Limitations are reported. |
+| Q12 | 2 | Direct support for taxonomy, data quality, and mitigation. |
+
+- Total: 23/24; high-quality core evidence with preservation and construct-validity limitations.
+
+### 10. Review-process reliability and bias
+
+- Missing data: wrong-removal rate and category-specific retention. Cost comparison is reported, but transfer to other annotation settings remains uncertain.
+- Publication bias: benchmark-based cleaning may underrepresent rare comment styles.
+- Selection uncertainty: low; extraction uncertainty: medium for agreement details.
+- Second reviewer unavailable; no duplicate identified.
+
+### 11. Synthesis-ready conclusion
+
+- Contribution: shows that reference-comment quality is an input to evaluation and model training, not guaranteed ground truth.
+- Does not establish: that every filtered comment lacks developer value.
+- Candidate claim: cleaning studies should report false suppression and category-specific retention.
+- Follow-up: verify full training-set counts and agreement statistics.

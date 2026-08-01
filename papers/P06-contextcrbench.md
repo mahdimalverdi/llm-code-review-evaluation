@@ -51,11 +51,10 @@
 ### Citation Note
 
 - [x] This paper should be cited in the final report.
-- [ ] Citation format has been checked.
-- [ ] BibTeX entry has been collected.
+- [x] Citation key checked against `references/references.bib`.
+- [x] Canonical BibTeX entry exists in `references/references.bib`.
 
 ```bibtex
-% TODO: Paste BibTeX here after checking the final arXiv/BibTeX source.
 ```
 
 ## 2. One-Sentence Summary
@@ -389,7 +388,7 @@ ContextCRBench helps operationalize context quality as semantic intent, surround
 | Need for trade-off-aware evaluation | Enrichment helps but must be balanced against data quality/cost/noise. | `Our perspective` |
 | Need for useful-feedback preservation metric | Filtering removes low-value samples, but wrong removals not measured. | `Our perspective` |
 
-## 18. Quality Appraisal
+## 18. Legacy Quality Appraisal (superseded by the canonical record)
 
 | Criterion | Score | Evidence note |
 |---|---:|---|
@@ -448,3 +447,119 @@ This paper is high-priority because it explicitly supports the context-quality a
 - Good synthesis with P04/P05: context can hurt when noisy, helps when meaningful and filtered.
 
 </details>
+## Canonical citation record
+
+Use citation key `p06_hu2025_contextcrbench` from `references/references.bib`; do not duplicate its BibTeX entry in this note.
+## Canonical SLR record
+
+> [!NOTE]
+> The numbered eleven-section record below is authoritative for synthesis and quality scoring. Earlier compact/legacy appraisal material is retained only for provenance.
+
+- Identification/screening: `p06_hu2025_contextcrbench`; Core; Include; High relevance.
+- Study overview: Context-enriched benchmark for fine-grained localization and code-review generation.
+- RQ1: Missing semantic context, noisy/outdated data, coarse granularity, and localization failure (Reported).
+- RQ2: Textual/code context, filtering, and fine-grained localization (Reported).
+- RQ3: Hunk quality, localization, and comment generation (Reported).
+- RQ4: Context enrichment/filtering versus noise, cost, and wrong removal (Reported/Our perspective).
+- RQ5: Direct support for semantic context and dataset quality.
+- RQ6: Context-quality and benchmark-design support.
+- Failure taxonomy: missing semantic context; noisy data; coarse granularity; localization failure.
+- Metrics: task performance across context and filtering conditions; exact judge/reliability details require verification.
+- Mitigation/trade-off: context enrichment and filtering; possible cost/noise and false removal; escalation absent.
+- Validity: annotation protocol remains a verification item.
+- Quality: 19/24; protocol and reliability details require verification.
+- Synthesis conclusion: supports context-quality dimensions, not workflow or useful-feedback preservation.
+
+### 1. Identification
+
+- Project ID: P06; citation key: `p06_hu2025_contextcrbench`.
+- Source: local full PDF; full-text inclusion; no local duplicate identified.
+
+### 2. Screening and proposal alignment
+
+- Decision: Include; Core; High relevance.
+- Rationale: benchmark construction and experiments explicitly compare textual, code, and combined context for code-review tasks.
+- Deliverables: context-quality model, benchmark validity, and trade-off framework.
+
+### 3. Study overview
+
+ContextCRBench derives 67,910 context-enriched entries from 153.7K raw issue/PR items. It links issues to PRs, extracts full function/class context, filters noisy or outdated items, and evaluates hunk quality, comment generation, and refinement across context configurations (Sections 2–5).
+
+### 4. Evidence mapped to proposal RQ1–RQ6
+
+| RQ | Evidence and interpretation | Type | Location |
+|---|---|---|---|
+| RQ1 | Missing semantic context, noisy/outdated items, coarse granularity, and localization failures are reported. | Reported | Sections 2.2, 2.4, 4–5 |
+| RQ2 | Hunk-quality, generation, refinement, lexical/edit metrics, and context-condition comparisons are used. | Reported | Sections 3.2, 4 |
+| RQ3 | Issue linking, full-function/class extraction, and data filtering intervene before generation/evaluation. | Reported | Sections 2.2–2.3 |
+| RQ4 | Context helps unevenly across tasks/models and adds token/financial cost; preservation and escalation are not measured. | Reported/Our perspective | Sections 4.2.3, 5.3–5.4 |
+| RQ5 | Data noise, outdated comments, repository selection, context extraction, and computational sampling are explicit validity concerns. | Reported | Sections 2, 3.3, 5.4 |
+| RQ6 | Direct support for context taxonomy and context-conditioned benchmark design. | Our perspective | Sections 2–5 |
+
+### 5. Failure and problematic-comment categories
+
+| Category | Definition/example | Type | Location |
+|---|---|---|---|
+| Missing semantic context | Diff hunk omits issue intent or enclosing code. | Reported | Section 2.2 |
+| Noisy/outdated reference | Comment no longer matches final PR state. | Reported | Section 2.2.2 |
+| Coarse localization | Review signal cannot be tied to the relevant hunk/entity. | Reported | Sections 2.4, 4 |
+| Context overload | Added context does not consistently improve generation. | Inferred | Sections 4.2.3, 5 |
+
+### 6. Evaluation dimensions and metrics
+
+| Dimension | Operationalization | Result/limitation | Location |
+|---|---|---|---|
+| Hunk quality | Binary classification metrics | Measures input suitability, not comment usefulness | Section 3.2.1 |
+| Generation quality | ROUGE and edit similarity | Lexical proxies remain limited | Sections 3.2, 4.2.3 |
+| Context utility | No/text/code/combined context comparisons | Effects vary by task/model | Sections 2.4.2, 4.2.3 |
+| Cost | Representative sampling due to financial cost | Full operational cost not reported | Section 3.3 |
+
+### 7. Mitigation and trade-offs
+
+- Mitigation: context enrichment and dataset filtering before generation.
+- Reduces: missing-context and stale/noisy-reference failures.
+- Useful feedback potentially lost: filtered rare/atypical examples; not measured.
+- Coverage: corpus retention is reported, downstream issue coverage is not.
+- Human escalation: not reported.
+- Cost: larger context and multi-model evaluation increase tokens/financial cost.
+- New failures: irrelevant context, attention dilution, and extraction errors.
+
+### 8. Annotation and evaluator validity
+
+- Judge/annotator: benchmark construction rules and automated task metrics; detailed human agreement is limited.
+- Rubric: context links, hunk quality, and task metrics.
+- Reliability: repository/filtering procedures and threats are reported; annotation calibration is incomplete.
+- Bias: top-repository selection, issue-link availability, and lexical metrics.
+
+### 9. Quality appraisal
+
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 | 2 | Three study RQs are explicit. |
+| Q2 | 2 | Benchmark and evaluated tasks/models are specified. |
+| Q3 | 2 | Raw/final corpus and context sources are described. |
+| Q4 | 2 | Extraction, filtering, and experiments are understandable. |
+| Q5 | 2 | Task metrics and context comparisons are defined. |
+| Q6 | 2 | Context/data/localization failures are reported. |
+| Q7 | 1 | Evaluation protocol is described; human judging detail is limited. |
+| Q8 | 1 | Threat analysis exists; agreement evidence is partial. |
+| Q9 | 2 | Context enrichment/filtering are evaluated. |
+| Q10 | 1 | Context/cost tensions are observed; preservation is absent. |
+| Q11 | 1 | Threats to validity are explicit. |
+| Q12 | 1 | Strong context support but indirect workflow/preservation evidence. |
+
+- Total: 19/24; relevant core evidence with evaluator limitations.
+
+### 10. Review-process reliability and bias
+
+- Missing data: human agreement, useful-feedback retention, escalation, and complete cost.
+- Publication bias: high-visibility repositories and available issue links.
+- Selection uncertainty: low; extraction uncertainty: medium for labeling/reliability details.
+- Second reviewer unavailable; no duplicate identified.
+
+### 11. Synthesis-ready conclusion
+
+- Contribution: operational evidence that context has relevance, granularity, freshness, and usability dimensions.
+- Does not establish: production usefulness or preservation after filtering.
+- Candidate claim: context quality must be evaluated separately from context availability and context size.
+- Follow-up: verify annotation and judge-protocol details.

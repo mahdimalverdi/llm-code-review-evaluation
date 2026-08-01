@@ -1,5 +1,8 @@
 # Paper Analysis Template
 
+> [!WARNING]
+> This is the legacy extended-analysis template. It may be retained for detailed notes, but it does not replace the canonical eleven-section SLR record in `skills/slr-paper-reviewer/references/paper-review-template.md`. A paper may be marked completed only after the canonical record satisfies the uniformity gate in `skills/slr-paper-reviewer/SKILL.md`. The proposal-aligned review questions are RQ1–RQ6 as defined in that skill; the older five-question coding lens below is supplementary only.
+
 > [!NOTE]
 > Use this template for every paper. The goal is not to summarize papers for their own sake. The goal is to extract coded evidence for a focused evidence synthesis that produces:
 >
@@ -79,9 +82,9 @@ Example:
 p40_ram2018_reviewability
 ```
 
-## Our Research Questions
+## Legacy Supplementary Coding Lens
 
-Use these as the coding lens while reading each paper.
+Use these fields only as optional detailed coding prompts. For selection, extraction, quality appraisal, and synthesis, use the proposal-aligned RQ1–RQ6 in the canonical skill template.
 
 | RQ | Question | What to extract from each paper |
 |---|---|---|

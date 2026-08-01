@@ -53,11 +53,10 @@
 ### Citation Note
 
 - [x] This paper should be cited in the final report.
-- [ ] Citation format has been checked.
+- [x] Citation key checked against `references/references.bib`.
 - [ ] BibTeX entry has been collected.
 
 ```bibtex
-% TODO: Paste BibTeX here after checking ACM/arXiv BibTeX.
 ```
 
 ## 2. One-Sentence Summary
@@ -415,7 +414,7 @@ P10 should be one of the core industrial anchors of our paper. It gives concrete
 | Need for rule-level evaluation | Taxonomy and per-rule precision/Outdated Rate drive rule decommissioning and improvement. | `Reported` |
 | Need for caution with proxy metrics | Outdated Rate does not prove direct causality. | `Reported / Our perspective` |
 
-## 18. Quality Appraisal
+## 18. Legacy Quality Appraisal (superseded by the canonical record)
 
 | Criterion | Score | Evidence note |
 |---|---:|---|
@@ -478,3 +477,120 @@ P10 is one of the strongest papers for our trade-off-aware evaluation framework 
 - Important caution: precision-first is defensible for adoption, but our framework should explicitly ask what useful comments are lost.
 
 </details>
+## Canonical citation record
+
+Use citation key `p10_sun2025_bitsai_cr` from `references/references.bib`; do not duplicate its BibTeX entry in this note.
+## Canonical SLR record
+
+> [!NOTE]
+> The numbered eleven-section record below is authoritative for synthesis and quality scoring. Earlier compact/legacy appraisal material is retained only for provenance.
+
+- Identification/screening: `p10_sun2025_bitsai_cr`; Core; Include; High relevance.
+- Study overview: Production LLM review with bounded context, ReviewFilter, precision-oriented monitoring, feedback, retention, latency, and trust.
+- RQ1: Hallucination, factual error, irrelevant, redundant, low-value, and difficult-to-understand comments (Reported).
+- RQ2: Hunk/function context, tree-sitter, line-level change annotation, bounded context (Reported).
+- RQ3: Precision, recall, outdated rate, filtering, latency, feedback, retention, deployment scale (Reported).
+- RQ4: Precision versus recall, alert fatigue, filter rate, latency, trust, and adoption (Reported).
+- RQ5: Production monitoring and context-processing validity (Reported/Our perspective).
+- RQ6: Strong production mitigation and trade-off support.
+- Failure taxonomy: hallucination; factual error; irrelevant; redundant; low-value; hard to understand.
+- Metrics: precision, recall, outdated rate, filter rate, latency, retention, user feedback, adoption.
+- Mitigation/trade-off: ReviewFilter and bounded context; precision gains may suppress useful low-confidence comments.
+- Validity: production proxies and organization-specific data limit generalization.
+- Quality: 23/24, high-quality core evidence.
+- Synthesis conclusion: strong production evidence for precision-oriented gating, with preservation as an explicit missing metric.
+
+### 1. Identification
+
+- Project ID: P10; citation key: `p10_li2025_bitsaicr`.
+- Source: local full PDF; full-text inclusion; no local duplicate identified.
+
+### 2. Screening and proposal alignment
+
+- Decision: Include; Core; High relevance.
+- Rationale: large-scale industrial system with rule taxonomy, generation, filtering, offline metrics, user feedback, latency, retention, and deployment evidence.
+- Deliverables: taxonomy, mitigation design, and multi-dimensional trade-off framework.
+
+### 3. Study overview
+
+BitsAI-CR builds a 219-rule taxonomy, expands diff hunks to function boundaries, generates rule-guided comments, removes duplicates, and applies a fine-tuned ReviewFilter before display. Evaluation uses 1,397 offline cases, a 400-example filter-reasoning experiment, a 137-user survey, and deployment telemetry exceeding 12k weekly active users (Sections 3–5).
+
+### 4. Evidence mapped to proposal RQ1–RQ6
+
+| RQ | Evidence and interpretation | Type | Location |
+|---|---|---|---|
+| RQ1 | Hallucinated formatting claims, factual errors, superfluous findings, irrelevance, redundancy, and unclear comments are reported. | Reported | Sections 3.3–3.5, 4.2; Figure 3 |
+| RQ2 | Precision, recall, filter rate, inference time, Outdated Rate, survey value, retention, WAU/WPV, and comment modification are used. | Reported | Tables 2–4; Sections 4.2–4.4 |
+| RQ3 | Taxonomy/context expansion act before/during generation; deduplication and ReviewFilter act after generation/before display. | Reported | Sections 3.2–3.3 |
+| RQ4 | ReviewFilter raises precision while lowering recall; conclusion-first filtering adds latency and changes filter rate. Useful-feedback loss is not directly labeled. | Reported/Our perspective | Tables 2–3 |
+| RQ5 | Private production data, function-boundary context, line annotations, and user feedback improve realism but limit reproducibility. | Reported | Sections 3–5 |
+| RQ6 | Direct industrial evidence for taxonomy-guided generation, filtering, proxy metrics, and operational trade-offs. | Our perspective | Sections 3–5 |
+
+### 5. Failure and problematic-comment categories
+
+| Category | Definition/example | Type | Location |
+|---|---|---|---|
+| Hallucinated rule violation | Claims a naming/format issue that is not present. | Reported | Section 4.2 |
+| Misinterpreted pattern | Treats digits in a function name as a magic-number issue. | Reported | Section 4.2 |
+| Correct but superfluous | Technically defensible feedback lacks practical user value. | Reported | Section 3.5; Figure 3 |
+| Redundant/unclear | Duplicate or hard-to-understand feedback wastes attention. | Reported | Sections 3.3–3.5 |
+
+### 6. Evaluation dimensions and metrics
+
+| Dimension | Operationalization | Result/limitation | Location |
+|---|---|---|---|
+| Precision/recall | Offline violating/non-violating cases | ReviewFilter increases precision and can reduce recall | Table 2 |
+| Filter behavior | Filter rate and reasoning-pattern ablation | Does not identify which removed comments were useful | Table 3 |
+| Latency | Seconds per sample | Conclusion-first filter reports 1.7 s/sample | Table 3 |
+| User value | Survey of 137 users | 74.5% affirmation; self-report proxy | Section 4.3 |
+| Workflow adoption | WAU, WPV, retention, modification/outdated signals | Adoption is not direct correctness | Sections 4.3–4.4 |
+
+### 7. Mitigation and trade-offs
+
+- Mitigation: taxonomy guidance, bounded context, deduplication, and ReviewFilter; before/during generation and before display.
+- Reduces: irrelevant, redundant, hallucinated, and low-precision comments.
+- Useful feedback potentially lost: lower recall and filtered low-confidence findings; direct wrong-removal labels absent.
+- Coverage: recall is reported; category/rare-issue preservation is incomplete.
+- Human escalation: user feedback/data flywheel exists; formal escalation rate is not reported.
+- Cost: 1.7 s/sample for one filter configuration plus production infrastructure; complete API/training cost absent.
+- New failures: taxonomy blind spots, filter false negatives, rule-maintenance burden, and proxy drift.
+
+### 8. Annotation and evaluator validity
+
+- Judge/annotator: internal experts, users, offline labels, and filter models.
+- Rubric: rule violations, precision/recall, user value, and operational telemetry.
+- Reliability: ablations, interviews, survey, and deployment data triangulate evidence; private labels and agreement details limit auditability.
+- Bias: organizational context, feedback self-selection, and proxy-based success measures.
+
+### 9. Quality appraisal
+
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 | 2 | System goals and evaluation questions are clear. |
+| Q2 | 2 | Taxonomy, generator, filter, and flywheel are specified. |
+| Q3 | 2 | Training, offline, survey, and production datasets are described. |
+| Q4 | 2 | Pipeline, training, and evaluation procedures are detailed. |
+| Q5 | 2 | Precision, recall, filter rate, latency, and telemetry are defined. |
+| Q6 | 2 | Several concrete comment failures are reported. |
+| Q7 | 2 | Expert, user, and automated evaluation protocols are described. |
+| Q8 | 1 | Triangulation/ablations exist; agreement and independent replication are limited. |
+| Q9 | 2 | Multiple mitigation components are evaluated. |
+| Q10 | 2 | Precision–recall–filter-rate–latency trade-offs are measured. |
+| Q11 | 2 | Lessons and operational limitations are discussed. |
+| Q12 | 2 | Direct support for taxonomy, mitigation, and trade-off design. |
+
+- Total: 23/24; high-quality core industrial evidence.
+
+### 10. Review-process reliability and bias
+
+- Missing data: direct wrong-removal labels, complete cost, formal escalation, and public replication data.
+- Publication bias: successful industrial deployments and positive user feedback may be overrepresented.
+- Selection uncertainty: low; extraction uncertainty: medium for private labels and causal claims.
+- Second reviewer unavailable; no duplicate identified.
+
+### 11. Synthesis-ready conclusion
+
+- Contribution: unusually rich production evidence connecting taxonomy, filtering, precision/recall, latency, and adoption.
+- Does not establish: that filtered comments are uniformly useless or that adoption proxies equal correctness.
+- Candidate claim: precision-oriented gates must report recall, wrong-removal, latency, and maintenance burden.
+- Follow-up: verify official ACM metadata and exact survey/interview protocol.

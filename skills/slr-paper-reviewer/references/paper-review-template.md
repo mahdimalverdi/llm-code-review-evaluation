@@ -1,5 +1,7 @@
 # Paper review record
 
+This is the canonical schema. Complete every section for every paper. Use `Not reported` when the PDF does not provide the information, and explain why the missing information matters. Do not replace sections with a short abstract summary. Every claim must be marked as `Reported`, `Inferred`, or `Our perspective` where applicable.
+
 ## 1. Identification
 
 - Project ID:

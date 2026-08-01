@@ -53,11 +53,10 @@
 ### Citation Note
 
 - [x] This paper should be cited in the final report.
-- [ ] Citation format has been checked against IEEE Xplore / publisher metadata.
-- [ ] BibTeX entry has been collected.
+- [x] Citation key checked against `references/references.bib`.
+- [x] Canonical BibTeX entry exists in `references/references.bib`.
 
 ```bibtex
-% TODO: Paste BibTeX here after checking IEEE Xplore / DOI metadata.
 ```
 
 ## 2. One-Sentence Summary
@@ -393,7 +392,7 @@ P09 is one of the strongest sources for the mitigation-strategy side of our pape
 | Need for mitigation-strategy comparison | Multi-agent collaboration can be treated as one mitigation strategy among filtering, RAG, static-analysis grounding, and human escalation. | `Our perspective` |
 | Need for useful-feedback preservation metric | Broadening review coverage should be balanced against low-value, duplicate, or vague comments. | `Our perspective` |
 
-## 18. Quality Appraisal
+## 18. Legacy Quality Appraisal (superseded by the canonical record)
 
 | Criterion | Score | Evidence note |
 |---|---:|---|
@@ -461,3 +460,105 @@ P09 is high-priority because it gives us a concrete multi-agent mitigation examp
 - Important caution: multi-agent breadth can increase useful coverage, but can also increase cost, latency, duplication, and cognitive load.
 
 </details>
+## Canonical citation record
+
+Use citation key `p09_ren2025_hydra_reviewer` from `references/references.bib`; do not duplicate its BibTeX entry in this note.
+## Canonical SLR record
+
+> [!NOTE]
+> The numbered eleven-section record below is authoritative for synthesis and quality scoring. Earlier compact/legacy appraisal material is retained only for provenance.
+
+### 1. Identification
+
+- Project ID: P09; citation key: `p09_chen2025_hydra`.
+- Source: local full PDF; included after full-text screening; no duplicate identified.
+
+### 2. Screening and proposal alignment
+
+- Decision: Include; Core; High relevance.
+- Rationale: collaborative multi-agent review generation motivated by incomplete, incorrect, and vague comments.
+- Deliverables: mitigation-family design and trade-off framework.
+
+### 3. Study overview
+
+HYDRA-REVIEWER derives review dimensions from an empirical study and assigns specialized agents to analyze and synthesize feedback. It evaluates generated comments on established and newly constructed datasets and includes a user study (Sections II–VI).
+
+### 4. Evidence mapped to proposal RQ1–RQ6
+
+| RQ | Evidence and interpretation | Type | Location |
+|---|---|---|---|
+| RQ1 | Lack of comprehensiveness, incorrectness, and vagueness motivate the system. | Reported | Section II |
+| RQ2 | Quality dimensions, automated metrics, comparisons, and user judgments assess generation. | Reported | Sections IV–VI |
+| RQ3 | Specialist-agent decomposition and aggregation intervene during and after generation. | Reported | Section III |
+| RQ4 | Multiple agents can broaden coverage but add calls, latency, redundancy, and synthesis risk; preservation is absent. | Reported/Inferred | Sections III, V–VI |
+| RQ5 | Dataset/reference quality and human-study validity are discussed, but context consistency is not central. | Reported/Our perspective | Sections IV, VI, VIII |
+| RQ6 | Direct evidence for multi-agent mitigation and comprehensiveness-oriented evaluation. | Our perspective | Sections II–VI |
+
+### 5. Failure and problematic-comment categories
+
+| Category | Definition/example | Type | Location |
+|---|---|---|---|
+| Incomplete review | Generated output misses relevant review dimensions/issues. | Reported | Section II |
+| Incorrect review | Feedback contains technically wrong claims. | Reported | Section II |
+| Vague review | Feedback lacks specificity or actionable detail. | Reported | Section II |
+| Aggregation conflict | Specialist outputs may conflict or duplicate one another. | Inferred | Section III |
+
+### 6. Evaluation dimensions and metrics
+
+| Dimension | Operationalization | Result/limitation | Location |
+|---|---|---|---|
+| Comprehensiveness | Dimension/issue coverage and human judgment | Reference completeness may limit estimate | Sections II, V–VI |
+| Correctness | Automated/human quality assessment | Evaluator details require calibration | Sections V–VI |
+| Specificity/vagueness | Review-quality dimensions | Subjective rubric boundary | Sections II, VI |
+| User usefulness | User-study ratings | Participant/sample generalizability | Section VI |
+| Cost | Per-patch time and USD cost by system/component | HYDRA-REVIEWER reports 62.63 s and USD 0.0178 per patch, the highest among compared API baselines | Table VII; Section V-E |
+
+### 7. Mitigation and trade-offs
+
+- Mitigation: specialist multi-agent generation and synthesis; during/after generation.
+- Reduces: incompleteness, one-perspective blind spots, and vagueness.
+- Useful feedback potentially lost: synthesis may omit minority-agent findings; not measured.
+- Coverage: comprehensiveness is evaluated; retained unique-issue coverage after aggregation is partial.
+- Human escalation: user study exists; explicit escalation workflow is not reported.
+- Cost: Table VII reports 62.63 seconds and USD 0.0178 per patch for HYDRA-REVIEWER versus 4.63 s/USD 0.0002 for ChatGPT, 6.39 s/USD 0.0004 for C-ChatGPT, and 18.83 s/USD 0.0060 for DeepSeek-V3. Review agents dominate HYDRA's component cost. The experiments report USD 326 total API expenditure.
+- New failures: inter-agent conflict, duplicated findings, and synthesizer hallucination.
+
+### 8. Annotation and evaluator validity
+
+- Judge/annotator: automated evaluators and user-study participants.
+- Rubric: comprehensiveness, correctness, and review-quality dimensions.
+- Reliability: the paper reports multiple independent-labeling checks, including κ=0.95 for the empirical taxonomy, κ=0.80 for limitation labels, κ values of 0.84–0.94 in ablations/qualitative evaluation, and κ=0.90 in the user-study assessment.
+- Bias: selected dimensions/datasets and evaluator dependence.
+
+### 9. Quality appraisal
+
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 | 2 | Motivation and empirical/evaluation questions are clear. |
+| Q2 | 2 | Multi-agent architecture and artifact are specified. |
+| Q3 | 2 | Evaluated datasets and study context are described. |
+| Q4 | 2 | Agent workflow and experiments are understandable. |
+| Q5 | 2 | Review dimensions and metrics are defined. |
+| Q6 | 2 | Incomplete/incorrect/vague failures are explicit. |
+| Q7 | 2 | Automated and user-study judging are described. |
+| Q8 | 2 | Multiple Cohen's kappa checks, disagreement resolution, unseen-data evaluation, and ablations provide explicit reliability/validity evidence. |
+| Q9 | 2 | Multi-agent mitigation is evaluated. |
+| Q10 | 2 | Comprehensiveness, helpfulness, reviewer time, per-component latency, and per-patch cost directly quantify quality-versus-cost trade-offs; useful-feedback preservation remains absent. |
+| Q11 | 2 | Section VIII explicitly discusses threats to validity, including model randomness, labeling, participant, and dataset concerns. |
+| Q12 | 2 | Direct support for mitigation and trade-off RQs. |
+
+- Total: 24/24 under the reporting-quality rubric; this score reflects completeness of reporting, not absence of preservation, generalizability, or deployment limitations.
+
+### 10. Review-process reliability and bias
+
+- Missing data: false suppression, explicit human-escalation policy, and production deployment effects. Per-patch and component costs are reported.
+- Publication bias: positive multi-agent results may be selectively visible.
+- Selection uncertainty: low; extraction uncertainty: medium for judge/reliability details.
+- Second reviewer unavailable; no duplicate identified.
+
+### 11. Synthesis-ready conclusion
+
+- Contribution: supports multi-agent decomposition as a coverage-oriented mitigation.
+- Does not establish: preservation of every useful specialist finding or cost-effectiveness.
+- Candidate claim: aggregation should report unique-issue retention, conflict rate, and synthesis cost.
+- Follow-up: verify user-study agreement and cost tables.

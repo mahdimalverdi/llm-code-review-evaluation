@@ -52,11 +52,10 @@
 ### Citation Note
 
 - [x] This paper should be cited in the final report.
-- [ ] Citation format has been checked.
-- [ ] BibTeX entry has been collected.
+- [x] Citation key checked against `references/references.bib`.
+- [x] Canonical BibTeX entry exists in `references/references.bib`.
 
 ```bibtex
-% TODO: Paste BibTeX here after checking the final arXiv/BibTeX source.
 ```
 
 ## 2. One-Sentence Summary
@@ -391,7 +390,7 @@ RevMate provides real-world evidence that generated review comments need human-c
 | Need for trade-off-aware evaluation | Filtering/reviewer overhead/value preservation are central. | `Our perspective` |
 | Need for useful-feedback preservation metric | Valuable-but-not-accepted comments show usefulness can be hidden by acceptance-only metric. | `Reported / Our perspective` |
 
-## 18. Quality Appraisal
+## 18. Legacy Quality Appraisal (superseded by the canonical record)
 
 | Criterion | Score | Evidence note |
 |---|---:|---|
@@ -451,3 +450,120 @@ This is high-priority because it provides live evidence for separating acceptanc
 - Gate issue: hidden wrong removals before reviewer sees comments.
 
 </details>
+## Canonical citation record
+
+Use citation key `p07_olewicki2024_revmate` from `references/references.bib`; do not duplicate its BibTeX entry in this note.
+## Canonical SLR record
+
+> [!NOTE]
+> The numbered eleven-section record below is authoritative for synthesis and quality scoring. Earlier compact/legacy appraisal material is retained only for provenance.
+
+- Identification/screening: `p07_olewicki2024_revmate`; Core; Include; High relevance.
+- Study overview: Mixed user study of RAG/LLM judging, filtering, reviewer exposure, acceptance, value, and downstream revision.
+- RQ1: Rejected, irrelevant, low-value, and non-accepted comments (Reported).
+- RQ2: Retrieved/contextual evidence affects reviewer exposure and value (Reported).
+- RQ3: Acceptance, usefulness, actionability, downstream revision, and reviewer overhead (Reported).
+- RQ4: Usefulness versus reviewer time and filtering-before-exposure (Reported).
+- RQ5: Human/workflow and annotation validity (Reported/Our perspective).
+- RQ6: Strong mitigation and workflow support.
+- Failure taxonomy: rejected; irrelevant; low-value; excessive reviewer burden; poor value-to-time.
+- Metrics: acceptance, perceived value, actionability, revision, reviewer time/overhead.
+- Mitigation/trade-off: RAG and judge filtering; may reduce exposure to useful borderline comments; escalation not fully measured.
+- Validity: acceptance is not correctness; user-study context and judge protocol require verification.
+- Quality: 22/24, with partial reliability and limitation evidence.
+- Synthesis conclusion: strong workflow usefulness evidence, but acceptance must not be treated as correctness.
+
+### 1. Identification
+
+- Project ID: P07; citation key: `p07_ben_salem2025_revmate`.
+- Source: local full PDF; full-text inclusion; no duplicate identified.
+
+### 2. Screening and proposal alignment
+
+- Decision: Include; Core; High relevance.
+- Rationale: live study of generated comments, filtering, acceptance, perceived value, reviewer time, and downstream revision.
+- Deliverables: annotation/user-study protocol and workflow-aware trade-off framework.
+
+### 3. Study overview
+
+RevMate was evaluated for six weeks with 59 reviewers across Mozilla and Ubisoft, covering 587 patch reviews and approximately 1,600 generated comments; 37 participants answered the survey. The system uses retrieval and prompt constraints, filters categories before display, and examines acceptance, usefulness, revision, and reviewer experience (method and RQ results sections).
+
+### 4. Evidence mapped to proposal RQ1–RQ6
+
+| RQ | Evidence and interpretation | Type | Location |
+|---|---|---|---|
+| RQ1 | Rejected, irrelevant, low-value, descriptive/praise-only, and poor value-to-time comments appear in filtering and user feedback. | Reported/Inferred | Prompt/filter description; RQ1–RQ3 results |
+| RQ2 | Acceptance, perceived value, revision, review duration, and qualitative feedback operationalize workflow usefulness. | Reported | RQ1–RQ3 results; survey |
+| RQ3 | Retrieval/prompt constraints act before/during generation; filtering acts before display. | Reported | System design/prompt steps |
+| RQ4 | Comments may be valuable without direct acceptance; filtering and inspection add reviewer overhead and may hide useful feedback. | Reported/Our perspective | RQ results and discussion |
+| RQ5 | Two organizations improve context diversity, while moderate coding agreement and workflow differences constrain generalization. | Reported | Qualitative method; discussion |
+| RQ6 | Direct support for user-study measures, usefulness/acceptance separation, and reviewer-overhead analysis. | Our perspective | Whole study |
+
+### 5. Failure and problematic-comment categories
+
+| Category | Definition/example | Type | Location |
+|---|---|---|---|
+| Irrelevant/out-of-scope | Comment is outside the useful review scope or excluded category. | Reported | Prompt/filter rules |
+| Descriptive/praise-only | Feedback describes or praises without actionable concern. | Reported | Prompt steps 4–5 |
+| Low-value/non-accepted | Reviewer does not adopt the comment or judges value insufficient. | Reported/Inferred | RQ1–RQ2 results |
+| Poor value-to-time | Inspection cost exceeds perceived benefit. | Inferred | RQ3 and survey |
+
+### 6. Evaluation dimensions and metrics
+
+| Dimension | Operationalization | Result/limitation | Location |
+|---|---|---|---|
+| Acceptance | Reviewer accepts/uses generated comment | Non-acceptance does not imply no value | RQ1 results |
+| Perceived usefulness | Survey and reviewer feedback | Subjective and self-selected | RQ2/survey |
+| Downstream impact | Patch revisions following comments | Association is not full causal correctness | RQ results |
+| Reviewer overhead | Review duration and participant perception | Measurement affected by workflow differences | RQ3 |
+| Reliability | Qualitative coding κ=.45 | Moderate agreement | Qualitative analysis section |
+
+### 7. Mitigation and trade-offs
+
+- Mitigation: RAG/prompt constraints and before-display filtering.
+- Reduces: irrelevant, descriptive, praise-only, and unsupported feedback.
+- Useful feedback potentially lost: filtered borderline comments; not directly enumerated.
+- Coverage: exposed/generated comment counts available, issue-level retained coverage incomplete.
+- Human escalation: reviewers inspect and decide; explicit escalation rate not defined.
+- Cost: reviewer inspection time and system inference; reviewer overhead is studied, API cost is not complete.
+- New failures: automation bias, ignored but valuable comments, and workflow interruption.
+
+### 8. Annotation and evaluator validity
+
+- Judge/annotator: 59 practitioner reviewers; 37 survey respondents; qualitative coders.
+- Rubric: acceptance, value, duration, content feedback, and revision behavior.
+- Reliability: qualitative coding κ=.45; cross-company design provides contextual contrast.
+- Bias: self-selection, novelty, organization, and acceptance-as-proxy effects.
+
+### 9. Quality appraisal
+
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 | 2 | Live-study questions are explicit. |
+| Q2 | 2 | RevMate and generated comments are specified. |
+| Q3 | 2 | Organizations, participants, patches, and comments are described. |
+| Q4 | 2 | Deployment, filtering, and study procedures are understandable. |
+| Q5 | 2 | Acceptance, value, revision, and duration are defined. |
+| Q6 | 2 | Rejected/irrelevant/low-value categories are observable. |
+| Q7 | 2 | User-study and qualitative protocols are described. |
+| Q8 | 1 | κ=.45 is reported; reliability remains moderate. |
+| Q9 | 2 | Retrieval/filtering intervention is deployed. |
+| Q10 | 2 | Value, acceptance, and reviewer-time tensions are directly studied. |
+| Q11 | 1 | Limitations are discussed with residual causal concerns. |
+| Q12 | 2 | Direct support for workflow and trade-off RQs. |
+
+- Total: 22/24; high-quality workflow evidence.
+
+### 10. Review-process reliability and bias
+
+- Missing data: exact false-suppression rate, issue coverage, and complete API cost.
+- Publication bias: participating teams and users may be unusually receptive.
+- Selection uncertainty: low; extraction uncertainty: medium for causal interpretation.
+- Second reviewer unavailable; no duplicate identified.
+
+### 11. Synthesis-ready conclusion
+
+- Contribution: demonstrates why acceptance, perceived value, downstream change, and reviewer time must remain distinct.
+- Does not establish: that every accepted comment is correct or every filtered/rejected comment is useless.
+- Candidate claim: workflow evaluation requires value-to-attention measures in addition to model-quality metrics.
+- Follow-up: verify acceptance and overhead numerators from the final tables.

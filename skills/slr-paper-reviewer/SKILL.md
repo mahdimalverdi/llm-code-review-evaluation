@@ -33,6 +33,40 @@ Use the progress file as a resumable cursor. On a later batch run, skip papers m
 8. Write or update one Markdown note under `papers/` using the repository’s existing paper-note convention. Preserve paper IDs and citation keys. Do not edit synthesis files during single-paper review unless explicitly requested.
 9. End with a short synthesis-ready summary: what this paper contributes, what it does not establish, and which SLR RQs it supports.
 
+## Uniformity gate
+
+Never mark a paper `Completed` merely because it has a summary or a quality score. Every paper note must contain all 11 sections in `references/paper-review-template.md`, with the following minimum depth:
+
+- at least one bibliographic/screening record and an explicit proposal inclusion decision;
+- a study-overview paragraph based on the full PDF, or an explicit `Blocked—needs verification` status;
+- one row for each proposal RQ1–RQ6, each labeled `Reported`, `Inferred`, or `Our perspective` and tied to a page/section/table when available;
+- at least three failure/taxonomy entries when the paper reports failures, or an explicit statement that no taxonomy was assessed;
+- at least three evaluation-dimension rows, including `Not reported` where appropriate;
+- explicit entries for useful-feedback preservation, coverage, human escalation, and cost, even when absent;
+- annotation/evaluator validity and review-process reliability fields;
+- Q1–Q12 scores with individual evidence notes, not only a total;
+- a synthesis-ready conclusion that states both contribution and non-contribution.
+
+If these requirements are not met, use `In progress` or `Blocked—needs verification`, never `Completed`. In batch mode, prioritize depth and traceability over the number of papers marked complete.
+
+## Uniformity rule
+
+Every final paper note must use the same eleven-part structure in `references/paper-review-template.md`:
+
+1. Identification
+2. Screening and proposal alignment
+3. Study overview
+4. Evidence mapped to proposal RQ1–RQ6
+5. Problematic-comment/failure categories
+6. Evaluation dimensions and metrics
+7. Mitigation and trade-offs
+8. Annotation and evaluator validity
+9. Quality appraisal (Q1–Q12, each with an evidence note)
+10. Review-process reliability and bias
+11. Synthesis-ready conclusion
+
+Existing notes may retain detailed legacy material below this structure, but the canonical structured section must be complete and must be the source used for synthesis. Do not mark a note `Completed` when it contains only an abstract-level summary, a provisional score without criterion-level evidence, or generic text copied from another paper. Use `In progress` or `Blocked—needs verification` instead.
+
 ## Proposal research questions
 
 Map each paper to these exact questions; do not replace them with generic summaries:

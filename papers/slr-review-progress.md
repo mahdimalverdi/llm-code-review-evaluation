@@ -1,16 +1,46 @@
 # SLR paper-review progress
 
+> Quality-control note: the first batch pass identified structural depth differences across notes. Rows previously marked `Completed` are batch-pass records; they require the uniformity re-review before final SLR synthesis. A paper is final only after all 11 canonical sections are populated with PDF-traceable evidence.
+
+## Uniformity re-review status
+
+| Batch | Scope | Status | Remaining work |
+|---|---|---|---|
+| Batch 1 | P01–P10 | Uniform canonical extraction completed | Full-PDF verification of unresolved protocol/metric details before final synthesis |
+| Batch 2 | P11–P20 | Uniform canonical extraction completed | Full-PDF verification of unresolved protocol/metric details before final synthesis |
+| Batch 3 | P21–P30 | Uniform canonical extraction completed | Full-PDF verification of specialized/security/judge protocol details before final synthesis |
+| Batch 4 | P31–P40 | Uniform canonical extraction completed | Full-PDF verification of judge-survey and foundational workflow evidence before final synthesis |
+| Batch 5 | P41–P50 | Uniform canonical extraction completed | Full-PDF verification of supporting/context and specialized non-functional evidence before final synthesis |
+| Batch 6 | P51–P60 | Uniform canonical extraction completed | Full-PDF verification of survey, benchmark, industrial, annotation, and usefulness evidence before final synthesis |
+| Batch 7 | P61–P71 | Uniform canonical extraction completed | Full-PDF verification of experience, industrial, security, adversarial, benchmark, and refinement evidence before final synthesis |
+
+## Corpus integrity audit
+
+- Unique PDF project IDs: 71.
+- Markdown note files: 73.
+- Duplicate note IDs requiring consolidation or explicit companion labeling: P18 and P21.
+- Final SLR study count must be frozen only after this audit.
+
+> [!WARNING]
+> The `Completed` values below are legacy first-pass statuses unless a gate-compliance batch is recorded below. A readiness audit on 2026-08-02 found that the short appended extraction blocks generally did not satisfy the eleven-section uniformity gate. P01–P10 have since been rebuilt and validated. P11–P71 still require gate-compliance validation; P54–P71 additionally retain provisional/full-text verification concerns.
+
+## Gate-compliance batches
+
+| Batch | Records | Result | Validation basis | Date |
+|---|---|---|---|---|
+| Calibration 1 | P01–P10 | Passed | Structural gate checked by `validate-note.sh`; reported sample sizes, agreement statistics, costs, and quality scores rechecked against the full local PDFs, including a second calibration of P04/P05/P08/P09 | 2026-08-02 |
+
 | ID | PDF | Note | Status | Decision | Relevance | Quality | Confidence | Unresolved items | Last reviewed |
 |---|---|---|---|---|---|---:|---|---|---|
 | P01 | `papers/pdfs/P01_DeepCRCEval_Revisiting_the_Evaluation_of_Code_Review_Comment_Generation.pdf` | `papers/P01-deepcrceval.md` | Completed | Include | High | 21/24 | Medium | Verify extended appendix and final citation metadata | 2026-08-01 |
 | P02 | `papers/pdfs/P02_HalluJudge.pdf` | `papers/P02-hallujudge.md` | Completed | Include | High | 23/24 | Medium | Verify final metadata and cost assumptions | 2026-08-01 |
 | P03 | `papers/pdfs/P03_RovoDev_Code_Reviewer.pdf` | `papers/P03-rovodev-code-reviewer.md` | Completed | Include | High | 21/24 | Medium | Verify ablation tables and final metadata | 2026-08-01 |
-| P04 | `papers/pdfs/P04_SWE_PRBench.pdf` | `papers/P04-swe-prbench.md` | Completed | Include | High | 19/24 | Medium | Verify judge protocol and benchmark details against PDF | 2026-08-01 |
-| P05 | `papers/pdfs/P05_SWRBench.pdf` | `papers/P05-swrbench.md` | Completed | Include | High | 20/24 | Medium | Verify annotator agreement and aggregation cost | 2026-08-01 |
+| P04 | `papers/pdfs/P04_SWE_PRBench.pdf` | `papers/P04-swe-prbench.md` | Completed | Include | High | 23/24 | High | Final publisher metadata remains to be checked | 2026-08-02 |
+| P05 | `papers/pdfs/P05_SWRBench.pdf` | `papers/P05-swrbench.md` | Completed | Include | High | 23/24 | High | Useful-feedback preservation and consolidated generation cost remain unreported | 2026-08-02 |
 | P06 | `papers/pdfs/P06_ContextCRBench.pdf` | `papers/P06-contextcrbench.md` | Completed | Include | High | 19/24 | Low/Medium | Verify annotation and judge protocol from full PDF | 2026-08-01 |
 | P07 | `papers/pdfs/P07_Impact_of_LLM_based_Review_Comment_Generation.pdf` | `papers/P07-revmate-user-study.md` | Completed | Include | High | 22/24 | Medium | Verify acceptance and reviewer-overhead measures | 2026-08-01 |
-| P08 | `papers/pdfs/P08_Too_Noisy_To_Learn.pdf` | `papers/P08-too-noisy-to-learn.md` | Completed | Include | High | 20/24 | Medium | Verify annotation reliability and filtering results | 2026-08-01 |
-| P09 | `papers/pdfs/P09_Hydra-Reviewer.pdf` | `papers/P09-hydra-reviewer.md` | Completed | Include | High | 21/24 | Medium | Verify judge protocol and cost/latency tables | 2026-08-01 |
+| P08 | `papers/pdfs/P08_Too_Noisy_To_Learn.pdf` | `papers/P08-too-noisy-to-learn.md` | Completed | Include | High | 23/24 | High | Wrong-removal and category-specific retention remain unreported | 2026-08-02 |
+| P09 | `papers/pdfs/P09_Hydra-Reviewer.pdf` | `papers/P09-hydra-reviewer.md` | Completed | Include | High | 24/24 | High | Preservation, escalation policy, and production effects remain unreported | 2026-08-02 |
 | P10 | `papers/pdfs/P10_BitsAI_CR.pdf` | `papers/P10-bitsai-cr.md` | Completed | Include | High | 23/24 | High | Verify final production metadata | 2026-08-01 |
 | P11 | `papers/pdfs/P11_LAURA.pdf` | `papers/P11-laura.md` | Completed | Include | High | 22/24 | High | Verify extended prompt and evaluator details | 2026-08-01 |
 | P12 | `papers/pdfs/P12_SGCR.pdf` | `papers/P12-sgcr.md` | Completed | Include | High | 21/24 | High | Verify production/adoption measurement details | 2026-08-01 |
@@ -55,13 +85,13 @@
 | P51 | `papers/pdfs/P51_modern_code_review_slr_taxonomy.pdf` | `papers/P51-modern-code-review-slr-taxonomy.md` | Completed | Supporting | High | 20/24 | Medium | Verify taxonomy extraction | 2026-08-01 |
 | P52 | `papers/pdfs/P52_towards_automating_code_review_activities.pdf` | `papers/P52-towards-automating-code-review-activities.md` | Completed | Supporting | Medium/High | 18/24 | Medium | Verify automation-boundary evidence | 2026-08-01 |
 | P53 | `papers/pdfs/P53_code_review_automation_strengths_weaknesses.pdf` | `papers/P53-code-review-automation-strengths-weaknesses.md` | Completed | Supporting/Core | High | 19/24 | Medium | Verify empirical evidence and limitations | 2026-08-01 |
-| P54 | `papers/pdfs/P54_CR-Bench_Evaluating_the_Real-World_Utility_of_AI_Code_Review_Agents.pdf` | `papers/P54-cr-bench.md` | Completed | Include | High | 19/24 provisional | Low/Medium | Complete full-text extraction and reliability appraisal | 2026-08-01 |
-| P55 | `papers/pdfs/P55_Automated_Code_Review_In_Practice.pdf` | `papers/P55-automated-code-review-in-practice.md` | Completed | Include | High | 21/24 provisional | Low/Medium | Verify confounding and sampling details | 2026-08-01 |
-| P56 | `papers/pdfs/P56_Human_and_Machine_How_Software_Engineers_Perceive_and_Engage_with_AI-Assisted_Code_Reviews_Compared_to_Their_Peers.pdf` | `papers/P56-human-and-machine.md` | Completed | Supporting | High | 18/24 provisional | Low/Medium | Extract interview coding and validity details | 2026-08-01 |
-| P57 | `papers/pdfs/P57_On_Assessing_the_Relevance_of_Code_Reviews_Authored_by_Generative_Models.pdf` | `papers/P57-assessing-relevance-code-reviews.md` | Completed | Include | High | 20/24 provisional | Low/Medium | Verify judge agreement and ranking protocol | 2026-08-01 |
-| P58 | `papers/pdfs/P58_Are_LLMs_Reliable_Code_Reviewers_Systematic_Overcorrection_in_Requirement_Conformance_Judgement.pdf` | `papers/P58-llm-reliability-overcorrection.md` | Completed | Include | High | 21/24 provisional | Low/Medium | Extract full benchmark and verification results | 2026-08-01 |
-| P59 | `papers/pdfs/P59_Automated_Classification_of_Human_Code_Review_Comments_with_Large_Language_Models.pdf` | `papers/P59-automated-classification-human-comments.md` | Completed | Include | High | 21/24 provisional | Low/Medium | Verify annotation agreement and label definitions | 2026-08-01 |
-| P60 | `papers/pdfs/P60_Hold_On_Is_My_Feedback_Useful_Evaluating_the_Usefulness_of_Code_Review_Comments.pdf` | `papers/P60-hold-on-feedback-usefulness.md` | Completed | Include | High | 20/24 provisional | Low/Medium | Verify usefulness labels and cross-project results | 2026-08-01 |
+| P54 | `papers/pdfs/P54_CR-Bench_Evaluating_the_Real-World_Utility_of_AI_Code_Review_Agents.pdf` | `papers/P54-cr-bench.md` | In progress | Include | High | provisional | Low/Medium | Complete canonical 11-part full-text extraction and reliability appraisal | 2026-08-02 |
+| P55 | `papers/pdfs/P55_Automated_Code_Review_In_Practice.pdf` | `papers/P55-automated-code-review-in-practice.md` | In progress | Include | High | provisional | Low/Medium | Complete canonical 11-part full-text extraction and confounding analysis | 2026-08-02 |
+| P56 | `papers/pdfs/P56_Human_and_Machine_How_Software_Engineers_Perceive_and_Engage_with_AI-Assisted_Code_Reviews_Compared_to_Their_Peers.pdf` | `papers/P56-human-and-machine.md` | In progress | Supporting | High | provisional | Low/Medium | Complete canonical 11-part interview extraction and validity details | 2026-08-02 |
+| P57 | `papers/pdfs/P57_On_Assessing_the_Relevance_of_Code_Reviews_Authored_by_Generative_Models.pdf` | `papers/P57-assessing-relevance-code-reviews.md` | In progress | Include | High | provisional | Low/Medium | Complete canonical 11-part ranking and agreement extraction | 2026-08-02 |
+| P58 | `papers/pdfs/P58_Are_LLMs_Reliable_Code_Reviewers_Systematic_Overcorrection_in_Requirement_Conformance_Judgement.pdf` | `papers/P58-llm-reliability-overcorrection.md` | In progress | Include | High | provisional | Low/Medium | Complete canonical 11-part benchmark and verification extraction | 2026-08-02 |
+| P59 | `papers/pdfs/P59_Automated_Classification_of_Human_Code_Review_Comments_with_Large_Language_Models.pdf` | `papers/P59-automated-classification-human-comments.md` | In progress | Include | High | provisional | Low/Medium | Complete canonical taxonomy, annotation, and agreement extraction | 2026-08-02 |
+| P60 | `papers/pdfs/P60_Hold_On_Is_My_Feedback_Useful_Evaluating_the_Usefulness_of_Code_Review_Comments.pdf` | `papers/P60-hold-on-feedback-usefulness.md` | In progress | Include | High | provisional | Low/Medium | Complete canonical usefulness-label and cross-project extraction | 2026-08-02 |
 | P61 | `papers/pdfs/P61_AI-Assisted_Code_Review_as_a_Scaffold_for_Code_Quality_and_Self-Regulated_Learning_An_Experience_Report.pdf` | `papers/P61-ai-assisted-code-review-learning.md` | Completed | Supporting | High | 17/24 provisional | Low/Medium | Verify experience-report method and coding | 2026-08-01 |
 | P62 | `papers/pdfs/P62_DeputyDev_--_AI_Powered_Developer_Assistant_Breaking_the_Code_Review_Logjam_through_Contextual_AI_to_Boost_Developer_Productivity.pdf` | `papers/P62-deputydev.md` | Completed | Include | High | 21/24 provisional | Low/Medium | Verify A/B design and confounders | 2026-08-01 |
 | P63 | `papers/pdfs/P63_Measuring_and_Exploiting_Confirmation_Bias_in_LLM-Assisted_Security_Code_Review.pdf` | `papers/P63-confirmation-bias-security-review.md` | Completed | Supporting/Core | High | 18/24 provisional | Low/Medium | Verify bias benchmark and measures | 2026-08-01 |
