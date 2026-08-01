@@ -26,7 +26,6 @@
 | Code / artifact | Needs PDF-level verification |
 
 ```bibtex
-% TODO: Add checked ACM BibTeX.
 ```
 
 ## One-Sentence Summary
@@ -135,8 +134,90 @@ P50 is useful as background for non-functional quality evaluation. It is not cen
 - [ ] Add checked ACM BibTeX.
 - [ ] Extract only non-functional evaluation insights relevant to review comments.
 - [ ] Decide whether P50 belongs in the final citation set.
-## Proposal-aligned quality appraisal
+## Legacy proposal-aligned quality appraisal (superseded by the canonical record)
 
 P50 is **Supporting / Low relevance**. It contributes specialized evidence for RQ2–RQ4 about efficiency-related evaluation and maintainability/correctness trade-offs, and RQ6 through a possible non-functional evaluation sublayer. It is not primarily a code-review-comment study.
 
 **Quality score: 11/24.** Q1–Q3=2, Q4–Q5=1, Q6=1, Q7=1, Q8=1, Q9=1, Q10=1, Q11=1, Q12=1.
+## Canonical citation record
+
+Use citation key `p50_peng2025_coffe` from `references/references.bib`; do not duplicate its BibTeX entry in this note.
+## Canonical SLR record
+
+> [!NOTE]
+> The numbered eleven-section record below is authoritative; the compact block is provenance only.
+
+- Identification/screening: `p50_peng2025_coffe`; Supporting; Include as specialized background; Low relevance.
+- Study overview: Benchmark for code-efficiency generation and evaluation.
+- RQ1: Efficiency-related review claims may be useful or low-value depending on evidence; direct comment taxonomy is absent.
+- RQ2: Code/task context and efficiency evidence (Reported).
+- RQ3: Efficiency, correctness, maintainability, and benchmark dimensions (Reported).
+- RQ4: Efficiency gain versus readability, maintainability, correctness, and computational cost (Reported).
+- RQ5: Benchmark validity and non-functional annotation (Reported).
+- RQ6: Supports a specialized non-functional evaluation sublayer.
+- Failure taxonomy: unsupported efficiency claim; readability regression; maintainability regression; correctness-efficiency conflict.
+- Metrics: efficiency, correctness, maintainability, and benchmark performance.
+- Mitigation/trade-off: efficiency-oriented suggestions; gains may create non-functional regressions.
+- Validity: not primarily a code-review-comment study.
+- Quality: 11/24; low-priority supporting evidence.
+- Synthesis conclusion: keep as specialized non-functional context, not core review evidence.
+
+### 1. Identification
+- P50; `p50_peng2025_coffe`; local full PDF; included as supporting unless explicitly marked core; authoritative record.
+### 2. Screening and proposal alignment
+- Include as supporting. `p50_peng2025_coffe`; Supporting; Include as specialized background; Low relevance.
+### 3. Study overview
+Benchmark for code-efficiency generation and evaluation.
+### 4. Evidence mapped to proposal RQ1–RQ6
+| RQ | Evidence | Type | Location |
+|---|---|---|---|
+| RQ1 | Efficiency-related review claims may be useful or low-value depending on evidence; direct comment taxonomy is absent. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ2 | Code/task context and efficiency evidence (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ3 | Efficiency, correctness, maintainability, and benchmark dimensions (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ4 | Efficiency gain versus readability, maintainability, correctness, and computational cost (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ5 | Benchmark validity and non-functional annotation (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ6 | Supports a specialized non-functional evaluation sublayer. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+### 5. Failure and problematic-comment categories
+| Category | Type | Location |
+|---|---|---|
+| unsupported efficiency claim | Reported/Inferred | Full PDF |
+| readability regression | Reported/Inferred | Full PDF |
+| maintainability regression | Reported/Inferred | Full PDF |
+| correctness-efficiency conflict. | Reported/Inferred | Full PDF |
+### 6. Evaluation dimensions and metrics
+| Dimension/metric | Limitation | Location |
+|---|---|---|
+| efficiency | Indirect/supporting evidence only | Full PDF |
+| correctness | Indirect/supporting evidence only | Full PDF |
+| maintainability | Indirect/supporting evidence only | Full PDF |
+| and benchmark performance. | Indirect/supporting evidence only | Full PDF |
+### 7. Mitigation and trade-offs
+- Mitigation/intervention: efficiency-oriented suggestions; gains may create non-functional regressions.
+- Useful feedback potentially lost: not directly measured unless stated above.
+- Coverage: indirect/task-specific; retained useful-review coverage is incomplete.
+- Human escalation: no formal rate/policy reported unless stated above.
+- Cost: paper-specific evidence above; otherwise Not reported.
+### 8. Annotation and evaluator validity
+- not primarily a code-review-comment study.
+- Q7–Q8 encode judging and reliability depth.
+### 9. Quality appraisal
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 | 2 | goal at scored depth. |
+| Q2 | 2 | artifact at scored depth. |
+| Q3 | 2 | dataset/context at scored depth. |
+| Q4 | 1 | procedure at scored depth. |
+| Q5 | 1 | metrics at scored depth. |
+| Q6 | 1 | failures at scored depth. |
+| Q7 | 1 | judging at scored depth. |
+| Q8 | 1 | reliability at scored depth. |
+| Q9 | 1 | intervention at scored depth. |
+| Q10 | 1 | trade-offs at scored depth. |
+| Q11 | 1 | threats at scored depth. |
+| Q12 | 1 | SLR support at scored depth. |
+- Total: 15/24; reporting/relevance score; supporting status is unchanged.
+### 10. Review-process reliability and bias
+- Indirect transfer, missing preservation/escalation evidence, and selection/publication bias remain explicit; second-reviewer calibration is unavailable.
+### 11. Synthesis-ready conclusion
+- Contribution: Benchmark for code-efficiency generation and evaluation.
+- Boundary: keep as specialized non-functional context, not core review evidence.

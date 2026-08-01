@@ -26,7 +26,6 @@
 | Code / artifact | Not applicable |
 
 ```bibtex
-% TODO: Add checked BibTeX.
 ```
 
 ## One-Sentence Summary
@@ -137,8 +136,91 @@ P47 can support broad misalignment and trust framing, but more code-review-speci
 - [ ] Add checked BibTeX.
 - [ ] Extract only misalignment concepts useful for code review.
 - [ ] Avoid overusing this paper for SE-specific claims.
-## Proposal-aligned quality appraisal
+## Legacy proposal-aligned quality appraisal (superseded by the canonical record)
 
 P47 is **Supporting / Low–Medium relevance**. It supports RQ1–RQ4 through broad misalignment, over-refusal, harmful-output, helpfulness, and coverage trade-offs; RQ5 through validity and calibration concerns; and RQ6 through mitigation vocabulary. It is not code-review-specific.
 
 **Quality score: 15/24.** Q1–Q3=2, Q4–Q5=1, Q6=1, Q7=1, Q8=1, Q9=2, Q10=1, Q11=1, Q12=2.
+## Canonical citation record
+
+Use citation key `p47_qu2025_misalignment_survey` from `references/references.bib`; do not duplicate its BibTeX entry in this note.
+## Canonical SLR record
+
+> [!NOTE]
+> The numbered eleven-section record below is authoritative; the compact block is provenance only.
+
+- Identification/screening: `p47_qu2025_misalignment_survey`; Supporting; Include as background; Low–Medium relevance.
+- Study overview: Critical survey of LLM misalignment, risks, manifestations, and mitigation.
+- RQ1: Harmful, misleading, over-refusing, and misaligned output categories (Reported).
+- RQ2: Helpfulness, safety, grounding, and trust dimensions (Reported).
+- RQ3: Alignment/mitigation families (Reported).
+- RQ4: Safety constraints versus helpfulness, coverage, and over-refusal (Reported).
+- RQ5: Evaluation validity and calibration (Reported).
+- RQ6: Vocabulary for mitigation and trade-off framing.
+- Failure taxonomy: harmful; misleading; over-refusal; misaligned; uncalibrated.
+- Metrics: safety, helpfulness, robustness, calibration, and coverage.
+- Mitigation/trade-off: alignment/safety constraints; may reduce useful coverage.
+- Validity: broad LLM survey, not review-specific evidence.
+- Quality: 15/24; supporting background evidence.
+- Synthesis conclusion: use cautiously to frame helpfulness/safety trade-offs.
+
+### 1. Identification
+- P47; `p47_qu2025_misalignment_survey`; local full PDF; included as supporting unless explicitly marked core; authoritative record.
+### 2. Screening and proposal alignment
+- Include as supporting. `p47_qu2025_misalignment_survey`; Supporting; Include as background; Low–Medium relevance.
+### 3. Study overview
+Critical survey of LLM misalignment, risks, manifestations, and mitigation.
+### 4. Evidence mapped to proposal RQ1–RQ6
+| RQ | Evidence | Type | Location |
+|---|---|---|---|
+| RQ1 | Harmful, misleading, over-refusing, and misaligned output categories (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ2 | Helpfulness, safety, grounding, and trust dimensions (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ3 | Alignment/mitigation families (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ4 | Safety constraints versus helpfulness, coverage, and over-refusal (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ5 | Evaluation validity and calibration (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ6 | Vocabulary for mitigation and trade-off framing. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+### 5. Failure and problematic-comment categories
+| Category | Type | Location |
+|---|---|---|
+| harmful | Reported/Inferred | Full PDF |
+| misleading | Reported/Inferred | Full PDF |
+| over-refusal | Reported/Inferred | Full PDF |
+| misaligned | Reported/Inferred | Full PDF |
+| uncalibrated. | Reported/Inferred | Full PDF |
+### 6. Evaluation dimensions and metrics
+| Dimension/metric | Limitation | Location |
+|---|---|---|
+| safety | Indirect/supporting evidence only | Full PDF |
+| helpfulness | Indirect/supporting evidence only | Full PDF |
+| robustness | Indirect/supporting evidence only | Full PDF |
+| calibration | Indirect/supporting evidence only | Full PDF |
+### 7. Mitigation and trade-offs
+- Mitigation/intervention: alignment/safety constraints; may reduce useful coverage.
+- Useful feedback potentially lost: not directly measured unless stated above.
+- Coverage: indirect/task-specific; retained useful-review coverage is incomplete.
+- Human escalation: no formal rate/policy reported unless stated above.
+- Cost: paper-specific evidence above; otherwise Not reported.
+### 8. Annotation and evaluator validity
+- broad LLM survey, not review-specific evidence.
+- Q7–Q8 encode judging and reliability depth.
+### 9. Quality appraisal
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 | 2 | goal at scored depth. |
+| Q2 | 2 | artifact at scored depth. |
+| Q3 | 2 | dataset/context at scored depth. |
+| Q4 | 1 | procedure at scored depth. |
+| Q5 | 1 | metrics at scored depth. |
+| Q6 | 1 | failures at scored depth. |
+| Q7 | 1 | judging at scored depth. |
+| Q8 | 1 | reliability at scored depth. |
+| Q9 | 2 | intervention at scored depth. |
+| Q10 | 1 | trade-offs at scored depth. |
+| Q11 | 1 | threats at scored depth. |
+| Q12 | 2 | SLR support at scored depth. |
+- Total: 17/24; reporting/relevance score; supporting status is unchanged.
+### 10. Review-process reliability and bias
+- Indirect transfer, missing preservation/escalation evidence, and selection/publication bias remain explicit; second-reviewer calibration is unavailable.
+### 11. Synthesis-ready conclusion
+- Contribution: Critical survey of LLM misalignment, risks, manifestations, and mitigation.
+- Boundary: use cautiously to frame helpfulness/safety trade-offs.

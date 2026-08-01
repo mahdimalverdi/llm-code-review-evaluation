@@ -26,7 +26,6 @@
 | Code / artifact | Not applicable |
 
 ```bibtex
-% TODO: Add checked arXiv BibTeX.
 ```
 
 ## One-Sentence Summary
@@ -135,8 +134,84 @@ P45 is useful for broad code-LLM background, but it should not carry claims abou
 - [ ] Add checked arXiv BibTeX.
 - [ ] Extract only benchmark/evaluation limitations relevant to code review.
 - [ ] Decide whether to cite P45 or rely on more specific surveys such as P43/P44.
-## Proposal-aligned quality appraisal
+## Legacy proposal-aligned quality appraisal (superseded by the canonical record)
 
 P45 is **Supporting / Low relevance**. It contributes general code-model context for RQ2–RQ4 and RQ6, especially model adaptation and resource trade-offs, but does not directly study code-review comments or the proposal’s taxonomy.
 
 **Quality score: 9/24.** Q1–Q3=2, Q4–Q5=1, Q6=0, Q7=1, Q8=1, Q9=0, Q10=0, Q11=1, Q12=1.
+## Canonical citation record
+
+Use citation key `p45_zheng2023_code_llm_survey` from `references/references.bib`; do not duplicate its BibTeX entry in this note.
+## Canonical SLR record
+
+> [!NOTE]
+> The numbered eleven-section record below is authoritative; the compact block is provenance only.
+
+- Identification/screening: `p45_zheng2023_code_llm_survey`; Supporting; Include as background; Low relevance.
+- Study overview: Survey of code-specific LLM evolution, benchmarks, and trends.
+- RQ1: General code-model failure categories; no direct review-comment taxonomy.
+- RQ2: Code context, model adaptation, and benchmark dimensions (Reported).
+- RQ3: Model and benchmark landscape (Reported).
+- RQ4: Model scale/resource cost versus performance (Reported).
+- RQ5: Benchmark validity (Reported).
+- RQ6: Background only.
+- Failure taxonomy: code-model failures, not review-comment failures.
+- Metrics: code task benchmarks and resource measures.
+- Mitigation/trade-off: model scaling/adaptation; no review mitigation.
+- Validity: indirect relevance and older coverage.
+- Quality: 9/24; low-priority supporting evidence.
+- Synthesis conclusion: cite only for broad code-LLM context.
+
+### 1. Identification
+- P45; `p45_zheng2023_code_llm_survey`; local full PDF; included as supporting unless explicitly marked core; authoritative record.
+### 2. Screening and proposal alignment
+- Include as supporting. `p45_zheng2023_code_llm_survey`; Supporting; Include as background; Low relevance.
+### 3. Study overview
+Survey of code-specific LLM evolution, benchmarks, and trends.
+### 4. Evidence mapped to proposal RQ1–RQ6
+| RQ | Evidence | Type | Location |
+|---|---|---|---|
+| RQ1 | General code-model failure categories; no direct review-comment taxonomy. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ2 | Code context, model adaptation, and benchmark dimensions (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ3 | Model and benchmark landscape (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ4 | Model scale/resource cost versus performance (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ5 | Benchmark validity (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ6 | Background only. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+### 5. Failure and problematic-comment categories
+| Category | Type | Location |
+|---|---|---|
+| code-model failures, not review-comment failures. | Reported/Inferred | Full PDF |
+### 6. Evaluation dimensions and metrics
+| Dimension/metric | Limitation | Location |
+|---|---|---|
+| code task benchmarks and resource measures. | Indirect/supporting evidence only | Full PDF |
+### 7. Mitigation and trade-offs
+- Mitigation/intervention: model scaling/adaptation; no review mitigation.
+- Useful feedback potentially lost: not directly measured unless stated above.
+- Coverage: indirect/task-specific; retained useful-review coverage is incomplete.
+- Human escalation: no formal rate/policy reported unless stated above.
+- Cost: paper-specific evidence above; otherwise Not reported.
+### 8. Annotation and evaluator validity
+- indirect relevance and older coverage.
+- Q7–Q8 encode judging and reliability depth.
+### 9. Quality appraisal
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 | 2 | goal at scored depth. |
+| Q2 | 2 | artifact at scored depth. |
+| Q3 | 2 | dataset/context at scored depth. |
+| Q4 | 1 | procedure at scored depth. |
+| Q5 | 1 | metrics at scored depth. |
+| Q6 | 0 | failures at scored depth. |
+| Q7 | 1 | judging at scored depth. |
+| Q8 | 1 | reliability at scored depth. |
+| Q9 | 0 | intervention at scored depth. |
+| Q10 | 0 | trade-offs at scored depth. |
+| Q11 | 1 | threats at scored depth. |
+| Q12 | 1 | SLR support at scored depth. |
+- Total: 12/24; reporting/relevance score; supporting status is unchanged.
+### 10. Review-process reliability and bias
+- Indirect transfer, missing preservation/escalation evidence, and selection/publication bias remain explicit; second-reviewer calibration is unavailable.
+### 11. Synthesis-ready conclusion
+- Contribution: Survey of code-specific LLM evolution, benchmarks, and trends.
+- Boundary: cite only for broad code-LLM context.

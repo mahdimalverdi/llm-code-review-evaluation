@@ -26,7 +26,6 @@
 | Code / artifact | Needs PDF-level verification |
 
 ```bibtex
-% TODO: Add checked Springer BibTeX.
 ```
 
 ## One-Sentence Summary
@@ -135,8 +134,87 @@ P42 can support a background claim that developers already use and share LLM out
 - [ ] Add checked Springer BibTeX.
 - [ ] Extract examples of PR/issue usage categories.
 - [ ] Decide whether to cite in related work or discussion only.
-## Proposal-aligned quality appraisal
+## Legacy proposal-aligned quality appraisal (superseded by the canonical record)
 
 P42 is **Supporting / Low–Medium relevance**. It provides contextual evidence for RQ1–RQ3 about LLM-generated PR/issue communication and possible review failures, and limited support for RQ5–RQ6. It does not directly evaluate a code-review mitigation or a controlled trade-off.
 
 **Quality score: 12/24.** Q1–Q3=2, Q4–Q5=1, Q6=1, Q7=1, Q8=1, Q9=0, Q10=0, Q11=1, Q12=2.
+## Canonical citation record
+
+Use citation key `p42_wasserbaech2024_chatgpt_github` from `references/references.bib`; do not duplicate its BibTeX entry in this note.
+## Canonical SLR record
+
+> [!NOTE]
+> The numbered eleven-section record below is authoritative; the compact block is provenance only.
+
+- Identification/screening: `p42_wasserbaech2024_chatgpt_github`; Supporting; Include as contextual evidence; Low–Medium relevance.
+- Study overview: Empirical analysis of developers’ shared ChatGPT conversations in GitHub PRs and issues.
+- RQ1: Contextual, communication, and possible low-value or unsupported AI-assisted feedback (Reported/Our perspective).
+- RQ2: Repository/PR/issue context and developer interaction (Reported).
+- RQ3: Communication, adoption, and AI-assisted review dimensions (Reported).
+- RQ4: AI assistance versus trust, communication cost, and workflow change (Reported/Our perspective).
+- RQ5: Ecological and socio-technical validity (Reported).
+- RQ6: Supports workflow/context positioning, not direct taxonomy construction.
+- Failure taxonomy: context-mismatch; unsupported; communication-friction; low-value assistance.
+- Metrics: conversation/PR/issue patterns and qualitative interaction analysis.
+- Mitigation/trade-off: shared AI assistance; may improve access while adding verification and trust cost.
+- Validity: observational communication data do not establish comment correctness.
+- Quality: 12/24; contextual supporting evidence.
+- Synthesis conclusion: use only for positioning AI-assisted review in real collaboration.
+
+### 1. Identification
+- P42; `p42_wasserbaech2024_chatgpt_github`; local full PDF; included as supporting unless explicitly marked core; authoritative record.
+### 2. Screening and proposal alignment
+- Include as supporting. `p42_wasserbaech2024_chatgpt_github`; Supporting; Include as contextual evidence; Low–Medium relevance.
+### 3. Study overview
+Empirical analysis of developers’ shared ChatGPT conversations in GitHub PRs and issues.
+### 4. Evidence mapped to proposal RQ1–RQ6
+| RQ | Evidence | Type | Location |
+|---|---|---|---|
+| RQ1 | Contextual, communication, and possible low-value or unsupported AI-assisted feedback (Reported/Our perspective). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ2 | Repository/PR/issue context and developer interaction (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ3 | Communication, adoption, and AI-assisted review dimensions (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ4 | AI assistance versus trust, communication cost, and workflow change (Reported/Our perspective). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ5 | Ecological and socio-technical validity (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ6 | Supports workflow/context positioning, not direct taxonomy construction. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+### 5. Failure and problematic-comment categories
+| Category | Type | Location |
+|---|---|---|
+| context-mismatch | Reported/Inferred | Full PDF |
+| unsupported | Reported/Inferred | Full PDF |
+| communication-friction | Reported/Inferred | Full PDF |
+| low-value assistance. | Reported/Inferred | Full PDF |
+### 6. Evaluation dimensions and metrics
+| Dimension/metric | Limitation | Location |
+|---|---|---|
+| conversation/PR/issue patterns and qualitative interaction analysis. | Indirect/supporting evidence only | Full PDF |
+### 7. Mitigation and trade-offs
+- Mitigation/intervention: shared AI assistance; may improve access while adding verification and trust cost.
+- Useful feedback potentially lost: not directly measured unless stated above.
+- Coverage: indirect/task-specific; retained useful-review coverage is incomplete.
+- Human escalation: no formal rate/policy reported unless stated above.
+- Cost: paper-specific evidence above; otherwise Not reported.
+### 8. Annotation and evaluator validity
+- observational communication data do not establish comment correctness.
+- Q7–Q8 encode judging and reliability depth.
+### 9. Quality appraisal
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 | 2 | goal at scored depth. |
+| Q2 | 2 | artifact at scored depth. |
+| Q3 | 2 | dataset/context at scored depth. |
+| Q4 | 1 | procedure at scored depth. |
+| Q5 | 1 | metrics at scored depth. |
+| Q6 | 1 | failures at scored depth. |
+| Q7 | 1 | judging at scored depth. |
+| Q8 | 1 | reliability at scored depth. |
+| Q9 | 0 | intervention at scored depth. |
+| Q10 | 0 | trade-offs at scored depth. |
+| Q11 | 1 | threats at scored depth. |
+| Q12 | 2 | SLR support at scored depth. |
+- Total: 14/24; reporting/relevance score; supporting status is unchanged.
+### 10. Review-process reliability and bias
+- Indirect transfer, missing preservation/escalation evidence, and selection/publication bias remain explicit; second-reviewer calibration is unavailable.
+### 11. Synthesis-ready conclusion
+- Contribution: Empirical analysis of developers’ shared ChatGPT conversations in GitHub PRs and issues.
+- Boundary: use only for positioning AI-assisted review in real collaboration.

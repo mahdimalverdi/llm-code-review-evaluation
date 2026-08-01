@@ -26,7 +26,6 @@
 | Code / artifact | Needs PDF-level verification |
 
 ```bibtex
-% TODO: Add checked IEEE BibTeX.
 ```
 
 ## One-Sentence Summary
@@ -136,8 +135,90 @@ P49 is useful for context-quality and consistency framing. It supports the idea 
 - [ ] Add checked IEEE BibTeX.
 - [ ] Extract exact inconsistency categories.
 - [ ] Consider adding `context consistency gate` to the trade-off framework.
-## Proposal-aligned quality appraisal
+## Legacy proposal-aligned quality appraisal (superseded by the canonical record)
 
 P49 is **Supporting/Core / Medium relevance**. It supports RQ1 through inconsistent or stale documentation-based behavior; RQ2 through context consistency; RQ3–RQ4 through consistency checking and mitigation consequences; and RQ5–RQ6 through context-validity and gate design.
 
 **Quality score: 17/24.** Q1–Q5=2, Q6=1, Q7=1, Q8=1, Q9=2, Q10=1, Q11=1, Q12=2.
+## Canonical citation record
+
+Use citation key `p49_lee2025_metamon` from `references/references.bib`; do not duplicate its BibTeX entry in this note.
+## Canonical SLR record
+
+> [!NOTE]
+> The numbered eleven-section record below is authoritative; the compact block is provenance only.
+
+- Identification/screening: `p49_lee2025_metamon`; Supporting/Core; Include; Medium relevance.
+- Study overview: Metamorphic LLM queries detect inconsistencies between program documentation and behavior.
+- RQ1: Stale-documentation, unsupported, and behavior-inconsistent review claims (Reported/Our perspective).
+- RQ2: Context consistency between documentation, code, and behavior (Reported).
+- RQ3: Consistency-checking and metamorphic evaluation dimensions (Reported).
+- RQ4: Consistency gates versus extra execution/query cost and possible false alarms (Reported/Our perspective).
+- RQ5: Context validity and oracle limitations (Reported).
+- RQ6: Supports consistency-gate and context-quality design.
+- Failure taxonomy: stale documentation; behavior inconsistency; unsupported claim; context contradiction.
+- Metrics: inconsistency detection, metamorphic outcomes, false positives, and robustness.
+- Mitigation/trade-off: consistency checking; improves evidence but adds execution/query cost.
+- Validity: specialized documentation/behavior task; review transfer is indirect.
+- Quality: 17/24; supporting/core context evidence.
+- Synthesis conclusion: supports explicit context-consistency dimensions.
+
+### 1. Identification
+- P49; `p49_lee2025_metamon`; local full PDF; included as supporting unless explicitly marked core; authoritative record.
+### 2. Screening and proposal alignment
+- Include as supporting. `p49_lee2025_metamon`; Supporting/Core; Include; Medium relevance.
+### 3. Study overview
+Metamorphic LLM queries detect inconsistencies between program documentation and behavior.
+### 4. Evidence mapped to proposal RQ1–RQ6
+| RQ | Evidence | Type | Location |
+|---|---|---|---|
+| RQ1 | Stale-documentation, unsupported, and behavior-inconsistent review claims (Reported/Our perspective). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ2 | Context consistency between documentation, code, and behavior (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ3 | Consistency-checking and metamorphic evaluation dimensions (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ4 | Consistency gates versus extra execution/query cost and possible false alarms (Reported/Our perspective). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ5 | Context validity and oracle limitations (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ6 | Supports consistency-gate and context-quality design. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+### 5. Failure and problematic-comment categories
+| Category | Type | Location |
+|---|---|---|
+| stale documentation | Reported/Inferred | Full PDF |
+| behavior inconsistency | Reported/Inferred | Full PDF |
+| unsupported claim | Reported/Inferred | Full PDF |
+| context contradiction. | Reported/Inferred | Full PDF |
+### 6. Evaluation dimensions and metrics
+| Dimension/metric | Limitation | Location |
+|---|---|---|
+| inconsistency detection | Indirect/supporting evidence only | Full PDF |
+| metamorphic outcomes | Indirect/supporting evidence only | Full PDF |
+| false positives | Indirect/supporting evidence only | Full PDF |
+| and robustness. | Indirect/supporting evidence only | Full PDF |
+### 7. Mitigation and trade-offs
+- Mitigation/intervention: consistency checking; improves evidence but adds execution/query cost.
+- Useful feedback potentially lost: not directly measured unless stated above.
+- Coverage: indirect/task-specific; retained useful-review coverage is incomplete.
+- Human escalation: no formal rate/policy reported unless stated above.
+- Cost: paper-specific evidence above; otherwise Not reported.
+### 8. Annotation and evaluator validity
+- specialized documentation/behavior task; review transfer is indirect.
+- Q7–Q8 encode judging and reliability depth.
+### 9. Quality appraisal
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 | 2 | goal at scored depth. |
+| Q2 | 2 | artifact at scored depth. |
+| Q3 | 2 | dataset/context at scored depth. |
+| Q4 | 2 | procedure at scored depth. |
+| Q5 | 2 | metrics at scored depth. |
+| Q6 | 1 | failures at scored depth. |
+| Q7 | 1 | judging at scored depth. |
+| Q8 | 1 | reliability at scored depth. |
+| Q9 | 2 | intervention at scored depth. |
+| Q10 | 1 | trade-offs at scored depth. |
+| Q11 | 1 | threats at scored depth. |
+| Q12 | 2 | SLR support at scored depth. |
+- Total: 19/24; reporting/relevance score; supporting status is unchanged.
+### 10. Review-process reliability and bias
+- Indirect transfer, missing preservation/escalation evidence, and selection/publication bias remain explicit; second-reviewer calibration is unavailable.
+### 11. Synthesis-ready conclusion
+- Contribution: Metamorphic LLM queries detect inconsistencies between program documentation and behavior.
+- Boundary: supports explicit context-consistency dimensions.

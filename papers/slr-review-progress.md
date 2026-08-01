@@ -32,6 +32,7 @@
 | Calibration 2 | P11–P20 | Passed | Canonical eleven-section records validated; Q1–Q12 totals recalculated consistently; compact extractions retained as provenance only | 2026-08-02 |
 | Calibration 3 | P21–P30 | Passed | Canonical eleven-section records validated; Q1–Q12 arithmetic corrected; P21 archived duplicate excluded from the study count | 2026-08-02 |
 | Calibration 4 | P31–P40 | Passed | Canonical records validated; supporting/core boundaries preserved; Q1–Q12 arithmetic corrected | 2026-08-02 |
+| Calibration 5 | P41–P50 | Passed | Canonical records validated; indirect/supporting evidence boundaries retained; systematic Q1–Q12 arithmetic errors corrected | 2026-08-02 |
 
 | ID | PDF | Note | Status | Decision | Relevance | Quality | Confidence | Unresolved items | Last reviewed |
 |---|---|---|---|---|---|---:|---|---|---|
@@ -75,16 +76,16 @@
 | P38 | `papers/pdfs/P38_expectations_outcomes_challenges_modern_code_review.pdf` | `papers/P38-expectations-outcomes-challenges-modern-code-review.md` | Completed | Supporting | High | 18/24 | Medium | Verify study protocol and constructs | 2026-08-01 |
 | P39 | `papers/pdfs/P39_characteristics_useful_code_reviews.pdf` | `papers/P39-characteristics-useful-code-reviews.md` | Completed | Supporting | High | 20/24 | Medium | Verify usefulness dimensions and participants | 2026-08-01 |
 | P40 | `papers/pdfs/P40_code_change_reviewability.pdf` | `papers/P40-code-change-reviewability.md` | Completed | Supporting/Core | Medium/High | 20/24 | High | Reviewability evidence is input-side and not LLM-specific | 2026-08-02 |
-| P41 | `papers/pdfs/P41_explanations_in_code_reviews.pdf` | `papers/P41-explaining-explanations-code-reviews.md` | Completed | Supporting | Medium | 17/24 | Medium | Verify explanation study and participant protocol | 2026-08-01 |
-| P42 | `papers/pdfs/P42_chatgpt_conversations_github_prs_issues.pdf` | `papers/P42-chatgpt-conversations-github-prs-issues.md` | Completed | Supporting | Low/Medium | 12/24 | Medium | Verify review-specific evidence boundary | 2026-08-01 |
-| P43 | `papers/pdfs/P43_llm_for_software_engineering_survey.pdf` | `papers/P43-llm-for-software-engineering-survey.md` | Completed | Supporting | Medium | 14/24 | Medium | Verify code-review coverage | 2026-08-01 |
-| P44 | `papers/pdfs/P44_code_generation_with_llms_survey.pdf` | `papers/P44-llm-code-generation-survey.md` | Completed | Supporting | Low/Medium | 10/24 | Medium | Use only for broad background | 2026-08-01 |
-| P45 | `papers/pdfs/P45_code_specific_llms_survey.pdf` | `papers/P45-code-specific-llms-survey.md` | Completed | Supporting | Low | 9/24 | Medium | Use only for model/resource context | 2026-08-01 |
-| P46 | `papers/pdfs/P46_llm_vulnerability_detection_repair_explanation.pdf` | `papers/P46-llm-vulnerability-detection-repair.md` | Completed | Supporting | Medium | 14/24 | Medium | Keep security boundary explicit | 2026-08-01 |
-| P47 | `papers/pdfs/P47_llm_misalignment_critical_survey.pdf` | `papers/P47-llm-misalignment-critical-survey.md` | Completed | Supporting | Low/Medium | 15/24 | Medium | Use for mitigation vocabulary only | 2026-08-01 |
-| P48 | `papers/pdfs/P48_llms_for_code_quality_issues.pdf` | `papers/P48-llms-code-quality-issues.md` | Completed | Supporting | Medium | 14/24 | Medium | Verify review-comment connection | 2026-08-01 |
-| P49 | `papers/pdfs/P49_metamon_documentation_behavior_inconsistency.pdf` | `papers/P49-metamon-documentation-behavior-inconsistency.md` | Completed | Supporting/Core | Medium | 17/24 | Medium | Verify context-consistency evidence | 2026-08-01 |
-| P50 | `papers/pdfs/P50_coffe_code_efficiency_benchmark.pdf` | `papers/P50-coffe-code-efficiency-benchmark.md` | Completed | Supporting | Low | 11/24 | Medium | Keep as specialized non-functional context | 2026-08-01 |
+| P41 | `papers/pdfs/P41_explanations_in_code_reviews.pdf` | `papers/P41-explaining-explanations-code-reviews.md` | Completed | Supporting | Medium | 18/24 | Medium | Verify explanation study and participant protocol | 2026-08-02 |
+| P42 | `papers/pdfs/P42_chatgpt_conversations_github_prs_issues.pdf` | `papers/P42-chatgpt-conversations-github-prs-issues.md` | Completed | Supporting | Low/Medium | 14/24 | Medium | Verify review-specific evidence boundary | 2026-08-02 |
+| P43 | `papers/pdfs/P43_llm_for_software_engineering_survey.pdf` | `papers/P43-llm-for-software-engineering-survey.md` | Completed | Supporting | Medium | 15/24 | Medium | Verify code-review coverage | 2026-08-02 |
+| P44 | `papers/pdfs/P44_code_generation_with_llms_survey.pdf` | `papers/P44-llm-code-generation-survey.md` | Completed | Supporting | Low/Medium | 13/24 | Medium | Use only for broad background | 2026-08-02 |
+| P45 | `papers/pdfs/P45_code_specific_llms_survey.pdf` | `papers/P45-code-specific-llms-survey.md` | Completed | Supporting | Low | 12/24 | Medium | Use only for model/resource context | 2026-08-02 |
+| P46 | `papers/pdfs/P46_llm_vulnerability_detection_repair_explanation.pdf` | `papers/P46-llm-vulnerability-detection-repair.md` | Completed | Supporting | Medium | 17/24 | Medium | Keep security boundary explicit | 2026-08-02 |
+| P47 | `papers/pdfs/P47_llm_misalignment_critical_survey.pdf` | `papers/P47-llm-misalignment-critical-survey.md` | Completed | Supporting | Low/Medium | 17/24 | Medium | Use for mitigation vocabulary only | 2026-08-02 |
+| P48 | `papers/pdfs/P48_llms_for_code_quality_issues.pdf` | `papers/P48-llms-code-quality-issues.md` | Completed | Supporting | Medium | 17/24 | Medium | Verify review-comment connection | 2026-08-02 |
+| P49 | `papers/pdfs/P49_metamon_documentation_behavior_inconsistency.pdf` | `papers/P49-metamon-documentation-behavior-inconsistency.md` | Completed | Supporting/Core | Medium | 19/24 | Medium | Verify context-consistency evidence | 2026-08-02 |
+| P50 | `papers/pdfs/P50_coffe_code_efficiency_benchmark.pdf` | `papers/P50-coffe-code-efficiency-benchmark.md` | Completed | Supporting | Low | 15/24 | Medium | Keep as specialized non-functional context | 2026-08-02 |
 | P51 | `papers/pdfs/P51_modern_code_review_slr_taxonomy.pdf` | `papers/P51-modern-code-review-slr-taxonomy.md` | Completed | Supporting | High | 20/24 | Medium | Verify taxonomy extraction | 2026-08-01 |
 | P52 | `papers/pdfs/P52_towards_automating_code_review_activities.pdf` | `papers/P52-towards-automating-code-review-activities.md` | Completed | Supporting | Medium/High | 18/24 | Medium | Verify automation-boundary evidence | 2026-08-01 |
 | P53 | `papers/pdfs/P53_code_review_automation_strengths_weaknesses.pdf` | `papers/P53-code-review-automation-strengths-weaknesses.md` | Completed | Supporting/Core | High | 19/24 | Medium | Verify empirical evidence and limitations | 2026-08-01 |
