@@ -2,6 +2,7 @@
 
 > [!NOTE]
 > This matrix turns individual paper notes into the backbone of the related-work, gap, taxonomy, and evaluation-framework sections. It is intentionally compact: detailed evidence lives in `papers/Pxx-*.md`.
+> Paper IDs are internal traceability handles; publication-facing prose must replace or accompany them with the corresponding citation keys in `references/references.bib`.
 
 ## Compact Matrix
 
@@ -57,24 +58,45 @@
 | P48 — LLMs for Code Quality Issues | Static-analysis/code-quality repair | Links LLM feedback to static-analysis warnings and quality issue resolution | Not review-comment specific | Static-analysis/code-quality sublayer |
 | P49 — METAMON | Documentation-behavior consistency | Operationalizes inconsistency between documentation and behavior using LLM queries | Documentation-focused, not PR review | Context consistency / stale-context checks |
 | P50 — COFFE | Efficiency benchmark | Adds non-functional quality and benchmark/proxy-validity evidence | Code-generation benchmark, not review comments | Efficiency/proxy-validity background |
+| P51 — Modern Code Review SLR | Human-review taxonomy and evidence map | Provides vocabulary and empirical review dimensions | Predates the LLM-specific trade-off problem | Review goals and taxonomy boundary |
+| P52 — Automating Code Review Activities | Automation task decomposition | Clarifies which review activities can be automated | Does not provide a unified LLM evaluation protocol | Automation-boundary framing |
+| P53 — Code Review Automation | Strengths, weaknesses, and automation limits | Directly identifies benefits and failure risks | Limited trade-off measurement | Motivation and gap framing |
+| P54 — CR-Bench | Real-world utility of review agents | PR-level utility and realistic task setting | Full deployment cost and preservation measures remain limited | Benchmark realism and utility |
+| P55 — Automated Review in Practice | Industry deployment | Observes operational review behavior | Confounding and proprietary context | Production evidence |
+| P56 — Human and Machine | Human perception of AI-assisted reviews | Compares engagement with human and AI feedback | Limited objective correctness evidence | Human-centered evaluation |
+| P57 — Review Relevance | Relevance of generated comments | Direct relevance labels and agreement evidence | Relevance does not cover correctness or grounding | Relevance dimension |
+| P58 — Overcorrection | Reliability and requirement-conformance errors | Exposes systematic overcorrection | Narrow task and benchmark boundary | False-positive and calibration risks |
+| P59 — Comment Classification | Automated taxonomy classification | Supports scalable labeling of human comments | Classification is not comment-quality validation | Annotation pipeline |
+| P60 — Feedback Usefulness | Developer usefulness labels | Directly grounds usefulness in review practice | Cross-context transfer and preservation remain open | Usefulness and value-to-attention |
+| P61 — AI Review and Learning | Learning and self-regulated review | Shows socio-technical and educational outcomes | Experience-report evidence is limited | Workflow value |
+| P62 — DeputyDev | Contextual assistant productivity | Links contextual assistance to developer outcomes | A/B confounding and limited failure taxonomy | Industrial workflow evidence |
+| P63 — Confirmation Bias | Security-review evaluator bias | Measures confirmation effects in LLM-assisted security review | Security-specific and not general comment quality | Evaluator/context bias |
+| P64 — Adversarial Comments | Comment-based attacks on security reviewers | Tests adversarial review context and defenses | Security boundary and specialized threat model | Adversarial robustness |
+| P65 — QASecClaw | Multi-agent false-positive reduction | Demonstrates staged verification for SAST findings | Not ordinary review-comment generation | Verification and routing mitigation |
+| P66 — Benchmark Survey | Benchmark and evaluation-practice survey | Consolidates pre-LLM and LLM benchmark limitations | Survey evidence is not a new empirical benchmark | Benchmark validity |
+| P67 — Familiar-Pattern Attack | Bias in static-analysis judgments | Shows pattern familiarity can hijack LLM analysis | Security/static-analysis specific | Context manipulation threat |
+| P68 — CoTDeceptor | Adversarial reasoning/code-agent robustness | Tests obfuscation against reasoning-enhanced agents | Not a review-comment evaluation study | Adversarial evaluator risk |
+| P69 — Deep Assessment | Semantic and expert assessment of review generation | Moves beyond lexical similarity with graded review quality | Annotation and workflow costs need explicit reporting | Evaluation dimensions and metric validity |
+| P70 — ChatGPT Code Refinement | Downstream refinement utility | Connects generated feedback to code changes | Review-comment connection is indirect | Supporting downstream-use evidence |
+| P71 — Llama Code Refinement | Replicated refinement evaluation | Adds replication and manual assessment evidence | Indirect review setting and limited trade-off analysis | Supporting replication evidence |
 
 ## Cross-Paper Patterns
 
 ### 1. Text similarity is insufficient, but still persistent
 
-P14 already recognized that BLEU is weak for review comments because valid comments are diverse and non-unique. Later work adds richer dimensions: grounding (P02), usefulness (P01/P18/P23/P24/P25/P39), security category/location (P21/P46), downstream refinability (P24/P48), suggestion adoption and code impact (P26), signal-to-noise and abandonment (P27), explanation quality (P41), and coding preferences (P30/P44/P45). P29/P31/P32/P33/P36 show that replacing lexical metrics with LLM judges is not enough unless the judge itself is validated.
+P14 already recognized that BLEU is weak for review comments because valid comments are diverse and non-unique. Later work adds richer dimensions: grounding (P02), usefulness and relevance (P01/P18/P23/P24/P25/P39/P57/P60), security category/location (P21/P46), downstream refinability (P24/P48/P70/P71), suggestion adoption and code impact (P26), signal-to-noise and abandonment (P27), explanation quality (P41), and coding preferences (P30/P44/P45). P29/P31/P32/P33/P36/P63/P69 show that replacing lexical metrics with an LLM judge or a single semantic score is insufficient unless the measurement instrument and rubric are validated.
 
 **Implication:** Our framework should not be another single metric. It should be a structured evaluation protocol with separate content, grounding, usefulness, explanation, workflow, and evaluator-validity dimensions.
 
 ### 2. Context quality is broader than code context
 
-The literature moves from diff hunks (P14/P15) to PR/repository context (P04/P05/P06), retrieved exemplars (P11/P20), specifications (P12), semantic metadata (P13), static-analysis output (P22/P48), reviewer provenance (P23), structured reasoning chains (P25), socio-technical workflow context (P26/P28/P37/P38/P42), input reviewability (P40), documentation-behavior consistency (P49), and evaluator context (P29/P31/P32/P33/P36).
+The literature moves from diff hunks (P14/P15) to PR/repository context (P04/P05/P06/P54/P62), retrieved exemplars (P11/P20), specifications (P12), semantic metadata (P13), static-analysis output (P22/P48/P65/P67), reviewer provenance (P23), structured reasoning chains (P25), socio-technical workflow context (P26/P28/P37/P38/P42/P55/P56/P61), input reviewability (P40), documentation-behavior consistency (P49), and evaluator or adversarial context (P29/P31/P32/P33/P36/P63/P64/P68).
 
 **Implication:** Context quality should include code, retrieval, static-analysis, specification, reviewer/provenance, change reviewability, documentation freshness, behavioral consistency, socio-technical workflow, and evaluator-prompt context.
 
 ### 3. Data, reference, and provenance quality are first-class concerns
 
-P08/P18 show that human review comments can be noisy. P17 shows strict curation improves reliability but reduces coverage. P22/P48 show synthetic/static-analysis signals can help but may contradict or be misinterpreted. P23 shows reviewer experience affects reference quality. P25 restructures sparse comments into issue-location-explanation-repair chains. P30 shows preference data scales with LLM judges but becomes judge-dependent. P31/P32 show carefully constructed benchmarks expose failures hidden by easier setups. P35 shows known reference bugs improve agreement. P42 adds that shared AI conversations have provenance and verification issues.
+P08/P18 show that human review comments can be noisy. P17 shows strict curation improves reliability but reduces coverage. P22/P48/P65 show that synthetic or static-analysis signals can help but may contradict, be misinterpreted, or require staged verification. P23 shows reviewer experience affects reference quality. P25 restructures sparse comments into issue-location-explanation-repair chains. P30 shows preference data scales with LLM judges but becomes judge-dependent. P31/P32/P54/P66 show that benchmark construction and evaluation choices can expose or conceal failures. P35 shows known reference bugs improve agreement. P42 adds that shared AI conversations have provenance and verification issues. P57/P59/P60 further distinguish relevance, scalable category labels, and developer-perceived usefulness from correctness.
 
 **Implication:** Evaluation should record who/what produced the reference, how complete it is, whether it targets a known issue, whether multiple valid comments exist, and whether AI-generated context has been verified.
 
@@ -86,13 +108,13 @@ The taxonomy should include hallucination, irrelevance, vagueness, non-actionabi
 
 ### 5. Mitigation strategies are trade-off choices, not free improvements
 
-Mitigations include filtering (P10), data cleaning (P08/P18), RAG (P11/P16/P20), specification grounding (P12), PEFT/fine-tuning (P13/P15), multi-agent generation (P09), prompt routing (P21), static-analysis hybrids (P22/P48), reviewer-experience weighting (P23), reward optimization (P24), CoT curation (P25), human oversight (P26/P28/P35), signal-to-noise monitoring (P27), thinking judges (P31), bias auditing (P32), tool/human-augmented judges (P33/P34/P36), reviewability-aware gating (P40), context-consistency checks (P49), and specialized security/performance evaluation (P46/P50).
+Mitigations include filtering (P10), data cleaning (P08/P18), RAG (P11/P16/P20), specification grounding (P12), PEFT/fine-tuning (P13/P15), multi-agent generation and verification (P09/P65), prompt routing (P21), static-analysis hybrids (P22/P48), reviewer-experience weighting (P23), reward optimization (P24), CoT curation (P25), human oversight (P26/P28/P35/P56), signal-to-noise monitoring (P27), thinking judges (P31), bias auditing (P32/P63), tool/human-augmented judges (P33/P34/P36), reviewability-aware gating (P40), context-consistency checks (P49), adversarial defenses (P64/P67/P68), and specialized security/performance evaluation (P46/P50).
 
 **Implication:** Every mitigation should report what it reduces, what useful feedback it may suppress, what it costs, and what new failure modes it introduces.
 
 ### 6. Useful-feedback preservation is still under-measured
 
-Most works measure improved scores or reduced bad comments, but few measure lost useful comments. Precision-first filters may suppress rare but valuable issues (P10/P21). Cleaning/reformulation may change intent (P18/P25). Reward models may optimize model-easy usefulness (P24). AI suggestions may be adopted but increase complexity (P26). CRA-only review may be present but low-signal (P27). Automation may save time but remove socio-technical benefits (P28/P37/P38). Strict reviewability or context-consistency gates (P40/P49) may prevent bad output but also skip useful automation opportunities.
+Most works measure improved scores or reduced bad comments, but few measure lost useful comments. Precision-first filters may suppress rare but valuable issues (P10/P21/P65). Cleaning/reformulation may change intent (P18/P25). Reward models may optimize model-easy usefulness (P24). AI suggestions may be adopted but increase complexity (P26), while relevance and usefulness labels still capture only part of quality (P57/P60). CRA-only review may be present but low-signal (P27). Automation may save time but remove socio-technical or learning benefits (P28/P37/P38/P56/P61). Strict reviewability, consistency, or adversarial gates (P40/P49/P64/P67/P68) may prevent bad output but also skip useful automation opportunities.
 
 **Implication:** Harmful-comment reduction and useful-feedback preservation must be measured separately.
 
@@ -110,13 +132,13 @@ P35 shifts the design point from scalar judging to natural-language critique. It
 
 ### 9. Code review is a socio-technical workflow, not only a defect detector
 
-P37/P38/P39 establish that human review provides maintainability, learning, awareness, shared ownership, and useful feedback beyond defect finding. P26 shows differences between AI and human feedback in verbosity, interaction, adoption, and code-quality impact. P27 shows CRA-only review has worse merge/abandonment outcomes than human-only review. P28 argues AI should support review rather than automate it because review also provides knowledge transfer, team awareness, shared ownership, rationale tracking, and accountability. P42 shows LLM output is already becoming part of PR/issue communication.
+P37/P38/P39/P51 establish that human review provides maintainability, learning, awareness, shared ownership, and useful feedback beyond defect finding. P52/P53 clarify that automation targets different review activities and carries activity-specific limitations. P26/P56 show differences between human and AI feedback or engagement, while P55/P62 add deployment evidence with context-specific confounding. P27 shows CRA-only review has worse merge/abandonment outcomes than human-only review. P28 argues AI should support review rather than automate it because review also provides knowledge transfer, team awareness, shared ownership, rationale tracking, and accountability. P42 shows LLM output is already becoming part of PR/issue communication, and P61 adds learning and self-regulation outcomes.
 
 **Implication:** The framework should include reviewer attention, interaction rounds, human final judgment, signal-to-noise, adoption, abandonment, code-quality deltas, knowledge transfer, team awareness, shared ownership, provenance, and accountability.
 
 ### 10. Specialized sublayers are needed for security, static analysis, and non-functional quality
 
-P46 shows security review has distinct dimensions: vulnerability type, location, exploitability, severity, repair correctness, false alarms, and missed vulnerabilities. P48 shows static-analysis/code-quality feedback has issue-resolution and behavior-preservation concerns. P50 shows efficiency needs measurable workload and benchmark evidence. These should not be collapsed into generic “comment quality.”
+P46 shows security review has distinct dimensions: vulnerability type, location, exploitability, severity, repair correctness, false alarms, and missed vulnerabilities. P63/P64/P67/P68 add confirmation bias and adversarial-context risks, and P65 adds staged false-positive verification. P48 shows static-analysis/code-quality feedback has issue-resolution and behavior-preservation concerns. P50 shows efficiency needs measurable workload and benchmark evidence. These should not be collapsed into generic “comment quality.”
 
 **Implication:** A general framework should allow optional secure-review, static-analysis/code-quality, and non-functional-quality sublayers.
 
@@ -141,9 +163,9 @@ Any LLM-as-a-Judge used in our framework should report at least:
 
 ## Emerging Gap Statement
 
-The first fifty papers show that LLM-based code review evaluation is moving from lexical similarity toward richer rubrics, PR-level benchmarks, context enrichment, production telemetry, data curation, RAG, specification grounding, static-analysis hybrids, reviewer provenance, reward-guided generation, structured comprehensibility, human-AI workflow analysis, signal-to-noise measures, judge robustness benchmarks, foundational human-review theory, reviewability, explanation quality, developer workflow/provenance, secure-review evaluation, code-quality repair, context consistency, and non-functional benchmark validity.
+Across the 71-paper corpus, LLM-based code review evaluation is moving from lexical similarity toward richer rubrics, PR-level utility benchmarks, context enrichment, production telemetry, data curation, RAG, specification grounding, static-analysis hybrids, reviewer provenance, reward-guided generation, structured comprehensibility, human-AI workflow and learning outcomes, signal-to-noise measures, judge robustness, adversarial-context testing, foundational human-review theory, reviewability, explanation quality, secure-review evaluation, code-quality repair, context consistency, and non-functional benchmark validity.
 
-However, they still do not provide a unified framework that jointly evaluates:
+Within the reviewed corpus, we did not identify a single framework that jointly operationalizes all of the following elements. This is a corpus-bounded finding rather than a claim that no such work exists outside the search and screening scope:
 
 - generated-comment quality: grounding, correctness, category, location, severity, explanation, repair suggestion, clarity, civility, and actionability,
 - input/context quality: diff, PR, repository, retrieval, specification, static-analysis, semantic metadata, reviewer provenance, reviewability, documentation freshness, behavioral consistency, and socio-technical workflow context,
@@ -162,18 +184,18 @@ A strong contribution is a **taxonomy and trade-off-aware evaluation framework**
 
 | Argument Need | Best Supporting Papers | Notes |
 |---|---|---|
-| Text similarity is insufficient | P14, P01, P11, P13, P16, P17, P18, P20, P21, P22, P23, P24, P25, P26, P29, P30, P31, P41, P44, P45 | LLM judges do not automatically solve metric validity. |
-| Context quality matters | P04, P05, P06, P10, P11, P12, P13, P16, P20, P21, P22, P23, P25, P26, P28, P29, P31, P32, P40, P42, P49 | Includes evaluator context, workflow context, reviewability, and documentation consistency. |
-| Data/reference/provenance quality matters | P08, P14, P17, P18, P20, P22, P23, P25, P30, P31, P35, P42 | P42 adds AI-conversation provenance. |
-| Taxonomy/usefulness categories matter | P01, P02, P08, P10, P18, P19, P21, P23, P25, P26, P27, P28, P30, P35, P39, P41 | Include comment, explanation, and workflow categories. |
-| Hybrid mitigation needs trade-off analysis | P09, P10, P11, P12, P16, P20, P21, P22, P24, P25, P35, P40, P46, P48, P49 | Include reviewability, security, static-analysis, and consistency gates. |
-| Downstream usefulness matters | P07, P10, P20, P24, P25, P26, P27, P35, P39, P48 | P39 adds human-usefulness grounding. |
+| Text similarity is insufficient | P14, P01, P11, P13, P16, P17, P18, P20, P21, P22, P23, P24, P25, P26, P29, P30, P31, P41, P44, P45, P54, P57, P60, P66, P69 | LLM judges and semantic scores do not automatically solve metric validity. |
+| Context quality matters | P04, P05, P06, P10, P11, P12, P13, P16, P20, P21, P22, P23, P25, P26, P28, P29, P31, P32, P40, P42, P49, P54, P55, P62, P63, P64, P67, P68 | Includes evaluator, adversarial, workflow, reviewability, and documentation context. |
+| Data/reference/provenance quality matters | P08, P14, P17, P18, P20, P22, P23, P25, P30, P31, P35, P42, P54, P57, P59, P60, P66 | Relevance, categories, usefulness, and benchmark construction are distinct evidence layers. |
+| Taxonomy/usefulness categories matter | P01, P02, P08, P10, P18, P19, P21, P23, P25, P26, P27, P28, P30, P35, P39, P41, P51, P57, P59, P60 | Include comment, explanation, workflow, relevance, and developer-usefulness categories. |
+| Hybrid mitigation needs trade-off analysis | P09, P10, P11, P12, P16, P20, P21, P22, P24, P25, P35, P40, P46, P48, P49, P58, P64, P65, P67, P68 | Include verification, adversarial defense, and overcorrection risks. |
+| Downstream usefulness matters | P07, P10, P20, P24, P25, P26, P27, P35, P39, P48, P54, P55, P56, P60, P61, P62, P70, P71 | Separate developer outcomes from indirect code-refinement evidence. |
 | Structured output matters | P17, P21, P25, P30, P35, P41, P46 | Issue, location, explanation, repair, known-bug inclusion, vulnerability type. |
 | LLM-as-a-Judge needs calibration/robustness | P16, P18, P22, P24, P29, P30, P31, P32, P33, P34, P36 | Strongest evidence now P29–P36. |
-| Bias/adversarial threat model matters | P31, P32, P33, P36, P47 | P47 is broad misalignment framing. |
-| Human-AI workflow matters | P03, P07, P10, P12, P21, P26, P27, P28, P35, P37, P38, P42 | P37/P38 define human-review value; P42 adds AI provenance. |
-| Useful-feedback preservation is missing | P10, P11, P12, P18, P20, P21, P22, P23, P24, P25, P26, P27, P28, P32, P39, P40, P49 | Include lost feedback under filters/gates/checks. |
-| Specialized security/code-quality/performance layers matter | P21, P22, P46, P48, P50 | Keep separate from general comment quality. |
+| Bias/adversarial threat model matters | P31, P32, P33, P36, P47, P58, P63, P64, P67, P68 | Distinguish evaluator bias, model overcorrection, and adversarial context. |
+| Human-AI workflow matters | P03, P07, P10, P12, P21, P26, P27, P28, P35, P37, P38, P42, P51, P52, P53, P55, P56, P61, P62 | Includes automation boundaries, learning, perception, and deployment outcomes. |
+| Useful-feedback preservation is missing | P10, P11, P12, P18, P20, P21, P22, P23, P24, P25, P26, P27, P28, P32, P39, P40, P49, P57, P58, P60, P64, P65 | Include lost feedback under filters, verification, and defensive gates. |
+| Specialized security/code-quality/performance layers matter | P21, P22, P46, P48, P50, P63, P64, P65, P67, P68 | Keep specialized threats and verification separate from general comment quality. |
 
 ## Tensions Worth Highlighting
 
@@ -187,6 +209,8 @@ A strong contribution is a **taxonomy and trade-off-aware evaluation framework**
 - **P28/P37/P38/P42:** Review context includes people, rationale, process, learning goals, and provenance.
 - **P29/P31/P32/P33:** Evaluator context itself changes judgments.
 - **P40/P49:** Context must be reviewable and internally consistent.
+- **P54/P62:** Rich PR/repository context improves realism but increases cost and confounding.
+- **P63/P64/P67/P68:** Context can also bias or adversarially manipulate reviewers and evaluators.
 
 ### Usefulness tension
 
@@ -198,6 +222,8 @@ A strong contribution is a **taxonomy and trade-off-aware evaluation framework**
 - **P28/P37/P38:** Automation may remove knowledge transfer and shared ownership.
 - **P35:** More comprehensive critiques can include more hallucinations/nitpicks.
 - **P39:** Useful feedback is developer-centered and cannot be reduced to correctness.
+- **P57/P60:** Relevance and perceived usefulness are necessary but do not establish correctness or grounding.
+- **P58/P65:** Aggressive correction or verification can reduce false positives while creating omission risks.
 
 ### Ground truth and evaluator-validity tension
 
@@ -211,6 +237,7 @@ A strong contribution is a **taxonomy and trade-off-aware evaluation framework**
 - **P33/P36:** Human uncertainty, preferences, biases, and adversarial attacks must be modeled.
 - **P35:** Known reference bugs improve critique evaluation, but inserted bugs may differ from natural bugs.
 - **P50:** Benchmark efficiency may not equal workflow value.
+- **P54/P66/P69:** Realistic benchmarks and richer semantic assessment improve validity but raise annotation, coverage, and cost questions.
 
 ## Update Rule
 
