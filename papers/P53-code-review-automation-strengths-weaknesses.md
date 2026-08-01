@@ -147,3 +147,8 @@ Limitations when using this source:
 - [ ] Verify official DOI from IEEE metadata.
 - [ ] Add its dataset-quality categories to the annotation guideline.
 - [ ] Add its metric-limitations argument to the framework section.
+## Proposal-aligned quality appraisal
+
+P53 is **Supporting/Core / High relevance**. It supports RQ1 through strengths and weaknesses of automated review, RQ2–RQ3 through evaluation dimensions and workflow effects, RQ4 through automation benefit versus false positives, burden, and trust, and RQ6 through gap analysis.
+
+**Quality score: 19/24.** Q1–Q5=2, Q6=2, Q7=1, Q8=1, Q9=1, Q10=2, Q11=1, Q12=2.

@@ -136,3 +136,8 @@ P49 is useful for context-quality and consistency framing. It supports the idea 
 - [ ] Add checked IEEE BibTeX.
 - [ ] Extract exact inconsistency categories.
 - [ ] Consider adding `context consistency gate` to the trade-off framework.
+## Proposal-aligned quality appraisal
+
+P49 is **Supporting/Core / Medium relevance**. It supports RQ1 through inconsistent or stale documentation-based behavior; RQ2 through context consistency; RQ3–RQ4 through consistency checking and mitigation consequences; and RQ5–RQ6 through context-validity and gate design.
+
+**Quality score: 17/24.** Q1–Q5=2, Q6=1, Q7=1, Q8=1, Q9=2, Q10=1, Q11=1, Q12=2.

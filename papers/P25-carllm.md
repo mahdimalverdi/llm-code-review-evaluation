@@ -142,3 +142,8 @@ P25 should be one of our main sources for the evaluation framework. It provides 
 - [ ] Add unclear/missing-location/wrong-judgment comment types to taxonomy.
 - [ ] Add decoding stability to trade-off framework.
 - [ ] Update `matrices/cross-paper-synthesis.md` with P25 evidence.
+## Proposal-aligned quality appraisal
+
+P25 is **Core / High relevance**. It supports RQ1 through noisy, incorrect, vague, or preference-misaligned comments; RQ2–RQ3 through curated preference and explanation dimensions; RQ4 through curation/reward benefits versus data and compute cost; and RQ6 through annotation and mitigation design.
+
+**Quality score: 20/24.** Q1–Q7=2, Q8=1, Q9=2, Q10=1, Q11=1, Q12=2. CoT or preference gains do not directly measure useful-feedback preservation or escalation.

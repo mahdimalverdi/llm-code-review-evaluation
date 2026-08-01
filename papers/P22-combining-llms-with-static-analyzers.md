@@ -129,3 +129,8 @@ P22 is a strong example of mitigation as a trade-off. It shows that the integrat
 - [ ] Add static-analysis context to `synthesis/context-quality.md`.
 - [ ] Add hybrid-conflict failure mode to taxonomy.
 - [ ] Update `matrices/cross-paper-synthesis.md` with P22 evidence.
+## Proposal-aligned quality appraisal
+
+P22 is **Core / High relevance**. It supports RQ1 through false positives, rule misinterpretation, and unsupported findings; RQ2–RQ3 through static-analysis context and calibrated evaluation; RQ4 through hybrid precision/coverage and cost trade-offs; and RQ6 through mitigation-family design.
+
+**Quality score: 20/24.** Q1–Q7=2, Q8=1, Q9=2, Q10=1, Q11=1, Q12=2. Hybrid gains do not establish useful-feedback preservation or workflow benefit.

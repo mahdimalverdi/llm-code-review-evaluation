@@ -135,3 +135,8 @@ P42 can support a background claim that developers already use and share LLM out
 - [ ] Add checked Springer BibTeX.
 - [ ] Extract examples of PR/issue usage categories.
 - [ ] Decide whether to cite in related work or discussion only.
+## Proposal-aligned quality appraisal
+
+P42 is **Supporting / Low–Medium relevance**. It provides contextual evidence for RQ1–RQ3 about LLM-generated PR/issue communication and possible review failures, and limited support for RQ5–RQ6. It does not directly evaluate a code-review mitigation or a controlled trade-off.
+
+**Quality score: 12/24.** Q1–Q3=2, Q4–Q5=1, Q6=1, Q7=1, Q8=1, Q9=0, Q10=0, Q11=1, Q12=2.

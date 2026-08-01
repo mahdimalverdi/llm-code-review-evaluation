@@ -132,3 +132,8 @@ P24 supports a key dimension of our trade-off-aware framework: evaluation should
 - [ ] Add reward-overoptimization and model-dependent reward to trade-off framework.
 - [ ] Add non-actionable-but-detecting comment type to taxonomy.
 - [ ] Update `matrices/cross-paper-synthesis.md` with P24 evidence.
+## Proposal-aligned quality appraisal
+
+P24 is **Core / High relevance**. It supports RQ1 through low-quality and preference-misaligned comments; RQ2–RQ3 through reward/preference dimensions; RQ4 through reward optimization versus generalization and cost; and RQ6 through mitigation-family design.
+
+**Quality score: 20/24.** Q1–Q7=2, Q8=1, Q9=2, Q10=1, Q11=1, Q12=2. Preference optimization should not be treated as proof of correctness or preservation of all useful feedback.

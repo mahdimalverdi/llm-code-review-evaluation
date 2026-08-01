@@ -195,3 +195,8 @@ The paper does not define a problematic-comment taxonomy, but it indirectly poin
 - [ ] Extract exact storage/parameter counts into trade-off framework.
 - [ ] Add LoRA/prefix tuning to mitigation strategy matrix.
 - [ ] Connect thresholding result to useful-feedback preservation and missed-diff cost.
+## Proposal-aligned quality appraisal
+
+P15 is **Core / Medium–High relevance**. It supports RQ1 through generic and low-quality generation risks; RQ2–RQ3 through review-necessity prediction, generation, and refinement; and RQ4–RQ6 through parameter-efficient adaptation and task-performance trade-offs.
+
+**Quality score: 18/24.** Q1–Q5=2, Q6=1, Q7=2, Q8=1, Q9=2, Q10=1, Q11=1, Q12=2. It provides limited direct evidence about problematic-comment taxonomy and workflow consequences.

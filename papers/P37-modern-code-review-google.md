@@ -139,3 +139,8 @@ P37 should be cited to justify why our evaluation framework considers usefulness
 - [ ] Add checked ACM BibTeX.
 - [ ] Extract 1–2 cite-worthy claims about review goals and workflow costs.
 - [ ] Map review goals into `synthesis/evaluation-dimensions.md`.
+## Proposal-aligned quality appraisal
+
+P37 is **Supporting / High relevance**. It supports RQ2–RQ3 through human review usefulness, knowledge transfer, awareness, and ownership; RQ4 through review value versus reviewer effort; RQ5 through socio-technical validity; and RQ6 through workflow framework design. It is not an LLM study.
+
+**Quality score: 18/24.** Q1–Q5=2, Q6=1, Q7=1, Q8=1, Q9=0, Q10=2, Q11=1, Q12=2. Use as foundational modern-code-review evidence.

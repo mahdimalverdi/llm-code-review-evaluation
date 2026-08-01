@@ -23,15 +23,16 @@
 - Last updated: `2026-05-08`
 - Confidence in extraction: `Medium`
 
-## Our Research Questions
+## Proposal RQ Mapping
 
-| RQ | Question | Relevance of this paper |
+| Proposal RQ | Relevance and evidence |
 |---|---|---|
-| RQ1 | What types of problematic comments appear in LLM-generated code review? | Reports noisy, vague, non-actionable, factually incorrect, context-missing, and low-value comments. |
-| RQ2 | How is context quality defined, used, or ignored? | Uses PR, Jira, guideline, and code-change context; shows missing language/framework/version context causes failures. |
-| RQ3 | Which evaluation dimensions are covered or missing? | Strong on workflow impact and actionability; weaker on controlled correctness labels and missed issues. |
-| RQ4 | What trade-offs arise from filtering/gating/evaluation? | Provides quality-gate ablations, but does not fully measure useful-comment loss under filtering. |
-| RQ5 | What should our framework include? | Supports production metrics, workflow impact, quality gates, and developer-facing value. |
+| RQ1 | **High.** Reports vague, non-actionable, factually incorrect, context-missing, and low-value comments. |
+| RQ2 | **High.** Uses PR, Jira, guideline, and code-change context; identifies missing language/framework/version information as a source of failure. |
+| RQ3 | **High.** Covers factual correctness, actionability, code resolution, PR cycle time, human-comment volume, and developer feedback. |
+| RQ4 | **High but partial.** Evaluates factuality/actionability gates and workflow outcomes, but does not measure useful-feedback loss or escalation cost. |
+| RQ5 | **Medium.** Provides production-context and context-quality evidence, but does not systematically assess dataset validity or annotation difficulty. |
+| RQ6 | **High.** Directly supports workflow-aware evaluation, gate design, context analysis, and production-validity considerations. |
 
 ---
 
@@ -392,7 +393,29 @@ RovoDev connects quality-rubric papers like P01 with gate papers like P02 and ad
 | Need for trade-off-aware evaluation | Gates exist but useful-comment loss is not measured. | `Our perspective` |
 | Need for useful-feedback preservation metric | Gate ablations do not directly report useful comments removed. | `Our perspective` |
 
-## 18. Final Assessment
+## 18. Quality Appraisal
+
+| Criterion | Score (0–2) | Evidence note |
+|---|---:|---|
+| Q1 goal/questions clear | 2 | Three study RQs and deployment objectives are explicit. |
+| Q2 evaluated artifact specified | 2 | RovoDev architecture, quality checks, and workflow are described. |
+| Q3 dataset/context described | 2 | Production repositories, PRs, comments, and internal benchmark are reported. |
+| Q4 procedure understandable | 2 | Offline/online evaluation, cohort comparison, and time-series analyses are described. |
+| Q5 dimensions/metrics defined | 2 | Code resolution, cycle time, human comments, alignment, and feedback are operationalized. |
+| Q6 failure categories reported | 2 | Vague, non-actionable, incorrect, context-missing, and low-value examples are discussed. |
+| Q7 judging protocol described | 1 | Developer feedback and LLM judging are described, but controlled annotation is limited. |
+| Q8 reliability/validity checks | 1 | Statistical tests and judge correlation are reported; broader construct validity remains limited. |
+| Q9 mitigation/intervention evaluated | 2 | Factual-correctness and actionability quality checks are evaluated. |
+| Q10 trade-offs measured | 1 | Workflow benefits and gate effects are measured, but useful-feedback preservation and escalation are absent. |
+| Q11 limitations/threats | 2 | Industrial generalizability, judge validity, and proxy limitations are discussed. |
+| Q12 direct SLR support | 2 | Strong direct support for proposal RQ1–RQ4 and RQ6. |
+| **Total** | **21/24** | **High-quality core evidence; production proxies require construct-validity caveats.** |
+
+### Evidence boundary correction
+
+P03 provides real-world workflow evidence, but code resolution, PR cycle time, and human-comment volume are not interchangeable with correctness, usefulness, or review coverage. The paper supports treating them as separate downstream dimensions. It does not establish that quality gates preserve useful comments or reduce total human effort without trade-offs.
+
+## 19. Final Assessment
 
 | Field | Value |
 |---|---|

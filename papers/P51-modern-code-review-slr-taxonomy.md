@@ -112,3 +112,8 @@ Limitations when using this source:
 - [x] Confirm final BibTeX from publisher export.
 - [ ] Add precise claims and citations to Background.
 - [ ] Add precise claims and citations to Methodology if useful.
+## Proposal-aligned quality appraisal
+
+P51 is **Supporting / High relevance**. It supports RQ1–RQ3 through a modern-code-review taxonomy, RQ4 through workflow and review-cost dimensions, RQ5 through review-study methodology, and RQ6 through taxonomy construction. It is not LLM-specific.
+
+**Quality score: 20/24.** Q1–Q5=2, Q6=2, Q7=1, Q8=1, Q9=0, Q10=1, Q11=2, Q12=2.

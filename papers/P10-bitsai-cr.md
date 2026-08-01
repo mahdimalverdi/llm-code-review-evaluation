@@ -24,15 +24,16 @@
 - Last updated: `2026-05-12`
 - Confidence in extraction: `High`
 
-## Our Research Questions
+## Proposal RQ Mapping
 
-| RQ | Question | Relevance of this paper |
+| Proposal RQ | Relevance and evidence |
 |---|---|---|
-| RQ1 | What types of problematic comments appear in LLM-generated code review? | Strong evidence for hallucination, factual errors, technically correct but low-value comments, irrelevant feedback, redundant comments, and difficult-to-understand comments. |
-| RQ2 | How is context quality defined, used, or ignored? | Uses hunk partitioning, function-boundary expansion, tree-sitter, and line-level change annotation to make context precise, bounded, and usable. |
-| RQ3 | Which evaluation dimensions are covered or missing? | Strong on precision, outdated rate, rule-level quality, filter rate, latency, user feedback, retention, deployment scale, and survey/interview evidence. |
-| RQ4 | What trade-offs arise from filtering/gating/evaluation? | Explicitly prioritizes precision over recall due to trust and alert-fatigue concerns; ReviewFilter improves precision but lowers recall and filters more comments. |
-| RQ5 | What should our framework include? | Supports a production-grade trade-off framework combining precision, acceptance/proxy impact, cost/latency, rule-level monitoring, feedback loops, and user trust. |
+| RQ1 | **High.** Reports hallucination, factual errors, low-value, irrelevant, redundant, and hard-to-understand comments. |
+| RQ2 | **High.** Uses bounded hunk/function context and line-level change annotation. |
+| RQ3 | **High.** Covers precision, outdated rate, filtering, latency, feedback, retention, and deployment signals. |
+| RQ4 | **High.** Explicitly evaluates precision versus recall, alert fatigue, filtering, latency, and trust. |
+| RQ5 | **High.** Provides production and context-processing evidence, though annotation difficulty is not central. |
+| RQ6 | **High.** Directly supports mitigation, monitoring, trust, and trade-off framework design. |
 
 ---
 
@@ -414,7 +415,29 @@ P10 should be one of the core industrial anchors of our paper. It gives concrete
 | Need for rule-level evaluation | Taxonomy and per-rule precision/Outdated Rate drive rule decommissioning and improvement. | `Reported` |
 | Need for caution with proxy metrics | Outdated Rate does not prove direct causality. | `Reported / Our perspective` |
 
-## 18. Final Assessment
+## 18. Quality Appraisal
+
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 | 2 | Production goals and evaluation objectives are explicit. |
+| Q2 | 2 | BitsAI reviewer and ReviewFilter are specified. |
+| Q3 | 2 | Deployment context, comments, rules, and feedback are described. |
+| Q4 | 2 | Generation, filtering, and monitoring procedures are reported. |
+| Q5 | 2 | Precision, recall, outdated rate, latency, retention, and feedback are defined. |
+| Q6 | 2 | Multiple problematic-comment types are reported. |
+| Q7 | 2 | User feedback and rule-level evaluation are described. |
+| Q8 | 2 | Production monitoring and comparative analyses provide validity evidence. |
+| Q9 | 2 | ReviewFilter and context processing are evaluated. |
+| Q10 | 2 | Precision/recall, trust, latency, and filter-rate trade-offs are central. |
+| Q11 | 1 | Production-specific generalization and proxy limitations remain. |
+| Q12 | 2 | Direct support for all six proposal RQs, especially RQ3–RQ6. |
+| **Total** | **23/24** | **High-quality core evidence.** |
+
+### Evidence boundary correction
+
+P10 is strong production evidence, but precision-oriented filtering may suppress useful lower-confidence comments; this risk must be measured rather than inferred from adoption or retention.
+
+## 19. Final Assessment
 
 | Field | Value |
 |---|---|

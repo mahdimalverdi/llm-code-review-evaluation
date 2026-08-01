@@ -443,3 +443,8 @@ P14 is foundational rather than directly aligned with our final contribution. It
 - Important caution: CodeReviewer is foundational, but its evaluation assumptions are exactly what our paper should critique and extend.
 
 </details>
+## Proposal-aligned quality appraisal
+
+P14 is **Core / High relevance**. It supports RQ1 through generic, irrelevant, low-information, and low-relevance comments; RQ2–RQ3 through code-change representation and evaluation metrics; and RQ4–RQ6 through dataset, training, multilingual, and metric trade-offs.
+
+**Quality score: 19/24.** Q1–Q7=2, Q8=1, Q9=1, Q10=1, Q11=1, Q12=2. It is an important generation baseline but does not directly evaluate useful-feedback preservation, escalation, or deployment cost.

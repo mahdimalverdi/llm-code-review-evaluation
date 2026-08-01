@@ -137,3 +137,8 @@ P23 should be cited in the data-quality and human-ground-truth validity sections
 - [ ] Add applicability/informativeness/explanation to `synthesis/evaluation-dimensions.md`.
 - [ ] Add confused-question and low-expertise/superficial-review types to taxonomy.
 - [ ] Update `matrices/cross-paper-synthesis.md` with P23 evidence.
+## Proposal-aligned quality appraisal
+
+P23 is **Supporting/Core / High relevance**. It supports RQ1 through low-value and reviewer-burden-related feedback types; RQ2–RQ3 through developer-centered usefulness and attention; RQ4 through value versus reviewer time; and RQ5–RQ6 through human-centered annotation and framework design.
+
+**Quality score: 21/24.** Q1–Q7=2, Q8=1, Q9=1, Q10=2, Q11=1, Q12=2. It is not an LLM mitigation study, so its direct evidence for RQ3 is limited.

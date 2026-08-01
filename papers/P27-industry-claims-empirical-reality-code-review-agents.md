@@ -122,3 +122,8 @@ P27 strongly supports the claim that AI review should not be evaluated by commen
 - [ ] Add CRA-only abandonment and human oversight to workflow synthesis.
 - [ ] Add low-signal CRA comments to problematic-comment taxonomy.
 - [ ] Update `matrices/cross-paper-synthesis.md` with P27 evidence.
+## Proposal-aligned quality appraisal
+
+P27 is **Supporting/Core / High relevance**. It supports RQ1 through noisy, low-signal, and harmful review-agent outputs; RQ2–RQ3 through production outcomes; RQ4 through adoption, signal-to-noise, and human-review trade-offs; and RQ6 through threat-to-validity and workflow design.
+
+**Quality score: 20/24.** Q1–Q7=2, Q8=1, Q9=1, Q10=2, Q11=1, Q12=2. Industry claims and empirical outcomes may use proxies that do not isolate correctness.

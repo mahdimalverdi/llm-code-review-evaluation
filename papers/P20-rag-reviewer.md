@@ -170,3 +170,8 @@ P20 does not define a full harmful-comment taxonomy, but it identifies or implie
 - [ ] Add low-frequency-token coverage to `synthesis/evaluation-dimensions.md`.
 - [ ] Add pair-vs-singleton and k-vs-token-budget trade-offs to `synthesis/trade-off-framework.md`.
 - [ ] Add generic/high-frequency and LFGT-omission failure modes to taxonomy.
+## Proposal-aligned quality appraisal
+
+P20 is **Core / High relevance**. It supports RQ1 through generic/high-frequency, low-frequency-token omission, IR rigidity, and incorrect-output categories; RQ2–RQ3 through retrieval/context augmentation; RQ4 through retrieval benefit versus distraction, cost, and rigidity; and RQ6 through mitigation-family design.
+
+**Quality score: 20/24.** Q1–Q7=2, Q8=1, Q9=2, Q10=1, Q11=1, Q12=2. Retrieval gains do not by themselves establish grounding, usefulness preservation, or workflow benefit.

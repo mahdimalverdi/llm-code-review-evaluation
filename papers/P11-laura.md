@@ -451,3 +451,8 @@ P11 is a core source for our context-quality model because it gives concrete con
 - Important caution: context enrichment can help, but retrieval and too much context can distract the model.
 
 </details>
+## Proposal-aligned quality appraisal
+
+P11 is **Core / High relevance**. It supports RQ1 through misleading, irrelevant, incomprehensible, low-information, non-self-contained, and difficult-to-evaluate comments; RQ2–RQ3 through retrieval and context-guided evaluation; RQ4 through retrieval/filtering versus context and cost; and RQ6 through mitigation-family design.
+
+**Quality score: 22/24.** Q1–Q7=2, Q8=1 (validity details are limited), Q9–Q10=2, Q11=1, Q12=2. The paper does not establish useful-feedback preservation, escalation, or production workflow impact.

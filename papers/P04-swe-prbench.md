@@ -23,15 +23,16 @@
 - Last updated: `2026-05-08`
 - Confidence in extraction: `Medium`
 
-## Our Research Questions
+## Proposal RQ Mapping
 
-| RQ | Question | Relevance of this paper |
+| Proposal RQ | Relevance and evidence |
 |---|---|---|
-| RQ1 | What types of problematic comments appear in LLM-generated code review? | Shows missed human-flagged issues, fabricated issues, unmatched plausible issues, and context-induced failures. |
-| RQ2 | How is context quality defined, used, or ignored? | Compares diff-only, diff+file, and full-context settings; reports degradation as context expands. |
-| RQ3 | Which evaluation dimensions are covered or missing? | Strong on issue detection/coverage; weaker on usefulness, workflow impact, cost, and acceptance. |
-| RQ4 | What trade-offs arise from filtering/gating/evaluation? | Strong context-richness vs attention/noise trade-off; judge validity trade-off. |
-| RQ5 | What should our framework include? | Supports explicit context-quality and context-size evaluation. |
+| RQ1 | **High.** Reports missed human issues, fabricated issues, unmatched plausible issues, and context-induced failures. |
+| RQ2 | **High.** Compares diff-only, diff-plus-file, and fuller-context conditions; context expansion can degrade performance. |
+| RQ3 | **High.** Focuses on issue detection/coverage and judge comparison; usefulness, actionability, workflow impact, and cost are limited. |
+| RQ4 | **High but partial.** Supports context-richness versus noise/attention trade-offs; does not measure useful-feedback preservation or escalation. |
+| RQ5 | **High.** Directly treats context amount/type and benchmark validity, but annotation difficulty needs further verification. |
+| RQ6 | **High.** Supports PR-centric benchmark design, context-quality dimensions, and evaluator-validity analysis. |
 
 ---
 
@@ -387,7 +388,29 @@ SWE-PRBench is direct evidence that context expansion must be evaluated, not ass
 | Need for trade-off-aware evaluation | Context expansion adds evidence but can reduce quality. | `Reported / Our perspective` |
 | Need for useful-feedback preservation metric | Not measured. | `Our perspective` |
 
-## 18. Final Assessment
+## 18. Quality Appraisal
+
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 goal/questions clear | 2 | Benchmark and context questions are stated. |
+| Q2 artifact specified | 2 | Benchmark, models, contexts, and judging setup are identified. |
+| Q3 dataset/context described | 2 | PR sample and context conditions are reported. |
+| Q4 procedure understandable | 2 | Issue matching and context comparisons are described. |
+| Q5 dimensions/metrics defined | 2 | Issue detection and judge metrics are reported. |
+| Q6 failure categories reported | 2 | Missed, fabricated, unmatched, and context-induced failures are reported. |
+| Q7 judging protocol described | 1 | Human-reference and judge validation are present but need PDF-level detail. |
+| Q8 reliability/validity checks | 1 | Kappa/judge validation is reported in the existing extraction; exact protocol needs verification. |
+| Q9 mitigation evaluated | 1 | Context conditions are compared, but no deployment mitigation is evaluated. |
+| Q10 trade-offs measured | 1 | Context-performance trade-off is measured; cost and preservation are not. |
+| Q11 limitations/threats | 1 | Some benchmark/judge limitations are discussed. |
+| Q12 direct SLR support | 2 | Strong direct support for RQ1, RQ2, RQ4, RQ5, and RQ6. |
+| **Total** | **19/24** | **High-quality core evidence with protocol details to verify.** |
+
+### Evidence boundary correction
+
+P04 supports issue-coverage and context-condition analysis. It should not be cited as evidence for production usefulness, human escalation, computational cost, or preservation of useful comments.
+
+## 19. Final Assessment
 
 | Field | Value |
 |---|---|

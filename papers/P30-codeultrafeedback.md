@@ -121,3 +121,8 @@ P30 supports adding non-functional and preference-based dimensions to code revie
 - [ ] Add coding preference dimensions to evaluation framework.
 - [ ] Add judge-selection sensitivity to evaluator-validity synthesis.
 - [ ] Add reference-guided judging trade-off to framework.
+## Proposal-aligned quality appraisal
+
+P30 is **Supporting/Core / High relevance**. It supports RQ2–RQ3 through preference dimensions and evaluator comparison; RQ4 through feedback quality, judge choice, and preference-coverage trade-offs; RQ5 through annotation validity; and RQ6 through evaluator and preference-data design. Its direct evidence for code-review-specific failure taxonomy is limited.
+
+**Quality score: 20/24.** Q1–Q5=2, Q6=1, Q7=2, Q8=2, Q9=0, Q10=2, Q11=1, Q12=2. Preference data should not be equated with correctness or production usefulness.

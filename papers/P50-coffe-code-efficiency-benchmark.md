@@ -135,3 +135,8 @@ P50 is useful as background for non-functional quality evaluation. It is not cen
 - [ ] Add checked ACM BibTeX.
 - [ ] Extract only non-functional evaluation insights relevant to review comments.
 - [ ] Decide whether P50 belongs in the final citation set.
+## Proposal-aligned quality appraisal
+
+P50 is **Supporting / Low relevance**. It contributes specialized evidence for RQ2–RQ4 about efficiency-related evaluation and maintainability/correctness trade-offs, and RQ6 through a possible non-functional evaluation sublayer. It is not primarily a code-review-comment study.
+
+**Quality score: 11/24.** Q1–Q3=2, Q4–Q5=1, Q6=1, Q7=1, Q8=1, Q9=1, Q10=1, Q11=1, Q12=1.

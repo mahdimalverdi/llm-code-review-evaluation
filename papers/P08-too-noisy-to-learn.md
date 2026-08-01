@@ -24,15 +24,16 @@
 - Last updated: `2026-05-08`
 - Confidence in extraction: `Medium`
 
-## Our Research Questions
+## Proposal RQ Mapping
 
-| RQ | Question | Relevance of this paper |
+| Proposal RQ | Relevance and evidence |
 |---|---|---|
-| RQ1 | What types of problematic comments appear in LLM-generated code review? | Strong evidence for noisy, vague, non-actionable, low-value, and unclear comments as harmful training/evaluation samples. |
-| RQ2 | How is context quality defined, used, or ignored? | Uses code diff + natural-language comment context to classify valid/noisy comments; supports semantic context-aware cleaning. |
-| RQ3 | Which evaluation dimensions are covered or missing? | Strong on relevance, clarity, constructiveness, actionability, informativeness; weaker on live workflow impact and reviewer overhead. |
-| RQ4 | What trade-offs arise from filtering/gating/evaluation? | Cleaning removes noise but reduces training data size and may remove borderline useful comments. |
-| RQ5 | What should our framework include? | Supports explicit data-quality layer and useful-feedback preservation when filtering noisy comments. |
+| RQ1 | **High.** Identifies noisy, vague, non-actionable, low-value, and unclear comments. |
+| RQ2 | **Medium.** Uses diff/comment context for cleaning, but does not provide a broad context-quality model. |
+| RQ3 | **High.** Covers relevance, clarity, constructiveness, actionability, and informativeness. |
+| RQ4 | **High but partial.** Shows cleaning-quality versus training-data-size trade-offs; useful-comment loss is not directly measured. |
+| RQ5 | **High.** Directly supports dataset validity and annotation/noise dimensions. |
+| RQ6 | **High.** Supports taxonomy and filtering/cleaning mitigation design. |
 
 ---
 
@@ -396,7 +397,29 @@ P08 is the strongest source so far for treating data quality as part of code rev
 | Need for trade-off-aware evaluation | Cleaning improves quality but reduces training size and may remove useful comments. | `Reported / Our perspective` |
 | Need for useful-feedback preservation metric | Predicted-valid filtering needs recall/preservation metric, not precision alone. | `Our perspective` |
 
-## 18. Final Assessment
+## 18. Quality Appraisal
+
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 | 2 | Data-noise and code-review learning objectives are clear. |
+| Q2 | 2 | Dataset-cleaning artifact and classification setup are specified. |
+| Q3 | 2 | Code/comment data and labels are described. |
+| Q4 | 2 | Cleaning/classification procedure is understandable. |
+| Q5 | 2 | Relevance, clarity, constructiveness, actionability, and informativeness are used. |
+| Q6 | 2 | Noise and low-value categories are central. |
+| Q7 | 1 | Annotation/judging details are only partly reported. |
+| Q8 | 1 | Reliability evidence is limited. |
+| Q9 | 2 | Data cleaning is evaluated as a mitigation. |
+| Q10 | 1 | Data-size trade-off is discussed; preservation is not measured. |
+| Q11 | 1 | Generalization and borderline-comment risks remain. |
+| Q12 | 2 | Strong direct support for RQ1, RQ4, RQ5, and RQ6. |
+| **Total** | **20/24** | **High-quality core evidence with reliability caveats.** |
+
+### Evidence boundary correction
+
+P08 shows why noisy data matter for training/evaluation, but filtering benefit should not be treated as proof that removed comments were useless.
+
+## 19. Final Assessment
 
 | Field | Value |
 |---|---|

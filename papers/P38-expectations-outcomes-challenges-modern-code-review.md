@@ -139,3 +139,8 @@ P38 is a core background source for arguing that useful code review feedback is 
 - [ ] Add checked IEEE BibTeX.
 - [ ] Extract cite-worthy claims about review outcomes beyond defect detection.
 - [ ] Map human-review outcomes to `synthesis/evaluation-dimensions.md`.
+## Proposal-aligned quality appraisal
+
+P38 is **Supporting / High relevance**. It supports RQ2–RQ3 through reviewer expectations, outcomes, usefulness, and challenge dimensions; RQ4 through review benefits versus cost and burden; RQ5 through human/context validity; and RQ6 through workflow-oriented framework design. It is not an LLM mitigation experiment.
+
+**Quality score: 18/24.** Q1–Q5=2, Q6=1, Q7=1, Q8=1, Q9=0, Q10=2, Q11=1, Q12=2.

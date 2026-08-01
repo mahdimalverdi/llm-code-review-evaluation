@@ -120,3 +120,8 @@ P28 is useful for positioning: our evaluation framework should not assume that t
 - [ ] Add human-support-not-replacement framing to synthesis.
 - [ ] Add knowledge-transfer/team-awareness preservation to trade-off framework.
 - [ ] Update `matrices/cross-paper-synthesis.md` with P28 evidence.
+## Proposal-aligned quality appraisal
+
+P28 is **Supporting / High relevance**. It supports RQ1 through risks of over-automation and low-value feedback; RQ2–RQ3 through knowledge transfer, accountability, awareness, and review value; RQ4 through support versus automation and human-escalation trade-offs; and RQ5–RQ6 through socio-technical framework design.
+
+**Quality score: 18/24.** Q1–Q5=2, Q6=1, Q7=1, Q8=1, Q9=1, Q10=2, Q11=1, Q12=2. It is primarily a conceptual/supporting paper rather than a controlled evaluation study.

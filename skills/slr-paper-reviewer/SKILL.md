@@ -5,7 +5,21 @@ description: Review individual research papers for a systematic literature revie
 
 # SLR paper reviewer
 
-Review one paper at a time and produce a traceable record that can later be synthesized into the proposed SLR, **“Literature Review Proposal on Trade-off-aware Evaluation of LLM-based Code Review.”** The proposal defines the review scope and outputs; Kitchenham's *Guidelines for Performing Systematic Literature Reviews in Software Engineering* (EBSE-2007-01, version 2.3) defines the review process. Follow the repository instructions and `docs/academic-writing-style.md` when writing English prose.
+Review one paper at a time—or run in batch/loop mode over all local PDFs—and produce traceable records that can later be synthesized into the proposed SLR, **“Literature Review Proposal on Trade-off-aware Evaluation of LLM-based Code Review.”** The proposal defines the review scope and outputs; Kitchenham's *Guidelines for Performing Systematic Literature Reviews in Software Engineering* (EBSE-2007-01, version 2.3) defines the review process. Follow the repository instructions and `docs/academic-writing-style.md` when writing English prose.
+
+## Batch/loop mode
+
+When the user asks to process all papers, update all papers, continue to the end, or use a loop:
+
+1. Enumerate `papers/pdfs/P*.pdf` by numeric project ID (`P01`, `P02`, …), not filesystem order.
+2. For each PDF, locate the matching `papers/PXX-*.md` note. If none exists, create one from `references/paper-review-template.md`.
+3. Complete the full single-paper workflow below before moving to the next paper. Do not merely add a generic placeholder or copy the abstract.
+4. Preserve valid existing evidence, but correct unsupported claims, wrong participant counts, wrong metrics, stale RQ mappings, and conclusions that exceed the PDF.
+5. After each paper, write its status to `papers/slr-review-progress.md`: ID, note path, decision, relevance, quality total, confidence, and unresolved verification items.
+6. Continue after a paper-level access or extraction problem. Mark that paper `Blocked—needs verification`, record the reason, and proceed to the next ID.
+7. At the end, report counts for completed, supporting, excluded, blocked, and missing notes. Do not claim completion if any PDF lacks a reviewed record.
+
+Use the progress file as a resumable cursor. On a later batch run, skip papers marked `Completed` only if their PDF hash and review date have not changed; otherwise re-review them. Never silently overwrite a note from a newer review.
 
 ## Workflow
 

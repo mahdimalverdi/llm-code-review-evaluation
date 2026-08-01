@@ -130,3 +130,8 @@ P26 is a major source for workflow-aware and trade-off-aware evaluation. It supp
 - [ ] Add verbose/narrow/incorrect/complexity-increasing AI suggestions to taxonomy.
 - [ ] Add human-AI interaction and final-human-oversight trade-offs to framework.
 - [ ] Update `matrices/cross-paper-synthesis.md` with P26 evidence.
+## Proposal-aligned quality appraisal
+
+P26 is **Core / High relevance**. It supports RQ1 through verbose, narrow, incorrect, and complexity-increasing suggestions; RQ2–RQ3 through human–AI interaction and code-quality impact; RQ4 through automation, adoption, interaction cost, and oversight trade-offs; and RQ6 through workflow-aware framework design.
+
+**Quality score: 21/24.** Q1–Q7=2, Q8=1, Q9=2, Q10=2, Q11=1, Q12=2. Human-AI synergy findings may be context-specific and should not be generalized without comparable settings.

@@ -147,3 +147,8 @@ P40 is important because it supports the claim that review quality depends on th
 - [ ] Extract explicit reviewability factors and map them to context-quality dimensions.
 - [ ] Add reviewability to `synthesis/context-quality.md`.
 - [ ] Add reviewability-adjusted evaluation to `synthesis/trade-off-framework.md`.
+## Proposal-aligned quality appraisal
+
+P40 is **Supporting/Core / Medium–High relevance**. It supports RQ2–RQ3 through reviewability and change-context dimensions; RQ4 through reviewability gains versus change-size and author effort; RQ5 through context validity; and RQ6 through reviewability-aware gating design. It is not an LLM generation study.
+
+**Quality score: 19/24.** Q1–Q5=2, Q6=1, Q7=2, Q8=1, Q9=1, Q10=2, Q11=1, Q12=2.

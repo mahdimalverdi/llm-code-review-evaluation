@@ -445,3 +445,8 @@ P12 is highly relevant because it gives a concrete industrial example of specifi
 - Important caution: adoption rate is powerful but must be treated as a proxy, not correctness.
 
 </details>
+## Proposal-aligned quality appraisal
+
+P12 is **Core / High relevance**. It supports RQ1 through irrelevant, incorrect, inconsistent, generic, trivial, low-priority, hallucinated, and unexplained comments; RQ2 through domain grounding; RQ3–RQ4 through explicit/implicit paths, specification quality, and maintenance trade-offs; and RQ6 through grounded mitigation design.
+
+**Quality score: 21/24.** Q1–Q7=2, Q8=1, Q9–Q10=2, Q11=1, Q12=2. The reported improvement should not be treated as evidence of preserved useful feedback or reduced human escalation.

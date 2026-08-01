@@ -146,3 +146,8 @@ P32 is directly useful for the evaluator-validity section. It supports our claim
 - [ ] Add prompt-bias sensitivity to LLM-as-a-judge protocol checklist.
 - [ ] Add “high consistency can be consistently biased” to validity discussion.
 - [ ] Add A/B swap and controlled perturbation requirements to final framework.
+## Proposal-aligned quality appraisal
+
+P32 is **Supporting/Core / High relevance**. It supports RQ2–RQ3 through evaluator bias, reliability, and robustness measures; RQ4 through bias-mitigation cost and validity trade-offs; RQ5 through annotation/evaluator validity; and RQ6 through judge-audit protocol design.
+
+**Quality score: 21/24.** Q1–Q8=2, Q9=0, Q10=2, Q11=1, Q12=2. Bias findings concern evaluators and should not be conflated with generated-comment failures.

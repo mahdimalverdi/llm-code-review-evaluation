@@ -23,15 +23,16 @@
 - Last updated: `2026-05-08`
 - Confidence in extraction: `Medium`
 
-## Our Research Questions
+## Proposal RQ Mapping
 
-| RQ | Question | Relevance of this paper |
+| Proposal RQ | Relevance and evidence |
 |---|---|---|
-| RQ1 | What types of problematic comments appear in LLM-generated code review? | Provides rejected comments, valuable-but-not-accepted comments, filtered irrelevant comments, and poor value-to-time cases. |
-| RQ2 | How is context quality defined, used, or ignored? | RevMate uses RAG and LLM-as-a-Judge filtering; context strategy affects reviewer exposure and value. |
-| RQ3 | Which evaluation dimensions are covered or missing? | Strong on acceptance, perceived value, reviewer overhead, and downstream revision; weaker on independent correctness labels. |
-| RQ4 | What trade-offs arise from filtering/gating/evaluation? | Strong usefulness-vs-time-overhead and filtering-before-exposure trade-off. |
-| RQ5 | What should our framework include? | Supports separating acceptance, usefulness, actionability, downstream impact, and reviewer overhead. |
+| RQ1 | **High.** Includes rejected, irrelevant, low-value, and non-accepted comments. |
+| RQ2 | **Medium.** RAG and judge filtering affect context exposure, but context quality is not fully isolated. |
+| RQ3 | **High.** Covers acceptance, perceived value, actionability, downstream revision, and reviewer overhead. |
+| RQ4 | **High.** Directly addresses usefulness versus reviewer time and filtering-before-exposure. |
+| RQ5 | **High.** Supports separating acceptance, usefulness, actionability, downstream impact, and burden. |
+| RQ6 | **High.** Supports mitigation, workflow, and useful-feedback preservation analysis. |
 
 ---
 
@@ -390,7 +391,29 @@ RevMate provides real-world evidence that generated review comments need human-c
 | Need for trade-off-aware evaluation | Filtering/reviewer overhead/value preservation are central. | `Our perspective` |
 | Need for useful-feedback preservation metric | Valuable-but-not-accepted comments show usefulness can be hidden by acceptance-only metric. | `Reported / Our perspective` |
 
-## 18. Final Assessment
+## 18. Quality Appraisal
+
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 | 2 | Study purpose and workflow questions are clear. |
+| Q2 | 2 | RevMate and review-feedback pipeline are specified. |
+| Q3 | 2 | Study context, comments, and reviewer interaction are described. |
+| Q4 | 2 | Filtering, exposure, and downstream evaluation are understandable. |
+| Q5 | 2 | Acceptance, value, actionability, revision, and burden are reported. |
+| Q6 | 2 | Rejected, irrelevant, and low-value comment types are identified. |
+| Q7 | 2 | Human/user evaluation and judge filtering are described. |
+| Q8 | 1 | Reliability details are partial. |
+| Q9 | 2 | RAG/judge filtering is evaluated. |
+| Q10 | 2 | Usefulness versus reviewer time is directly examined. |
+| Q11 | 1 | Workflow and generalizability limitations remain. |
+| Q12 | 2 | Direct support for proposal RQ1–RQ4 and RQ6. |
+| **Total** | **22/24** | **High-quality core evidence.** |
+
+### Evidence boundary correction
+
+P07 supports workflow usefulness and filtering trade-offs, but acceptance is not equivalent to correctness and rejected comments are not automatically harmful.
+
+## 19. Final Assessment
 
 | Field | Value |
 |---|---|

@@ -140,3 +140,8 @@ P48 is relevant mainly for static-analysis-driven code quality feedback and repa
 - [ ] Add checked Springer BibTeX.
 - [ ] Extract static-analysis and code-quality dimensions.
 - [ ] Decide whether this belongs in secure/quality-review background or main framework.
+## Proposal-aligned quality appraisal
+
+P48 is **Supporting / Medium relevance**. It supports RQ1 through code-quality issue, false-positive, and unsupported-claim categories; RQ2–RQ3 through quality and correctness dimensions; RQ4 through static-analysis/LLM trade-offs; and RQ6 through specialized evaluation design.
+
+**Quality score: 14/24.** Q1–Q3=2, Q4–Q5=1, Q6=2, Q7=1, Q8=1, Q9=1, Q10=1, Q11=1, Q12=2.

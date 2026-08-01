@@ -137,3 +137,8 @@ P47 can support broad misalignment and trust framing, but more code-review-speci
 - [ ] Add checked BibTeX.
 - [ ] Extract only misalignment concepts useful for code review.
 - [ ] Avoid overusing this paper for SE-specific claims.
+## Proposal-aligned quality appraisal
+
+P47 is **Supporting / Low–Medium relevance**. It supports RQ1–RQ4 through broad misalignment, over-refusal, harmful-output, helpfulness, and coverage trade-offs; RQ5 through validity and calibration concerns; and RQ6 through mitigation vocabulary. It is not code-review-specific.
+
+**Quality score: 15/24.** Q1–Q3=2, Q4–Q5=1, Q6=1, Q7=1, Q8=1, Q9=2, Q10=1, Q11=1, Q12=2.

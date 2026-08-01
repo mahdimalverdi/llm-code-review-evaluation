@@ -142,3 +142,8 @@ P19 is not a harmful-comment paper, but its categories help separate high-value 
 - [ ] Add 17-category taxonomy to `synthesis/problematic-comment-taxonomy.md` as a usefulness-linked taxonomy layer.
 - [ ] Add flat-vs-hierarchical classification to `synthesis/trade-off-framework.md`.
 - [ ] Add comment-type/usefulness-category to `synthesis/evaluation-dimensions.md`.
+## Proposal-aligned quality appraisal
+
+P19 is **Core / High relevance**. It supports RQ1 through 17 fine-grained review-comment categories; RQ2–RQ3 through usefulness-linked classification; and RQ5–RQ6 through taxonomy and annotation-protocol design. RQ4 is only indirectly supported because classification is not deployment mitigation.
+
+**Quality score: 19/24.** Q1–Q6=2, Q7=1, Q8=2, Q9=1, Q10=0, Q11=1, Q12=2. It does not measure cost, escalation, or useful-feedback preservation after filtering.

@@ -382,7 +382,29 @@ SWRBench strengthens the benchmark-realism side of our framework while leaving r
 | Need for trade-off-aware evaluation | Aggregation improves F1 but may add cost/latency/filtering risk. | `Reported / Our perspective` |
 | Need for useful-feedback preservation metric | Aggregation filters invalid points but lost useful points not measured. | `Our perspective` |
 
-## 18. Final Assessment
+## 18. Quality Appraisal
+
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 goal/questions clear | 2 | Benchmark and aggregation questions are stated. |
+| Q2 artifact specified | 2 | PR benchmark, project context, ground truth, and systems are identified. |
+| Q3 dataset/context described | 2 | PR-centric dataset and project snapshots are described. |
+| Q4 procedure understandable | 2 | Issue coverage and aggregation procedures are reported. |
+| Q5 dimensions/metrics defined | 2 | F1 and issue coverage are central. |
+| Q6 failure categories reported | 2 | Functional/non-functional misses and invalid review points are discussed. |
+| Q7 judging protocol described | 1 | Manual verification is reported but annotator details remain incomplete. |
+| Q8 reliability/validity checks | 1 | Structured verification is present; agreement details need verification. |
+| Q9 mitigation evaluated | 2 | Multi-review aggregation is evaluated. |
+| Q10 trade-offs measured | 1 | F1 gains are reported; cost/latency and useful-feedback loss are not fully measured. |
+| Q11 limitations/threats | 1 | Ground-truth incompleteness and construct limitations are noted. |
+| Q12 direct SLR support | 2 | Strong direct support for benchmark, context, coverage, and aggregation questions. |
+| **Total** | **20/24** | **High-quality core evidence with annotation details to verify.** |
+
+### Evidence boundary correction
+
+P05 supports realistic PR-level benchmarking and issue coverage. Full project context is not automatically high-quality context, and aggregation gains should not be interpreted as proof of useful-feedback preservation or lower operational cost.
+
+## 19. Final Assessment
 
 | Field | Value |
 |---|---|

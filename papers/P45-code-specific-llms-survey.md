@@ -135,3 +135,8 @@ P45 is useful for broad code-LLM background, but it should not carry claims abou
 - [ ] Add checked arXiv BibTeX.
 - [ ] Extract only benchmark/evaluation limitations relevant to code review.
 - [ ] Decide whether to cite P45 or rely on more specific surveys such as P43/P44.
+## Proposal-aligned quality appraisal
+
+P45 is **Supporting / Low relevance**. It contributes general code-model context for RQ2–RQ4 and RQ6, especially model adaptation and resource trade-offs, but does not directly study code-review comments or the proposal’s taxonomy.
+
+**Quality score: 9/24.** Q1–Q3=2, Q4–Q5=1, Q6=0, Q7=1, Q8=1, Q9=0, Q10=0, Q11=1, Q12=1.

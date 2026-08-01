@@ -133,3 +133,8 @@ P16 is one of the clearest papers showing that context quality is model-dependen
 - [ ] Extract exact human/judge alignment values carefully because the paper reports multiple correlation figures.
 - [ ] Update `synthesis/context-quality.md` with context collapse and model-capacity dependency.
 - [ ] Update `synthesis/trade-off-framework.md` with retrieval depth and expert routing trade-offs.
+## Proposal-aligned quality appraisal
+
+P16 is **Core / High relevance**. It supports RQ1 through hallucination, severity overestimation, false positives, and context collapse; RQ2 through context-aware automation; RQ3–RQ4 through context and generation evaluation; and RQ5–RQ6 through context-quality and mitigation design.
+
+**Quality score: 20/24.** Q1–Q7=2, Q8=1, Q9=2, Q10=1, Q11=1, Q12=2. Context-aware gains should not be generalized to preservation or human escalation without direct measurement.

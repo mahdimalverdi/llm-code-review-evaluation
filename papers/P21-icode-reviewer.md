@@ -194,3 +194,8 @@ Important context-quality mechanisms:
 - [ ] Add wrong category/location and misleading security review to `synthesis/problematic-comment-taxonomy.md`.
 - [ ] Add feature-based prompt routing to `synthesis/context-quality.md`.
 - [ ] Update `matrices/cross-paper-synthesis.md` with P21 evidence.
+## Proposal-aligned quality appraisal
+
+P21 is **Core / High relevance**. It supports RQ1 through false-positive security comments, misleading comments, wrong category/location, and uncertain security claims; RQ2–RQ3 through security/context-aware review; RQ4 through routing and specialization trade-offs; and RQ6 through mitigation design.
+
+**Quality score: 20/24.** Q1–Q7=2, Q8=1, Q9=2, Q10=1, Q11=1, Q12=2. Security-specific findings should not be generalized to all review comments.

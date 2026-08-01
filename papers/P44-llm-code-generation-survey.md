@@ -135,3 +135,8 @@ P44 is useful for broad LLM coding evaluation background but should not carry th
 - [ ] Add checked ACM BibTeX.
 - [ ] Extract only the parts relevant to evaluation limitations.
 - [ ] Decide whether this belongs in related work or background footnote only.
+## Proposal-aligned quality appraisal
+
+P44 is **Supporting / Low–Medium relevance**. It provides broad context for RQ2–RQ4 on LLM evaluation, hallucination, cost, and generalization, but has limited direct evidence about generated code-review comments, review taxonomy, or review-specific mitigation.
+
+**Quality score: 10/24.** Q1–Q3=2, Q4–Q5=1, Q6=0, Q7=1, Q8=1, Q9=0, Q10=1, Q11=1, Q12=1.

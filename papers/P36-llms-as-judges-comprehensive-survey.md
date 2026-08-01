@@ -192,3 +192,8 @@ P36 is a vocabulary and taxonomy source. It helps us name evaluator failure mode
 - [ ] Add adversarial judge attacks to threat model.
 - [ ] Add meta-evaluation metric table to methodology notes.
 - [ ] Use P33 as SE-specific source and P36 as general LLM-as-Judge taxonomy source.
+## Proposal-aligned quality appraisal
+
+P36 is **Supporting / High relevance**. It supports RQ2–RQ3 through judge functionality, methodology, metrics, bias, and attack taxonomies; RQ4 through reliability/cost/robustness trade-offs; RQ5 through evaluator validity; and RQ6 through methodological vocabulary. It is broad rather than code-review-specific.
+
+**Quality score: 20/24.** Q1–Q5=2, Q6=1, Q7–Q8=2, Q9=0, Q10=2, Q11=1, Q12=2. Use P33 for SE-specific claims and P36 for general judge taxonomy.

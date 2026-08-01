@@ -114,3 +114,8 @@ Limitations when using this source:
 - [x] Map findings to Related Work and Framework.
 - [ ] Verify official DOI from IEEE metadata.
 - [ ] Decide whether this paper should be cited in Introduction or only Background/Related Work.
+## Proposal-aligned quality appraisal
+
+P52 is **Supporting / Medium–High relevance**. It supports RQ2–RQ4 through code-review activity decomposition, automation boundaries, human involvement, and workflow cost; RQ5 through methodology; and RQ6 through mitigation and workflow design. Direct LLM evidence is limited.
+
+**Quality score: 18/24.** Q1–Q5=2, Q6=1, Q7=1, Q8=1, Q9=1, Q10=2, Q11=1, Q12=2.

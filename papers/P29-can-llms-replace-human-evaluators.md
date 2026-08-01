@@ -123,3 +123,8 @@ P29 gives strong support for treating LLM-as-a-judge as an imperfect evaluator, 
 - [ ] Add verbosity bias to judge-failure taxonomy.
 - [ ] Add human-calibration requirement for LLM-as-a-judge.
 - [ ] Update `matrices/cross-paper-synthesis.md` with P29 evidence.
+## Proposal-aligned quality appraisal
+
+P29 is **Supporting/Core / High relevance**. It supports RQ2–RQ3 through evaluator validity and judgment dimensions; RQ4 through judge choice, reliability, and cost trade-offs; RQ5 through evaluator bias and annotation validity; and RQ6 through LLM-as-a-Judge methodology. Its direct evidence for generated-comment taxonomy is limited.
+
+**Quality score: 21/24.** Q1–Q7=2, Q8=2, Q9=0, Q10=2, Q11=1, Q12=2. It should not be used as direct evidence about review-comment mitigation outcomes.

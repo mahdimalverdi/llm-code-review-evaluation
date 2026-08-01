@@ -146,3 +146,8 @@ P17 shows that even when code hunk and review comment are available, the model m
 - [ ] Add CTR/CL/SI to `synthesis/evaluation-dimensions.md`.
 - [ ] Add noisy/unfaithful example categories to taxonomy.
 - [ ] Add contamination-resistance and invariant testing to trade-off matrix.
+## Proposal-aligned quality appraisal
+
+P17 is **Core / Medium–High relevance**. It supports RQ1 through noisy and unfaithful review-comment/data types; RQ2–RQ3 through question-answering and context use; and RQ5–RQ6 through dataset validity and annotation considerations.
+
+**Quality score: 19/24.** Q1–Q5=2, Q6=2, Q7=1, Q8=1, Q9=1, Q10=1, Q11=1, Q12=2. It is less direct evidence for mitigation trade-offs and deployment workflow effects.

@@ -145,3 +145,8 @@ P34 supports the high-level claim that LLM-based evaluation must be treated as a
 - [ ] Use only where the concise early vision is helpful.
 - [ ] Prefer P33 for detailed survey claims.
 - [ ] Add strict LLM-as-a-Judge vs LLM-based metric distinction to evaluator section.
+## Proposal-aligned quality appraisal
+
+P34 is **Supporting / Medium–High relevance**. It supports RQ2–RQ4 through evaluator validity, human oversight, high-stakes review, and escalation arguments; RQ5 through threats to validity; and RQ6 through roadmap/methodology design. Direct evidence for comment taxonomy is limited.
+
+**Quality score: 18/24.** Q1–Q5=2, Q6=1, Q7=1, Q8=1, Q9=1, Q10=2, Q11=1, Q12=2. Treat its roadmap claims as interpretation rather than measured deployment results.

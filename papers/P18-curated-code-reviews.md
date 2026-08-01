@@ -132,3 +132,8 @@ P18 shows that the review comment itself is part of the evaluation context. Even
 - [ ] Add clarity/relevance/conciseness/civility to `synthesis/evaluation-dimensions.md`.
 - [ ] Add noisy-comment categories to taxonomy.
 - [ ] Add LLM-as-judge calibration and reformulation risks to trade-off framework.
+## Proposal-aligned quality appraisal
+
+P18 is **Core / High relevance**. It supports RQ1 through noisy, unclear, uncivil, irrelevant, verbose, and non-informative comments; RQ2–RQ3 through curation and usefulness dimensions; RQ4 through curation/reformulation versus useful-intent preservation; and RQ5–RQ6 through annotation and mitigation design.
+
+**Quality score: 20/24.** Q1–Q7=2, Q8=1, Q9=2, Q10=1, Q11=1, Q12=2. Curation benefit should not be equated with zero risk of removing useful feedback.

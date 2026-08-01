@@ -389,7 +389,29 @@ ContextCRBench helps operationalize context quality as semantic intent, surround
 | Need for trade-off-aware evaluation | Enrichment helps but must be balanced against data quality/cost/noise. | `Our perspective` |
 | Need for useful-feedback preservation metric | Filtering removes low-value samples, but wrong removals not measured. | `Our perspective` |
 
-## 18. Final Assessment
+## 18. Quality Appraisal
+
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 goal/questions clear | 2 | Context and benchmark questions are identified. |
+| Q2 artifact specified | 2 | ContextCRBench tasks and evaluation settings are described. |
+| Q3 dataset/context described | 2 | Textual/code context and filtering dimensions are reported. |
+| Q4 procedure understandable | 1 | First-pass note indicates PDF-level protocol details still need verification. |
+| Q5 dimensions/metrics defined | 2 | Localization, comment generation, and context comparisons are covered. |
+| Q6 failure categories reported | 2 | Missing semantic context, noisy data, coarse granularity, and localization failures are identified. |
+| Q7 judging protocol described | 1 | Annotation/judge details are incomplete in the current extraction. |
+| Q8 reliability/validity checks | 1 | Data filtering is discussed; agreement details are not verified. |
+| Q9 mitigation evaluated | 2 | Context enrichment and data filtering are compared. |
+| Q10 trade-offs measured | 1 | Context benefits versus quality/noise trade-off is reported; cost and preservation are limited. |
+| Q11 limitations/threats | 1 | Generalization and context/cost limitations are noted. |
+| Q12 direct SLR support | 2 | Strong support for context quality, dataset validity, and mitigation design. |
+| **Total** | **19/24** | **High-quality core evidence pending PDF-level protocol verification.** |
+
+### Evidence boundary correction
+
+P06 supports context-quality and benchmark-design dimensions. Claims about human escalation, deployment cost, and useful-feedback preservation remain outside its direct evidence.
+
+## 19. Final Assessment
 
 | Field | Value |
 |---|---|

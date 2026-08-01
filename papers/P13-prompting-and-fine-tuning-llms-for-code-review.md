@@ -450,3 +450,8 @@ P13 is highly relevant because it strengthens our argument that context augmenta
 - Important caution: BLEU improvement should not be equated with better review quality.
 
 </details>
+## Proposal-aligned quality appraisal
+
+P13 is **Core / High relevance**. It supports RQ1 through generic, distracted, unclear, less-informative, and overconfident incorrect comments; RQ2–RQ3 through context augmentation and human evaluation; RQ4 through prompting/fine-tuning, context, metric, and resource trade-offs; and RQ6 through mitigation-family comparison.
+
+**Quality score: 21/24.** Q1–Q7=2, Q8=1, Q9–Q10=2, Q11=1, Q12=2. Automatic metric improvements must not be interpreted as equivalent to human-perceived usefulness.

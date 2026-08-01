@@ -25,15 +25,16 @@
 - Last updated: `2026-05-08`
 - Confidence in extraction: `Medium`
 
-## Our Research Questions
+## Proposal RQ Mapping
 
-| RQ | Question | Relevance of this paper |
+| Proposal RQ | Relevance and evidence |
 |---|---|---|
-| RQ1 | What types of problematic comments appear in LLM-generated code review? | Strong evidence for hallucinated, unsupported, context-misaligned, and wrong API/type-assumption comments. |
-| RQ2 | How is context quality defined, used, or ignored? | Treats the diff as grounding context and judges claim-to-diff support. |
-| RQ3 | Which evaluation dimensions are covered or missing? | Strong on hallucination/grounding; weaker on usefulness, actionability, and workflow impact. |
-| RQ4 | What trade-offs arise from filtering/gating/evaluation? | Provides cost-vs-effectiveness trade-off for judge strategies, but not full useful-comment preservation. |
-| RQ5 | What should our framework include? | Supports explicit grounding checks and false-positive/false-negative gate evaluation. |
+| RQ1 | **High.** Reports hallucinated, unsupported, context-misaligned, and wrong API/type-assumption comments. These are primarily grounding failures, not a complete taxonomy of all problematic comments. |
+| RQ2 | **High.** Operationalizes claim-to-diff support and context alignment. It does not cover all dimensions such as actionability or completeness. |
+| RQ3 | **High.** Evaluates post-generation hallucination detection/gating using direct assessment, chain-of-thought, and related judge strategies. |
+| RQ4 | **High but partial.** Measures detection effectiveness versus judge cost; does not measure useful-feedback preservation, review coverage, or escalation outcomes. |
+| RQ5 | **Medium.** Uses context alignment and proprietary/production data, but does not systematically study dataset validity or annotation difficulty beyond its labeling protocol. |
+| RQ6 | **High.** Directly supports grounding-gate design, annotation procedures, evaluator validity, and cost-aware mitigation analysis. |
 
 ---
 
@@ -390,7 +391,29 @@ HalluJudge supports our framework’s grounding and gate components, but also re
 | Need for trade-off-aware evaluation | Effectiveness-cost trade-off covered, but useful-comment loss not. | `Our perspective` |
 | Need for useful-feedback preservation metric | Preference coverage partially covers this, but wrong removals are not directly evaluated. | `Our perspective` |
 
-## 18. Final Assessment
+## 18. Quality Appraisal
+
+| Criterion | Score (0–2) | Evidence note |
+|---|---:|---|
+| Q1 goal/questions clear | 2 | Four study questions are stated. |
+| Q2 evaluated artifact specified | 2 | HalluJudge strategies, generated comments, and production feedback are specified. |
+| Q3 dataset/context described | 2 | Annotation and production datasets are described, although some data are proprietary. |
+| Q4 procedure understandable | 2 | Judge strategies, labels, and comparison setup are reported. |
+| Q5 dimensions/metrics defined | 2 | Precision, recall, F1, preference coverage, cost, and token measures are reported. |
+| Q6 failure categories reported | 2 | Hallucination/context-misalignment categories and examples are reported. |
+| Q7 judging protocol described | 2 | Two annotators plus a third resolver are documented in the existing extraction. |
+| Q8 reliability/validity checks | 2 | Agreement and production-preference comparisons are reported. |
+| Q9 mitigation/intervention evaluated | 2 | Post-generation grounding gate/judge strategies are evaluated. |
+| Q10 trade-offs measured | 2 | Effectiveness and cost are compared across strategies. |
+| Q11 limitations/threats | 1 | Proprietary setting, noisy preference proxy, and narrow hallucination operationalization are noted. |
+| Q12 direct SLR support | 2 | Strong direct support for proposal RQ1–RQ4 and RQ6. |
+| **Total** | **23/24** | **High-quality core evidence; retain caveats about proprietary data and scope.** |
+
+### Evidence boundary correction
+
+The paper supports grounding-gate effectiveness and cost analysis. It does **not** establish that filtering preserves useful feedback, improves review coverage, or determines when to escalate to a human. Those are gaps motivating the proposed SLR framework, not findings reported by P02.
+
+## 19. Final Assessment
 
 | Field | Value |
 |---|---|

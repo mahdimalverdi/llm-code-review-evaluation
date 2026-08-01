@@ -24,15 +24,16 @@
 - Last updated: `2026-05-12`
 - Confidence in extraction: `Medium`
 
-## Our Research Questions
+## Proposal RQ Mapping
 
-| RQ | Question | Relevance of this paper |
+| Proposal RQ | Relevance and evidence |
 |---|---|---|
-| RQ1 | What types of problematic comments appear in LLM-generated code review? | Strong evidence for three high-level problematic types: lack of comprehensiveness, incorrectness, and vagueness. |
-| RQ2 | How is context quality defined, used, or ignored? | Indirectly relevant: the paper argues that code review should be conducted from multiple perspectives, which is close to context usability and coverage. |
-| RQ3 | Which evaluation dimensions are covered or missing? | Strong on comprehensiveness, correctness, vagueness, helpfulness, readability, qualitative review dimensions, ablation, and cost. |
-| RQ4 | What trade-offs arise from filtering/gating/evaluation? | Strong for multi-agent cost/latency vs quality/comprehensiveness; weaker for false suppression of useful comments. |
-| RQ5 | What should our framework include? | Supports a mitigation-strategy layer and a trade-off matrix for multi-agent review systems. |
+| RQ1 | **High.** Reports lack of comprehensiveness, incorrectness, and vagueness. |
+| RQ2 | **Medium.** Multiple reviewer perspectives improve coverage, but context quality is not independently operationalized. |
+| RQ3 | **High.** Covers comprehensiveness, correctness, vagueness, helpfulness, readability, ablation, and cost. |
+| RQ4 | **High.** Directly examines multi-agent quality/comprehensiveness versus cost and latency. |
+| RQ5 | **Medium.** Annotation and evaluator validity are relevant but not the paper’s central contribution. |
+| RQ6 | **High.** Supports mitigation-family classification and multi-agent trade-off analysis. |
 
 ---
 
@@ -392,7 +393,29 @@ P09 is one of the strongest sources for the mitigation-strategy side of our pape
 | Need for mitigation-strategy comparison | Multi-agent collaboration can be treated as one mitigation strategy among filtering, RAG, static-analysis grounding, and human escalation. | `Our perspective` |
 | Need for useful-feedback preservation metric | Broadening review coverage should be balanced against low-value, duplicate, or vague comments. | `Our perspective` |
 
-## 18. Final Assessment
+## 18. Quality Appraisal
+
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 | 2 | Motivation and evaluation objectives are clear. |
+| Q2 | 2 | Hydra-Reviewer and agent configuration are specified. |
+| Q3 | 2 | Evaluation data and comparison settings are described. |
+| Q4 | 2 | Multi-agent generation and ablations are understandable. |
+| Q5 | 2 | Quality, correctness, comprehensiveness, helpfulness, and cost are reported. |
+| Q6 | 2 | Incorrect, vague, and incomplete comments are identified. |
+| Q7 | 1 | Judging protocol is described but requires detailed verification. |
+| Q8 | 1 | Reliability/validity checks are partial. |
+| Q9 | 2 | Multi-agent mitigation is evaluated. |
+| Q10 | 2 | Quality/comprehensiveness versus cost/latency is measured. |
+| Q11 | 1 | Generalization and suppression risks remain. |
+| Q12 | 2 | Direct support for RQ1, RQ3, RQ4, and RQ6. |
+| **Total** | **21/24** | **High-quality core evidence.** |
+
+### Evidence boundary correction
+
+P09 supports multi-agent mitigation trade-offs, not useful-feedback preservation or human escalation.
+
+## 19. Final Assessment
 
 | Field | Value |
 |---|---|

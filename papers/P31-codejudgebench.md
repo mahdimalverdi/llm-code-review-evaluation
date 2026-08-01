@@ -128,3 +128,8 @@ P31 is strong evidence that any LLM-as-a-judge evaluation for code review must t
 - [ ] Add preprocessing sensitivity to evaluation-pipeline trade-offs.
 - [ ] Add thinking-judge cost/quality trade-off.
 - [ ] Update `matrices/cross-paper-synthesis.md` with P31 evidence.
+## Proposal-aligned quality appraisal
+
+P31 is **Supporting/Core / High relevance**. It supports RQ2–RQ3 through judge reliability and evaluation dimensions, RQ4 through judge cost and ranking trade-offs, RQ5 through evaluator validity, and RQ6 through benchmark design. Direct evidence for generated-comment taxonomy is limited.
+
+**Quality score: 21/24.** Q1–Q8=2, Q9=0, Q10=2, Q11=1, Q12=2. Do not treat judge benchmark performance as proof of deployment utility.
