@@ -48,7 +48,17 @@ The proposal requires recording database name, search string, search date, retri
 
 The current corpus contains 71 locally available PDFs. Because the original database retrieval counts and screening history are not fully preserved, report this corpus as a targeted structured review unless the search log is reconstructed.
 
-Selection stages are identification, duplicate removal, title/abstract screening, full-text eligibility, and inclusion as core or supporting evidence. Record exclusion reasons and companion publications.
+Selection stages are identification, duplicate removal, title/abstract screening, full-text eligibility, and evidence-tier assignment. Record exclusion reasons and companion publications.
+
+### Evidence tiers and weighting
+
+Included records are assigned one of three synthesis roles:
+
+- **Core:** direct evidence about generated review comments, review agents, code-review benchmarks, or mitigation in the review workflow.
+- **Supporting:** evidence about human review, evaluator validity, annotation, context, workflow, or closely related security/static-analysis settings.
+- **Peripheral:** adjacent code-generation, refinement, misalignment, or non-functional evidence used only for bounded background claims.
+
+Evidence tier is independent of methodological quality. A high-quality adjacent study remains peripheral for review-specific claims, while a lower-scoring direct study can remain core but should be interpreted cautiously. Report denominators by tier and by availability of the extracted field. The working assignment is maintained in `matrices/paper-pool.md`.
 
 ## Quality assessment
 
@@ -60,8 +70,8 @@ Use `skills/slr-paper-reviewer/references/paper-review-template.md`. Extract the
 
 ## Synthesis plan
 
-Use tabulation, thematic grouping, and framework mapping as specified in the proposal. Produce: a thematic map of research streams; a summary of failure types; a comparison of evaluation dimensions and their limitations; a paper-to-framework mapping matrix; mitigation families classified by intervention point; a gap analysis; summaries of useful-feedback preservation, false suppression, coverage, escalation, cost, and evaluator/annotation risks; and open research directions. Keep primary/core evidence separate from supporting/background evidence. Do not pool incompatible metrics quantitatively.
+Use tabulation, thematic grouping, and framework mapping as specified in the proposal. Produce: a thematic map of research streams; a summary of failure types; a comparison of evaluation dimensions and their limitations; a paper-to-framework mapping matrix; mitigation families classified by intervention point; a gap analysis; summaries of useful-feedback preservation, false suppression, coverage, escalation, cost, and evaluator/annotation risks; and open research directions. Keep core evidence separate from supporting and peripheral evidence. Do not pool incompatible metrics quantitatively. Every numerical summary must define its denominator, and every literature-derived category must retain paper-level traceability.
 
 ## Amendments and limitations
 
-The corpus was assembled before a complete search log was available. This is a protocol limitation and must be reported. The current note set has undergone a structural uniformity pass; provisional records require a final PDF-level verification pass before final claims are made. Under the proposal’s reporting note, the result remains a targeted structured review until all search sources, dates, counts, selection decisions, quality scores, and extraction records are complete.
+The corpus was assembled before a complete search log was available. This is a protocol limitation and must be reported. The current note set has undergone a full-text structural uniformity pass, but structural validation is not independent reviewer agreement. Under the proposal’s reporting note, the result remains a targeted structured review until all search sources, dates, counts, selection decisions, quality scores, and extraction records are complete. Any later search rerun is a protocol amendment and must be dated rather than presented as if it preceded corpus assembly.

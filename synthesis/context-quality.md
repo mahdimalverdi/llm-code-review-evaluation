@@ -7,7 +7,7 @@
 
 Context in LLM-based code review is not just an input-size problem. It is an evaluation object.
 
-A review assistant can receive more context and still perform worse if the context is noisy, irrelevant, contradictory, stale, too broad, missing the relevant file-level detail, hard to review, or hard for the model to attend to.
+A review assistant can receive more context and still perform worse if the context is noisy, irrelevant, contradictory, stale, too broad, missing the relevant file-level detail, hard to review, or hard for the model to attend to [@p04_kumar2026_swe_prbench; @p06_hu2025_contextcrbench; @p13_haider2024_prompting_finetuning; @p16_icoz2026_context_aware].
 
 ## Working Hypothesis
 
@@ -49,6 +49,9 @@ A useful framework should evaluate context quality, not just context size.
 | P46 | Vulnerability detection and repair. | Security claims need category, location, exploitability, and repair evidence. | Secure review requires specialized context and stronger evidence. |
 | P49 — METAMON | Documentation-behavior consistency. | Documentation and behavior can diverge. | Context consistency and freshness should be explicit checks. |
 | P50 | Efficiency benchmark. | Efficiency claims need workload and measurement context. | Non-functional comments require benchmark/workload grounding. |
+| P54/P62 | PR-level benchmark and contextual industrial assistant. | Repository context improves realism but increases operational cost and deployment-specific confounding. | Context availability, utility, and cost should be reported separately. |
+| P63/P64/P67/P68 | Bias and adversarial context. | Comments, familiar patterns, and obfuscation can manipulate reviewers or reasoning agents. | Context quality must include integrity and adversarial robustness. |
+| P65 | Multi-agent verification over SAST findings. | Tool context can be checked in stages to reduce false positives. | Verification adds routing and model-call cost. |
 
 ## Proposed Dimensions of Context Quality
 
@@ -158,4 +161,4 @@ Context quality can be used at multiple stages:
 
 ## Draft Paragraph for Paper
 
-A recurring limitation in current LLM-based code review evaluation is that context is often treated as an input configuration rather than as an evaluation object. Recent work suggests that this assumption is unsafe. HalluJudge frames hallucination as a failure of grounding between generated claims and the code diff. RovoDev shows that missing language, framework, or surrounding-code context can lead to incorrect or non-actionable comments. SWE-PRBench further shows that adding more context can degrade review performance across models. Human-review studies add that context also includes reviewability, workflow goals, reviewer attention, and developer usefulness. METAMON-like consistency work further suggests that documentation and behavior may diverge, so stale or contradictory context should be checked explicitly. Together, these results suggest that future evaluation frameworks should measure context quality directly, including relevance, completeness, specificity, consistency, groundability, reviewability, provenance, freshness, behavioral evidence, and cost.
+A recurring limitation in current LLM-based code review evaluation is that context is often treated as an input configuration rather than as an evaluation object. HalluJudge frames hallucination as a grounding failure, while production evidence identifies missing language, framework, or surrounding-code context as a source of incorrect or non-actionable feedback [@p02_tantithamthavorn2026_hallujudge; @p03_tantithamthavorn2026_rovodev]. PR-level evidence indicates that adding context can degrade performance [@p04_kumar2026_swe_prbench]. Human-review and reviewability studies broaden context to include workflow goals, reviewer attention, and whether a change is understandable [@p37_sadowski2018_google_mcr; @p38_bacchelli2013_expectations_mcr; @p40_ram2018_reviewability]. Documentation-consistency and adversarial-context studies add freshness, integrity, and manipulation risks [@p49_lee2025_metamon; @p63_mitropoulos2026_confirmation_bias; @p64_thornton2026_adversarial_comments; @p67_bernstein2025_trust_me_function]. Within this corpus, these findings support measuring context through relevance, completeness, specificity, consistency, groundability, reviewability, provenance, freshness, integrity, behavioral evidence, and cost.

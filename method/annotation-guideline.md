@@ -1,7 +1,7 @@
 # Annotation Guideline
 
 > [!NOTE]
-> This guideline operationalizes the taxonomy of problematic LLM-generated code review comments. It is designed for a small annotated evidence layer, not for a large-scale benchmark. The goal is to test whether the taxonomy and trade-off-aware evaluation framework can be applied consistently.
+> This guideline operationalizes the literature-derived taxonomy of problematic LLM-generated code review comments. It is a protocol for future empirical validation, not evidence that annotation has already been conducted.
 
 ## 1. Annotation Goal
 

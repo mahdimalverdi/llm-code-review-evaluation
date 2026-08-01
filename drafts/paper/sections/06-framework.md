@@ -1,8 +1,6 @@
 # Trade-Off-Aware Evaluation Framework
 
-The planned empirical study compares mitigation strategies, but the comparison needs a framework that prevents misleading conclusions. A strategy that removes more generated comments is not necessarily better. It may remove harmful comments, but it may also remove useful feedback, reduce review coverage, increase latency, or route too many cases to human reviewers. This section defines the trade-off-aware evaluation framework that will be used to interpret the empirical results once the study is executed.
-
-DRAFTTODO: After running the empirical study, revise this opening to summarize how the framework was actually used in the analysis and whether any framework layers needed to be revised.
+The reviewed evidence indicates that a mitigation mechanism cannot be evaluated only by the number of comments it removes. Filtering, context expansion, reformulation, verification, and human oversight can suppress useful signals, reduce coverage, change intent, or add latency and reviewer effort [@p04_kumar2026_swe_prbench; @p07_olewicki2024_revmate; @p10_sun2025_bitsai_cr; @p18_bensghaier2025_curated_reviews; @p35_mcaleese2024_llm_critics; @p65_ameen2026_qasecclaw]. This section derives a trade-off-aware framework from the synthesis; it is a proposal for future evaluation rather than a report of an executed comparison.
 
 The framework connects six layers: input and context quality, generated-comment quality, problematic-comment type, mitigation decision, preservation and coverage, and cost and evaluator validity. These layers turn evaluation from passive scoring into a workflow decision problem.
 
@@ -18,7 +16,7 @@ The framework connects six layers: input and context quality, generated-comment 
 | Preservation and coverage | What useful feedback or review coverage is preserved or lost? | useful comments retained, useful comments wrongly suppressed, coverage retained |
 | Cost and evaluator validity | What effort, computation, latency, or measurement risk is introduced? | model calls, human escalation, annotation agreement, judge robustness |
 
-The framework is designed to be applied to each strategy in the same way. For every generated comment, the study will ask whether the comment is problematic, what type of problem it has, what decision should be taken, what useful feedback would be preserved or lost, and what cost the decision introduces.
+The framework is designed to be applied consistently across strategies. For every generated comment, an evaluation should ask whether the comment is problematic, what type of problem it has, what decision should be taken, what useful feedback would be preserved or lost, and what cost the decision introduces.
 
 ## Layer 1: Input and Context Quality
 
@@ -59,12 +57,12 @@ Cost includes additional model calls, verifier calls, retrieval operations, late
 
 The final layer concerns the reliability of the measurement itself. Human annotators may disagree on usefulness, actionability, or severity. LLM-based judges may be sensitive to prompts, output order, model choice, and verbosity. Evaluator validity is therefore part of the evaluation, not an implementation detail.
 
-The empirical study should report inter-annotator agreement where feasible and should avoid treating LLM-as-a-Judge outputs as ground truth without validation. If LLM-based judges are used, their role should be explicit: they may support screening or provide auxiliary evidence, but the main claims about mitigation quality should be grounded in the annotation protocol.
+An empirical study should report inter-annotator agreement and avoid treating LLM-as-a-Judge outputs as ground truth without validation. If LLM-based judges are used, their role should be explicit: they may support screening or provide auxiliary evidence, but primary mitigation-quality claims should be grounded in a validated annotation protocol.
 
-## Using the Framework in the Empirical Study
+## Using the Framework in Future Empirical Work
 
-For each strategy, the planned analysis reports a trade-off profile rather than a single ranking. A profile includes the failure types reduced, the useful comments preserved, the useful comments wrongly suppressed, the coverage retained, the number of comments rewritten or escalated, and the added cost.
+For each strategy, a future analysis should report a trade-off profile rather than a single ranking. A profile includes the failure types reduced, useful comments preserved, useful comments wrongly suppressed, coverage retained, comments rewritten or escalated, and added cost.
 
 This design makes it possible to compare strategies without assuming that one strategy is universally best. Robust prompting may reduce non-actionable comments but leave unsupported claims. Post-generation verification may reduce unsupported comments but wrongly suppress useful weak signals. A context-quality gate may reduce context-dependent failures but lower coverage. A hybrid strategy may improve safety while adding cost and escalation burden. The framework is designed to make these trade-offs visible.
 
-DRAFTTODO: After empirical analysis, replace the hypothetical strategy examples with the actual observed trade-off profiles and note any framework dimensions that were unmeasurable or revised.
+These examples are hypotheses derived from the review, not empirical findings of the present study. Future work should test them and report any framework dimensions that prove unmeasurable or require revision.

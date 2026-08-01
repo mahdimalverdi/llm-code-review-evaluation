@@ -1,8 +1,8 @@
 # Paper Draft Workflow
 
-This directory contains the section-by-section draft of the paper.
+This directory contains the section-by-section seminar review manuscript.
 
-The goal is to write the paper gradually, one section at a time, while keeping the final LaTeX output reproducible.
+The goal is to produce a reproducible targeted structured literature-review report. A controlled mitigation experiment is future work and must not be presented as completed evidence in this manuscript.
 
 ## Structure
 

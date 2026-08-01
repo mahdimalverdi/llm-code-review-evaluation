@@ -20,7 +20,7 @@ problematic comment type
 + mitigation decision
 ```
 
-This project addresses that gap by developing an operational taxonomy of problematic comments and a multi-dimensional, trade-off-aware evaluation framework, supported by a small annotated evidence layer.
+This review addresses that gap by deriving an operational taxonomy, annotation protocol, and multi-dimensional trade-off-aware evaluation framework from the reviewed evidence. Validation through an annotated empirical study is future work.
 
 ## Current Literature Movement
 
@@ -47,9 +47,12 @@ The analyzed papers show a clear movement in LLM-based code review evaluation.
 7. **From general review to specialized sublayers**  
    Security review, static-analysis-guided code-quality repair, documentation-behavior consistency, and non-functional efficiency evaluation each introduce additional dimensions that should not be collapsed into a single generic quality score [@p21_peng2025_icodereviewer; @p46_zhou2025_vulnerability_repair; @p48_patcas2026_code_quality_issues; @p49_lee2025_metamon; @p50_peng2025_coffe].
 
+8. **From benign context to biased and adversarial context**
+   Recent security-oriented evidence shows that comments, familiar patterns, and obfuscation can bias or manipulate model judgments, making context integrity and adversarial robustness part of evaluator validity [@p63_mitropoulos2026_confirmation_bias; @p64_thornton2026_adversarial_comments; @p67_bernstein2025_trust_me_function; @p68_li2025_cotdeceptor].
+
 ## Main Research Gap
 
-Recent work improves evaluation along several dimensions, but these dimensions remain fragmented. Existing studies do not yet provide a unified framework that jointly evaluates:
+Recent work improves evaluation along several dimensions, but these dimensions remain fragmented. Within the reviewed corpus, we did not identify a single framework that jointly operationalizes all of the following elements. This is a corpus-bounded result rather than a claim about all work outside the search scope:
 
 - **generated-comment quality**, including correctness, relevance, specificity, grounding, actionability, explanation quality, and usefulness;
 - **context quality**, including relevance, completeness, specificity, consistency, groundability, freshness, reviewability, provenance, behavioral evidence, attention load, and cost;
@@ -121,7 +124,7 @@ The paper proposes a framework for evaluating generated review comments across i
 
 ### C3 — Annotation Protocol and Evidence Layer
 
-The paper adds a structured annotation protocol and a small annotated evidence layer. This layer should include transparent label definitions, a pilot annotation round, at least two annotators if feasible, inter-annotator agreement reporting, conflict resolution rules, and a reproducible sampling and generation setup.
+The review derives a structured annotation protocol with transparent label definitions and conflict-resolution rules. A future validation study should add pilot annotation, multiple annotators, agreement reporting, and a reproducible sampling and generation setup.
 
 ### C4 — Concrete Trade-off Findings
 
@@ -159,10 +162,14 @@ The stronger framing is that existing methods each cover one part of the evaluat
 | LLM-as-a-Judge needs validation | P29, P30, P31, P32, P33, P36 | [@p29_wang2025_human_evaluators; @p30_weyssow2025_codeultrafeedback; @p31_jiang2025_codejudgebench; @p32_zhao2026_bias_loop; @p33_he2025_llmjudge_se; @p36_li2024_llms_as_judges] | Automated evaluators are measurement instruments, not ground truth. |
 | Specialized security/code-quality/performance layers matter | P21, P22, P46, P48, P50 | [@p21_peng2025_icodereviewer; @p22_jaoua2025_static_analyzers; @p46_zhou2025_vulnerability_repair; @p48_patcas2026_code_quality_issues; @p50_peng2025_coffe] | Some review tasks need structured validation beyond generic comment quality. |
 | Context consistency and provenance matter | P12, P42, P49 | [@p12_wang2025_sgcr; @p42_wasserbaech2024_chatgpt_github; @p49_lee2025_metamon] | Specs, docs, AI conversations, and behavior can diverge or need verification. |
+| Real-world utility and workflow evidence remain context-specific | P54, P55, P56, P62 | [@p54_pereira2026_crbench; @p55_cihan2025_acr_practice; @p56_alami2025_human_machine; @p62_khare2025_deputydev] | PR-level realism and deployment evidence improve external validity but retain cost and confounding limits. |
+| Relevance and usefulness are distinct from correctness | P57, P60, P69 | [@p57_heumuller2025_relevance_reviews; @p60_ahmed2025_feedback_useful; @p69_jiang2025_deep_assessment_crg] | Richer labels improve construct coverage but still require grounding and evaluator validation. |
+| Verification and overcorrection create omission risks | P58, P65 | [@p58_jin2026_reliable_code_reviewers; @p65_ameen2026_qasecclaw] | Reducing false positives does not establish that useful feedback or coverage was preserved. |
+| Evaluators are vulnerable to biased or adversarial context | P63, P64, P67, P68 | [@p63_mitropoulos2026_confirmation_bias; @p64_thornton2026_adversarial_comments; @p67_bernstein2025_trust_me_function; @p68_li2025_cotdeceptor] | Evaluator validity should include context integrity and attack robustness. |
 
 ## Methodological Implication
 
-The method should be described as a **focused evidence synthesis** with an added annotation layer, not as a simple literature summary. The analysis pipeline is:
+The method should be described as a **targeted structured literature review and focused evidence synthesis**, not as a simple literature summary or completed annotation study. The analysis pipeline is:
 
 ```text
 Paper selection
@@ -174,16 +181,13 @@ Paper selection
   → cross-paper synthesis
   → operational taxonomy
   → annotation guideline
-  → small annotated evidence layer
   → final trade-off-aware framework
 ```
 
 ## Next Steps
 
-- [ ] Update `drafts/methodology.md` to include taxonomy construction, annotation protocol, and the small annotated evidence layer.
-- [ ] Create `method/annotation-guideline.md`.
-- [ ] Create `method/evaluation-schema.md`.
-- [ ] Create `synthesis/final-framework.md`.
-- [ ] Create `drafts/introduction.md`.
-- [ ] Replace core `TODO_PUBLISHER_BIBTEX` entries with official publisher-exported BibTeX.
-- [ ] Deep-read P39, P40, and P49 for stronger usefulness/context-quality framing.
+- [ ] Freeze core, supporting, and peripheral evidence tiers.
+- [ ] Complete citation traceability across all synthesis prose.
+- [ ] Produce RQ1–RQ6 result tables with explicit denominators.
+- [ ] Re-run database searches if the formal SLR label is required.
+- [ ] Replace unresolved bibliography metadata with verified publisher or canonical preprint data.

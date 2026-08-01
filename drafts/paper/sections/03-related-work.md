@@ -2,13 +2,13 @@
 
 The closest work to this paper does not come from a single literature stream. Code-review automation studies how review comments can be generated or transformed. Benchmark work studies how review systems can be compared. Grounding work asks whether generated claims are supported by the available evidence. Human-centered and industrial studies ask whether feedback is useful in practice. Evaluator-validity work asks whether human or LLM-based judgments can be trusted. A reviewer-facing assistant needs all of these views at once when deciding what to do with a generated comment.
 
-The gap we focus on is therefore a decision-level gap. Prior work has made strong progress on individual pieces: richer quality rubrics, hallucination checks, PR-level benchmarks, context-aware generation, industrial filters, data curation, human-in-the-loop studies, static-analysis hybrids, and LLM-as-a-Judge protocols. What is still less developed is a paired comparison of mitigation strategies on the same review instances, where we can see not only which errors are removed but also which useful comments are lost, which cases are escalated, and which costs are introduced.
+The gap we focus on is therefore a decision-level gap. Prior work has made progress on richer quality rubrics, hallucination checks, PR-level benchmarks, context-aware generation, industrial filters, data curation, human-in-the-loop studies, static-analysis hybrids, and LLM-as-a-Judge protocols. Within the reviewed corpus, these streams do not jointly operationalize error reduction, useful-feedback preservation, escalation, coverage, and cost.
 
 Figure \ref{fig:related-work-coverage-map} summarizes this positioning as a coverage map. The literature streams reviewed in this section provide different evaluation signals: comment quality, grounding, benchmark realism, data validity, workflow value, mitigation evidence, and evaluator reliability. Our concern is how those signals combine when a review assistant must decide whether a generated comment should be shown, rewritten, suppressed, escalated, or treated only as internal evidence.
 
 <!-- figure: path="figures/related-work-coverage-map.tex" caption="Related-work coverage map for comment-level mitigation evaluation. Darker cells indicate stronger focus in prior work; the final row summarizes the integrated decision-level perspective studied in this paper." label="fig:related-work-coverage-map" -->
 
-Table \ref{tab:related-work-synthesis} gives a compact synthesis of the literature streams and the remaining gap addressed by this study.
+Table \ref{tab:related-work-synthesis} gives a compact synthesis of the literature streams and the corpus-bounded gap addressed by this review.
 
 <!-- table: caption="Compact synthesis of the main related-work streams and the gap addressed in this paper." label="tab:related-work-synthesis" -->
 | Literature stream | Main contribution | Remaining gap |
@@ -95,8 +95,8 @@ Some review tasks require evidence that a generic quality score cannot provide. 
 
 ## Summary of the Gap
 
-The gap is not a missing benchmark, a missing metric, or a missing judge. The gap is the lack of a paired decision-level comparison: when several mitigation strategies face the same generated comment, which errors do they remove, which useful signals do they preserve, and what cost do they introduce?
+The gap is not merely a missing benchmark, metric, or judge. It is the lack of an integrated decision-level account of which errors mitigation removes, which useful signals it preserves, and what coverage, escalation, or cost it introduces.
 
 Prior work gives us many of the ingredients for that comparison: rubrics, grounding checks, realistic benchmarks, production signals, context evidence, data-quality analysis, failure taxonomies, and scalable judges. What remains under-specified is how these signals combine when a review assistant must choose among show, suppress, rewrite, and escalate.
 
-Our work addresses this gap with an operational taxonomy and a trade-off-aware evaluation framework for controlled empirical comparison on shared review instances. The intended outcome is not a single universal score or another benchmark leaderboard. It is a structured way to compare which errors are reduced, which useful signals are preserved or lost, what costs are introduced, and which comments should be shown, suppressed, rewritten, or escalated.
+This review addresses the gap with an operational taxonomy and trade-off-aware evaluation framework derived from the corpus. The intended outcome is not a universal score or benchmark leaderboard, but a structured basis for future comparisons of which errors are reduced, which useful signals are preserved or lost, what costs are introduced, and which comments should be shown, suppressed, rewritten, or escalated.

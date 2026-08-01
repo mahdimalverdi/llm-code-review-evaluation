@@ -1,275 +1,93 @@
 # Research Roadmap
 
-This document records the current research direction for the paper. It should be used as the project compass for future writing, synthesis, annotation, and empirical work.
+## Current Deliverable
 
-## Current Paper Identity
+The immediate deliverable is:
 
-The paper should be framed as:
+> a targeted structured literature review and focused evidence synthesis on trade-off-aware evaluation of LLM-generated code review comments.
 
-> a planned controlled empirical study of mitigation strategies for problematic LLM-generated code review comments, supported by an operational taxonomy and a trade-off-aware evaluation framework.
-
-The main goal is not to choose one universally best method. The main goal is to understand which mitigation strategies reduce which kinds of problematic comments and what trade-offs they introduce in useful-feedback preservation, review coverage, human escalation, and computational cost.
-
-This framing is stronger for a Q1 journal submission than a framework-only paper, but it will only become submission-ready after the empirical execution is completed: dataset selection, strategy implementation, annotation, agreement reporting, result tables, and findings.
+The review supports an operational taxonomy, annotation protocol, and evaluation framework. A controlled empirical comparison of mitigation strategies is a possible follow-on study, not the current seminar output.
 
 ## Working Title
 
 ```text
-Reducing Problematic LLM-Generated Code Review Comments: An Empirical Study of Mitigation Trade-offs
+Trade-off-aware Evaluation of LLM-based Code Review:
+A Structured Review of Comment Quality, Mitigation, and Evaluation Validity
 ```
 
-This title foregrounds the intended empirical contribution and the trade-off problem. The taxonomy and framework remain important, but they support the empirical comparison rather than replacing it.
+## Review Boundary
 
-## Current Execution Status
+The local corpus contains 71 full-text records. It combines direct code-review studies with supporting work on human review, evaluator validity, security, static analysis, code refinement, and non-functional evaluation. Evidence must therefore be tiered rather than counted as homogeneous.
 
-The manuscript is currently a design-stage draft. The following pieces are drafted or partially drafted:
+| Tier | Role in synthesis | Claim boundary |
+|---|---|---|
+| Core | Direct evidence about generated review comments, review agents, benchmarks, or mitigation | May support review-specific findings |
+| Supporting | Human-review, evaluator, annotation, context, or workflow evidence | Supports constructs and interpretation |
+| Peripheral | Adjacent security, refinement, code-generation, or efficiency evidence | Supports only explicitly bounded transfer claims |
 
-- targeted literature review;
-- related-work synthesis;
-- initial operational taxonomy;
-- trade-off-aware evaluation framework;
-- methodology and planned empirical design;
-- planned findings placeholders.
+## Review Questions and Deliverables
 
-The following pieces are still TODO:
-
-- choose the dataset and sampling frame;
-- implement or define the mitigation strategies precisely;
-- generate or collect strategy outputs;
-- create the annotation guideline and evaluation schema;
-- run pilot annotation;
-- revise taxonomy based on pilot annotation;
-- run final annotation;
-- compute agreement statistics;
-- compute error-reduction, preservation, coverage, escalation, and cost metrics;
-- replace planned findings with actual results;
-- revise abstract, introduction, discussion, threats, and conclusion in result-oriented language.
-
-## Central Claim
-
-Current evaluations of LLM-generated code review comments are fragmented. They often measure correctness, usefulness, hallucination, context enrichment, acceptance, or evaluator quality separately. However, mitigation strategies should be evaluated by both what they remove and what they lose.
-
-This project is designed to address that gap by comparing representative mitigation strategies on a shared set of review instances and measuring:
-
-- problematic-comment reduction;
-- failure-type-specific effects;
-- useful-feedback preservation;
-- wrongly suppressed useful comments;
-- review coverage;
-- human escalation;
-- computational cost;
-- context-quality effects;
-- and evaluator validity.
-
-## Contributions
-
-### Contribution 1 — Operational Taxonomy
-
-Develop an operational taxonomy of problematic LLM-generated code review comments. The taxonomy should support annotation and empirical comparison, not only conceptual discussion.
-
-Candidate categories:
-
-| Category | Meaning |
+| RQ | Deliverable |
 |---|---|
-| Unsupported / hallucinated comment | The comment makes a claim not supported by the available diff or context. |
-| Irrelevant comment | The comment is not related to the reviewed change. |
-| Incorrect technical claim | The comment is technically wrong. |
-| Wrong location / wrong cause | The comment identifies the wrong location or explains the wrong cause. |
-| Non-actionable comment | The developer cannot determine what to do next. |
-| Low-value nitpick | The comment may be technically valid but is not worth reviewer attention. |
-| Invalid fix suggestion | The suggested change does not fix the issue or may introduce a regression. |
-| Context-dependent / insufficient-context case | The comment cannot be judged reliably without more context. |
-| Useful but not directly acceptable | The comment is not directly applicable but still provides useful insight. |
+| RQ1: reported problematic-comment types | Operational taxonomy with traceable evidence |
+| RQ2: evaluation dimensions and instruments | Dimension/metric/evaluator-validity matrix |
+| RQ3: mitigation families and intervention points | Before/during/after-generation and pre-display classification |
+| RQ4: reported trade-offs | Preservation, coverage, escalation, workflow, and cost evidence map |
+| RQ5: context, dataset, and annotation validity | Context-quality and methodological-risk synthesis |
+| RQ6: direct and indirect framework support | Tiered paper-to-framework mapping |
 
-### Contribution 2 — Controlled Empirical Comparison
+## Current Evidence Status
 
-Compare a limited set of representative mitigation strategies on the same review instances.
+- P01–P71 each have one authoritative full-text note.
+- All notes pass the canonical structural validator.
+- All IDs have bibliography entries.
+- Cross-paper synthesis covers the full corpus.
+- Search-history reconstruction and independent selection/calibration remain incomplete.
+- The current review must not be called a completed SLR until those requirements are satisfied.
 
-Initial strategies:
+## Work Packages
 
-| Strategy | Role |
-|---|---|
-| Baseline LLM reviewer | Measures the unmitigated problematic-comment rate. |
-| Robust prompting | Tests whether generation-time constraints reduce problematic comments. |
-| Context-quality gate | Tests whether low-context or inconsistent-context cases should be skipped, downgraded, or escalated. |
-| Post-generation verification | Tests whether comments can be checked before display. |
-| Hybrid gate plus verifier | Tests whether pre-generation/context control and post-generation verification complement each other. |
+### WP1 — Corpus and protocol closure
 
-Optional strategy if feasible: retrieval-augmented context enrichment.
+- Freeze inclusion and evidence tiers.
+- Resolve remaining bibliographic and extraction-confidence items.
+- If required, execute reproducible searches and record database-specific strings, dates, counts, deduplication, and exclusions.
 
-### Contribution 3 — Trade-Off-Aware Metrics
+### WP2 — RQ-oriented synthesis
 
-Evaluate strategies using both error-reduction and preservation/cost metrics.
+- Build one result table for each RQ.
+- Count studies only after defining the denominator and evidence tier.
+- Keep incompatible metrics as narrative or structured thematic synthesis.
+- Link every category and finding to paper IDs and citation keys.
 
-Required dimensions:
+### WP3 — Seminar manuscript
 
-- overall problematic-comment rate;
-- rate of each problematic-comment type;
-- technical correctness;
-- groundedness;
-- relevance;
-- usefulness;
-- actionability;
-- useful comments retained;
-- useful comments wrongly suppressed;
-- review coverage retained;
-- rewrite rate;
-- human escalation rate;
-- computational cost;
-- context quality;
-- evaluator validity.
-
-### Contribution 4 — Annotation Protocol and Evidence Artifact
-
-Add a structured human annotation layer over the generated comments and mitigation decisions.
-
-The annotation protocol should include:
-
-- clear label definitions;
-- a pilot annotation round;
-- at least two annotators if feasible;
-- inter-annotator agreement reporting;
-- conflict resolution rules;
-- examples and counterexamples;
-- reproducible prompts, settings, and metric scripts.
-
-### Contribution 5 — Empirical Findings
-
-The paper should report a small number of concrete findings after the study is run. The strongest findings will likely concern trade-offs, not simple wins.
-
-Candidate findings to test:
-
-1. Post-generation verification may reduce unsupported comments but suppress some useful weak signals.
-2. Context-quality gates may help more with context-dependent failures than with low-value or non-actionable comments.
-3. Robust prompting may improve actionability but may not reliably eliminate unsupported claims.
-4. Hybrid strategies may improve safety but add cost, escalation, or over-suppression.
-5. Useful-but-not-directly-acceptable comments reveal a gray zone missed by binary correct/incorrect evaluation.
-
-## Research Questions
-
-### RQ1
-
-```text
-What types of problematic comments occur in LLM-generated code review?
-```
-
-Expected output: label distribution and refined operational taxonomy.
-
-### RQ2
-
-```text
-Which mitigation strategies reduce which types of problematic comments?
-```
-
-Expected output: strategy-by-failure-type comparison.
-
-### RQ3
-
-```text
-How do mitigation strategies affect useful-feedback preservation, review coverage, human escalation, and execution cost?
-```
-
-Expected output: trade-off matrix and preservation/cost metrics.
-
-### RQ4
-
-```text
-Does combining context-quality control with post-generation verification produce a better trade-off than either strategy alone?
-```
-
-Expected output: hybrid-strategy analysis, if the hybrid strategy is included.
-
-### RQ5
-
-```text
-How does context quality or context inconsistency affect mitigation success?
-```
-
-Expected output: context-quality analysis and context-dependent failure patterns.
-
-## Expected Paper Structure
+Use this structure:
 
 ```text
 1. Introduction
-2. Background and Motivation
-3. Related Work
-4. Methodology
-5. Operational Taxonomy of Problematic Comments
-6. Trade-Off-Aware Evaluation Framework
-7. Empirical Evaluation Design
-8. Findings
-9. Discussion
-10. Threats to Validity
-11. Conclusion
+2. Background
+3. Review Method
+4. Study Selection and Characteristics
+5. Results by RQ
+6. Trade-off-aware Evaluation Framework
+7. Discussion and Research Gaps
+8. Threats to Validity
+9. Conclusion
 ```
 
-## Minimum Viable Study
+### WP4 — Quality control
 
-A realistic minimum version of the paper can include:
+- Verify bibliography metadata.
+- Check citation-key resolution.
+- Reconcile all corpus counts.
+- Audit claim strength against evidence tiers and quality scores.
+- Build and visually inspect the final PDF.
 
-```text
-one primary dataset
-+ one main generation model
-+ 4–5 representative mitigation strategies
-+ 100–300 annotated generated comments
-+ pilot annotation
-+ agreement reporting on a substantial subset
-+ error-reduction and preservation metrics
-+ 2–4 concrete findings about mitigation trade-offs
-```
+## Deferred Empirical Study
 
-If the sample is smaller, results should be framed as exploratory. If the sample is larger and annotations are strong, the work becomes more competitive for Q1 empirical software engineering venues.
-
-## Data Strategy
-
-Preferred strategy:
-
-```text
-Use an existing code review dataset or benchmark
-+ select a manageable subset
-+ generate comments with a fixed model and prompt
-+ apply representative mitigation strategies
-+ add structured human annotation
-+ report agreement, trade-offs, and cost proxies
-```
-
-Selection criteria:
-
-- code diff is available;
-- review-relevant context is available or recoverable;
-- generated comments can be evaluated for grounding, usefulness, and actionability;
-- licensing permits analysis and release of derived artifacts where possible.
-
-## Risk Register
-
-| Risk | Mitigation |
-|---|---|
-| Paper becomes a generic survey | Keep the empirical comparison as the central study. |
-| Paper becomes only a leaderboard | Emphasize failure types and trade-offs, not a single winner. |
-| Annotation quality is weak | Use clear guidelines, pilot annotation, multiple annotators, and agreement reporting. |
-| No strong insight emerges | Design metrics around trade-offs, not only error rates. |
-| Scope becomes too large | Use one dataset, one main model, limited strategies, and a manageable sample size. |
-| Reviewers see the taxonomy as subjective | Support it with annotation, agreement analysis, and examples. |
-| Cost is ignored | Report model calls, token cost, escalation rate, and review coverage. |
-| LLM-as-a-judge is overtrusted | Use it only as support unless validated against human labels. |
-
-## Immediate Repository Tasks
-
-1. Create `method/annotation-guideline.md`.
-2. Create `method/evaluation-schema.md`.
-3. Decide the dataset and sampling plan.
-4. Decide the generation model and prompts.
-5. Define the mitigation strategy implementations.
-6. Create metric-computation scripts.
-7. Replace core `TODO_PUBLISHER_BIBTEX` entries with official publisher BibTeX.
-8. Run a small pilot annotation.
+The existing annotation guideline and evaluation schema can support a later controlled study comparing prompting, context gates, verification, and hybrid mitigation. That study would require dataset selection, generated outputs, pilot annotation, agreement analysis, preservation/coverage metrics, and cost reporting. It should be described as future work until executed.
 
 ## Current Priority
 
-The next work should not be adding more papers. The next work should be making the empirical design executable.
-
-Recommended next step:
-
-```text
-Choose the dataset and create the annotation guideline/evaluation schema.
-```
+The next priority is not collecting additional convenience papers or implementing mitigation strategies. It is closing the review method and producing traceable RQ1–RQ6 findings from the existing corpus.

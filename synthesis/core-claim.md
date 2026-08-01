@@ -1,7 +1,7 @@
 # Core Claim
 
 > [!NOTE]
-> This file is the compact research-positioning anchor for the project. It should be checked before writing the introduction, methodology, framework, or empirical sections. Its purpose is to prevent the paper from drifting back into a small method-comparison study.
+> This file is the compact positioning anchor for the seminar review. It should prevent the report from drifting into either a paper-by-paper summary or an unexecuted empirical-study claim.
 
 ## One-Sentence Claim
 
@@ -11,7 +11,7 @@ Current evaluations of LLM-generated code review comments are fragmented because
 
 This paper should be positioned as:
 
-> a focused evidence synthesis and trade-off-aware evaluation framework for LLM-generated code review comments, supported by an operational taxonomy and a small annotated evidence layer.
+> a targeted structured literature review and focused evidence synthesis that derives an operational taxonomy, annotation protocol, and trade-off-aware evaluation framework for LLM-generated code review comments.
 
 It should not be positioned as:
 
@@ -52,7 +52,7 @@ Existing work has studied several important pieces of the problem:
 - LLM-as-a-judge validity;
 - secure review and static-analysis-guided review.
 
-However, these pieces remain fragmented. The literature does not yet provide a unified evaluation framework that connects:
+Within the reviewed corpus, these pieces remain fragmented: no single identified framework jointly operationalizes all of the following elements. This is a corpus-bounded finding, not a claim that no such work exists outside the search scope [@p01_lu2025_deepcrceval; @p02_tantithamthavorn2026_hallujudge; @p03_tantithamthavorn2026_rovodev; @p29_wang2025_human_evaluators; @p54_pereira2026_crbench; @p57_heumuller2025_relevance_reviews; @p60_ahmed2025_feedback_useful; @p69_jiang2025_deep_assessment_crg]:
 
 ```text
 problematic comment type
@@ -92,7 +92,7 @@ This shifts the paper from a method-comparison study to a framework-oriented eva
 
 ## Contribution Statement
 
-This paper makes four intended contributions.
+This review makes four intended contributions.
 
 ### C1 — Operational Taxonomy
 
@@ -124,9 +124,9 @@ Input/context quality
 
 The framework should make explicit that reducing problematic comments is not enough if useful feedback, review coverage, or human workflow value is lost.
 
-### C3 — Annotation Protocol and Evidence Layer
+### C3 — Annotation Protocol
 
-It adds a structured annotation protocol and a small annotated evidence layer.
+It derives a structured annotation protocol that can be evaluated in future empirical work.
 
 This layer should include:
 
@@ -137,11 +137,11 @@ This layer should include:
 - conflict resolution rules;
 - and a reproducible sampling and generation setup.
 
-The annotation layer gives empirical support to the taxonomy and reduces the risk that the framework appears purely subjective.
+The present review does not claim that this protocol has already been validated by an annotation study.
 
-### C4 — Concrete Trade-off Findings
+### C4 — Corpus-level Trade-off Findings
 
-It reports a small number of concrete insights about trade-offs, rather than only listing methods.
+It reports recurring trade-off patterns and evidence gaps across the reviewed corpus, rather than claiming results from an unexecuted strategy comparison.
 
 Candidate findings to investigate:
 
@@ -165,29 +165,28 @@ Candidate findings to investigate:
 The target paper is best described as:
 
 ```text
-framework-oriented focused evidence synthesis
+targeted structured literature review
++ focused evidence synthesis
 + operational taxonomy
 + annotation protocol
-+ illustrative annotated study
++ trade-off-aware framework
 ```
 
-It is not a full systematic literature review unless the search protocol is expanded and formalized. It is also not a full empirical benchmark unless the annotated dataset and experimental setup become substantially larger.
+It is not a fully reproducible systematic literature review unless the database search and screening history is re-executed and documented. It is not an empirical benchmark or annotation study.
 
 ## Minimum Viable Paper
 
 The minimum viable version of the paper should include:
 
 ```text
-50-paper evidence base
+71-paper evidence pool
 + operational taxonomy
 + annotation guideline
-+ 100–200 annotated generated review comments
-+ inter-annotator agreement report
 + trade-off-aware framework
-+ 2–3 concrete findings
++ RQ1–RQ6 synthesis findings
 ```
 
-The empirical part should support the taxonomy and framework. It should not become the main identity of the paper.
+Any later empirical study should validate or revise the taxonomy and framework; it is outside the current seminar deliverable.
 
 ## Positioning Against Nearby Work
 

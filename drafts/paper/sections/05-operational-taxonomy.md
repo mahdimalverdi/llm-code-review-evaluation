@@ -1,10 +1,10 @@
 # Operational Taxonomy of Problematic Comments
 
-The empirical comparison requires labels that distinguish different kinds of problematic LLM-generated code review comments. A single binary label such as correct or incorrect is not sufficient because a generated review comment can fail in several ways. It may be technically wrong, unsupported by the available context, irrelevant to the changed code, too vague to act on, or valid but too low-value to justify reviewer attention. It may also contain a recoverable useful signal while being unsuitable to show directly. This section defines the operational taxonomy used to annotate generated comments, compare mitigation strategies, and interpret mitigation trade-offs.
+The reviewed literature requires labels that distinguish different kinds of problematic LLM-generated code review comments. A binary label such as correct or incorrect is insufficient because a comment may be unsupported, irrelevant, vague, non-actionable, incorrectly localized, or valid but too low-value to justify attention [@p02_tantithamthavorn2026_hallujudge; @p08_liu2025_too_noisy; @p19_nguyen2025_fine_grained_classification; @p35_mcaleese2024_llm_critics; @p57_heumuller2025_relevance_reviews; @p60_ahmed2025_feedback_useful]. It may also contain a recoverable signal while being unsuitable to show directly. This section defines the literature-derived taxonomy for future annotation and mitigation analysis.
 
 The taxonomy is operational rather than only descriptive. Each label is intended to support three tasks: human annotation, strategy-by-failure-type comparison, and mitigation-decision analysis. The initial labels are derived from the targeted literature review and the cross-paper synthesis. The taxonomy is intentionally smaller than the full failure inventory in the synthesis notes: specialized, context-specific, and workflow-specific details are represented as secondary modifiers unless they are necessary to explain the dominant reason that a comment should not be shown directly.
 
-The taxonomy is a protocol-level measurement instrument. Its final executed-study form must be reported after pilot annotation, agreement analysis, and adjudication of ambiguous cases. The final manuscript should state which labels were added, merged, removed, demoted to modifiers, or clarified during pilot refinement.
+The taxonomy is a protocol-level measurement proposal, not an empirically validated instrument. Future work should test it through pilot annotation, agreement analysis, and adjudication of ambiguous cases, reporting any labels added, merged, removed, demoted, or clarified.
 
 ## Design Principles
 
@@ -159,18 +159,18 @@ The taxonomy does not map labels mechanically to one decision. Instead, labels c
 
 This mapping supports the decision-confusion analysis in the methodology. For example, suppressing a comment with the **recoverable signal** modifier is counted differently from suppressing a comment labeled irrelevant. The former may be recoverable feedback loss, while the latter may be successful noise reduction.
 
-## Link to the Empirical Evaluation
+## Link to Future Empirical Evaluation
 
-The taxonomy is designed to be used in four parts of the empirical evaluation.
+The taxonomy is designed to support four parts of a future empirical evaluation.
 
 First, it measures the baseline distribution of problematic comments. Second, it supports strategy-by-failure-type comparison: each mitigation strategy can be evaluated by which categories it reduces. Third, it enables preservation analysis by identifying useful comments that are wrongly suppressed, comments that should be rewritten, and context-dependent cases that should be escalated rather than shown or removed. Fourth, it explains the decision-confusion analysis by linking each incorrect strategy decision to a failure label or modifier.
 
-The taxonomy therefore functions as a planned measurement instrument for the empirical study. It is not the final result by itself. Its value should be tested by whether annotators can apply the labels consistently and whether the labels reveal trade-offs that a single correctness or acceptance score would miss. After the empirical comparison is run, the final manuscript must report how the taxonomy was actually applied, including any labels that were merged, revised, promoted, or demoted during annotation.
+The taxonomy is a literature-derived measurement proposal, not a validated instrument. Its value should be tested by whether independent annotators can apply the labels consistently and whether the labels reveal trade-offs that a single correctness or acceptance score would miss. A future empirical report should document labels that are merged, revised, promoted, or demoted during pilot annotation.
 
-## Pilot Refinement and Reliability Checks
+## Recommended Pilot Refinement and Reliability Checks
 
-The pilot annotation round tests whether the taxonomy is usable by annotators. The pilot identifies labels that overlap too much, labels that annotators interpret inconsistently, and failure types that are missing from the core taxonomy. After the pilot, label definitions should be revised before the final annotation sample.
+A future pilot annotation round should test whether the taxonomy is usable by annotators. It should identify overlapping labels, inconsistent interpretations, and missing failure types before a final annotation sample is constructed.
 
 Reliability is assessed on key labels, not only on the final mitigation decision. At minimum, the study reports agreement on problematic-comment presence, core failure label, usefulness, actionability, context quality, and recommended mitigation decision when feasible. Disagreements are treated as evidence about difficult judgment cases rather than only as noise. For example, repeated disagreement between unsupported and context-dependent labels may indicate that the available context is insufficient or that the annotation guideline needs clearer evidence requirements.
 
-The executed study must report pilot size, annotator background, labels revised, agreement problems, core and modifier changes, and any taxonomy changes made before the final annotation sample. These reported changes should also be reflected in the annotation guideline and evaluation schema so that the taxonomy, coding form, and metric definitions remain consistent.
+Any executed study should report pilot size, annotator background, revised labels, agreement problems, core/modifier changes, and taxonomy changes. Those changes should also be reflected in the annotation guideline and evaluation schema.

@@ -1,53 +1,25 @@
-# Findings
+# Results
 
-DRAFTTODO: This section is a placeholder until the empirical study is executed. Replace all planned findings below with actual findings supported by quantitative tables, uncertainty summaries where feasible, and qualitative examples.
+## RQ1: Problematic-comment Types
 
-This section will report the empirical findings after the mitigation strategies are implemented and annotated. It should present a small number of concrete, evidence-backed observations rather than a long list of descriptive statistics. The findings should be organized around trade-offs: which failure types are reduced, which useful comments are preserved or lost, and what cost or human effort is introduced.
+The literature does not support treating all weak comments as hallucinations. Reported failures include unsupported or context-misaligned claims, incorrect technical claims, wrong location or cause, irrelevance, vagueness, non-actionability, invalid fixes, redundancy, low-value nitpicks, severity miscalibration, and context-dependent cases [@p02_tantithamthavorn2026_hallujudge; @p08_liu2025_too_noisy; @p19_nguyen2025_fine_grained_classification; @p21_peng2025_icodereviewer; @p35_mcaleese2024_llm_critics; @p58_jin2026_reliable_code_reviewers]. The synthesis further separates input/context failures, workflow failures, and evaluator failures because these require different remedies.
 
-The final findings must be based on the annotated empirical sample. Until the study is run, the following are hypotheses and planned analysis targets rather than results.
+## RQ2: Evaluation Dimensions
 
-## Planned Finding 1: Mitigation Strategies Reduce Different Failure Types
+Evaluation has moved beyond BLEU and exact matching toward semantic, human-centered, and workflow dimensions [@p01_lu2025_deepcrceval; @p14_li2022_codereviewer; @p69_jiang2025_deep_assessment_crg]. However, correctness, grounding, relevance, usefulness, actionability, explanation quality, acceptance, and downstream revision remain distinct constructs. Relevance labels do not establish correctness, and direct acceptance can underestimate perceived value [@p07_olewicki2024_revmate; @p39_bosu2015_useful_reviews; @p57_heumuller2025_relevance_reviews; @p60_ahmed2025_feedback_useful]. No single metric in the corpus captures comment quality, coverage, workflow value, and evaluator validity together.
 
-The first expected finding concerns failure-type specificity. Robust prompting, context-quality gates, post-generation verification, and hybrid designs are unlikely to reduce the same categories of problematic comments equally.
+## RQ3: Mitigation Families
 
-For example, robust prompting may reduce vague or non-actionable comments, while post-generation verification may be more effective for unsupported or technically incorrect claims. A context-quality gate may be most useful for comments that cannot be judged because the available context is incomplete or inconsistent. The final analysis should report these differences in a strategy-by-failure-type table.
+Mitigations intervene before generation, during generation, after generation, or before display. Pre-generation approaches include data cleaning, reviewability or context gates, and context selection. Generation-time approaches include prompting, fine-tuning, retrieval, specification grounding, static-analysis support, routing, and multi-agent generation. Post-generation approaches include critics, grounding checks, relevance or actionability filters, repair validation, rewriting, aggregation, and staged verification. Pre-display decisions include suppression and human escalation [@p08_liu2025_too_noisy; @p09_ren2025_hydra_reviewer; @p10_sun2025_bitsai_cr; @p11_zhang2025_laura; @p12_wang2025_sgcr; @p22_jaoua2025_static_analyzers; @p35_mcaleese2024_llm_critics; @p65_ameen2026_qasecclaw].
 
-DRAFTTODO: Replace this planned finding with the observed strategy-by-failure-type results after implementation and annotation.
+## RQ4: Trade-off Evidence
 
-## Planned Finding 2: Error Reduction Can Hide Useful-Feedback Loss
+The strongest recurring gap is asymmetric reporting. Studies commonly report improved quality, precision, acceptance, issue coverage, or reduced false positives, but less often report useful comments wrongly removed, retained review coverage, escalation burden, or end-to-end cost. Evidence nevertheless shows that more context can degrade performance, filtering can favor precision over recall, reformulation can change intent, comprehensive critiques can add nitpicks, and verification can increase routing and model-call cost [@p04_kumar2026_swe_prbench; @p10_sun2025_bitsai_cr; @p18_bensghaier2025_curated_reviews; @p35_mcaleese2024_llm_critics; @p58_jin2026_reliable_code_reviewers; @p65_ameen2026_qasecclaw]. The evidence therefore supports reporting error reduction and preservation as separate outcomes.
 
-A strategy that suppresses many comments may reduce the apparent rate of problematic comments while also removing useful feedback. This finding is central to the paper. The empirical results should therefore report useful comments retained, useful comments wrongly suppressed, and useful-but-not-directly-acceptable comments that would be better rewritten than removed.
+## RQ5: Context, Dataset, and Annotation Validity
 
-The strongest version of this finding would show that a strategy with the best error-reduction score is not necessarily best under preservation and coverage metrics.
+Context quality includes relevance, completeness, specificity, consistency, freshness, reviewability, provenance, integrity, and attention load. More context is not necessarily more usable context [@p04_kumar2026_swe_prbench; @p06_hu2025_contextcrbench; @p16_icoz2026_context_aware]. Human review references are realistic but can be noisy, incomplete, or dependent on reviewer experience [@p08_liu2025_too_noisy; @p18_bensghaier2025_curated_reviews; @p23_lin2026_reviewer_experience]. Context can also manipulate evaluators through confirmation cues, adversarial comments, familiar patterns, or obfuscation [@p63_mitropoulos2026_confirmation_bias; @p64_thornton2026_adversarial_comments; @p67_bernstein2025_trust_me_function; @p68_li2025_cotdeceptor]. Annotation reliability and evidence provenance must therefore be reported as part of validity rather than treated as implementation details.
 
-DRAFTTODO: Replace this planned finding with actual preservation, suppression, rewrite, and coverage results.
+## RQ6: Support for the Framework
 
-## Planned Finding 3: Context Quality Changes Mitigation Behavior
-
-Context quality is expected to moderate mitigation success. Low-context or inconsistent-context instances may lead to more unsupported, context-dependent, or hard-to-judge comments. In such cases, a context-quality gate may reduce risky comments but also lower automatic review coverage.
-
-The final results should compare high-context and low-context instances when feasible and report whether different strategies behave differently across these groups.
-
-DRAFTTODO: Replace this planned finding with actual context-quality subgroup results or mark it exploratory if subgroup counts are too small.
-
-## Planned Finding 4: Hybrid Mitigation May Improve Safety but Increase Cost
-
-A hybrid gate-plus-verifier strategy may reduce complementary failure types, but it may also add model calls, increase latency, raise the human escalation rate, or suppress more useful comments. The paper should not assume the hybrid strategy is best. It should evaluate whether the hybrid improves the trade-off profile compared with its individual components.
-
-DRAFTTODO: Replace this planned finding with actual hybrid-strategy trade-off results, including cost and escalation.
-
-## Planned Finding 5: Rewrite and Escalate Decisions Capture a Gray Zone
-
-Binary show/suppress decisions may miss comments that contain useful signals but are not safe or clear enough to show directly. The empirical results should therefore report rewrite and escalation rates. These decisions are important because they show when mitigation should preserve a comment in modified form or route it to a human rather than simply deleting it.
-
-DRAFTTODO: Replace this planned finding with actual rewrite and escalation rates and representative examples.
-
-## Reporting Principles
-
-Each final finding should include three elements:
-
-1. a quantitative summary from the annotated sample;
-2. one or more representative examples;
-3. an interpretation of the trade-off and its implication for LLM-based code review tools.
-
-The section should avoid overclaiming. If the sample is small, findings should be described as exploratory but still useful for designing larger evaluations.
+Core studies directly support the failure taxonomy, evaluation dimensions, benchmark limitations, mitigation families, and workflow outcomes. Supporting studies ground human-review value, evaluator robustness, annotation, and context interpretation. Peripheral studies contribute only bounded transfer claims. Across these tiers, no single identified framework operationalizes comment quality, context quality, preservation, coverage, cost, workflow, and evaluator validity together. This corpus-bounded gap motivates the integrated framework presented in the next section.

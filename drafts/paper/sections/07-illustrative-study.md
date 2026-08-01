@@ -1,109 +1,37 @@
-# Empirical Evaluation Design
+# Study Selection and Characteristics
 
-This section defines the planned controlled empirical comparison used to evaluate mitigation strategies. The study is designed to be small enough to execute with careful annotation, but structured enough to produce evidence beyond a pilot demonstration. The goal is to compare representative strategies on the same review instances and measure both the errors they reduce and the useful feedback or coverage they may lose.
+## Corpus Accounting
 
-DRAFTTODO: After execution, retitle or revise this section if needed from "Empirical Evaluation Design" to "Empirical Evaluation" and replace planned procedures with actual dataset, implementation, and execution details.
+The evidence pool contains 71 unique project IDs, 71 local PDFs, 71 authoritative extraction notes, and 71 project-prefixed bibliography entries. All notes pass the structural extraction validator. P18 and P21 previously had duplicate note files; these were consolidated so that each project ID now contributes one authoritative record.
 
-## Study Goal
+| Corpus property | Value |
+|---|---:|
+| Full-text substantive records | 71 |
+| Core evidence | 41 |
+| Supporting evidence | 24 |
+| Peripheral evidence | 6 |
+| Methodological anchors outside the substantive corpus | 4 |
+| Duplicate authoritative IDs | 0 |
 
-The empirical evaluation has three goals. First, it estimates the distribution of problematic generated review comments in the selected sample. Second, it compares how representative mitigation strategies affect different failure types. Third, it measures trade-offs that would be hidden by simple accuracy, acceptance, or hallucination metrics.
+These counts describe the local evidence pool, not a PRISMA-style database search flow. Identification, deduplication, title/abstract exclusion, and full-text exclusion counts remain unavailable.
 
-The study is not a model leaderboard. It uses a fixed generation setup so that the analysis focuses on mitigation behavior. The comparison should therefore be interpreted as evidence about intervention types, not as a general ranking of all possible models or prompts.
+## Research Streams
 
-## Experimental Units and Sample
+The corpus spans six overlapping streams:
 
-The experimental unit is a code-review instance consisting of a code change, available review-relevant context, a generated review comment, and a mitigation decision. The same base instances are used across strategies where feasible. This paired design allows direct comparison between strategies on the same underlying review situation.
+1. generated review-comment models and datasets;
+2. PR-level and context-aware benchmarks;
+3. data curation, taxonomy, relevance, and usefulness;
+4. industrial and human--AI workflow evidence;
+5. LLM-as-a-Judge and evaluator-validity studies; and
+6. specialized security, static-analysis, context-consistency, and non-functional evidence.
 
-The sample should be selected from an existing code review dataset or pull-request-level benchmark when possible. A suitable instance should contain a code diff and enough context to judge whether a generated comment is relevant, grounded, useful, and actionable. Instances that are not judgeable under the available context should be retained when they are useful for studying context-quality failures, but they should be labeled as such rather than treated as ordinary model failures.
+The first four streams provide the strongest direct evidence for review-comment evaluation. Evaluator studies primarily qualify measurement claims. Specialized and adjacent studies contribute optional sublayers and transfer risks.
 
-A feasible first version uses approximately 100--300 generated comments after pilot development. The final sample size should be justified by annotation resources and by the need to compare strategies across failure types. If the study remains smaller, the paper should frame the results as exploratory and avoid broad claims.
+## Evidence Weighting
 
-DRAFTTODO: Replace this planning text with the actual dataset, sampling frame, number of instances, number of generated comments, inclusion and exclusion rules, and judgeability statistics.
+Quality score and evidence tier are used together. A supporting or peripheral study is not promoted to direct evidence because it has a high quality score, and a direct study is not excluded solely because some reporting criteria are weak. Where a paper does not report useful-feedback preservation, escalation, or cost, the absence is coded as missing evidence rather than interpreted as zero impact.
 
-## Compared Strategies
+## Traceability
 
-The evaluation compares a limited set of representative strategies:
-
-1. **Baseline LLM reviewer**: generates comments from the available code-change context using a fixed base prompt.
-2. **Robust prompting**: uses a constrained prompt that asks the model to avoid unsupported, vague, or low-value feedback.
-3. **Context-quality gate**: detects insufficient or inconsistent context and skips, downgrades, or escalates low-context cases.
-4. **Post-generation verification**: checks generated comments for support, relevance, correctness, and actionability before display.
-5. **Hybrid gate plus verifier**: combines context-quality gating and post-generation verification.
-
-If the dataset and implementation allow it, a retrieval-augmented context strategy can be added. It should be evaluated with the same metrics and should include the cost and noise introduced by additional context.
-
-DRAFTTODO: After implementation, replace generic strategy descriptions with exact prompts, verifier and gate criteria, model versions, thresholds, and any excluded strategies.
-
-## Procedure
-
-The evaluation proceeds in six steps.
-
-1. Select a fixed sample of review instances.
-2. Generate baseline comments using a fixed model, prompt, and decoding configuration.
-3. Apply each mitigation strategy to the same sample where feasible.
-4. Record the generated comment, mitigation decision, verifier output, context-quality judgment, and cost proxies.
-5. Annotate the resulting comments and decisions using the operational taxonomy and annotation guideline.
-6. Compute error-reduction, preservation, coverage, escalation, and cost metrics for each strategy.
-
-All prompts, model versions, temperature settings, retrieval settings, static-analysis settings, gating rules, verifier prompts, and decision thresholds should be fixed before the final evaluation run. Pilot tuning should be separated from the final sample.
-
-DRAFTTODO: After execution, rewrite this procedure in past tense with the actual number of runs, failed cases, missing outputs, reruns, and deviations from the planned protocol.
-
-## Annotation Procedure
-
-Annotators are shown the code change, available context, generated comment, and strategy output. They label the problematic-comment type, correctness, grounding, relevance, usefulness, actionability, context quality, decision, and confidence.
-
-At least two annotators with software-engineering experience should label the pilot and a substantial subset of the final sample when feasible. The pilot should be used to refine the taxonomy and annotation guideline. Agreement should be reported separately for major label groups because labels such as usefulness and actionability may be more subjective than correctness or relevance.
-
-Disagreements should be resolved through discussion or adjudication. The final dataset should preserve both initial labels and resolved labels where feasible. Preserving disagreement reasons is especially useful for understanding ambiguous categories such as useful-but-not-directly-acceptable comments or context-dependent comments.
-
-DRAFTTODO: After annotation, report annotator backgrounds, training and calibration process, pilot size, double-coded proportion, agreement values, adjudication process, and labels revised due to disagreement.
-
-## Metrics
-
-The main error-reduction metrics are:
-
-- overall problematic-comment rate;
-- failure-type-specific rates;
-- unsupported or hallucinated comment rate;
-- irrelevant comment rate;
-- wrong-location or wrong-cause rate;
-- invalid fix suggestion rate;
-- non-actionable and low-value comment rates.
-
-The main preservation and workflow metrics are:
-
-- useful comments retained;
-- useful comments wrongly suppressed;
-- review coverage retained;
-- rewrite rate;
-- human escalation rate;
-- context-dependent cases routed correctly;
-- number of additional model or verifier calls;
-- approximate token cost;
-- latency proxy where measurable.
-
-The study should report confidence intervals or uncertainty summaries where the sample size permits. When the sample is small, descriptive results should be paired with qualitative examples and conservative interpretation.
-
-## Planned Result Tables
-
-The empirical section should include at least three result tables once the study is run.
-
-<!-- table: caption="Planned empirical result tables." label="tab:planned-result-tables" -->
-| Table | Purpose |
-| --- | --- |
-| Strategy-by-failure-type table | Shows which problematic-comment categories are reduced by each strategy. |
-| Preservation and coverage table | Shows useful comments retained, useful comments wrongly suppressed, review coverage, rewrite rate, and escalation rate. |
-| Cost and effort table | Shows additional calls, token cost, latency proxy, and human effort or escalation burden. |
-
-These tables should be accompanied by a small number of qualitative examples. The examples should illustrate trade-offs rather than merely show successful or failed comments.
-
-## Interpretation Rules
-
-A strategy should not be described as better only because it suppresses more comments. A strategy is preferable only when its error reduction is balanced against useful-feedback preservation, coverage, cost, and human escalation.
-
-The hybrid strategy should not be assumed to dominate the individual strategies. It may reduce complementary failure types, but it may also increase suppression, cost, or escalation. The analysis should therefore report where the hybrid improves the trade-off and where it does not.
-
-Context quality should be analyzed as a moderator. The study should examine whether low-context or inconsistent-context instances produce different failure patterns and whether mitigation strategies behave differently under such conditions.
-
-DRAFTTODO: After results are available, convert the planned-result table list into actual result tables and move interpretation rules into the findings and discussion sections as evidence-backed claims.
+The complete paper-level inventory appears in the cross-paper synthesis and progress log. Each thematic result in the following section links to paper IDs and bibliography keys. This structure permits claims to be checked against the corresponding full-text extraction while keeping the report organized by research question rather than by paper.

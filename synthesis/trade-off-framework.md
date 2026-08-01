@@ -5,7 +5,7 @@
 
 ## Core Claim
 
-Current evaluations often ask whether an LLM-generated review comment is good. They less often ask what is lost when we filter, suppress, rewrite, aggregate, enrich, verify, or escalate comments.
+Current evaluations often ask whether an LLM-generated review comment is good. They less often ask what is lost when comments are filtered, suppressed, rewritten, aggregated, enriched, verified, or escalated. Across the reviewed corpus, these interventions can improve one outcome while reducing coverage, changing intent, adding reviewer effort, or increasing model and evaluator cost [@p04_kumar2026_swe_prbench; @p07_olewicki2024_revmate; @p10_sun2025_bitsai_cr; @p18_bensghaier2025_curated_reviews; @p26_zhong2026_human_ai_synergy; @p58_jin2026_reliable_code_reviewers; @p65_ameen2026_qasecclaw].
 
 A trade-off-aware framework should measure both:
 
@@ -144,6 +144,11 @@ A trade-off-aware evaluation should report more than model quality.
 | Security review has asymmetric costs | P46 | False alarms erode trust; missed vulnerabilities can be high-impact. |
 | Misalignment and safety filtering have coverage costs | P47 | Safer outputs may become less useful or too conservative. |
 | Documentation-code consistency can be checked | P49 | Consistency checks help but add false-block and cost risks. |
+| Real-world utility needs PR-level and workflow evidence | P54/P55/P62 | Benchmark or deployment gains remain sensitive to context, confounding, and operational cost. |
+| Relevance and usefulness are partial outcomes | P57/P60 | Relevant or perceived-useful feedback may still be incorrect, weakly grounded, or costly. |
+| Overcorrection and staged verification change omission risk | P58/P65 | Lower false-positive exposure does not establish useful-feedback preservation. |
+| Context can bias or adversarially manipulate evaluation | P63/P64/P67/P68 | Defensive controls require robustness tests and can introduce suppression and cost trade-offs. |
+| Semantic and expert assessment improves construct coverage | P69 | Richer assessment reduces reliance on lexical similarity but raises annotation and evaluator costs. |
 
 ## Decision Matrix for Generated Comments
 

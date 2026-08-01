@@ -58,7 +58,7 @@ MONTH_NORMALIZATION = {
 
 MONTH_FIELD_PATTERN = re.compile(r"^(\s*month\s*=\s*)([A-Za-z]+)(\s*,?\s*)$", re.MULTILINE)
 
-TITLE = "Reducing Problematic LLM-Generated Code Review Comments: An Empirical Study of Mitigation Trade-offs"
+TITLE = "Trade-off-aware Evaluation of LLM-based Code Review: A Structured Review of Comment Quality, Mitigation, and Evaluation Validity"
 
 LATEX_HEADER = rf"""\documentclass[12pt]{{article}}
 

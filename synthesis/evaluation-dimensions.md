@@ -5,7 +5,7 @@
 
 ## Purpose
 
-Current papers often collapse several concepts into a single quality, acceptance, or similarity score. Our framework separates them so that LLM-generated code review comments can be evaluated more precisely.
+Studies use lexical similarity, semantic rubrics, relevance, usefulness, acceptance, issue coverage, workflow outcomes, and evaluator judgments, but these constructs are not interchangeable [@p01_lu2025_deepcrceval; @p07_olewicki2024_revmate; @p14_li2022_codereviewer; @p57_heumuller2025_relevance_reviews; @p60_ahmed2025_feedback_useful; @p69_jiang2025_deep_assessment_crg]. The synthesis therefore keeps them separate.
 
 ## Core Distinction
 
@@ -20,10 +20,10 @@ Trade-off = what we gain and what we risk losing
 
 | Dimension | Core Question | Typical Evidence | Related Papers |
 |---|---|---|---|
-| Technical correctness | Is the comment technically true? | Human labels, issue coverage, code resolution, factuality judge | P01, P02, P03, P04, P05, P06, P37, P38 |
-| Relevance to code change | Is the comment about the actual reviewed change? | PR/diff alignment, reviewer acceptance, judge matching | P01, P02, P03, P04, P05, P39, P40 |
+| Technical correctness | Is the comment technically true? | Human labels, issue coverage, code resolution, factuality judge | P01, P02, P03, P04, P05, P06, P54, P58, P69 |
+| Relevance to code change | Is the comment about the actual reviewed change? | PR/diff alignment, reviewer acceptance, judge matching | P01, P02, P03, P04, P05, P39, P40, P57 |
 | Grounding / context alignment | Can the comment’s claims be traced to provided context? | Claim-to-diff grounding, hallucination labels, grounded rationale | P02, P03, P40, P41 |
-| Usefulness | Does the comment provide practical value to the developer/reviewer? | Reviewer value marking, code resolution, survey feedback, useful-review characteristics | P01, P03, P07, P37, P38, P39 |
+| Usefulness | Does the comment provide practical value to the developer/reviewer? | Reviewer value marking, code resolution, survey feedback, useful-review characteristics | P01, P03, P07, P37, P38, P39, P54, P60 |
 | Actionability | Can the developer act on the comment? | Actionability gate, human labels, accepted comments, actionable explanation | P01, P03, P07, P39, P41 |
 | Specificity | Is the comment precise enough to identify the issue/location? | Line-level localization, specificity rubric, focused reviewability | P01, P06, P39, P40, P41 |
 | Explanation / rationale quality | Does the comment explain why the issue matters? | Explanation clarity, rationale grounding, explanation usefulness | P25, P41 |
@@ -42,8 +42,9 @@ Trade-off = what we gain and what we risk losing
 | Latency | How much delay does the method introduce? | Inference time, reviewer wait time, pipeline delay | P01, P02, P07, P37, P38 |
 | Operational complexity | How hard is it to deploy and maintain? | Workflow integration, quality gates, monitoring | P03, P07, P37 |
 | Developer trust | Does the system increase or erode trust? | Survey, adoption, feedback, acceptance patterns, rationale quality | P03, P07, P37, P41 |
-| Workflow impact | Does it improve review workflow? | PR cycle time, human-comment reduction, live study outcomes, knowledge transfer | P03, P07, P37, P38 |
-| Knowledge transfer / team awareness | Does the review preserve learning and shared ownership? | Human-review outcomes, socio-technical review value | P37, P38, P28 |
+| Workflow impact | Does it improve review workflow? | PR cycle time, human-comment reduction, live study outcomes, knowledge transfer | P03, P07, P37, P38, P55, P56, P62 |
+| Knowledge transfer / team awareness | Does the review preserve learning and shared ownership? | Human-review outcomes, socio-technical review value | P28, P37, P38, P51, P61 |
+| Evaluator robustness | Is the instrument stable under order, prompt, source, or adversarial variation? | Human agreement, swaps, perturbations, repeated runs, attack tests | P29–P36, P63, P64, P67, P68 |
 
 ## Dimensions Often Collapsed Together
 
@@ -73,7 +74,7 @@ P40 adds an important input-side dimension. A bad generated comment may be cause
 
 ### Coverage vs precision
 
-A system can cover more potential issues while also producing more false positives. This is a key trade-off for code review assistants.
+A system can cover more potential issues while also producing more false positives. Conversely, overcorrection or aggressive verification can lower visible false positives while omitting useful signals [@p10_sun2025_bitsai_cr; @p35_mcaleese2024_llm_critics; @p58_jin2026_reliable_code_reviewers; @p65_ameen2026_qasecclaw].
 
 ## Suggested Evaluation Matrix
 

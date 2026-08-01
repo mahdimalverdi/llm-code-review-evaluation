@@ -1,69 +1,25 @@
 # Threats to Validity
 
-DRAFTTODO: After the empirical study is executed, revise this section with actual threats observed during dataset selection, generation, annotation, analysis, and artifact release.
+## Search and Selection Validity
 
-This section discusses threats to the validity of the planned empirical comparison and the steps intended to reduce them. Because the study is intentionally bounded, the main risk is overgeneralizing from a controlled evaluation. The paper should therefore match its claims to the size, diversity, and reliability of the final annotated sample.
+The main limitation is the missing original search history. Although the proposal defined databases and query families, database-specific strings, dates, retrieval counts, deduplication counts, and excluded-record logs were not preserved. The 71-paper corpus may therefore omit relevant work and may reflect convenience or snowballing effects. We mitigate overclaiming by reporting a targeted structured review, not a complete SLR, and by bounding gap claims to the reviewed corpus.
+
+## Extraction Reliability
+
+All records pass a uniform structural validator, but extraction was not independently duplicated. Structural completeness does not establish inter-reviewer agreement or eliminate interpretation errors. Each note retains evidence locations, confidence, and unresolved items to support later audit. A second-reviewer calibration sample would strengthen reliability.
 
 ## Construct Validity
 
-The study measures problematic generated review comments using an operational taxonomy. The taxonomy may not capture all possible failure modes, and some labels may overlap. For example, a comment can be both unsupported and technically incorrect, or both non-actionable and low-value. To reduce this threat, the annotation guideline should define primary and secondary labels, provide inclusion and exclusion criteria, and preserve disagreement notes for ambiguous cases.
+Correctness, grounding, relevance, usefulness, actionability, acceptance, coverage, and cost are defined differently across studies. We avoid pooling incompatible measures and distinguish evaluation dimensions from failure categories and workflow decisions. The resulting taxonomy is literature-derived but not yet empirically validated through annotation.
 
-Useful-feedback preservation is also difficult to measure. A comment may be useful to one reviewer but not another, or useful only after rewriting. The study design reduces this threat by separating usefulness, actionability, grounding, and mitigation decision rather than collapsing them into one score.
+## Evidence-transfer Validity
 
-DRAFTTODO: After pilot annotation, update this subsection with the labels that had low agreement, labels that were merged or clarified, and any construct definitions revised before final annotation.
+The corpus includes direct code-review studies and adjacent work on human review, judging, security, static analysis, refinement, and efficiency. Evidence tiers reduce the risk of treating these sources as equivalent, but transfer judgments remain interpretive. Peripheral studies are used only for bounded background claims.
 
-## Internal Validity
+## Publication and Temporal Validity
 
-Differences between strategies may be caused by prompt wording, model settings, verifier design, or threshold choices rather than by the strategy family itself. To reduce this threat, prompts, model versions, decoding settings, gating rules, verifier rules, and thresholds should be fixed before the final evaluation run. Any pilot tuning should be separated from the final sample.
+The corpus contains preprints, surveys, and recent work whose metadata or peer-reviewed status may change. Publication bias may favor positive system results, while industrial studies may omit proprietary details or negative outcomes. Bibliographic metadata and newly published work should be checked before submission.
 
-A paired evaluation design helps internal validity because the same review instances are processed across strategies where feasible. This reduces the chance that observed differences are caused by different input distributions.
+## Framework Validity
 
-DRAFTTODO: After execution, report any protocol deviations, failed strategy runs, prompt or threshold changes, reruns, or missing outputs that may affect internal validity.
-
-## External Validity
-
-The results may not generalize across programming languages, repositories, organizations, review cultures, model families, or code-change types. A study using one dataset and one main model can still provide useful evidence about trade-offs, but it should not claim universal superiority of one strategy.
-
-To reduce this threat, the paper should describe the dataset, sampling strategy, model, prompts, and review context clearly. Future work can then replicate the evaluation on other datasets, languages, and review workflows.
-
-DRAFTTODO: After dataset selection, specify the actual language, repository, model, review-context, and sampling limitations that constrain generalization.
-
-## Annotation Validity
-
-Human annotators may disagree on usefulness, severity, actionability, and whether a comment should be rewritten or escalated. These disagreements are not only noise; they may reveal genuinely ambiguous review situations. The study should report inter-annotator agreement where feasible and preserve disagreement reasons for analysis.
-
-If only a subset is double-annotated, the paper should state this clearly and avoid overclaiming annotation reliability for the full dataset.
-
-DRAFTTODO: After annotation, report annotator backgrounds, calibration procedure, double-annotated subset size, agreement values, adjudication process, and unresolved disagreement patterns.
-
-## Dataset and Reference Validity
-
-The selected dataset may contain instances that are not review-relevant, not judgeable under the available context, or linked to incomplete references. Such cases can make a good generated comment appear wrong or make a bad comment appear unsupported only because the necessary context is missing.
-
-The planned study mitigates this by labeling context quality and dataset validity separately from generated-comment quality. Instances that cannot be judged should be marked as context-dependent or dataset-validity concerns rather than treated as ordinary model failures.
-
-DRAFTTODO: After sample construction, report excluded instances, non-judgeable instances, duplicate or invalid cases, and reference-quality limitations.
-
-## Evaluator Validity
-
-If LLM-as-a-Judge is used as part of verification or auxiliary evaluation, its outputs may be sensitive to prompt wording, answer order, model choice, and response format. The study should not treat LLM judgments as ground truth unless validated against human labels. When LLM judges are used, their role should be reported explicitly as a mitigation component, an auxiliary measurement instrument, or both.
-
-DRAFTTODO: After any LLM-judge use, report the judge model, prompt, role, comparison against human labels, and observed judge limitations.
-
-## Cost and Workflow Validity
-
-Cost proxies such as token count, number of model calls, latency estimates, and human escalation rate may not directly match real deployment cost. Different providers, infrastructure, review workflows, and organizational policies can change these costs. The study should therefore report cost measures transparently and interpret them as proxies rather than exact deployment estimates.
-
-DRAFTTODO: After execution, report the actual cost proxies collected and clarify which deployment costs remain unmeasured.
-
-## Literature and Framing Validity
-
-The targeted literature review may miss relevant papers, especially because LLM-based code review research is changing quickly. Some recent papers may be preprints or may change before publication. The paper mitigates this by documenting inclusion criteria, maintaining a transparent paper pool, and separating reported evidence from inferred interpretation and our own perspective.
-
-DRAFTTODO: Before submission, update the search date, paper pool, inclusion counts, and any newly relevant work added after the initial targeted review.
-
-## Summary
-
-The main planned validity strategy is transparency: fixed settings, explicit labels, pilot annotation, agreement reporting, preserved disagreement notes, separate context-quality labels, and conservative interpretation. The study should present its empirical findings as evidence about mitigation trade-offs under a controlled design, not as universal claims about all LLM-based code review tools.
-
-DRAFTTODO: After execution, add concrete validity details: actual sample limitations, annotation disagreements, missing data, failed strategy runs, unavailable artifacts, and any deviations from the planned protocol.
+The taxonomy, annotation protocol, and trade-off framework synthesize recurring evidence gaps; they are not validated deployment instruments. Future pilot annotation and controlled evaluation may merge, split, or revise categories and decision rules. The present claims concern the structure and incompleteness of reported evaluation, not the effectiveness of an unexecuted mitigation method.

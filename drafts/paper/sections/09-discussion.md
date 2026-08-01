@@ -1,43 +1,21 @@
 # Discussion
 
-DRAFTTODO: After empirical results are available, revise this discussion so that each implication is grounded in observed findings rather than only the study design.
+## Evaluation as a Decision Problem
 
-The planned empirical study is designed to examine whether reducing problematic LLM-generated code review comments is a trade-off problem rather than a simple quality-improvement problem. This section discusses the implications of that framing for evaluation design, tool builders, benchmark designers, and future research. Until the study is executed, these implications should be read as design-stage implications rather than evidence-backed empirical claims.
-
-## Implications for Evaluation Design
-
-The main implication of the proposed design is that single-score evaluation is insufficient. A strategy that removes more comments may appear better under an error-rate metric, but it may be worse if it suppresses useful feedback, reduces review coverage, or increases human escalation. Evaluation should therefore report both reduction and preservation metrics.
-
-This is especially important for generated review comments because usefulness is not identical to correctness. Some comments may be technically correct but low-value. Others may be weakly grounded but still useful as signals for a human reviewer. A binary correct/incorrect or accepted/rejected label cannot capture these cases. The show/suppress/rewrite/escalate decision model gives a more realistic view of how generated comments should enter a review workflow.
-
-DRAFTTODO: After results are available, connect this implication to actual evidence about error reduction, useful-feedback preservation, review coverage, and escalation.
+The synthesis suggests that evaluation should connect measurement to action. Correctness or groundedness alone does not determine whether a comment should be shown. A weakly grounded but potentially important concern may require escalation; a valid but vague concern may require rewriting; and a correct but low-value nitpick may justify suppression. The show, suppress, rewrite, and escalate decisions expose trade-offs hidden by binary quality labels.
 
 ## Implications for Tool Builders
 
-Tool builders should avoid treating mitigation as only a filter. Suppression is only one possible action. When a generated comment contains a useful signal but is too uncertain, too vague, or too strongly phrased, rewriting or escalation may preserve value that would otherwise be lost. This matters for developer trust: an assistant that is too noisy can be ignored, but an assistant that is too conservative may fail to provide useful feedback.
+Tool builders should report both harmful-comment reduction and useful-feedback preservation. Context expansion should be evaluated for marginal utility, freshness, integrity, latency, and model capacity. Verification and filtering should expose suppressed outputs to audit so that wrong removals can be measured. Human escalation should be treated as a cost and coverage outcome, not as a free fallback.
 
-The proposed study also motivates selecting mitigation strategies according to failure type. Robust prompting may help with vagueness or actionability. Post-generation verification may help with unsupported claims. Context-quality gates may help when the available context is insufficient or inconsistent. Hybrid strategies may be useful, but they should be justified by improved trade-offs, not by the assumption that more safeguards are always better.
+## Implications for Benchmarks
 
-DRAFTTODO: After implementation, replace the strategy-level examples with implications grounded in the observed strengths, weaknesses, and cost profiles of the compared strategies.
+Benchmarks should distinguish reference incompleteness from model failure, record input reviewability, and support multiple valid comments. Acceptance, adoption, or lexical similarity should not be treated as complete proxies for usefulness. Specialized security, static-analysis, repair, and performance claims require task-specific evidence rather than a generic quality score.
 
-## Implications for Benchmark and Dataset Designers
+## Implications for Evaluators
 
-Benchmark designers should treat context and reference quality as part of the evaluation object. If a benchmark instance does not provide enough context to judge a comment, then disagreement between a model and a reference may not indicate model failure. It may indicate an invalid or under-specified evaluation instance.
+LLM-based judges can support scale but should be treated as measurement instruments. At minimum, judge studies should report the rubric, answer rate, order swaps, repeated-run consistency, prompt perturbation, judge and source-model sensitivity, preprocessing, human comparison, adversarial robustness, and cost [@p29_wang2025_human_evaluators; @p31_jiang2025_codejudgebench; @p32_zhao2026_bias_loop; @p33_he2025_llmjudge_se; @p36_li2024_llms_as_judges].
 
-Datasets for LLM-based code review should therefore record what context is available, whether the reference comment is judgeable, and whether a generated comment requires additional evidence. This would make it easier to evaluate context-quality gates, retrieval strategies, and post-generation verification systems fairly.
+## Research Agenda
 
-## Implications for Human and LLM-Based Evaluation
-
-Human annotation remains important because usefulness, actionability, and value are partly judgment-based. However, human annotation also introduces disagreement. Reporting inter-annotator agreement and disagreement patterns is therefore part of the evidence, not merely a quality-control step.
-
-LLM-as-a-Judge may be useful for scaling evaluation or supporting screening, but it should not be treated as ground truth without validation. If LLM judges are used in future versions of this work, their judgments should be compared against human labels, tested for prompt sensitivity where feasible, and reported as measurement instruments with known limitations.
-
-DRAFTTODO: After annotation and any auxiliary LLM-judge experiments, revise this subsection with the actual agreement, disagreement, and judge-validation findings.
-
-## Scope of Generalization
-
-The study should be interpreted according to its scope. If it uses one dataset, one main generation model, and a few hundred comments, it can provide useful design evidence and exploratory empirical findings, but not universal claims about all LLM-based review systems. The goal is to identify trade-off patterns and evaluation requirements that can guide larger studies.
-
-The strongest general contribution at the design stage is therefore methodological: mitigation should be evaluated by the failure types it reduces, the useful comments it preserves or loses, the coverage it retains, and the cost it introduces. This framing can be reused even when future work uses different models, datasets, programming languages, or review workflows.
-
-DRAFTTODO: After results are available, calibrate the scope of generalization to the actual dataset, model, sample size, languages, repositories, and annotation reliability.
+The most useful next step is not another single-score leaderboard. Future work should measure preservation under filters and gates, validate the proposed taxonomy with independent annotators, compare context quantity with context quality, test defensive mechanisms against adversarial review context, and report workflow and cost effects alongside quality. A controlled mitigation study can use the annotation protocol and framework derived here, but its findings should be presented separately from this literature review.

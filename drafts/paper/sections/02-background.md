@@ -1,6 +1,6 @@
 # Background and Motivation
 
-A generated review comment can fail in several different ways. The comment may be wrong, the available context may be incomplete, the evaluation instance may be unjudgeable, or the evaluator may be unreliable. These failures should not be treated as the same problem. This section separates the concepts that later sections use to build the taxonomy, annotation protocol, and empirical comparison.
+A generated review comment can fail in several different ways. The comment may be wrong, the available context may be incomplete, the evaluation instance may be unjudgeable, or the evaluator may be unreliable. These failures should not be treated as the same problem. This section separates the concepts used in the review synthesis, taxonomy, annotation protocol, and evaluation framework.
 
 The key distinction is between the comment, the context around it, the dataset instance used to evaluate it, the evaluator that judges it, and the workflow decision that follows. Keeping these layers separate makes the later trade-off analysis more precise: a mitigation strategy may reduce bad comments, but it may also remove useful signals, escalate too many cases, or hide a weakness in the evaluation data.
 
@@ -40,4 +40,4 @@ The same mitigation can be helpful and harmful at the same time, depending on wh
 
 Evaluation should therefore ask three linked questions. First, is the instance valid and judgeable under the available context? Second, is the generated comment useful enough to preserve in some form? Third, what mitigation decision should follow: show, suppress, rewrite, or escalate? These questions connect error reduction to useful-feedback preservation, cost, workflow impact, dataset validity, and evaluator validity.
 
-This framing leads to the two core artifacts developed in the next sections: an operational taxonomy of problematic generated review comments, and a trade-off-aware evaluation design for comparing mitigation strategies on shared review instances.
+This framing leads to the two core artifacts developed in the next sections: an operational taxonomy of problematic generated review comments and a trade-off-aware framework for evaluating mitigation decisions.

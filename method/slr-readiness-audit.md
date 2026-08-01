@@ -4,7 +4,7 @@ Audit date: 2026-08-02
 
 ## Decision
 
-The current change set is not ready to be committed as a completed SLR extraction. It is suitable as a documented work-in-progress checkpoint after the blockers below are either resolved or explicitly scoped out of the commit message.
+The paper-level extraction is structurally complete and suitable for a committed evidence-synthesis checkpoint. The project is not yet ready to be reported as a fully reproducible SLR because the original search and screening history is unavailable. Until a new documented search is executed, the defensible label is **targeted structured literature review**.
 
 ## Verified strengths
 
@@ -14,43 +14,47 @@ The current change set is not ready to be committed as a completed SLR extractio
 - The canonical synthesis files define the intended taxonomy, context model, evaluation dimensions, trade-off framework, and research gap.
 - The protocol now records the proposal's databases, date boundary, query families, eligibility criteria, quality scale, extraction fields, and reporting limitation.
 
-## Commit blockers
+## Readiness findings
 
-### 1. Uniformity-gate failure
+### 1. Uniformity gate — resolved
 
 All 71 authoritative notes now contain the required eleven-section canonical record and pass `validate-note.sh`. Legacy compact extractions are retained as provenance and marked non-authoritative where applicable. This structural blocker is resolved; independent second-reviewer calibration remains a review-level limitation.
 
-### 2. Provisional full-text verification
+### 2. Provisional full-text verification — resolved structurally
 
 No authoritative record remains provisional. Medium-confidence records retain explicit transfer, evaluator, or second-reviewer limitations and should be weighted accordingly in synthesis.
 
-### 3. Duplicate note identities (partially resolved)
+### 3. Duplicate note identities — resolved
 
-P18 and P21 each have two Markdown notes for one project ID. The secondary notes have now been designated as archived duplicates and excluded from the study count. Their unique details must still be compared and merged into the authoritative records before the archived files can be removed.
+P18 and P21 now each have one authoritative Markdown note. The archived duplicate files were consolidated and removed; the corpus contains 71 notes for 71 project IDs.
 
-### 4. Citation traceability in synthesis prose
+### 4. Citation traceability in synthesis prose — substantially resolved
 
-`synthesis/context-quality.md`, `synthesis/core-claim.md`, `synthesis/evaluation-dimensions.md`, `synthesis/problematic-comment-taxonomy.md`, and `synthesis/trade-off-framework.md` currently rely mainly on internal P-IDs and contain no Pandoc citations. Literature-based prose intended for the report must use keys from `references/references.bib`.
+The main synthesis claims now include Pandoc citations and P51–P71 evidence has been integrated into the gap, context, dimensions, taxonomy, trade-off, and manuscript results. Internal matrices retain P-IDs as traceability handles. A final sentence-level citation audit remains necessary before submission.
 
-### 5. Bibliographic verification
+### 5. Bibliographic verification — open
 
 All P01–P71 IDs have bibliography entries, but multiple paper notes still request publisher/arXiv metadata verification. These are not missing-key errors; they are metadata-confidence issues that must be resolved before final submission.
 
-### 6. Search-history limitation
+### 6. Search-history limitation — blocks the formal SLR label
 
 The proposal supplies databases and example queries, but the original retrieval dates, database-specific strings, result counts, and screening counts are unavailable. Unless reconstructed through a new reproducible search, the report must retain the label “targeted structured review.”
 
-## Required exit criteria
+## Required exit criteria for a submission-ready review
 
 The extraction checkpoint is ready for a completion commit only when:
 
 1. each unique P-ID has a canonical eleven-section record or an explicit blocked/excluded status;
 2. each included record has RQ1–RQ6 evidence labels and locations, Q1–Q12 evidence notes, and explicit preservation/coverage/escalation/cost fields;
-3. P18 and P21 duplicate notes are resolved;
-4. synthesis prose uses bibliography citation keys for literature-based claims;
+3. the working core/supporting/peripheral evidence tiers cover each P-ID exactly once;
+4. synthesis prose uses bibliography citation keys for literature-based claims and receives a final sentence-level audit;
 5. progress counts are generated from gate-compliant statuses rather than legacy labels; and
 6. the review is described as targeted structured review unless the database search log is reconstructed.
 
-## Recommended next batch
+## Recommended next work
 
-Start with P01–P10 because these records contain the most detailed legacy notes. Convert each to the canonical eleven-section schema using full-PDF locations, then use the batch as a calibration sample before processing P11–P71.
+1. Re-run database searches if the seminar requires the formal SLR label.
+2. Conduct independent calibration on a sample of selection, extraction, and tier decisions.
+3. Complete sentence-level citation and publisher-metadata verification.
+4. Add denominator-based descriptive counts after the final included set is frozen.
+5. Visually inspect and copyedit the generated PDF.

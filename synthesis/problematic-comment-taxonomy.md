@@ -5,7 +5,7 @@
 
 ## Purpose
 
-A single label such as “bad comment” is too coarse. A generated review comment may be bad because it is hallucinated, irrelevant, vague, non-actionable, low-value, grounded in stale context, misleading as workflow support, or because it misses the actual issue. These failures have different causes and require different mitigation strategies.
+A single label such as “bad comment” is too coarse. Across the corpus, problematic feedback includes unsupported claims, irrelevance, incorrectness, vagueness, weak actionability, low-value or redundant feedback, wrong localization, invalid repairs, and context-dependent or adversarially influenced judgments [@p02_tantithamthavorn2026_hallujudge; @p08_liu2025_too_noisy; @p19_nguyen2025_fine_grained_classification; @p21_peng2025_icodereviewer; @p35_mcaleese2024_llm_critics; @p57_heumuller2025_relevance_reviews; @p58_jin2026_reliable_code_reviewers; @p64_thornton2026_adversarial_comments]. These failures have different causes and mitigation implications.
 
 ## Core Distinction
 
@@ -90,6 +90,8 @@ Each failure type implies a different trade-off.
 | Biased judge decision | Stronger judge protocol | Higher evaluation cost and latency. |
 
 ## Evidence Sources from Papers
+
+The categories below are literature-derived but corpus-bounded. Direct generated-review evidence carries more weight than categories transferred from security, static-analysis, or general evaluator studies.
 
 | Paper | Useful Failure Types |
 |---|---|
