@@ -26,7 +26,6 @@
 | Artifact | GitHub: `martin-wey/CodeUltraFeedback` |
 
 ```bibtex
-% TODO: Add checked ACM BibTeX.
 ```
 
 ## One-Sentence Summary
@@ -121,8 +120,90 @@ P30 supports adding non-functional and preference-based dimensions to code revie
 - [ ] Add coding preference dimensions to evaluation framework.
 - [ ] Add judge-selection sensitivity to evaluator-validity synthesis.
 - [ ] Add reference-guided judging trade-off to framework.
-## Proposal-aligned quality appraisal
+## Legacy proposal-aligned quality appraisal (superseded by the canonical record)
 
 P30 is **Supporting/Core / High relevance**. It supports RQ2–RQ3 through preference dimensions and evaluator comparison; RQ4 through feedback quality, judge choice, and preference-coverage trade-offs; RQ5 through annotation validity; and RQ6 through evaluator and preference-data design. Its direct evidence for code-review-specific failure taxonomy is limited.
 
 **Quality score: 20/24.** Q1–Q5=2, Q6=1, Q7=2, Q8=2, Q9=0, Q10=2, Q11=1, Q12=2. Preference data should not be equated with correctness or production usefulness.
+## Canonical citation record
+
+Use citation key `p30_weyssow2025_codeultrafeedback` from `references/references.bib`; do not duplicate its BibTeX entry in this note.
+## Canonical SLR record
+
+> [!NOTE]
+> The numbered eleven-section record below is authoritative; the compact block is provenance only.
+
+- Identification/screening: `p30_weyssow2025_codeultrafeedback`; Supporting; Include; High relevance.
+- Study overview: LLM-as-a-Judge preference dataset for aligning coding models to review/evaluation preferences.
+- RQ1: Direct comment-failure taxonomy is limited; preference disagreement and low-quality outputs are relevant (Reported/Our perspective).
+- RQ2: Preference dimensions, evaluator judgments, and coding context (Reported).
+- RQ3: Preference data, judge quality, and alignment outcomes (Reported).
+- RQ4: Preference alignment versus judge cost, bias, and generalization (Reported).
+- RQ5: Annotation and evaluator-validity evidence (Reported).
+- RQ6: Strong preference/evaluator methodology support.
+- Failure taxonomy: preference disagreement; evaluator inconsistency; low-quality output; judge bias.
+- Metrics: preference agreement, judge quality, alignment, and robustness.
+- Mitigation/trade-off: preference optimization; may improve judged alignment while overfitting preferences.
+- Validity: preference is not correctness, actionability, or production acceptance.
+- Quality: 20/24; strong supporting evidence.
+- Synthesis conclusion: supports proxy-validity analysis for preference-based evaluation.
+
+### 1. Identification
+- P30; `p30_weyssow2025_codeultrafeedback`; local full PDF; included; authoritative record.
+### 2. Screening and proposal alignment
+- Include as supporting. `p30_weyssow2025_codeultrafeedback`; Supporting; Include; High relevance.
+### 3. Study overview
+LLM-as-a-Judge preference dataset for aligning coding models to review/evaluation preferences.
+### 4. Evidence mapped to proposal RQ1–RQ6
+| RQ | Evidence | Type | Location |
+|---|---|---|---|
+| RQ1 | Direct comment-failure taxonomy is limited; preference disagreement and low-quality outputs are relevant (Reported/Our perspective). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ2 | Preference dimensions, evaluator judgments, and coding context (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ3 | Preference data, judge quality, and alignment outcomes (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ4 | Preference alignment versus judge cost, bias, and generalization (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ5 | Annotation and evaluator-validity evidence (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ6 | Strong preference/evaluator methodology support. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+### 5. Failure and problematic-comment categories
+| Category | Type | Location |
+|---|---|---|
+| preference disagreement | Reported/Inferred | Full PDF |
+| evaluator inconsistency | Reported/Inferred | Full PDF |
+| low-quality output | Reported/Inferred | Full PDF |
+| judge bias. | Reported/Inferred | Full PDF |
+### 6. Evaluation dimensions and metrics
+| Dimension/metric | Limitation | Location |
+|---|---|---|
+| preference agreement | Not an end-to-end outcome | Full PDF |
+| judge quality | Not an end-to-end outcome | Full PDF |
+| alignment | Not an end-to-end outcome | Full PDF |
+| and robustness. | Not an end-to-end outcome | Full PDF |
+### 7. Mitigation and trade-offs
+- Mitigation/intervention: preference optimization; may improve judged alignment while overfitting preferences.
+- Useful feedback potentially lost: not directly measured unless stated above.
+- Coverage: partial; useful-issue retention after intervention is incomplete.
+- Human escalation: no formal rate/policy reported unless stated above.
+- Cost: paper-specific evidence above; otherwise Not reported.
+### 8. Annotation and evaluator validity
+- preference is not correctness, actionability, or production acceptance.
+- Q7–Q8 encode judging and reliability depth.
+### 9. Quality appraisal
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 | 2 | goal at scored depth. |
+| Q2 | 2 | artifact at scored depth. |
+| Q3 | 2 | dataset/context at scored depth. |
+| Q4 | 2 | procedure at scored depth. |
+| Q5 | 2 | metrics at scored depth. |
+| Q6 | 1 | failures at scored depth. |
+| Q7 | 2 | judging at scored depth. |
+| Q8 | 2 | reliability at scored depth. |
+| Q9 | 0 | intervention at scored depth. |
+| Q10 | 2 | trade-offs at scored depth. |
+| Q11 | 1 | threats at scored depth. |
+| Q12 | 2 | SLR support at scored depth. |
+- Total: 20/24; reporting-quality score.
+### 10. Review-process reliability and bias
+- Missing preservation/escalation evidence and selection/publication bias remain explicit; second-reviewer calibration is unavailable.
+### 11. Synthesis-ready conclusion
+- Contribution: LLM-as-a-Judge preference dataset for aligning coding models to review/evaluation preferences.
+- Boundary: supports proxy-validity analysis for preference-based evaluation.

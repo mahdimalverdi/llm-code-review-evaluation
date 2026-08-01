@@ -22,7 +22,6 @@
 | DOI | 10.1145/3696630.3728505 |
 
 ```bibtex
-% TODO: Add checked ACM BibTeX.
 ```
 
 ## One-Sentence Summary
@@ -120,8 +119,88 @@ P28 is useful for positioning: our evaluation framework should not assume that t
 - [ ] Add human-support-not-replacement framing to synthesis.
 - [ ] Add knowledge-transfer/team-awareness preservation to trade-off framework.
 - [ ] Update `matrices/cross-paper-synthesis.md` with P28 evidence.
-## Proposal-aligned quality appraisal
+## Legacy proposal-aligned quality appraisal (superseded by the canonical record)
 
 P28 is **Supporting / High relevance**. It supports RQ1 through risks of over-automation and low-value feedback; RQ2–RQ3 through knowledge transfer, accountability, awareness, and review value; RQ4 through support versus automation and human-escalation trade-offs; and RQ5–RQ6 through socio-technical framework design.
 
 **Quality score: 18/24.** Q1–Q5=2, Q6=1, Q7=1, Q8=1, Q9=1, Q10=2, Q11=1, Q12=2. It is primarily a conceptual/supporting paper rather than a controlled evaluation study.
+## Canonical citation record
+
+Use citation key `p28_heander2025_support_not_automation` from `references/references.bib`; do not duplicate its BibTeX entry in this note.
+## Canonical SLR record
+
+> [!NOTE]
+> The numbered eleven-section record below is authoritative; the compact block is provenance only.
+
+- Identification/screening: `p28_heander2025_support_not_automation`; Supporting; Include; High relevance.
+- Study overview: Conceptual and socio-technical argument for AI-supported rather than fully automated code review.
+- RQ1: Over-automation, low-value feedback, and loss of knowledge-transfer functions (Reported/Our perspective).
+- RQ2: Team context, rationale, awareness, and accountability (Reported).
+- RQ3: Human oversight, learning, shared ownership, and workflow value (Reported).
+- RQ4: Support versus automation, human escalation, accountability, and reviewer burden (Reported).
+- RQ5: Socio-technical validity and human-centered evaluation (Reported).
+- RQ6: Strong conceptual framework support.
+- Failure taxonomy: low-value; over-automated; context-insensitive; accountability-losing feedback.
+- Metrics: proposed workflow/usefulness dimensions; no new benchmark metrics.
+- Mitigation/trade-off: human-supported automation; preserves oversight but may retain cost and delay.
+- Validity: conceptual/supporting evidence, not controlled empirical mitigation.
+- Quality: 18/24; supporting evidence.
+- Synthesis conclusion: supports human escalation and socio-technical dimensions in the framework.
+
+### 1. Identification
+- P28; `p28_heander2025_support_not_automation`; local full PDF; included; authoritative record.
+### 2. Screening and proposal alignment
+- Include as supporting. `p28_heander2025_support_not_automation`; Supporting; Include; High relevance.
+### 3. Study overview
+Conceptual and socio-technical argument for AI-supported rather than fully automated code review.
+### 4. Evidence mapped to proposal RQ1–RQ6
+| RQ | Evidence | Type | Location |
+|---|---|---|---|
+| RQ1 | Over-automation, low-value feedback, and loss of knowledge-transfer functions (Reported/Our perspective). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ2 | Team context, rationale, awareness, and accountability (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ3 | Human oversight, learning, shared ownership, and workflow value (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ4 | Support versus automation, human escalation, accountability, and reviewer burden (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ5 | Socio-technical validity and human-centered evaluation (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ6 | Strong conceptual framework support. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+### 5. Failure and problematic-comment categories
+| Category | Type | Location |
+|---|---|---|
+| low-value | Reported/Inferred | Full PDF |
+| over-automated | Reported/Inferred | Full PDF |
+| context-insensitive | Reported/Inferred | Full PDF |
+| accountability-losing feedback. | Reported/Inferred | Full PDF |
+### 6. Evaluation dimensions and metrics
+| Dimension/metric | Limitation | Location |
+|---|---|---|
+| proposed workflow/usefulness dimensions | Not an end-to-end outcome | Full PDF |
+| no new benchmark metrics. | Not an end-to-end outcome | Full PDF |
+### 7. Mitigation and trade-offs
+- Mitigation/intervention: human-supported automation; preserves oversight but may retain cost and delay.
+- Useful feedback potentially lost: not directly measured unless stated above.
+- Coverage: partial; useful-issue retention after intervention is incomplete.
+- Human escalation: no formal rate/policy reported unless stated above.
+- Cost: paper-specific evidence above; otherwise Not reported.
+### 8. Annotation and evaluator validity
+- conceptual/supporting evidence, not controlled empirical mitigation.
+- Q7–Q8 encode judging and reliability depth.
+### 9. Quality appraisal
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 | 2 | goal at scored depth. |
+| Q2 | 2 | artifact at scored depth. |
+| Q3 | 2 | dataset/context at scored depth. |
+| Q4 | 2 | procedure at scored depth. |
+| Q5 | 2 | metrics at scored depth. |
+| Q6 | 1 | failures at scored depth. |
+| Q7 | 1 | judging at scored depth. |
+| Q8 | 1 | reliability at scored depth. |
+| Q9 | 1 | intervention at scored depth. |
+| Q10 | 2 | trade-offs at scored depth. |
+| Q11 | 1 | threats at scored depth. |
+| Q12 | 2 | SLR support at scored depth. |
+- Total: 19/24; reporting-quality score.
+### 10. Review-process reliability and bias
+- Missing preservation/escalation evidence and selection/publication bias remain explicit; second-reviewer calibration is unavailable.
+### 11. Synthesis-ready conclusion
+- Contribution: Conceptual and socio-technical argument for AI-supported rather than fully automated code review.
+- Boundary: supports human escalation and socio-technical dimensions in the framework.

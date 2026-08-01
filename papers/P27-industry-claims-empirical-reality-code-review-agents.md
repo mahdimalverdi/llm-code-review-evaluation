@@ -23,7 +23,6 @@
 | Artifact | Figshare analysis code and datasets |
 
 ```bibtex
-% TODO: Add checked ACM BibTeX.
 ```
 
 ## One-Sentence Summary
@@ -122,8 +121,91 @@ P27 strongly supports the claim that AI review should not be evaluated by commen
 - [ ] Add CRA-only abandonment and human oversight to workflow synthesis.
 - [ ] Add low-signal CRA comments to problematic-comment taxonomy.
 - [ ] Update `matrices/cross-paper-synthesis.md` with P27 evidence.
-## Proposal-aligned quality appraisal
+## Legacy proposal-aligned quality appraisal (superseded by the canonical record)
 
 P27 is **Supporting/Core / High relevance**. It supports RQ1 through noisy, low-signal, and harmful review-agent outputs; RQ2–RQ3 through production outcomes; RQ4 through adoption, signal-to-noise, and human-review trade-offs; and RQ6 through threat-to-validity and workflow design.
 
 **Quality score: 20/24.** Q1–Q7=2, Q8=1, Q9=1, Q10=2, Q11=1, Q12=2. Industry claims and empirical outcomes may use proxies that do not isolate correctness.
+## Canonical citation record
+
+Use citation key `p27_chowdhury2026_industry_claims` from `references/references.bib`; do not duplicate its BibTeX entry in this note.
+## Canonical SLR record
+
+> [!NOTE]
+> The numbered eleven-section record below is authoritative; the compact block is provenance only.
+
+- Identification/screening: `p27_chowdhury2026_industry_claims`; Supporting; Include; High relevance.
+- Study overview: Empirical comparison of industry claims about code-review agents with pull-request outcomes.
+- RQ1: Noisy, low-signal, and harmful agent outputs (Reported/Our perspective).
+- RQ2: Production PR context and repository workflow (Reported).
+- RQ3: Adoption, merge/abandonment, signal-to-noise, and human-review outcomes (Reported).
+- RQ4: Automation/adoption versus review quality, trust, and workflow risk (Reported).
+- RQ5: Ecological validity and production-proxy limitations (Reported).
+- RQ6: Strong threat-to-validity and workflow support.
+- Failure taxonomy: low-signal; noisy; harmful; unadopted; workflow-disruptive output.
+- Metrics: PR outcomes, adoption, signal-to-noise, and human-review comparison.
+- Mitigation/trade-off: agent deployment/monitoring; may reduce burden but create workflow and trust costs.
+- Validity: observational production proxies and selection effects.
+- Quality: 20/24; supporting/core evidence.
+- Synthesis conclusion: grounds the SLR in empirical workflow outcomes rather than claims alone.
+
+### 1. Identification
+- P27; `p27_chowdhury2026_industry_claims`; local full PDF; included; authoritative record.
+### 2. Screening and proposal alignment
+- Include as supporting. `p27_chowdhury2026_industry_claims`; Supporting; Include; High relevance.
+### 3. Study overview
+Empirical comparison of industry claims about code-review agents with pull-request outcomes.
+### 4. Evidence mapped to proposal RQ1–RQ6
+| RQ | Evidence | Type | Location |
+|---|---|---|---|
+| RQ1 | Noisy, low-signal, and harmful agent outputs (Reported/Our perspective). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ2 | Production PR context and repository workflow (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ3 | Adoption, merge/abandonment, signal-to-noise, and human-review outcomes (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ4 | Automation/adoption versus review quality, trust, and workflow risk (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ5 | Ecological validity and production-proxy limitations (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ6 | Strong threat-to-validity and workflow support. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+### 5. Failure and problematic-comment categories
+| Category | Type | Location |
+|---|---|---|
+| low-signal | Reported/Inferred | Full PDF |
+| noisy | Reported/Inferred | Full PDF |
+| harmful | Reported/Inferred | Full PDF |
+| unadopted | Reported/Inferred | Full PDF |
+| workflow-disruptive output. | Reported/Inferred | Full PDF |
+### 6. Evaluation dimensions and metrics
+| Dimension/metric | Limitation | Location |
+|---|---|---|
+| PR outcomes | Not an end-to-end outcome | Full PDF |
+| adoption | Not an end-to-end outcome | Full PDF |
+| signal-to-noise | Not an end-to-end outcome | Full PDF |
+| and human-review comparison. | Not an end-to-end outcome | Full PDF |
+### 7. Mitigation and trade-offs
+- Mitigation/intervention: agent deployment/monitoring; may reduce burden but create workflow and trust costs.
+- Useful feedback potentially lost: not directly measured unless stated above.
+- Coverage: partial; useful-issue retention after intervention is incomplete.
+- Human escalation: no formal rate/policy reported unless stated above.
+- Cost: paper-specific evidence above; otherwise Not reported.
+### 8. Annotation and evaluator validity
+- observational production proxies and selection effects.
+- Q7–Q8 encode judging and reliability depth.
+### 9. Quality appraisal
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 | 2 | goal at scored depth. |
+| Q2 | 2 | artifact at scored depth. |
+| Q3 | 2 | dataset/context at scored depth. |
+| Q4 | 2 | procedure at scored depth. |
+| Q5 | 2 | metrics at scored depth. |
+| Q6 | 2 | failures at scored depth. |
+| Q7 | 2 | judging at scored depth. |
+| Q8 | 1 | reliability at scored depth. |
+| Q9 | 1 | intervention at scored depth. |
+| Q10 | 2 | trade-offs at scored depth. |
+| Q11 | 1 | threats at scored depth. |
+| Q12 | 2 | SLR support at scored depth. |
+- Total: 21/24; reporting-quality score.
+### 10. Review-process reliability and bias
+- Missing preservation/escalation evidence and selection/publication bias remain explicit; second-reviewer calibration is unavailable.
+### 11. Synthesis-ready conclusion
+- Contribution: Empirical comparison of industry claims about code-review agents with pull-request outcomes.
+- Boundary: grounds the SLR in empirical workflow outcomes rather than claims alone.

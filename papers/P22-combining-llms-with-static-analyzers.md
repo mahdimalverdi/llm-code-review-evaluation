@@ -23,7 +23,6 @@
 | Artifact | GitHub: `ImenJaoua/Hybrid-Code-Review`; Zenodo: `14061110` |
 
 ```bibtex
-% TODO: Add checked arXiv BibTeX.
 ```
 
 ## One-Sentence Summary
@@ -129,8 +128,89 @@ P22 is a strong example of mitigation as a trade-off. It shows that the integrat
 - [ ] Add static-analysis context to `synthesis/context-quality.md`.
 - [ ] Add hybrid-conflict failure mode to taxonomy.
 - [ ] Update `matrices/cross-paper-synthesis.md` with P22 evidence.
-## Proposal-aligned quality appraisal
+## Legacy proposal-aligned quality appraisal (superseded by the canonical record)
 
 P22 is **Core / High relevance**. It supports RQ1 through false positives, rule misinterpretation, and unsupported findings; RQ2–RQ3 through static-analysis context and calibrated evaluation; RQ4 through hybrid precision/coverage and cost trade-offs; and RQ6 through mitigation-family design.
 
 **Quality score: 20/24.** Q1–Q7=2, Q8=1, Q9=2, Q10=1, Q11=1, Q12=2. Hybrid gains do not establish useful-feedback preservation or workflow benefit.
+## Canonical citation record
+
+Use citation key `p22_jaoua2025_static_analyzers` from `references/references.bib`; do not duplicate its BibTeX entry in this note.
+## Canonical SLR record
+
+> [!NOTE]
+> The numbered eleven-section record below is authoritative; the compact block is provenance only.
+
+- Identification/screening: `p22_jaoua2025_static_analyzers`; Core; Include; High relevance.
+- Study overview: Hybrid static-analyzer and LLM code-review generation/evaluation.
+- RQ1: False positives, rule misinterpretation, unsupported findings, and analyzer-induced noise (Reported).
+- RQ2: Static-analysis findings provide structured context and evidence (Reported).
+- RQ3: Hybrid quality, calibrated judging, and comparison of analyzer/LLM configurations (Reported).
+- RQ4: Precision/coverage and hybrid complexity/cost trade-offs (Reported/Our perspective).
+- RQ5: Rule/dataset validity and judge calibration (Reported).
+- RQ6: Strong hybrid mitigation support.
+- Failure taxonomy: false positive; rule misinterpretation; unsupported finding; analyzer-context mismatch.
+- Metrics: precision/recall/F1 or calibrated quality measures, cost, and comparison baselines.
+- Mitigation/trade-off: static-analysis grounding; can reduce hallucination but inherit analyzer blind spots and cost.
+- Validity: language/tool-specific setting limits generalization.
+- Quality: 20/24; strong core evidence with partial workflow validity.
+- Synthesis conclusion: supports hybrid grounding, not automatic useful-feedback preservation.
+
+### 1. Identification
+- P22; `p22_jaoua2025_static_analyzers`; local full PDF; included; authoritative record.
+### 2. Screening and proposal alignment
+- Include as Core. `p22_jaoua2025_static_analyzers`; Core; Include; High relevance.
+### 3. Study overview
+Hybrid static-analyzer and LLM code-review generation/evaluation.
+### 4. Evidence mapped to proposal RQ1–RQ6
+| RQ | Evidence | Type | Location |
+|---|---|---|---|
+| RQ1 | False positives, rule misinterpretation, unsupported findings, and analyzer-induced noise (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ2 | Static-analysis findings provide structured context and evidence (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ3 | Hybrid quality, calibrated judging, and comparison of analyzer/LLM configurations (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ4 | Precision/coverage and hybrid complexity/cost trade-offs (Reported/Our perspective). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ5 | Rule/dataset validity and judge calibration (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ6 | Strong hybrid mitigation support. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+### 5. Failure and problematic-comment categories
+| Category | Type | Location |
+|---|---|---|
+| false positive | Reported/Inferred | Full PDF |
+| rule misinterpretation | Reported/Inferred | Full PDF |
+| unsupported finding | Reported/Inferred | Full PDF |
+| analyzer-context mismatch. | Reported/Inferred | Full PDF |
+### 6. Evaluation dimensions and metrics
+| Dimension/metric | Limitation | Location |
+|---|---|---|
+| precision/recall/F1 or calibrated quality measures | Not an end-to-end outcome | Full PDF |
+| cost | Not an end-to-end outcome | Full PDF |
+| and comparison baselines. | Not an end-to-end outcome | Full PDF |
+### 7. Mitigation and trade-offs
+- Mitigation/intervention: static-analysis grounding; can reduce hallucination but inherit analyzer blind spots and cost.
+- Useful feedback potentially lost: not directly measured unless stated above.
+- Coverage: partial; useful-issue retention after intervention is incomplete.
+- Human escalation: no formal rate/policy reported unless stated above.
+- Cost: paper-specific evidence above; otherwise Not reported.
+### 8. Annotation and evaluator validity
+- language/tool-specific setting limits generalization.
+- Q7–Q8 encode judging and reliability depth.
+### 9. Quality appraisal
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 | 2 | goal at scored depth. |
+| Q2 | 2 | artifact at scored depth. |
+| Q3 | 2 | dataset/context at scored depth. |
+| Q4 | 2 | procedure at scored depth. |
+| Q5 | 2 | metrics at scored depth. |
+| Q6 | 2 | failures at scored depth. |
+| Q7 | 2 | judging at scored depth. |
+| Q8 | 1 | reliability at scored depth. |
+| Q9 | 2 | intervention at scored depth. |
+| Q10 | 1 | trade-offs at scored depth. |
+| Q11 | 1 | threats at scored depth. |
+| Q12 | 2 | SLR support at scored depth. |
+- Total: 21/24; reporting-quality score.
+### 10. Review-process reliability and bias
+- Missing preservation/escalation evidence and selection/publication bias remain explicit; second-reviewer calibration is unavailable.
+### 11. Synthesis-ready conclusion
+- Contribution: Hybrid static-analyzer and LLM code-review generation/evaluation.
+- Boundary: supports hybrid grounding, not automatic useful-feedback preservation.

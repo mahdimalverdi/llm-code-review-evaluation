@@ -23,7 +23,6 @@
 | Artifact | Zenodo replication package `15400484` |
 
 ```bibtex
-% TODO: Add checked ACM BibTeX.
 ```
 
 ## One-Sentence Summary
@@ -137,8 +136,90 @@ P23 should be cited in the data-quality and human-ground-truth validity sections
 - [ ] Add applicability/informativeness/explanation to `synthesis/evaluation-dimensions.md`.
 - [ ] Add confused-question and low-expertise/superficial-review types to taxonomy.
 - [ ] Update `matrices/cross-paper-synthesis.md` with P23 evidence.
-## Proposal-aligned quality appraisal
+## Legacy proposal-aligned quality appraisal (superseded by the canonical record)
 
 P23 is **Supporting/Core / High relevance**. It supports RQ1 through low-value and reviewer-burden-related feedback types; RQ2–RQ3 through developer-centered usefulness and attention; RQ4 through value versus reviewer time; and RQ5–RQ6 through human-centered annotation and framework design.
 
 **Quality score: 21/24.** Q1–Q7=2, Q8=1, Q9=1, Q10=2, Q11=1, Q12=2. It is not an LLM mitigation study, so its direct evidence for RQ3 is limited.
+## Canonical citation record
+
+Use citation key `p23_lin2026_reviewer_experience` from `references/references.bib`; do not duplicate its BibTeX entry in this note.
+## Canonical SLR record
+
+> [!NOTE]
+> The numbered eleven-section record below is authoritative; the compact block is provenance only.
+
+- Identification/screening: `p23_lin2026_reviewer_experience`; Supporting; Include; High relevance.
+- Study overview: Reviewer experience is used to weight or interpret review-comment usefulness and reviewer value.
+- RQ1: Low-value, confusing, or experience-dependent feedback (Reported/Our perspective).
+- RQ2: Reviewer expertise and project context affect usefulness (Reported).
+- RQ3: Usefulness, reviewer attention, actionability, and experience-sensitive evaluation (Reported).
+- RQ4: Value-to-attention and reviewer-burden trade-offs (Reported).
+- RQ5: Human-centered annotation and construct validity (Reported).
+- RQ6: Strong usefulness and workflow framework support.
+- Failure taxonomy: low-value; confusing; expertise-mismatched; attention-inefficient feedback.
+- Metrics: usefulness, reviewer experience, attention/time, and experience-conditioned quality.
+- Mitigation/trade-off: reviewer-experience weighting; may personalize value but reduce comparability and add burden.
+- Validity: human preference is not identical to correctness or actionability.
+- Quality: 21/24; strong supporting evidence.
+- Synthesis conclusion: supports separating usefulness from correctness and measuring reviewer burden.
+
+### 1. Identification
+- P23; `p23_lin2026_reviewer_experience`; local full PDF; included; authoritative record.
+### 2. Screening and proposal alignment
+- Include as supporting. `p23_lin2026_reviewer_experience`; Supporting; Include; High relevance.
+### 3. Study overview
+Reviewer experience is used to weight or interpret review-comment usefulness and reviewer value.
+### 4. Evidence mapped to proposal RQ1–RQ6
+| RQ | Evidence | Type | Location |
+|---|---|---|---|
+| RQ1 | Low-value, confusing, or experience-dependent feedback (Reported/Our perspective). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ2 | Reviewer expertise and project context affect usefulness (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ3 | Usefulness, reviewer attention, actionability, and experience-sensitive evaluation (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ4 | Value-to-attention and reviewer-burden trade-offs (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ5 | Human-centered annotation and construct validity (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ6 | Strong usefulness and workflow framework support. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+### 5. Failure and problematic-comment categories
+| Category | Type | Location |
+|---|---|---|
+| low-value | Reported/Inferred | Full PDF |
+| confusing | Reported/Inferred | Full PDF |
+| expertise-mismatched | Reported/Inferred | Full PDF |
+| attention-inefficient feedback. | Reported/Inferred | Full PDF |
+### 6. Evaluation dimensions and metrics
+| Dimension/metric | Limitation | Location |
+|---|---|---|
+| usefulness | Not an end-to-end outcome | Full PDF |
+| reviewer experience | Not an end-to-end outcome | Full PDF |
+| attention/time | Not an end-to-end outcome | Full PDF |
+| and experience-conditioned quality. | Not an end-to-end outcome | Full PDF |
+### 7. Mitigation and trade-offs
+- Mitigation/intervention: reviewer-experience weighting; may personalize value but reduce comparability and add burden.
+- Useful feedback potentially lost: not directly measured unless stated above.
+- Coverage: partial; useful-issue retention after intervention is incomplete.
+- Human escalation: no formal rate/policy reported unless stated above.
+- Cost: paper-specific evidence above; otherwise Not reported.
+### 8. Annotation and evaluator validity
+- human preference is not identical to correctness or actionability.
+- Q7–Q8 encode judging and reliability depth.
+### 9. Quality appraisal
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 | 2 | goal at scored depth. |
+| Q2 | 2 | artifact at scored depth. |
+| Q3 | 2 | dataset/context at scored depth. |
+| Q4 | 2 | procedure at scored depth. |
+| Q5 | 2 | metrics at scored depth. |
+| Q6 | 2 | failures at scored depth. |
+| Q7 | 2 | judging at scored depth. |
+| Q8 | 1 | reliability at scored depth. |
+| Q9 | 1 | intervention at scored depth. |
+| Q10 | 2 | trade-offs at scored depth. |
+| Q11 | 1 | threats at scored depth. |
+| Q12 | 2 | SLR support at scored depth. |
+- Total: 21/24; reporting-quality score.
+### 10. Review-process reliability and bias
+- Missing preservation/escalation evidence and selection/publication bias remain explicit; second-reviewer calibration is unavailable.
+### 11. Synthesis-ready conclusion
+- Contribution: Reviewer experience is used to weight or interpret review-comment usefulness and reviewer value.
+- Boundary: supports separating usefulness from correctness and measuring reviewer burden.

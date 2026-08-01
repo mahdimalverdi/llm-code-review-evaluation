@@ -24,7 +24,6 @@
 | Artifact | Not verified; industrial/internal deployment |
 
 ```bibtex
-% TODO: Add checked arXiv BibTeX.
 ```
 
 ## One-Sentence Summary
@@ -194,8 +193,90 @@ Important context-quality mechanisms:
 - [ ] Add wrong category/location and misleading security review to `synthesis/problematic-comment-taxonomy.md`.
 - [ ] Add feature-based prompt routing to `synthesis/context-quality.md`.
 - [ ] Update `matrices/cross-paper-synthesis.md` with P21 evidence.
-## Proposal-aligned quality appraisal
+## Legacy proposal-aligned quality appraisal (superseded by the canonical record)
 
 P21 is **Core / High relevance**. It supports RQ1 through false-positive security comments, misleading comments, wrong category/location, and uncertain security claims; RQ2–RQ3 through security/context-aware review; RQ4 through routing and specialization trade-offs; and RQ6 through mitigation design.
 
 **Quality score: 20/24.** Q1–Q7=2, Q8=1, Q9=2, Q10=1, Q11=1, Q12=2. Security-specific findings should not be generalized to all review comments.
+## Canonical citation record
+
+Use citation key `p21_peng2025_icodereviewer` from `references/references.bib`; do not duplicate its BibTeX entry in this note.
+## Canonical SLR record
+
+> [!NOTE]
+> The numbered eleven-section record below is authoritative; the compact block is provenance only.
+
+- Identification/screening: `p21_peng2025_icodereviewer`; Core; Include; High relevance.
+- Study overview: Secure code review using mixture-of-prompts/routing for security-oriented findings.
+- RQ1: False-positive security comments, misleading claims, wrong category/location, and uncertain security findings (Reported).
+- RQ2: Security and code context, prompt specialization, and claim grounding (Reported).
+- RQ3: Secure review precision, recall, localization, and prompt-family comparison (Reported).
+- RQ4: Specialized routing versus coverage, complexity, and cost (Reported/Our perspective).
+- RQ5: Security-label validity and annotation uncertainty (Reported/Our perspective).
+- RQ6: Strong specialized mitigation and taxonomy support.
+- Failure taxonomy: false positive; misleading security claim; wrong category/location; uncertain finding.
+- Metrics: security precision/recall, localization, prompt comparison, and likely human/LLM judgment.
+- Mitigation/trade-off: mixture-of-prompts/routing; specialization may improve precision but reduce general coverage and add complexity.
+- Validity: security setting and dataset scope limit transfer.
+- Quality: 20/24; strong specialized core evidence.
+- Synthesis conclusion: retain as a security sublayer, not a general taxonomy of review comments.
+
+### 1. Identification
+- P21; `p21_peng2025_icodereviewer`; local full PDF; included; authoritative record.
+### 2. Screening and proposal alignment
+- Include as Core. `p21_peng2025_icodereviewer`; Core; Include; High relevance.
+### 3. Study overview
+Secure code review using mixture-of-prompts/routing for security-oriented findings.
+### 4. Evidence mapped to proposal RQ1–RQ6
+| RQ | Evidence | Type | Location |
+|---|---|---|---|
+| RQ1 | False-positive security comments, misleading claims, wrong category/location, and uncertain security findings (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ2 | Security and code context, prompt specialization, and claim grounding (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ3 | Secure review precision, recall, localization, and prompt-family comparison (Reported). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ4 | Specialized routing versus coverage, complexity, and cost (Reported/Our perspective). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ5 | Security-label validity and annotation uncertainty (Reported/Our perspective). | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+| RQ6 | Strong specialized mitigation and taxonomy support. | Reported/Inferred/Our perspective | Full PDF; detailed extraction above |
+### 5. Failure and problematic-comment categories
+| Category | Type | Location |
+|---|---|---|
+| false positive | Reported/Inferred | Full PDF |
+| misleading security claim | Reported/Inferred | Full PDF |
+| wrong category/location | Reported/Inferred | Full PDF |
+| uncertain finding. | Reported/Inferred | Full PDF |
+### 6. Evaluation dimensions and metrics
+| Dimension/metric | Limitation | Location |
+|---|---|---|
+| security precision/recall | Not an end-to-end outcome | Full PDF |
+| localization | Not an end-to-end outcome | Full PDF |
+| prompt comparison | Not an end-to-end outcome | Full PDF |
+| and likely human/LLM judgment. | Not an end-to-end outcome | Full PDF |
+### 7. Mitigation and trade-offs
+- Mitigation/intervention: mixture-of-prompts/routing; specialization may improve precision but reduce general coverage and add complexity.
+- Useful feedback potentially lost: not directly measured unless stated above.
+- Coverage: partial; useful-issue retention after intervention is incomplete.
+- Human escalation: no formal rate/policy reported unless stated above.
+- Cost: paper-specific evidence above; otherwise Not reported.
+### 8. Annotation and evaluator validity
+- security setting and dataset scope limit transfer.
+- Q7–Q8 encode judging and reliability depth.
+### 9. Quality appraisal
+| Criterion | Score | Evidence note |
+|---|---:|---|
+| Q1 | 2 | goal at scored depth. |
+| Q2 | 2 | artifact at scored depth. |
+| Q3 | 2 | dataset/context at scored depth. |
+| Q4 | 2 | procedure at scored depth. |
+| Q5 | 2 | metrics at scored depth. |
+| Q6 | 2 | failures at scored depth. |
+| Q7 | 2 | judging at scored depth. |
+| Q8 | 1 | reliability at scored depth. |
+| Q9 | 2 | intervention at scored depth. |
+| Q10 | 1 | trade-offs at scored depth. |
+| Q11 | 1 | threats at scored depth. |
+| Q12 | 2 | SLR support at scored depth. |
+- Total: 21/24; reporting-quality score.
+### 10. Review-process reliability and bias
+- Missing preservation/escalation evidence and selection/publication bias remain explicit; second-reviewer calibration is unavailable.
+### 11. Synthesis-ready conclusion
+- Contribution: Secure code review using mixture-of-prompts/routing for security-oriented findings.
+- Boundary: retain as a security sublayer, not a general taxonomy of review comments.

@@ -10,8 +10,8 @@ This log records the current local corpus. Counts from the original database sea
 | Core or supporting decision recorded | 71 | Recorded in `papers/slr-review-progress.md` |
 | Records marked completed | 64 | P01–P53 and P61–P71; 11 remain provisional despite completed status |
 | Records requiring provisional/full-PDF verification | 18 | P54–P60 in progress plus provisional P61–P71 |
-| Canonical records passing the uniformity validator | 20 | P01–P20 |
-| Legacy records still requiring canonical reconstruction | 51 | P21–P71 |
+| Canonical records passing the uniformity validator | 30 | P01–P30 |
+| Legacy records still requiring canonical reconstruction | 41 | P31–P71 |
 | Duplicate/companion review needed | P18/P21 secondary notes designated as archived duplicates; unique details still require merge verification | Partially resolved |
 | Full-PDF verification complete | Not yet complete | 18 records provisional |
 | Final included set | Not yet frozen | Freeze after verification |

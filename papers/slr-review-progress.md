@@ -30,6 +30,7 @@
 |---|---|---|---|---|
 | Calibration 1 | P01–P10 | Passed | Structural gate checked by `validate-note.sh`; reported sample sizes, agreement statistics, costs, and quality scores rechecked against the full local PDFs, including a second calibration of P04/P05/P08/P09 | 2026-08-02 |
 | Calibration 2 | P11–P20 | Passed | Canonical eleven-section records validated; Q1–Q12 totals recalculated consistently; compact extractions retained as provenance only | 2026-08-02 |
+| Calibration 3 | P21–P30 | Passed | Canonical eleven-section records validated; Q1–Q12 arithmetic corrected; P21 archived duplicate excluded from the study count | 2026-08-02 |
 
 | ID | PDF | Note | Status | Decision | Relevance | Quality | Confidence | Unresolved items | Last reviewed |
 |---|---|---|---|---|---|---:|---|---|---|
@@ -53,14 +54,14 @@
 | P18 | `papers/pdfs/P18_Harnessing_LLMs_for_Curated_Code_Reviews.pdf` | `papers/P18-curated-code-reviews.md` | Completed | Include | High | 21/24 | High | Useful-intent preservation remains unmeasured | 2026-08-02 |
 | P19 | `papers/pdfs/P19_Fine_Grained_Review_Comment_Classification.pdf` | `papers/P19-fine-grained-review-comment-classification.md` | Completed | Include | High | 19/24 | Medium/High | Verify category definitions and agreement | 2026-08-01 |
 | P20 | `papers/pdfs/P20_Retrieval_Augmented_Code_Review_Comment_Generation.pdf` | `papers/P20-rag-reviewer.md` | Completed | Include | High | 21/24 | High | Preservation, escalation, and workflow cost remain unreported | 2026-08-02 |
-| P21 | `papers/pdfs/P21_iCodeReviewer.pdf` | `papers/P21-icode-reviewer.md` | Completed | Include | High | 20/24 | Medium/High | Verify security-specific labels and routing details | 2026-08-01 |
-| P22 | `papers/pdfs/P22_Combining_LLMs_with_Static_Analyzers_for_Code_Review.pdf` | `papers/P22-combining-llms-with-static-analyzers.md` | Completed | Include | High | 20/24 | Medium | Verify hybrid evaluation and cost details | 2026-08-01 |
+| P21 | `papers/pdfs/P21_iCodeReviewer.pdf` | `papers/P21-icode-reviewer.md` | Completed | Include | High | 21/24 | High | Security-specific transfer and preservation remain limited | 2026-08-02 |
+| P22 | `papers/pdfs/P22_Combining_LLMs_with_Static_Analyzers_for_Code_Review.pdf` | `papers/P22-combining-llms-with-static-analyzers.md` | Completed | Include | High | 21/24 | High | Preservation and workflow benefit remain unreported | 2026-08-02 |
 | P23 | `papers/pdfs/P23_Leveraging_Reviewer_Experience.pdf` | `papers/P23-reviewer-experience.md` | Completed | Supporting | High | 21/24 | Medium/High | Verify study protocol and participant details | 2026-08-01 |
-| P24 | `papers/pdfs/P24_Reward_Models_for_Code_Review_Comment_Generation.pdf` | `papers/P24-reward-models-code-review.md` | Completed | Include | High | 20/24 | Medium | Verify preference and reward evaluation details | 2026-08-01 |
-| P25 | `papers/pdfs/P25_Fine_Tuning_LLMs_for_Automated_Code_Review.pdf` | `papers/P25-carllm.md` | Completed | Include | High | 20/24 | Medium | Verify curation and cost evidence | 2026-08-01 |
-| P26 | `papers/pdfs/P26_Human_AI_Synergy_in_Agentic_Code_Review.pdf` | `papers/P26-human-ai-synergy-agentic-code-review.md` | Completed | Include | High | 21/24 | Medium | Verify interaction and adoption measures | 2026-08-01 |
-| P27 | `papers/pdfs/P27_From_Industry_Claims_to_Empirical_Reality.pdf` | `papers/P27-industry-claims-empirical-reality-code-review-agents.md` | Completed | Supporting | High | 20/24 | Medium | Verify production proxies and sampling | 2026-08-01 |
-| P28 | `papers/pdfs/P28_Support_Not_Automation_AI_Supported_Code_Review.pdf` | `papers/P28-support-not-automation-ai-supported-code-review.md` | Completed | Supporting | High | 18/24 | Medium | Verify conceptual claims and evidence type | 2026-08-01 |
+| P24 | `papers/pdfs/P24_Reward_Models_for_Code_Review_Comment_Generation.pdf` | `papers/P24-reward-models-code-review.md` | Completed | Include | High | 21/24 | High | Reward validity and preservation remain limited | 2026-08-02 |
+| P25 | `papers/pdfs/P25_Fine_Tuning_LLMs_for_Automated_Code_Review.pdf` | `papers/P25-carllm.md` | Completed | Include | High | 21/24 | High | Preservation and escalation remain unreported | 2026-08-02 |
+| P26 | `papers/pdfs/P26_Human_AI_Synergy_in_Agentic_Code_Review.pdf` | `papers/P26-human-ai-synergy-agentic-code-review.md` | Completed | Include | High | 22/24 | High | Context-specific causal interpretation remains limited | 2026-08-02 |
+| P27 | `papers/pdfs/P27_From_Industry_Claims_to_Empirical_Reality.pdf` | `papers/P27-industry-claims-empirical-reality-code-review-agents.md` | Completed | Supporting | High | 21/24 | High | Production proxies do not isolate correctness | 2026-08-02 |
+| P28 | `papers/pdfs/P28_Support_Not_Automation_AI_Supported_Code_Review.pdf` | `papers/P28-support-not-automation-ai-supported-code-review.md` | Completed | Supporting | High | 19/24 | High | Conceptual evidence; no controlled mitigation evaluation | 2026-08-02 |
 | P29 | `papers/pdfs/P29_Can_LLMs_Replace_Human_Evaluators.pdf` | `papers/P29-can-llms-replace-human-evaluators.md` | Completed | Supporting | High | 21/24 | Medium/High | Verify evaluator comparison and bias measures | 2026-08-01 |
 | P30 | `papers/pdfs/P30_CodeUltraFeedback.pdf` | `papers/P30-codeultrafeedback.md` | Completed | Supporting | High | 20/24 | Medium | Verify preference-data and evaluator details | 2026-08-01 |
 | P31 | `papers/pdfs/P31_CodeJudgeBench.pdf` | `papers/P31-codejudgebench.md` | Completed | Supporting | High | 21/24 | Medium | Verify benchmark protocol and judge metrics | 2026-08-01 |
