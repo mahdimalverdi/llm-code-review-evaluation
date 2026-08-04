@@ -137,6 +137,11 @@ def progress_metadata() -> dict[str, dict[str, str]]:
     return result
 
 
+def note_quality_score(text: str) -> str:
+    match = re.search(r"(?:Total|Overall)\s*:\s*`?(\d{1,2})\s*/\s*24", text, re.I)
+    return match.group(1) if match else "NR"
+
+
 def last_section(text: str, number: int) -> str:
     pattern = re.compile(rf"^(#{{2,3}})\s+{number}\.\s+.*$", re.M)
     matches = list(pattern.finditer(text))
@@ -332,7 +337,7 @@ def main() -> None:
             "evidence_tier": tier,
             "decision": meta.get("decision", "NR"),
             "relevance": meta.get("relevance", "NR"),
-            "quality_score": meta.get("quality", "NR"),
+            "quality_score": meta.get("quality", note_quality_score(text)),
             "confidence": meta.get("confidence", "NR"),
             "context_types": ";".join(context_evidence) if context_evidence else "NR",
             "failure_types": ";".join(failure_evidence) if failure_evidence else "NR",

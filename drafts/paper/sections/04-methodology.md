@@ -30,7 +30,7 @@ The six review questions refine this goal, while the extraction fields identify 
 
 The proposal defined ACM Digital Library, IEEE Xplore, ScienceDirect, SpringerLink, arXiv, Semantic Scholar, Google Scholar, and Scopus where available, with a primary focus on work from 2021 onward and earlier foundational modern-code-review studies. Query families covered LLM code review, automated review, generated comments, evaluation metrics, hallucination and grounding, context-aware review, LLM-as-a-Judge, and human--AI review.
 
-The local corpus contains 71 unique full-text records. These records cannot be treated as the output of a reproducible search flow because the original retrieval and exclusion counts are unavailable. We therefore report verified local-corpus counts and do not infer missing identification-stage counts from the PDF directory.
+The local corpus contains 121 unique full-text records. These records cannot be treated as the output of a reproducible search flow because the original retrieval and exclusion counts are unavailable. We therefore report verified local-corpus counts and do not infer missing identification-stage counts from the PDF directory.
 
 ## Eligibility and Evidence Tiers
 
@@ -44,7 +44,7 @@ The proposal specified eight 0--2 criteria. The extraction workflow expanded the
 
 ## Data Extraction
 
-Each paper has one authoritative Markdown record derived from the local full text. Records contain bibliographic identity, screening decision, study design, RQ1--RQ6 evidence, Q1--Q12 appraisal, trade-off fields, evaluator-validity fields, evidence locations, and unresolved verification items. All 71 records pass the same eleven-section structural validator. This validation establishes completeness of form, not independent reviewer agreement.
+Each paper has one authoritative Markdown record derived from the local full text. Records contain bibliographic identity, screening decision, study design, RQ1--RQ6 evidence, Q1--Q12 appraisal, trade-off fields, evaluator-validity fields, evidence locations, and unresolved verification items. All 121 records pass the same eleven-section structural validator. This validation establishes completeness of form, not independent reviewer agreement.
 
 <!-- table: caption="Study-level data items and their use in the review." label="tab:data-items" -->
 | Data-item group | Fields | Use |
@@ -64,7 +64,7 @@ The complete field definitions and controlled labels are provided in the replica
 
 We used tabulation, thematic grouping, and framework mapping. We did not pool incompatible metrics. Initial categories were derived during cross-paper synthesis and normalized into controlled vocabularies for failure types, evaluation dimensions, mitigation families, and context types. A deterministic script then projected the authoritative notes into one study-level CSV row per paper. The script searches the canonical numbered sections, records multi-valued controlled labels, and uses `NR` when the note does not contain enough evidence. The generated counts therefore describe coded evidence in the notes, not the prevalence of failures in deployed systems.
 
-The script also validates that P01--P71 occur exactly once, evidence tiers do not overlap, bibliography keys resolve, and quality scores are available. Findings were organized by research question. Paper IDs provide internal traceability, while bibliography keys support publication-facing claims. Every reported count uses the 71-record evidence pool as its denominator unless another denominator is stated.
+The script also validates that P01--P71 occur exactly once, evidence tiers do not overlap, bibliography keys resolve, and quality scores are available. Findings were organized by research question. Paper IDs provide internal traceability, while bibliography keys support publication-facing claims. Every reported count uses the 121-record evidence pool as its denominator unless another denominator is stated.
 
 ## Protocol Deviations and Amendments
 

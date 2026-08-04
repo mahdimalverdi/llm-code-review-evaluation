@@ -24,7 +24,7 @@ Because the original database-specific retrieval history was not preserved, the 
 The current evidence pipeline is:
 
 ```text
-71 locally available full texts
+121 locally available full texts
   → explicit eligibility and relevance decisions
   → uniform eleven-section extraction records
   → Q1–Q12 quality appraisal
@@ -42,16 +42,16 @@ The review does not pool incompatible metrics quantitatively. It distinguishes r
 - **Supporting:** informs human-review value, evaluator validity, annotation, context quality, or workflow interpretation.
 - **Peripheral:** supplies bounded background from adjacent code-generation, refinement, security, static-analysis, or non-functional evaluation work.
 
-The 71-paper local corpus is an evidence pool, not automatically 71 equally weighted primary studies. The final included set and evidence tier must be frozen before the report is submitted.
+The 121-paper local corpus is an evidence pool, not automatically 121 equally weighted primary studies. The final included set and evidence tier must be frozen before the report is submitted.
 
 ## Current Status
 
-- 71 unique project IDs, PDFs, authoritative notes, and bibliography entries are present.
-- All 71 notes pass `skills/slr-paper-reviewer/scripts/validate-note.sh`.
+- 121 unique project IDs, PDFs, authoritative notes, and bibliography entries are present.
+- All 121 notes pass `skills/slr-paper-reviewer/scripts/validate-note.sh`.
 - Duplicate P18 and P21 notes were consolidated and removed.
-- `matrices/cross-paper-synthesis.md` covers P01–P71.
+- `matrices/cross-paper-synthesis.md` covers P01–P121.
 - The taxonomy, context model, evaluation dimensions, annotation guideline, evaluation schema, and trade-off framework are drafted.
-- `data/slr-extraction.csv` provides one reproducible study-level row for each P01–P71 record, and `data/slr-summary.md` reports generated demographics and RQ-level coding counts.
+- `data/slr-extraction.csv` provides one reproducible study-level row for each P01–P121 record, and `data/slr-summary.md` reports generated demographics and RQ-level coding counts.
 - The original database queries, dates, retrieval counts, and title/abstract screening history remain unavailable.
 - Several synthesis files still require publication-facing citations and integration into the final RQ-oriented report.
 

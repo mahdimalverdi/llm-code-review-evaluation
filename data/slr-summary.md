@@ -120,13 +120,13 @@
 
 ## Quality score
 
-- Records scored: 71
-- Mean: 19.62/24
+- Records scored: 121
+- Mean: 19.90/24
 - Minimum: 12/24
 - Maximum: 24/24
 
 | Evidence tier | Studies | Mean quality |
 |---|---:|---:|
-| Core | 41 | 20.90/24 |
+| Core | 91 | 20.57/24 |
 | Supporting | 24 | 18.67/24 |
 | Peripheral | 6 | 14.67/24 |

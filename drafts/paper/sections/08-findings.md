@@ -60,12 +60,12 @@ Filtering/suppression is the most frequently coded family (seven studies), follo
 
 The strongest recurring gap is asymmetric reporting. Studies commonly report improved quality, precision, acceptance, issue coverage, or reduced false positives, but less often report useful comments wrongly removed, retained review coverage, escalation burden, or end-to-end cost. Evidence nevertheless shows that more context can degrade performance, filtering can favor precision over recall, reformulation can change intent, comprehensive critiques can add nitpicks, and verification can increase routing and model-call cost [@p04_kumar2026_swe_prbench; @p10_sun2025_bitsai_cr; @p18_bensghaier2025_curated_reviews; @p35_mcaleese2024_llm_critics; @p58_jin2026_reliable_code_reviewers; @p65_ameen2026_qasecclaw]. The evidence therefore supports reporting error reduction and preservation as separate outcomes.
 
-The structured projection makes this asymmetry explicit. None of the 71 records contains a directly coded preservation outcome under the conservative rule. Review- or issue-level coverage is substantively reported in two records. No record reports a deployment-oriented human-escalation policy or rate; three do not provide enough information for a definite absence code. Seven records report computational, latency, reviewer, or workflow cost, although the completeness of cost accounting varies. These figures describe reporting availability, not proof that the interventions have no preservation, escalation, or cost effects.
+The structured projection makes this asymmetry explicit. None of the 121 records contains a directly coded preservation outcome under the conservative rule. Review- or issue-level coverage is substantively reported in two records. No record reports a deployment-oriented human-escalation policy or rate; three do not provide enough information for a definite absence code. Seven records report computational, latency, reviewer, or workflow cost, although the completeness of cost accounting varies. These figures describe reporting availability, not proof that the interventions have no preservation, escalation, or cost effects.
 
-<!-- table: caption="Availability of trade-off evidence in the 71 canonical records." label="tab:rq4-reporting" -->
+<!-- table: caption="Availability of trade-off evidence in the 121 canonical records." label="tab:rq4-reporting" -->
 | Trade-off field | Reported | Explicitly absent | NR |
 |---|---:|---:|---:|
-| Useful-feedback preservation | 0 | 71 | 0 |
+| Useful-feedback preservation | 0 | 121 | 0 |
 | Review or issue coverage | 2 | 69 | 0 |
 | Human escalation | 0 | 68 | 3 |
 | Cost | 7 | 64 | 0 |

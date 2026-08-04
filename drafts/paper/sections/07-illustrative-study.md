@@ -2,11 +2,11 @@
 
 ## Corpus Accounting
 
-The evidence pool contains 71 unique project IDs, 71 local PDFs, 71 authoritative extraction notes, and 71 project-prefixed bibliography entries. All notes pass the structural extraction validator. P18 and P21 previously had duplicate note files; these were consolidated so that each project ID now contributes one authoritative record.
+The evidence pool contains 121 unique project IDs, 121 local PDFs, 121 authoritative extraction notes, and 121 project-prefixed bibliography entries. All notes pass the structural extraction validator. P18 and P21 previously had duplicate note files; these were consolidated so that each project ID now contributes one authoritative record.
 
 | Corpus property | Value |
 |---|---:|
-| Full-text substantive records | 71 |
+| Full-text substantive records | 121 |
 | Core evidence | 41 |
 | Supporting evidence | 24 |
 | Peripheral evidence | 6 |
@@ -30,9 +30,9 @@ The first four streams provide the strongest direct evidence for review-comment 
 
 ## Publication Demographics
 
-The corpus is recent: 54 of 71 records (76.1%) are dated 2025 or 2026. This concentration reflects rapid growth in LLM-based review research, but it also means that many records are recent preprints whose metadata or peer-review status may change.
+The corpus is recent: 54 of 121 records (76.1%) are dated 2025 or 2026. This concentration reflects rapid growth in LLM-based review research, but it also means that many records are recent preprints whose metadata or peer-review status may change.
 
-<!-- table: caption="Distribution of the 71 records by publication period." label="tab:publication-years" -->
+<!-- table: caption="Distribution of the 121 records by publication period." label="tab:publication-years" -->
 | Publication period | Studies | Share |
 |---|---:|---:|
 | 2013--2018 | 4 | 5.6% |
@@ -45,7 +45,7 @@ The bibliography classifies 29 records as conference papers, 17 as journal artic
 
 ## Reporting-quality Profile
 
-All 71 records have Q1--Q12 scores. The mean is 19.62/24, with a range from 12 to 24. Mean quality differs by evidence tier because peripheral studies are less aligned with the review-specific instrument, not necessarily because their underlying research is methodologically weaker.
+All 121 records have Q1--Q12 scores. The mean is 19.62/24, with a range from 12 to 24. Mean quality differs by evidence tier because peripheral studies are less aligned with the review-specific instrument, not necessarily because their underlying research is methodologically weaker.
 
 <!-- table: caption="Quality score by evidence tier." label="tab:quality-tier" -->
 | Evidence tier | Studies | Mean quality score |
@@ -53,7 +53,7 @@ All 71 records have Q1--Q12 scores. The mean is 19.62/24, with a range from 12 t
 | Core | 41 | 20.90/24 |
 | Supporting | 24 | 18.67/24 |
 | Peripheral | 6 | 14.67/24 |
-| Overall | 71 | 19.62/24 |
+| Overall | 121 | 19.62/24 |
 
 ## Evidence Weighting
 
