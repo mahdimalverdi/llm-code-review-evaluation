@@ -168,6 +168,46 @@ A trade-off-aware evaluation should report more than model quality.
 | Efficiency claim without benchmark/workload | Require evidence or lower priority | Avoid unsupported optimization advice. |
 | Stale or contradictory documentation context | Run consistency check or escalate | Prevent stale-context-based comments. |
 
+## Operational Evaluation Pipeline
+
+The framework treats comment handling as a sequence of decisions rather than as a single quality judgment. This distinction is important because a comment can be correct but not worth showing, or uncertain but worth escalating. The pipeline therefore separates generation, evidence assessment, decision selection, and outcome measurement.
+
+```text
+generated comment
+        |
+        v
+context and provenance checks
+        |
+        v
+quality assessment: grounding, correctness, relevance, actionability
+        |
+        v
+decision: show | prioritize | rewrite | escalate | suppress
+        |
+        v
+outcome: developer response, retained value, correction, or omission
+```
+
+For each decision, evaluation should record both the observed benefit and the counterfactual risk. A suppression decision should therefore include whether the comment was harmful, useful, or uncertain; a rewrite decision should include whether the revised comment preserved the original issue and intent; and an escalation decision should include whether human review changed the final decision. This instrumentation makes useful-feedback loss observable rather than treating it as an unmeasured side effect [@p57_heumuller2025_relevance_reviews; @p58_jin2026_reliable_code_reviewers; @p65_ameen2026_qasecclaw].
+
+### Minimum Reporting Set
+
+Every comparison between an unfiltered and filtered system should report:
+
+1. comment-level quality: grounding, correctness, relevance, and actionability;
+2. decision-level outcomes: show, rewrite, escalate, and suppress rates;
+3. preservation: useful comments retained and useful comments suppressed;
+4. cost: model calls, tokens, latency, and human inspection time;
+5. workflow effects: acceptance, correction, review coverage, and evidence of knowledge transfer.
+
+When suppressed comments cannot be assessed directly, the study should report that limitation and use sampled or blinded adjudication to estimate false suppression. Acceptance alone is not a sufficient proxy for usefulness because developers may reject valuable comments for reasons unrelated to correctness or actionability [@p07_olewicki2024_revmate; @p26_zhong2026_human_ai_synergy; @p39_bosu2015_useful_reviews].
+
+### Trade-off Comparisons
+
+The primary comparison should be between operating points, not only between models. For a threshold-based filter, report the frontier formed by harmful comments shown, useful comments retained, reviewer effort, and computational cost. For a context intervention, compare the marginal value of the added context against its cost and its effect on attention or noise. For human escalation, report the uncertainty rule and the value gained per escalation. These comparisons allow a system to be judged according to its intended workflow rather than according to a single aggregate score [@p04_kumar2026_swe_prbench; @p06_hu2025_contextcrbench; @p12_wang2025_sgcr; @p63_mitropoulos2026_confirmation_bias].
+
+The framework does not prescribe one universal operating point. A safety-critical review may rationally accept more escalation and latency, whereas a high-volume maintenance workflow may prefer lower cost with explicit reporting of reduced coverage. The required contribution is to make that choice visible and empirically testable.
+
 ## Proposed Evaluation Formula Sketch
 
 This is not a final mathematical model, but a conceptual scoring structure:
