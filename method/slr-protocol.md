@@ -46,7 +46,11 @@ The proposal provides these query patterns for adaptation to each database synta
 
 The proposal requires recording database name, search string, search date, retrieved count, screened count, included count, and exclusion reason. Use these fields in the search log; do not infer counts from the local PDF folder.
 
-The current corpus contains 71 locally available PDFs. Because the original database retrieval counts and screening history are not fully preserved, report this corpus as a targeted structured review unless the search log is reconstructed.
+The frozen canonical corpus contains 121 locally available full-text records: a 71-record baseline and 50 unique core records admitted through the dated arXiv amendment. Because the original database retrieval counts and screening history are not fully preserved, report this corpus as a targeted structured review unless all declared database searches are rerun and documented.
+
+### Amendment promotion rule
+
+An amendment candidate is promoted to the canonical corpus only when the reviewed full-text ledger records `full_text_decision=include`, `inclusion_group=core`, a direct code-review criterion, an evidence location, and a decision rationale; duplicate or companion identities are reconciled before counting. Promotion additionally requires a stable project ID, an authoritative canonical note, a project-prefixed bibliography key, and a `freeze_ready` row in `data/search/final-corpus-freeze-register.csv`. Candidates classified as supporting remain in the separately auditable reserve and do not enter the canonical denominator unless a later dated amendment applies the same promotion rule. The candidate-level basis is recorded in `data/search/arxiv-full-text-screening-reviewed.csv`, and identity reconciliation is recorded in `data/search/core-reconciliation-queue.csv`.
 
 Selection stages are identification, duplicate removal, title/abstract screening, full-text eligibility, and evidence-tier assignment. Record exclusion reasons and companion publications.
 

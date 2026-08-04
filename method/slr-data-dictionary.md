@@ -1,6 +1,6 @@
 # SLR Data Dictionary
 
-This dictionary defines the study-level fields used to answer RQ1–RQ6. One row in `data/slr-extraction.csv` represents one authoritative P01–P71 record. Multi-valued fields use semicolon-separated controlled labels. `NR` means that the authoritative note does not report enough evidence for coding; it does not mean zero or absence in the underlying study.
+This dictionary defines the study-level fields used to answer RQ1--RQ5 and the separate framework-traceability objective. One row in `data/slr-extraction.csv` represents one authoritative P01--P121 record. Multi-valued fields use semicolon-separated controlled labels. `NR` means that the authoritative note lacks the expected field or does not contain enough evidence to determine applicability; it does not mean zero or absence in the underlying study. For RQ4 reporting fields, `no` means that the standardized extraction identified no measurement or reporting of the outcome in the available full text. Publication-facing tables label these states as `Unclear or not applicable` and `No extractable evidence identified`, respectively.
 
 | ID | CSV field | Meaning | Review use |
 |---|---|---|---|
@@ -10,10 +10,11 @@ This dictionary defines the study-level fields used to answer RQ1–RQ6. One row
 | F04 | `year` | Publication year from bibliography | Demographics |
 | F05 | `venue` | Journal, booktitle, or publication source | Demographics |
 | F06 | `publication_type` | Journal, conference, preprint, or other | Demographics |
-| F07 | `evidence_tier` | Core, Supporting, or Peripheral | RQ6 and evidence weighting |
+| F07 | `evidence_tier` | Core, Supporting, or Peripheral | Framework traceability and evidence weighting |
 | F08 | `decision` | Include, supporting inclusion, or exclusion state in the note | Selection audit |
 | F09 | `relevance` | High, Medium, Low, or compound label | Evidence weighting |
 | F10 | `quality_score` | Q1–Q12 total on a 0–24 scale | Quality summary |
+| F10a | `rq4_independent_appraisal_score` | Q1–Q9 plus Q11 reporting and methodological appraisal on a 0–20 scale; excludes Q10 and Q12 | RQ4 sensitivity analysis |
 | F11 | `confidence` | Extraction confidence from the progress log | Reliability |
 | F12 | `context_types` | Controlled context categories evidenced in the note | RQ5 |
 | F13 | `failure_types` | Controlled problematic-comment/failure categories | RQ1 |
@@ -26,8 +27,9 @@ This dictionary defines the study-level fields used to answer RQ1–RQ6. One row
 | F20 | `cost_reported` | Whether computational, latency, reviewer, or workflow cost is reported | RQ4 |
 | F21 | `annotation_reported` | Whether a human annotation/user-study protocol is reported | RQ5 |
 | F22 | `evaluator_types` | Human, LLM judge, automatic metric, tool/execution, or none reported | RQ2/RQ5 |
-| F23 | `limitations_reported` | Whether study/review limitations are substantively recorded | RQ5/RQ6 |
-| F24–F29 | `rq1_evidence`–`rq6_evidence` | Reported, inferred/mixed, perspective-only, NR, or present | RQ completeness |
+| F23 | `limitations_reported` | Whether study/review limitations are substantively recorded | RQ5 and validity |
+| F24–F28 | `rq1_evidence`–`rq5_evidence` | Reported, inferred/mixed, perspective-only, NR, or present | RQ completeness |
+| F29 | `rq6_evidence` | Legacy field retained as the framework-traceability projection | Framework derivation |
 | F30 | `source_note` | Authoritative Markdown record | Auditability |
 
 ## Controlled Coding Rules

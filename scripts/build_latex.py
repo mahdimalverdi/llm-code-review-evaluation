@@ -57,16 +57,17 @@ MONTH_NORMALIZATION = {
 }
 
 MONTH_FIELD_PATTERN = re.compile(r"^(\s*month\s*=\s*)([A-Za-z]+)(\s*,?\s*)$", re.MULTILINE)
+NOTE_FIELD_PATTERN = re.compile(r"^\s*note\s*=\s*\{.*\},?\s*$\n?", re.MULTILINE)
 
 TITLE = "Trade-off-aware Evaluation of LLM-based Code Review: A Structured Review of Comment Quality, Mitigation, and Evaluation Validity"
 
-LATEX_HEADER = rf"""\documentclass[12pt]{{article}}
+LATEX_HEADER = rf"""\documentclass[10pt]{{article}}
 
 \usepackage{{cmap}}
 \usepackage[T1]{{fontenc}}
 \usepackage[utf8]{{inputenc}}
 \usepackage{{lmodern}}
-\usepackage[a4paper,margin=1in]{{geometry}}
+\usepackage[paperwidth=6.75in,paperheight=10in,top=0.68in,bottom=0.68in,left=0.68in,right=0.68in,headheight=13pt,headsep=16pt,footskip=24pt]{{geometry}}
 \usepackage{{amsmath}}
 \usepackage{{array}}
 \usepackage{{booktabs}}
@@ -75,17 +76,52 @@ LATEX_HEADER = rf"""\documentclass[12pt]{{article}}
 \usepackage{{graphicx}}
 \usepackage{{longtable}}
 \usepackage{{microtype}}
+\usepackage{{caption}}
+\usepackage{{fancyhdr}}
+\usepackage{{titlesec}}
 \usepackage{{tabularx}}
 \usepackage{{url}}
 \usepackage{{listings}}
-\usepackage{{xcolor}}
+\usepackage[table]{{xcolor}}
 \usepackage{{tikz}}
 \usetikzlibrary{{arrows.meta,fit,positioning}}
-\usepackage[hidelinks]{{hyperref}}
+\definecolor{{ACMBlue}}{{RGB}}{{28,86,143}}
+\definecolor{{ACMRule}}{{RGB}}{{72,72,72}}
+\definecolor{{ACMTableHead}}{{RGB}}{{238,242,246}}
+\usepackage[colorlinks=true,linkcolor=ACMBlue,citecolor=ACMBlue,urlcolor=ACMBlue]{{hyperref}}
 
-\linespread{{1.08}}
-\setlength{{\parindent}}{{0pt}}
-\setlength{{\parskip}}{{0.65em}}
+\linespread{{1.02}}
+\setlength{{\parindent}}{{1.15em}}
+\setlength{{\parskip}}{{0pt}}
+\setlength{{\emergencystretch}}{{2em}}
+\setlength{{\tabcolsep}}{{4.5pt}}
+\setlength{{\textfloatsep}}{{11pt plus 2pt minus 2pt}}
+\setlength{{\intextsep}}{{9pt plus 2pt minus 2pt}}
+
+\titleformat{{\section}}{{\large\bfseries}}{{\thesection}}{{0.65em}}{{}}
+\titleformat{{\subsection}}{{\normalsize\bfseries}}{{\thesubsection}}{{0.65em}}{{}}
+\titleformat{{\subsubsection}}{{\normalsize\bfseries}}{{\thesubsubsection}}{{0.65em}}{{}}
+\titlespacing*{{\section}}{{0pt}}{{1.65em}}{{0.55em}}
+\titlespacing*{{\subsection}}{{0pt}}{{1.25em}}{{0.4em}}
+\titlespacing*{{\subsubsection}}{{0pt}}{{1em}}{{0.35em}}
+
+\captionsetup{{font=small,labelfont=bf,labelsep=period,justification=centering,skip=5pt}}
+\captionsetup[table]{{position=top}}
+
+\pagestyle{{fancy}}
+\fancyhf{{}}
+\fancyhead[L]{{\footnotesize Trade-off-aware Evaluation of LLM-based Code Review}}
+\fancyhead[R]{{\footnotesize Malverdi and Haghighi}}
+\fancyfoot[L]{{\scriptsize Targeted Structured Review}}
+\fancyfoot[R]{{\scriptsize\thepage}}
+\renewcommand{{\headrulewidth}}{{0.35pt}}
+\renewcommand{{\footrulewidth}}{{0.35pt}}
+\fancypagestyle{{plain}}{{%
+  \fancyhf{{}}%
+  \fancyfoot[R]{{\scriptsize\thepage}}%
+  \renewcommand{{\headrulewidth}}{{0pt}}%
+  \renewcommand{{\footrulewidth}}{{0.35pt}}%
+}}
 
 \lstset{{
   basicstyle=\ttfamily\small,
@@ -94,31 +130,31 @@ LATEX_HEADER = rf"""\documentclass[12pt]{{article}}
   frame=single
 }}
 
-\newcommand{{\keywords}}[1]{{%
-  \vspace{{0.75em}}
-  \noindent\textbf{{Keywords: }}#1
-}}
+\renewenvironment{{abstract}}{{%
+  \vspace{{0.7em}}\noindent\rule{{\linewidth}}{{0.5pt}}\par
+  \vspace{{0.55em}}\noindent\textbf{{ABSTRACT}}\par\small\noindent
+}}{{\par\normalsize\vspace{{0.35em}}}}
 
-\title{{\textbf{{{TITLE}}}}}
-\author{{%
-Mahdi Malverdi\\
-Department of Computer Science and Engineering\\
-Shahid Beheshti University, Tehran, Iran\\
-\url{{m.malverdi@mail.sbu.ac.ir}}
-\and
-Hassan Haghighi\\
-Department of Computer Science and Engineering\\
-Shahid Beheshti University, Tehran, Iran\\
-\url{{h_haghighi@sbu.ac.ir}}
+\newcommand{{\keywords}}[1]{{%
+  \vspace{{0.45em}}
+  \noindent\textbf{{Additional Key Words and Phrases: }}#1
 }}
-\date{{}}
 
 \begin{{document}}
-\maketitle
+\thispagestyle{{plain}}
+\begin{{flushleft}}
+{{\LARGE\bfseries {TITLE}\par}}
+\vspace{{1.25em}}
+{{\large\bfseries MAHDI MALVERDI}}, Shahid Beheshti University, Tehran, Iran\\
+{{\large\bfseries HASSAN HAGHIGHI}}, Shahid Beheshti University, Tehran, Iran\\
+\vspace{{0.35em}}
+{{\small \href{{mailto:m.malverdi@mail.sbu.ac.ir}}{{m.malverdi@mail.sbu.ac.ir}} \quad
+\href{{mailto:h_haghighi@sbu.ac.ir}}{{h\_haghighi@sbu.ac.ir}}}}
+\end{{flushleft}}
 """
 
 LATEX_FOOTER = r"""
-\bibliographystyle{plain}
+\bibliographystyle{abbrv}
 \bibliography{references}
 
 \end{document}
@@ -180,7 +216,7 @@ LATEX_LINEBREAK = r" \\"
 
 TABLE_METADATA_PATTERN = re.compile(r"^<!--\s*table:\s*(.*?)\s*-->\s*$")
 FIGURE_METADATA_PATTERN = re.compile(r"^<!--\s*figure:\s*(.*?)\s*-->\s*$")
-ATTRIBUTE_PATTERN = re.compile(r"(caption|label|longtable|path|width)\s*=\s*(['\"])(.*?)\2")
+ATTRIBUTE_PATTERN = re.compile(r"(caption|label|longtable|path|width|first-column-width)\s*=\s*(['\"])(.*?)\2")
 RAW_LATEX_INLINE_PATTERN = re.compile(r"\\(?:ref|autoref|pageref)\{[^}]+\}")
 
 
@@ -227,6 +263,10 @@ def convert_inline_markdown(text: str) -> str:
         text = re.sub(pattern, repl, text)
 
     protect(r"\[((?:@[^\]]+?)(?:;\s*@[^\]]+?)*)\]", citation_to_latex)
+    protect(
+        r"\[([^\]]+)\]\((https?://[^)]+)\)",
+        lambda m: r"\href{" + escape_latex(m.group(2)) + "}{" + escape_latex(m.group(1)) + "}",
+    )
     protect(RAW_LATEX_INLINE_PATTERN.pattern, lambda m: m.group(0))
     protect(r"`([^`]+)`", lambda m: r"\texttt{" + escape_latex(m.group(1)) + "}")
 
@@ -321,8 +361,13 @@ def normalize_table_rows(rows: list[list[str]]) -> list[list[str]]:
     return [row + [""] * (column_count - len(row)) for row in rows]
 
 
-def table_column_spec(column_count: int) -> str:
+def table_column_spec(column_count: int, metadata: dict[str, str] | None = None) -> str:
     ragged = r">{\raggedright\arraybackslash}"
+    if column_count == 2:
+        first_width = metadata.get("first-column-width") if metadata else None
+        if first_width:
+            return rf"@{{}}{ragged}p{{{first_width}}}{ragged}X@{{}}"
+        return rf"@{{}}{ragged}p{{0.38\linewidth}}{ragged}X@{{}}"
     if column_count == 3:
         return rf"@{{}}{ragged}p{{0.23\linewidth}}{ragged}X{ragged}X@{{}}"
     return "@{}" + "".join(ragged + "X" for _ in range(column_count)) + "@{}"
@@ -331,15 +376,18 @@ def table_column_spec(column_count: int) -> str:
 def longtable_column_spec(column_count: int) -> str:
     ragged = r">{\raggedright\arraybackslash}"
     if column_count == 2:
-        widths = [0.34, 0.58]
+        widths = [0.12, 0.80]
     elif column_count == 3:
         widths = [0.22, 0.34, 0.34]
     elif column_count == 4:
         widths = [0.20, 0.23, 0.23, 0.23]
     elif column_count == 5:
         widths = [0.15, 0.17, 0.19, 0.23, 0.18]
+    elif column_count == 6:
+        widths = [0.18, 0.09, 0.14, 0.13, 0.15, 0.13]
     else:
-        width = min(0.92 / max(column_count, 1), 0.18)
+        # Reserve room for inter-column padding in wide longtables.
+        width = min(0.82 / max(column_count, 1), 0.18)
         widths = [width] * column_count
     columns = "".join(rf"{ragged}p{{{width:.2f}\textwidth}}" for width in widths)
     return rf"@{{}}{columns}@{{}}"
@@ -371,8 +419,13 @@ def format_latex_table_row(cells: list[str], *, bold: bool = False) -> str:
     return " & ".join(converted_cells) + LATEX_LINEBREAK
 
 
-def convert_table_to_tabularx(rows: list[list[str]], caption: str | None, label: str | None) -> list[str]:
-    column_spec = table_column_spec(len(rows[0]))
+def convert_table_to_tabularx(
+    rows: list[list[str]],
+    caption: str | None,
+    label: str | None,
+    metadata: dict[str, str] | None = None,
+) -> list[str]:
+    column_spec = table_column_spec(len(rows[0]), metadata)
     output = [r"\begin{table}[H]", r"\centering"]
     if caption:
         output.append(r"\caption{" + convert_inline_markdown(caption) + "}")
@@ -383,6 +436,7 @@ def convert_table_to_tabularx(rows: list[list[str]], caption: str | None, label:
         r"\renewcommand{\arraystretch}{1.18}",
         rf"\begin{{tabularx}}{{\linewidth}}{{{column_spec}}}",
         r"\toprule",
+        r"\rowcolor{ACMTableHead}",
         format_latex_table_row(rows[0], bold=True),
         r"\midrule",
     ])
@@ -407,11 +461,12 @@ def convert_table_to_longtable(rows: list[list[str]], caption: str | None, label
         if label:
             caption_line += r"\label{" + label + "}"
         output.append(caption_line + LATEX_LINEBREAK)
-    output.extend([r"\toprule", header_row, r"\midrule", r"\endfirsthead"])
+    output.extend([r"\toprule", r"\rowcolor{ACMTableHead}", header_row, r"\midrule", r"\endfirsthead"])
     if caption:
         output.append(r"\caption[]{" + convert_inline_markdown(caption) + r" (continued)}" + LATEX_LINEBREAK)
     output.extend([
         r"\toprule",
+        r"\rowcolor{ACMTableHead}",
         header_row,
         r"\midrule",
         r"\endhead",
@@ -444,7 +499,7 @@ def convert_markdown_table_to_latex(table_lines: list[str], metadata: dict[str, 
     label = metadata.get("label") if metadata else None
     if should_use_longtable(len(rows) - 1, column_count, metadata):
         return convert_table_to_longtable(rows, caption, label)
-    return convert_table_to_tabularx(rows, caption, label)
+    return convert_table_to_tabularx(rows, caption, label, metadata)
 
 
 def convert_markdown_to_latex(markdown: str) -> str:
@@ -629,6 +684,9 @@ def copy_references(output_file: Path) -> None:
         return prefix + normalized + suffix
 
     bibliography = MONTH_FIELD_PATTERN.sub(normalize_month, bibliography)
+    # Preserve provenance in the canonical bibliography but omit internal
+    # maintenance notes from the publication-facing build copy.
+    bibliography = NOTE_FIELD_PATTERN.sub("", bibliography)
     output_path = output_file.parent / BUILD_REFERENCES_FILE_NAME
     output_path.write_text(bibliography, encoding="utf-8")
 

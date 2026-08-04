@@ -183,7 +183,7 @@ The minimum viable version of the paper should include:
 + operational taxonomy
 + annotation guideline
 + trade-off-aware framework
-+ RQ1–RQ6 synthesis findings
++ RQ1–RQ5 synthesis findings and a separate framework-derivation trace
 ```
 
 Any later empirical study should validate or revise the taxonomy and framework; it is outside the current seminar deliverable.

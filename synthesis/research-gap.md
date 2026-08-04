@@ -207,6 +207,6 @@ Paper selection
 
 - [ ] Freeze core, supporting, and peripheral evidence tiers.
 - [ ] Complete citation traceability across all synthesis prose.
-- [ ] Produce RQ1–RQ6 result tables with explicit denominators.
+- [ ] Produce RQ1–RQ5 result tables with explicit denominators and a separate framework-traceability matrix.
 - [ ] Re-run database searches if the formal SLR label is required.
 - [ ] Replace unresolved bibliography metadata with verified publisher or canonical preprint data.

@@ -7,7 +7,7 @@ The evidence pool contains 121 unique project IDs, 121 local PDFs, 121 authorita
 | Corpus property | Value |
 |---|---:|
 | Full-text substantive records | 121 |
-| Core evidence | 41 |
+| Core evidence | 91 |
 | Supporting evidence | 24 |
 | Peripheral evidence | 6 |
 | Methodological anchors outside the substantive corpus | 4 |
@@ -30,30 +30,42 @@ The first four streams provide the strongest direct evidence for review-comment 
 
 ## Publication Demographics
 
-The corpus is recent: 54 of 121 records (76.1%) are dated 2025 or 2026. This concentration reflects rapid growth in LLM-based review research, but it also means that many records are recent preprints whose metadata or peer-review status may change.
+The corpus is recent: 95 of 121 records (78.5%) are dated 2025 or 2026. This concentration reflects rapid growth in LLM-based review research, but it also means that many records are recent preprints whose metadata or peer-review status may change.
 
 <!-- table: caption="Distribution of the 121 records by publication period." label="tab:publication-years" -->
 | Publication period | Studies | Share |
 |---|---:|---:|
-| 2013--2018 | 4 | 5.6% |
-| 2021--2023 | 5 | 7.0% |
-| 2024 | 8 | 11.3% |
-| 2025 | 31 | 43.7% |
-| 2026 | 23 | 32.4% |
+| 2013--2018 | 4 | 3.3% |
+| 2021--2023 | 7 | 5.8% |
+| 2024 | 15 | 12.4% |
+| 2025 | 49 | 40.5% |
+| 2026 | 46 | 38.0% |
 
-The bibliography classifies 29 records as conference papers, 17 as journal articles, and 25 as preprints or other publication forms. Publication type is descriptive and is not used as an inclusion or quality criterion.
+The bibliography classifies 44 records as conference papers, 25 as journal articles, and 52 as preprints or other publication forms. Publication type is descriptive and is not used as an inclusion or quality criterion.
 
 ## Reporting-quality Profile
 
-All 121 records have Q1--Q12 scores. The mean is 19.62/24, with a range from 12 to 24. Mean quality differs by evidence tier because peripheral studies are less aligned with the review-specific instrument, not necessarily because their underlying research is methodologically weaker.
+All 121 records have Q1--Q12 scores. The mean is 19.90/24, with a range from 12 to 24. Mean quality differs by evidence tier because peripheral studies are less aligned with the review-specific instrument, not necessarily because their underlying research is methodologically weaker.
 
 <!-- table: caption="Quality score by evidence tier." label="tab:quality-tier" -->
 | Evidence tier | Studies | Mean quality score |
 |---|---:|---:|
-| Core | 41 | 20.90/24 |
+| Core | 91 | 20.57/24 |
 | Supporting | 24 | 18.67/24 |
 | Peripheral | 6 | 14.67/24 |
-| Overall | 121 | 19.62/24 |
+| Overall | 121 | 19.90/24 |
+
+## Sensitivity Analysis
+
+We repeated the RQ4 reporting-availability counts for prespecified corpus subsets. To avoid selecting studies partly on the same reporting fields examined by RQ4, the RQ4-independent appraisal subset excludes Q10 (trade-off measurement) and Q12 (direct review support) and retains Q1--Q9 plus Q11. Its threshold is at least 17/20; this threshold is descriptive rather than an inclusion rule. The peer-reviewed subset includes records classified as conference or journal articles. Removing supporting and peripheral studies does not change the four RQ4 numerators because all coded preservation, coverage, escalation, and cost evidence occurs in the core tier. Restricting by publication status or RQ4-independent reporting and methodological appraisal lowers the numerators, but the reporting asymmetry remains.
+
+<!-- table: caption="Sensitivity of RQ4 reporting availability to corpus composition." label="tab:sensitivity-rq4" -->
+| Analysis set | Studies | Useful feedback | Coverage | Escalation | Cost |
+|---|---:|---:|---:|---:|---:|
+| All canonical records | 121 | 45 (37.2%) | 46 (38.0%) | 27 (22.3%) | 34 (28.1%) |
+| Core evidence only | 91 | 45 (49.5%) | 46 (50.5%) | 27 (29.7%) | 34 (37.4%) |
+| Peer-reviewed only | 69 | 19 (27.5%) | 20 (29.0%) | 10 (14.5%) | 15 (21.7%) |
+| RQ4-independent appraisal at least 17/20 | 77 | 34 (44.2%) | 34 (44.2%) | 18 (23.4%) | 27 (35.1%) |
 
 ## Evidence Weighting
 
@@ -61,4 +73,4 @@ Quality score and evidence tier are used together. A supporting or peripheral st
 
 ## Traceability
 
-The complete paper-level inventory appears in the cross-paper synthesis, progress log, and generated `data/slr-extraction.csv`. Each thematic result in the following section links to bibliography keys, while the dataset preserves paper IDs and source-note paths. This structure permits claims and counts to be checked against the corresponding full-text extraction while keeping the report organized by research question rather than by paper.
+The complete paper-level inventory appears in the cross-paper synthesis, progress log, and generated `data/slr-extraction.csv`. The manuscript bibliography contains cited works, while the complete inventory of all 121 included records is provided in the replication package described in the Data and Replication Package Availability section. Each thematic result in the following section links to bibliography keys, while the dataset preserves paper IDs and source-note paths. This structure permits claims and counts to be checked against the corresponding full-text extraction while keeping the report organized by research question rather than by paper.

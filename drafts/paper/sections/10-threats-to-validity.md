@@ -6,7 +6,7 @@ The main limitation is the missing original search history. Although the proposa
 
 ## Extraction Reliability
 
-All records pass a uniform structural validator, but extraction was not independently duplicated. Structural completeness does not establish inter-reviewer agreement or eliminate interpretation errors. Each note retains evidence locations, confidence, and unresolved items to support later audit. A second-reviewer calibration sample would strengthen reliability.
+All records pass a uniform structural validator, but extraction was not independently duplicated. Structural completeness does not establish inter-reviewer agreement or eliminate interpretation errors. Each note retains evidence locations, confidence, and unresolved items to support later audit. Before journal submission, a randomly selected 10--20% sample should be independently screened and coded by the second author, with agreement reported for the principal categorical fields and disagreements adjudicated. Until that calibration is completed, single-reviewer extraction remains a major methodological limitation.
 
 ## Construct Validity
 

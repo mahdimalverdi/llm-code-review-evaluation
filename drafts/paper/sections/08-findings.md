@@ -6,7 +6,7 @@ The literature does not support treating all weak comments as hallucinations. Re
 
 The deterministic study-level coding found the broadest evidence coverage for incorrect claims (25 studies), irrelevance (23), spurious or false-positive findings (16), low-value or nitpick feedback (14), unsupported or hallucinated claims (13), and vague or generic feedback (12). These counts indicate how many studies contain coded evidence for a category; they are not comment-level prevalence estimates.
 
-<!-- table: caption="Most frequently coded problematic-comment or related failure categories." label="tab:rq1-failures" -->
+<!-- table: caption="Most frequently coded problematic-comment or related failure categories." label="tab:rq1-failures" longtable="false" -->
 | Failure category | Studies with coded evidence |
 |---|---:|
 | Incorrect claim | 25 |
@@ -24,7 +24,7 @@ Evaluation has moved beyond BLEU and exact matching toward semantic, human-cente
 
 Coverage appears in 28 coded records, followed by lexical similarity (23), evaluator validity and usefulness (22 each), correctness and cost/latency (19 each), and acceptance/adoption (14). Grounding is explicitly coded in four records, even though grounding-related failures occur elsewhere. This difference illustrates why failure categories and evaluation dimensions must be extracted separately.
 
-<!-- table: caption="Most frequently coded evaluation dimensions." label="tab:rq2-dimensions" -->
+<!-- table: caption="Most frequently coded evaluation dimensions." label="tab:rq2-dimensions" longtable="false" -->
 | Evaluation dimension | Studies with coded evidence |
 |---|---:|
 | Coverage | 28 |
@@ -43,7 +43,7 @@ Mitigations intervene before generation, during generation, after generation, or
 
 Filtering/suppression is the most frequently coded family (30 studies), followed by human escalation (27), fine-tuning (20), verification/critics (15), retrieval/RAG (14), and prompting (11). Benchmark/rubric interventions appear in ten studies. Less frequent families include data cleaning, reward optimization, rewriting, static-analysis hybrids, multi-agent generation, specification grounding, and routing. Frequency does not establish effectiveness because the studies use different artifacts and outcomes.
 
-<!-- table: caption="Most frequently coded mitigation families." label="tab:rq3-mitigation" -->
+<!-- table: caption="Most frequently coded mitigation families." label="tab:rq3-mitigation" longtable="false" -->
 | Mitigation family | Studies with coded evidence |
 |---|---:|
 | Filtering or suppression | 30 |
@@ -63,12 +63,14 @@ The strongest recurring gap is asymmetric reporting. Studies commonly report imp
 The structured projection makes this asymmetry explicit but must be interpreted as reporting availability rather than outcome prevalence. Preservation-related evidence appears in 45 records, coverage in 46, human-escalation evidence in 27, and cost evidence in 34. In most cases, these fields are discussed as a design implication, limitation, or partial measurement rather than as a complete deployment outcome. The counts therefore show where a trade-off is addressed, not that it was measured with a common protocol or resolved favorably.
 
 <!-- table: caption="Availability of trade-off evidence in the 121 canonical records." label="tab:rq4-reporting" -->
-| Trade-off field | Reported | Explicitly absent | NR |
+| Trade-off field | Reported | No extractable evidence identified | Unclear or not applicable |
 |---|---:|---:|---:|
 | Useful-feedback preservation | 45 | 76 | 0 |
 | Review or issue coverage | 46 | 75 | 0 |
 | Human escalation | 27 | 91 | 3 |
 | Cost | 34 | 87 | 0 |
+
+`No extractable evidence identified` means that no measurement or reporting of the outcome was identified in the available full text during the standardized extraction. It does not establish that the construct was absent from the study setting. `Unclear or not applicable` means that the expected field is missing or its applicability cannot be determined. The zero values in the latter column for three outcomes reflect completion of the standardized extraction fields, not evidence that the outcomes were absent in the underlying systems.
 
 ## RQ5: Context, Dataset, and Annotation Validity
 
@@ -76,6 +78,16 @@ Context quality includes relevance, completeness, specificity, consistency, fres
 
 Reviewer/workflow context is the most common controlled context code (68 studies), followed by PR/issue context (32), repository/project context (30), diff/hunk context (22), and retrieved history (15). Six records contain adversarial-context evidence. The prominence of workflow context supports treating code review as a socio-technical process, while the smaller but distinct adversarial group motivates an integrity dimension in context-quality assessment.
 
-## RQ6: Support for the Framework
+## Derivation and Traceability of the Proposed Framework
 
-Core studies directly support the failure taxonomy, evaluation dimensions, benchmark limitations, mitigation families, and workflow outcomes. Supporting studies ground human-review value, evaluator robustness, annotation, and context interpretation. Peripheral studies contribute only bounded transfer claims. Across these tiers, no single identified framework operationalizes comment quality, context quality, preservation, coverage, cost, workflow, and evaluator validity together. This corpus-bounded gap motivates the integrated framework presented in the next section.
+Core studies directly inform the failure taxonomy, evaluation dimensions, benchmark limitations, mitigation families, and workflow outcomes. Supporting studies inform human-review value, evaluator robustness, annotation, and context interpretation. Peripheral studies contribute only bounded transfer claims. These links explain how the framework was derived; they do not constitute independent empirical validation. Across these tiers, no single framework identified in this corpus operationalizes comment quality, context quality, preservation, coverage, cost, workflow, and evaluator validity together. This corpus-bounded gap motivates the integrated framework presented in the next section.
+
+<!-- table: caption="Evidence trace for the proposed framework layers." label="tab:framework-traceability" -->
+| Framework component | Direct evidence | Supporting or transfer evidence | Qualification or tension |
+|---|---|---|---|
+| Input and context quality | PR-level and context-aware benchmarks [@p04_kumar2026_swe_prbench; @p06_hu2025_contextcrbench; @p16_icoz2026_context_aware] | Reviewability and provenance studies [@p23_lin2026_reviewer_experience; @p40_ram2018_reviewability] | Additional context can add noise or reduce performance; quantity is not a proxy for quality. |
+| Generated-comment quality | Multi-dimensional review evaluation [@p01_lu2025_deepcrceval; @p18_bensghaier2025_curated_reviews; @p69_jiang2025_deep_assessment_crg] | Human usefulness evidence [@p39_bosu2015_useful_reviews; @p60_ahmed2025_feedback_useful] | Correctness, relevance, usefulness, and acceptance are non-equivalent constructs. |
+| Problematic-comment type | Hallucination, noise, relevance, and failure studies [@p02_tantithamthavorn2026_hallujudge; @p08_liu2025_too_noisy; @p19_nguyen2025_fine_grained_classification] | Evaluator-bias and adversarial evidence [@p32_zhao2026_bias_loop; @p64_thornton2026_adversarial_comments] | The integrated taxonomy is author-derived and has not yet undergone independent reliability testing. |
+| Mitigation decision | Filtering, retrieval, verification, and staged review [@p10_sun2025_bitsai_cr; @p11_zhang2025_laura; @p35_mcaleese2024_llm_critics; @p65_ameen2026_qasecclaw] | Human--AI workflow evidence [@p07_olewicki2024_revmate] | The four-way show/suppress/rewrite/escalate policy is proposed here rather than directly validated by one study. |
+| Preservation and coverage | Precision, issue coverage, reformulation, and critique evidence [@p10_sun2025_bitsai_cr; @p18_bensghaier2025_curated_reviews; @p58_jin2026_reliable_code_reviewers] | Human-review value and workflow studies [@p37_sadowski2018_google_mcr; @p38_bacchelli2013_expectations_mcr] | Most studies mention or partially measure these outcomes rather than evaluating both with a common protocol. |
+| Cost and evaluator validity | Cost-aware and judge-validity studies [@p01_lu2025_deepcrceval; @p29_wang2025_human_evaluators; @p31_jiang2025_codejudgebench] | General LLM-judge methodology [@p33_he2025_llmjudge_se; @p36_li2024_llms_as_judges] | Judge scores and cost proxies are task-dependent and require calibration against human evidence. |

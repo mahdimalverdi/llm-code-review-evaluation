@@ -1,0 +1,5 @@
+# Data and Replication Package Availability
+
+The manuscript bibliography contains the works cited in the narrative, whereas the complete inventory of all 121 included records is provided in the replication package. The archived package is available through the persistent Zenodo DOI [10.5281/zenodo.18002402](https://doi.org/10.5281/zenodo.18002402). It includes the study-level inventory, project-prefixed citation keys, evidence tiers, extraction fields, source-note paths, coding evidence, appraisal fields, and the dated amendment ledgers used to reconstruct the reported counts. The principal machine-readable inventory is `slr-extraction.csv`; the package also contains the coding-evidence and search-ledger files.
+
+Only cited works appear in the manuscript bibliography; consequently, its entry count is smaller than the 121-study corpus and should not be interpreted as the corpus denominator. The replication inventory, rather than the rendered reference list, is the authoritative study-accounting artifact.

@@ -34,7 +34,7 @@ The local corpus contains 71 full-text records. It combines direct code-review s
 | RQ3: mitigation families and intervention points | Before/during/after-generation and pre-display classification |
 | RQ4: reported trade-offs | Preservation, coverage, escalation, workflow, and cost evidence map |
 | RQ5: context, dataset, and annotation validity | Context-quality and methodological-risk synthesis |
-| RQ6: direct and indirect framework support | Tiered paper-to-framework mapping |
+| Framework derivation and traceability | Tiered paper-to-framework mapping; not an independent RQ or validation claim |
 
 ## Current Evidence Status
 
@@ -91,4 +91,4 @@ The existing annotation guideline and evaluation schema can support a later cont
 
 ## Current Priority
 
-The next priority is not collecting additional convenience papers or implementing mitigation strategies. It is closing the review method and producing traceable RQ1–RQ6 findings from the existing corpus.
+The next priority is not collecting additional convenience papers or implementing mitigation strategies. It is closing the review method and producing traceable RQ1–RQ5 findings from the existing corpus, and documenting framework derivation separately.

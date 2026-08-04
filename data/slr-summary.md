@@ -29,9 +29,9 @@
 
 | Type | Studies |
 |---|---:|
-| `preprint_or_other` | 52 |
-| `conference` | 44 |
-| `journal` | 25 |
+| `preprint_or_other` | 54 |
+| `conference` | 43 |
+| `journal` | 24 |
 
 ## RQ1 failure types
 
@@ -128,3 +128,10 @@
 | Core | 91 | 20.57/24 |
 | Supporting | 24 | 18.67/24 |
 | Peripheral | 6 | 14.67/24 |
+
+## RQ4-independent appraisal score
+
+This score sums Q1--Q9 and Q11 (maximum 20), excluding Q10 trade-off reporting and Q12 direct-review support.
+
+- Records scored: 121
+- Mean: 16.74/20

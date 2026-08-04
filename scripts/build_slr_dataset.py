@@ -142,6 +142,21 @@ def note_quality_score(text: str) -> str:
     return match.group(1) if match else "NR"
 
 
+def rq4_independent_appraisal_score(text: str) -> str:
+    """Return Q1--Q9 plus Q11, excluding RQ4-dependent and relevance items."""
+    scores: dict[int, int] = {}
+    for match in re.finditer(
+        r"^\|\s*Q(\d{1,2})(?:\s+[^|]*)?\s*\|\s*([012])\s*\|",
+        text,
+        re.MULTILINE | re.IGNORECASE,
+    ):
+        scores[int(match.group(1))] = int(match.group(2))
+    retained_items = (*range(1, 10), 11)
+    if not all(item in scores for item in retained_items):
+        return "NR"
+    return str(sum(scores[item] for item in retained_items))
+
+
 def last_section(text: str, number: int) -> str:
     pattern = re.compile(rf"^(#{{2,3}})\s+{number}\.\s+.*$", re.M)
     matches = list(pattern.finditer(text))
@@ -338,6 +353,7 @@ def main() -> None:
             "decision": meta.get("decision", "NR"),
             "relevance": meta.get("relevance", "NR"),
             "quality_score": meta.get("quality", note_quality_score(text)),
+            "rq4_independent_appraisal_score": rq4_independent_appraisal_score(text),
             "confidence": meta.get("confidence", "NR"),
             "context_types": ";".join(context_evidence) if context_evidence else "NR",
             "failure_types": ";".join(failure_evidence) if failure_evidence else "NR",
@@ -423,6 +439,20 @@ def main() -> None:
     for tier in ("Core", "Supporting", "Peripheral"):
         tier_scores = [int(r["quality_score"]) for r in rows if r["evidence_tier"] == tier and r["quality_score"].isdigit()]
         summary.append(f"| {tier} | {len(tier_scores)} | {sum(tier_scores)/len(tier_scores):.2f}/24 |")
+    independent_scores = [
+        int(r["rq4_independent_appraisal_score"])
+        for r in rows
+        if r["rq4_independent_appraisal_score"].isdigit()
+    ]
+    summary += [
+        "",
+        "## RQ4-independent appraisal score",
+        "",
+        "This score sums Q1--Q9 and Q11 (maximum 20), excluding Q10 trade-off reporting and Q12 direct-review support.",
+        "",
+        f"- Records scored: {len(independent_scores)}",
+        f"- Mean: {sum(independent_scores)/len(independent_scores):.2f}/20",
+    ]
     (OUT_DIR / "slr-summary.md").write_text("\n".join(summary) + "\n", encoding="utf-8")
     print(f"Wrote {csv_path.relative_to(ROOT)} ({len(rows)} records)")
     print(f"Wrote {audit_path.relative_to(ROOT)} ({len(audit_rows)} evidence rows)")

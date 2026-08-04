@@ -14,12 +14,12 @@ Future reproducible searches must be recorded row by row in `method/search-run-l
 | Canonical records passing the uniformity validator | 121 | Validator rerun after the freeze |
 | Legacy records still requiring canonical reconstruction | 0 | None |
 | Duplicate/companion records resolved | 2 | P108/EXT-0028 and P116/EXT-0030 are counted once |
-| Supplementary supporting reserve | 70 | Text and extraction packets retained outside the frozen denominator |
+| Supplementary supporting candidates | 79 | 69 aligned extraction packets; 10 queued; all outside the frozen denominator |
 | Final included set | 121 | Frozen on 2026-08-04; generated counts are reproducible from `data/slr-extraction.csv` |
 
 ## Supplementary reproducible identification stage
 
-The dated arXiv amendment is tracked separately from the baseline P01–P71 corpus. It produced 293 unique candidates after deduplication; 140 reached full-text assessment, with 132 included for consideration and 8 excluded. From the 52 core candidates, 50 unique studies were admitted to the frozen corpus and two were resolved as duplicate external/search identities. Seventy supporting records were retained as an evidence reserve and were not counted as canonical additions.
+The dated arXiv amendment is tracked separately from the baseline P01–P71 corpus. It produced 293 unique candidates after deduplication; 140 reached full-text assessment, with 132 included for consideration and 8 excluded. The retained records comprise 53 core-classified records and 79 supporting candidates. One core record maps to baseline P05, two are duplicate/version identities, and 50 unique studies were admitted to the frozen corpus. Among the supporting candidates, 69 have aligned extraction packets and 10 remain queued; none is counted as a canonical addition. A stale ARXIV-0051 packet predates its full-text exclusion and is provenance only.
 
 The supplementary external export contains 30 candidate records: 19 duplicates, 3 full-text verified inclusions, 7 access-limited metadata-only records, and 1 exclusion. Access-limited records are not counted in the final included set.
 
