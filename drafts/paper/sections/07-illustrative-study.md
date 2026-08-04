@@ -2,18 +2,18 @@
 
 ## Corpus Accounting
 
-The evidence pool contains 121 unique project IDs, 121 local PDFs, 121 authoritative extraction notes, and 121 project-prefixed bibliography entries. All notes pass the structural extraction validator. P18 and P21 previously had duplicate note files; these were consolidated so that each project ID now contributes one authoritative record.
+The evidence pool contains 121 unique full-text studies, each represented by one structured extraction record and one bibliographic identity. All records pass the same structural completeness check, and duplicate study representations were reconciled before analysis.
 
 | Corpus property | Value |
 |---|---:|
-| Full-text substantive records | 121 |
+| Included full-text studies | 121 |
 | Core evidence | 91 |
 | Supporting evidence | 24 |
 | Peripheral evidence | 6 |
 | Methodological anchors outside the substantive corpus | 4 |
-| Duplicate authoritative IDs | 0 |
+| Unresolved duplicate study identities | 0 |
 
-These counts describe the local evidence pool, not a PRISMA-style database search flow. Identification, deduplication, title/abstract exclusion, and full-text exclusion counts remain unavailable.
+These counts describe the synthesis corpus, not a PRISMA-style database search flow. Identification, deduplication, title/abstract exclusion, and full-text exclusion counts for the historical baseline remain unavailable.
 
 ## Research Streams
 
@@ -62,7 +62,7 @@ We repeated the RQ4 reporting-availability counts for prespecified corpus subset
 <!-- table: caption="Sensitivity of RQ4 reporting availability to corpus composition." label="tab:sensitivity-rq4" -->
 | Analysis set | Studies | Useful feedback | Coverage | Escalation | Cost |
 |---|---:|---:|---:|---:|---:|
-| All canonical records | 121 | 45 (37.2%) | 46 (38.0%) | 27 (22.3%) | 34 (28.1%) |
+| All included studies | 121 | 45 (37.2%) | 46 (38.0%) | 27 (22.3%) | 34 (28.1%) |
 | Core evidence only | 91 | 45 (49.5%) | 46 (50.5%) | 27 (29.7%) | 34 (37.4%) |
 | Peer-reviewed only | 69 | 19 (27.5%) | 20 (29.0%) | 10 (14.5%) | 15 (21.7%) |
 | RQ4-independent appraisal at least 17/20 | 77 | 34 (44.2%) | 34 (44.2%) | 18 (23.4%) | 27 (35.1%) |
@@ -73,4 +73,4 @@ Quality score and evidence tier are used together. A supporting or peripheral st
 
 ## Traceability
 
-The complete paper-level inventory appears in the cross-paper synthesis, progress log, and generated `data/slr-extraction.csv`. The manuscript bibliography contains cited works, while the complete inventory of all 121 included records is provided in the replication package described in the Data and Replication Package Availability section. Each thematic result in the following section links to bibliography keys, while the dataset preserves paper IDs and source-note paths. This structure permits claims and counts to be checked against the corresponding full-text extraction while keeping the report organized by research question rather than by paper.
+The manuscript bibliography contains cited works, while the complete paper-level inventory of all 121 included records is provided in the replication package described in the Data and Replication Package Availability section. The inventory preserves study identifiers, citation keys, evidence tiers, extraction decisions, and evidence locations. This structure permits claims and counts to be checked against the corresponding full-text extraction while keeping the report organized by research question rather than by paper.

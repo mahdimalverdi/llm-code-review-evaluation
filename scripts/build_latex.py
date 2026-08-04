@@ -30,6 +30,7 @@ Supported figure metadata syntax:
 from __future__ import annotations
 
 import argparse
+import csv
 import html
 import re
 from pathlib import Path
@@ -38,7 +39,9 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_ORDER_FILE = REPO_ROOT / "drafts" / "paper" / "sections_order.txt"
 DEFAULT_OUTPUT_FILE = REPO_ROOT / "build" / "paper.tex"
 REFERENCES_FILE = REPO_ROOT / "references" / "references.bib"
+STUDY_INVENTORY_FILE = REPO_ROOT / "data" / "slr-extraction.csv"
 BUILD_REFERENCES_FILE_NAME = "references.bib"
+EXPECTED_INCLUDED_STUDY_COUNT = 121
 
 MONTH_NORMALIZATION = {
     "january": "jan",
@@ -706,6 +709,34 @@ def copy_references(output_file: Path) -> None:
         )
 
 
+def included_study_nocite() -> str:
+    """Return a LaTeX nocite command for every included study."""
+    if not STUDY_INVENTORY_FILE.exists():
+        raise FileNotFoundError(f"Missing study inventory: {STUDY_INVENTORY_FILE}")
+
+    with STUDY_INVENTORY_FILE.open(encoding="utf-8", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    citation_keys = [row.get("citation_key", "").strip() for row in rows]
+    if len(citation_keys) != EXPECTED_INCLUDED_STUDY_COUNT:
+        raise ValueError(
+            "Study inventory must contain exactly "
+            f"{EXPECTED_INCLUDED_STUDY_COUNT} records; found {len(citation_keys)}"
+        )
+    if any(not key for key in citation_keys):
+        raise ValueError("Every included study must have a citation key")
+    if len(set(citation_keys)) != len(citation_keys):
+        raise ValueError("Included-study citation keys must be unique")
+
+    bibliography = REFERENCES_FILE.read_text(encoding="utf-8")
+    bibliography_keys = set(re.findall(r"@\w+\{\s*([^,\s]+)", bibliography))
+    missing_keys = sorted(set(citation_keys) - bibliography_keys)
+    if missing_keys:
+        raise ValueError(
+            "Included studies missing from bibliography: " + ", ".join(missing_keys)
+        )
+    return r"\nocite{" + ",".join(citation_keys) + "}"
+
+
 def build_latex(order_file: Path, output_file: Path) -> None:
     sections = read_order(order_file)
     missing = [str(path) for path in sections if not path.exists()]
@@ -721,6 +752,7 @@ def build_latex(order_file: Path, output_file: Path) -> None:
         else:
             parts.append(convert_markdown_to_latex(markdown))
         parts.append("\n")
+    parts.append(included_study_nocite())
     parts.append(LATEX_FOOTER)
 
     output_file.parent.mkdir(parents=True, exist_ok=True)

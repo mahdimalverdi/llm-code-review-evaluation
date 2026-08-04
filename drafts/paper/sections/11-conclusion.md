@@ -27,7 +27,7 @@ show, suppress, rewrite, and escalate. It is intended as a reproducible reportin
 and decision structure rather than a universal scalar score.
 
 The findings are bounded by the assembled corpus. The dated supplementary search
-and freeze improve traceability, but the original database search and screening
+and documented corpus closure improve traceability, but the original database search and screening
 history was not preserved. The work should therefore not be described as a fully
 reproducible systematic review. The proposed taxonomy and framework also remain
 literature-derived rather than empirically validated. Independent annotation,

@@ -85,7 +85,9 @@ prepare_aux_for_bibtex() {
 }
 
 run_bibtex() {
-  if ! bibtex paper; then
+  # The complete study bibliography contains non-ASCII author names. bibtexu
+  # preserves UTF-8 metadata that classic BibTeX can corrupt in the BBL output.
+  if ! bibtexu paper; then
     echo "ERROR: BibTeX failed. Check build/paper.blg." >&2
     return 1
   fi

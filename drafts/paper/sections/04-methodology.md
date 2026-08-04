@@ -32,38 +32,38 @@ For each taxonomy category, annotation decision, and framework layer, we record 
 
 ## Search Scope and Corpus Assembly
 
-The proposal defined ACM Digital Library, IEEE Xplore, ScienceDirect, SpringerLink, arXiv, Semantic Scholar, Google Scholar, and Scopus where available, with a primary focus on work from 2021 onward and earlier foundational modern-code-review studies. Query families covered LLM code review, automated review, generated comments, evaluation metrics, hallucination and grounding, context-aware review, LLM-as-a-Judge, and human--AI review.
+The review protocol identified ACM Digital Library, IEEE Xplore, ScienceDirect, SpringerLink, arXiv, Semantic Scholar, Google Scholar, and Scopus where available, with a primary focus on work from 2021 onward and earlier foundational modern-code-review studies. Query families covered LLM code review, automated review, generated comments, evaluation metrics, hallucination and grounding, context-aware review, LLM-as-a-Judge, and human--AI review.
 
-The local corpus contains 121 unique full-text records. It combines a 71-record baseline with 50 unique core studies admitted through a dated supplementary amendment. The baseline cannot be treated as the output of a reproducible search flow because its original retrieval and exclusion counts are unavailable. We therefore report verified corpus and amendment counts and do not infer missing historical identification-stage counts from the PDF directory.
+The synthesis corpus contains 121 unique full-text studies. It combines a 71-study baseline with 50 unique core studies admitted through a dated supplementary amendment. The baseline cannot be treated as the output of a reproducible search flow because its original retrieval and exclusion counts are unavailable. We therefore report only verified corpus and amendment counts and do not infer missing historical identification-stage counts.
 
-### Dated supplementary amendment and freeze
+### Dated supplementary amendment and corpus closure
 
-The amendment searched arXiv using documented query families and produced 293 unique title/abstract records after pooled deduplication. Full text was assessed for 140 records: 132 were retained for consideration and eight were excluded. The retained set comprised 53 core-classified records and 79 supporting candidates. Of the 53 core records, one mapped to baseline P05, two were duplicate/version identities, and 50 unique studies were admitted to the canonical corpus. Of the 79 supporting candidates, 69 currently have aligned extraction packets and ten remain queued for extraction; none contributes to the 121-study denominator. A stale packet created before the exclusion of ARXIV-0051 is retained only as provenance and is not included in these counts.
+The amendment searched arXiv using documented query families and produced 293 unique title/abstract records after pooled deduplication. Full text was assessed for 140 records: 132 were retained for consideration and eight were excluded. The retained set comprised 53 core-classified records and 79 supporting candidates. Of the 53 core records, one matched a baseline study, two represented duplicate or companion versions, and 50 unique studies were admitted to the synthesis corpus. Of the 79 supporting candidates, 69 underwent reserve extraction and ten remained queued at corpus closure; none contributes to the 121-study denominator.
 
-An external 30-record export was screened separately after the canonical freeze. Reconciliation found 20 duplicates, including EXT-0006/P06; two full-text candidates retained outside the frozen denominator; seven access-limited metadata-only candidates; and one exclusion. The external export therefore contributes no additional study to the 121-study denominator. The freeze decision and provenance are recorded in `data/search/final-corpus-freeze-register.csv` and the associated screening ledgers.
+An external 30-record export was screened separately after corpus closure. Reconciliation found 20 duplicates, two full-text candidates retained outside the closed corpus, seven access-limited metadata-only candidates, and one exclusion. The external export therefore contributes no additional study to the 121-study denominator. Candidate-level decisions and provenance are included in the replication package.
 
 <!-- table: caption="Auditable accounting of the baseline corpus and dated search amendments." label="tab:corpus-flow-audit" -->
-| Source | Identified | Full text assessed | Canonical additions | Reserve or post-freeze | Duplicates | Access-limited |
+| Source | Identified | Full text assessed | Corpus additions | Reserve or post-closure | Duplicates | Access-limited |
 |---|---:|---:|---:|---:|---:|---:|
 | Historical baseline | NR | 71 | 71 | 0 | NR | NR |
 | Dated arXiv amendment | 293 | 140 | 50 | 79 supporting: 69 extracted, 10 queued | 3 core identities | 0 |
 | External cross-check export | 30 | 3 | 0 | 2 full-text candidates | 20 | 7 |
 
-The rows are not additive identification stages: the external export is a post-freeze cross-check and overlaps the baseline and arXiv records. The canonical arithmetic is therefore `71 + 50 = 121`.
+The rows are not additive identification stages: the external export is a post-closure cross-check and overlaps the baseline and arXiv records. The corpus arithmetic is therefore `71 + 50 = 121`.
 
 ## Eligibility and Evidence Tiers
 
 Core eligibility covered LLM-based, AI-assisted, or automated code review; generated review comments or PR feedback; code-review benchmarks and rubrics; relevant failure types; and mitigation through prompting, filtering, retrieval, verification, tool support, rewriting, or escalation. Supporting eligibility covered evaluator validity, human review, workflow value, annotation, context quality, and methodological foundations. General code generation or repair without a review connection was excluded unless retained as explicitly bounded peripheral evidence.
 
-The frozen synthesis assigns 91 records to the core tier, 24 to supporting evidence, and six to peripheral evidence. The tiers indicate argumentative role, not methodological quality. Direct code-review evidence can support review-specific findings; supporting evidence defines constructs or qualifications; peripheral evidence is used only for bounded transfer claims. The 79 supplementary supporting candidates are outside these counts because they were not promoted through the canonical-note and freeze rule; 69 have aligned extraction packets and ten remain queued.
+The closed synthesis corpus assigns 91 studies to the core tier, 24 to supporting evidence, and six to peripheral evidence. The tiers indicate argumentative role, not methodological quality. Direct code-review evidence can support review-specific findings; supporting evidence defines constructs or qualifications; peripheral evidence is used only for bounded transfer claims. The 79 supplementary supporting candidates are outside these counts because they did not satisfy the full inclusion and extraction rule before corpus closure; 69 underwent reserve extraction and ten remained queued.
 
 ## Quality Appraisal
 
-The proposal specified eight 0--2 criteria. The extraction workflow expanded these into 12 items covering artifact clarity, context, data, metrics, judging, reliability, limitations, relevance to the review questions, preservation, coverage/escalation, cost/workflow, and evaluator validity. The expanded instrument improves extraction consistency but is not presented as the proposal's original rubric. Total scores do not determine inclusion; criterion-level evidence, confidence, and evidence tier guide interpretation.
+The initial protocol specified eight 0--2 criteria. The extraction workflow expanded these into 12 items covering artifact clarity, context, data, metrics, judging, reliability, limitations, relevance to the review questions, preservation, coverage/escalation, cost/workflow, and evaluator validity. The expanded instrument improves extraction consistency but is not presented as the original rubric. Total scores do not determine inclusion; criterion-level evidence, confidence, and evidence tier guide interpretation.
 
 ## Data Extraction
 
-Each paper has one authoritative Markdown record derived from the local full text. Records contain bibliographic identity, screening decision, study design, RQ1--RQ5 evidence, a framework-traceability field, Q1--Q12 appraisal, trade-off fields, evaluator-validity fields, evidence locations, and unresolved verification items. All 121 records pass the same eleven-section structural validator. This validation establishes completeness of form, not independent reviewer agreement.
+Each included study has one structured extraction record derived from its available full text. Records contain bibliographic identity, screening decision, study design, RQ1--RQ5 evidence, a framework-traceability field, Q1--Q12 appraisal, trade-off fields, evaluator-validity fields, evidence locations, and unresolved verification items. All 121 records pass the same eleven-section completeness check. This validation establishes completeness of form, not independent reviewer agreement.
 
 <!-- table: caption="Study-level data items and their use in the review." label="tab:data-items" -->
 | Data-item group | Fields | Use |
@@ -77,13 +77,13 @@ Each paper has one authoritative Markdown record derived from the local full tex
 | Trade-off reporting | preservation, coverage, escalation, and cost availability | RQ4 |
 | Method validity | annotation, limitations, and RQ evidence status | RQ5 and framework traceability |
 
-The complete field definitions and controlled labels are provided in the replication artifact `method/slr-data-dictionary.md`.
+The complete field definitions and controlled labels are provided in the replication package.
 
 ## Synthesis
 
-We used tabulation, thematic grouping, and framework mapping. We did not pool incompatible metrics. Initial categories were derived during cross-paper synthesis and normalized into controlled vocabularies for failure types, evaluation dimensions, mitigation families, and context types. A deterministic script then projected the authoritative notes into one study-level CSV row per paper. The script searches the canonical numbered sections, records multi-valued controlled labels, and uses `NR` when the note does not contain enough evidence. The generated counts therefore describe coded evidence in the notes, not the prevalence of failures in deployed systems.
+We used tabulation, thematic grouping, and framework mapping. We did not pool incompatible metrics. Initial categories were derived during cross-study synthesis and normalized into controlled vocabularies for failure types, evaluation dimensions, mitigation families, and context types. A deterministic transformation procedure produced one study-level record per included study, retained multi-valued controlled labels, and used `NR` when the extraction did not contain enough evidence. The resulting counts therefore describe coded evidence in the reviewed studies, not the prevalence of failures in deployed systems.
 
-The script validates that the canonical note set occurs exactly once, baseline evidence tiers do not overlap, promoted supplementary records receive the core tier, bibliography keys resolve, and quality scores are available. Findings were organized by research question. Paper IDs provide internal traceability, while bibliography keys support publication-facing claims. Every reported count uses the 121-record evidence pool as its denominator unless another denominator is stated.
+Automated consistency checks ensure that each included study occurs once, evidence tiers do not overlap, admitted supplementary studies receive the intended tier, citations resolve, and appraisal scores are available. Findings were organized by research question. Stable study identifiers support traceability within the replication package, while citations support claims in this report. Every reported count uses the 121-study evidence pool as its denominator unless another denominator is stated.
 
 ## Protocol Deviations and Amendments
 
