@@ -26,8 +26,8 @@ The current review must be described as a **targeted structured literature revie
 | Structured extraction | 71 study-level rows and 550 coded evidence rows | `data/slr-extraction.csv`; `data/slr-coding-evidence.csv` |
 | Canonical synthesis | Taxonomy, evaluation dimensions, context model, trade-off framework, and research gap drafted | `synthesis/` |
 | Manuscript | Twelve section files exist; several sections remain short or provisional | `drafts/paper/sections/` |
-| Reproducible arXiv amendment | 293 unique records screened by title/abstract; 140 assessed at full text | `method/search-protocol-amendment.md`; `data/search/` |
-| arXiv full-text queue | 132 included for consideration and 8 excluded; included records are not yet integrated into the final corpus | `data/search/arxiv-full-text-screening-reviewed.csv` |
+| Reproducible arXiv amendment | 293 unique records screened by title/abstract; 140 assessed at full text; local acquisition state synchronized | `method/search-protocol-amendment.md`; `data/search/` |
+| arXiv full-text queue | 132 included for consideration and 8 excluded; 52 core records extracted and held for final freeze; supporting records remain to be assessed | `data/search/arxiv-full-text-screening-reviewed.csv`; `data/search/core-reconciliation-queue.csv` |
 | External candidate export | 18 duplicates, 3 full-text includes, 8 provisional includes, and 1 exclusion | `data/search/external-candidate-screening.csv` |
 | External acquisition | 9 already downloaded, 3 newly downloaded, and 9 metadata-only records | `data/search/external-pdf-acquisition.csv` |
 | Citation-key integrity | 125 citation blocks checked across 22 synthesis and draft files; all 64 used keys exist in the bibliography | Audit completed 2026-08-04 |
@@ -268,6 +268,7 @@ Add one row after each substantial work session. Keep entries concise and link t
 | 2026-08-02 | 0–2 | Completed baseline extraction, validation, synthesis integration, and manuscript structure | 71 valid notes; generated extraction and summary files | Execute and document supplementary search |
 | 2026-08-04 | 3 | Completed arXiv full-text screening and external-candidate triage; acquired three external PDFs | 132 arXiv includes, 8 excludes; external decisions recorded | Reconcile duplicates and provisional candidates |
 | 2026-08-04 | 6 | Audited citation-key integrity across synthesis and draft Markdown files | 64 used keys checked; no missing bibliography key | Perform semantic citation audit after corpus freeze |
+| 2026-08-04 | 3 | Synchronized local PDF acquisition, core reconciliation, and extraction checkpoint ledgers | 136 local PDFs no longer marked pending; 52 core records have validated notes; 50 held for final freeze and 2 duplicate/companion records retained | Process supporting records only where full text is available, then freeze the evidence set |
 | YYYY-MM-DD | _Phase_ | _Describe completed work_ | _Link output or record result_ | _State the next concrete action_ |
 
 ## Known Blockers and Risks

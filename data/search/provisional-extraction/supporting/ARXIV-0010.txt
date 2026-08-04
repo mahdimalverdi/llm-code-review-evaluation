@@ -1,0 +1,1695 @@
+                                                                                                                                                                                     1
+
+
+
+
+                                         From Human-Centric to Agentic Code Review: The
+                                          Impact of Different Generations of Generative AI
+                                                   Technology on Review Quality
+                                                                               Suzhen Zhong, Shayan Noei, Bram Adams, Ying Zou
+
+
+
+                                            Abstract—Code review helps maintain software quality before              and automate software engineering tasks [5], [6]. Initially (Pre-
+                                         code integration, but it also imposes a substantial workload on             LLM era), human reviewers manually provided review feed-
+                                         human reviewers. As generative artificial intelligence becomes              back, potentially assisted by bots or older machine learn-
+                                         part of software development, code review is shifting from a
+                                         primarily human review process toward AI-supported review                   ing (ML) tools. Later (LLM era), early LLM reviewers assisted
+                                         processes in which large language model (LLM) reviewers and AI              developers in generating natural-language feedback from code
+                                         agent reviewers participate alongside human reviewers. However,             changes [7]. More recently (agent era), AI agent reviewers
+                                         we still lack empirical evidence on how this transition affects             have extended the capabilities of LLMs by autonomously
+                                         review efficiency and review quality. In this paper, we study 1.02          retrieving project context, running development tools, and
+                                         million reviewed pull requests from 207 GitHub projects that
+                                                                                                                     verifying findings before producing feedback [8]. Across these
+arXiv:2607.13196v1 [cs.SE] 14 Jul 2026
+
+
+
+
+                                         transition across three code review eras: human-centric review,
+                                         LLM-assisted review, and agentic code review. We identify three             three eras, code review shifts from a human-centric process
+                                         AI reviewer adoption practices: Gradual AI Adoption, Rapid                  to a human-AI collaboration review process in which human
+                                         LLM Adoption, and Rapid AI Agent Adoption. We further model                 reviewers, LLM reviewers, and AI agent reviewers may need
+                                         pull request review discussions as reviewer interaction sequences           to collaborate to complete the code review.
+                                         to characterize how human, LLM, and AI agent reviewers
+                                         collaborate during the review process. Our results show that                   Prior work finds that frequent human reviews of small
+                                         agent-involved collaboration patterns, especially reviews initiated         code changes support efficient review decisions [9], [10],
+                                         by AI agents or involving multiple AI agents, are associated                while reviewer workload and patch characteristics influence
+                                         with faster review decisions under Gradual AI Adoption and                  review time [11], [12]. Other studies have examined review
+                                         Rapid AI Agent Adoption. However, these efficiency gains do                 smells [13], showing that assigning unsuitable reviewers or re-
+                                         not translate into better review quality. We also find that review
+                                         activity and pull request type remain important across eras,                viewing pull requests with too many code changes at once can
+                                         while human-AI collaboration patterns become the strongest                  reduce review quality. Recent studies find that LLM-assisted
+                                         explanatory factor for review efficiency once LLM and AI agent              review may increase review time [14]. Thus far, existing
+                                         reviewers participate. These findings provide empirical guidance            studies provide limited evidence on how code review practices
+                                         for designing AI-supported code review processes that improve               and review quality evolve as teams transition from human-
+                                         efficiency without weakening review quality.
+                                                                                                                     centric review (without generative AI participation) to LLM-
+                                           Index Terms—Agentic Code Review, Modern Code Review                       assisted and agentic review. Therefore, it remains unclear how
+                                                                                                                     projects utilize AI reviewers over time, how human, LLM, and
+                                                                                                                     AI agent reviewers collaborate throughout the review process,
+                                                                  I. I NTRODUCTION                                   and which practices and factors are associated with review
+                                            Generative AI has been rapidly integrated into software                  quality.
+                                         development. For example, AI-generated code now accounts                       To answer these questions, we analyze 1.02 million pull
+                                         for 75% of new code at Google [1]. GitHub reports that                      requests (PR) from 207 open-source projects whose code
+                                         developers pushed nearly one billion commits in 2025, while                 review practices have evolved from the human-centric to the
+                                         public repositories using an LLM SDK grew by 178% year                      LLM-assisted and agentic review eras. We aim to answer the
+                                         over year [2]. As AI-generated code increases the volume of                 following research questions (RQs):
+                                         code changes, code review and code integration are becoming                    RQ1. What are the common AI adoption practices and
+                                         downstream bottlenecks. Recent blog posts from Google [3]                   how do they relate to review quality? Although LLM and
+                                         and Amazon [4] warn that faster code generation can over-                   AI agent reviewers are increasingly used in code review, it
+                                         whelm human reviewers and delivery pipelines.                               is unclear how projects adopt these reviewers and whether
+                                            With this rapid progress in generative AI, developers are                different adoption practices affect review quality. Across the
+                                         increasingly adopting generative AI to write and review code                207 studied projects, we identify three AI reviewer adoption
+                                                                                                                     practices: (1) Gradual AI Adoption, (2) Rapid LLM Adoption,
+                                           Suzhen Zhong, Shayan Noei, and Ying Zou are with the Department of        and (3) Rapid AI Agent Adoption. By comparing review
+                                         Electrical and Computer Engineering, Queen’s University, Kingston, ON K7L   efficiency and review smells across the three review eras, we
+                                         3N6, Canada. E-mail: {suzhen.zhong, s.noei, ying.zou}@queensu.ca.           find that the Rapid LLM Adoption is significantly associated
+                                           Bram Adams is with the Maintenance, Construction and Intelligence of
+                                         Software Lab (MCIS), School of Computing, Queen’s University, Kingston,     with an increase in code review smell prevalence. However,
+                                         ON K7L 3N6, Canada. E-mail: bram.adams@queensu.ca.                          Gradual AI Adoption and Rapid AI Agent Adoption practices
+                                                                                                                                 2
+
+
+
+show significantly more efficient review in the agent era.         the pre-LLM, LLM, and agent eras. We cluster the generative
+   RQ2. What is the impact of human-AI collabora-                  AI adoption series for each project into common AI reviewer
+tion patterns on code review quality? To identify which            adoption practices. Within each practice, we examine the pull
+human-AI review collaboration patterns are associated with         request types (e.g., bug fixing) that increasingly involve AI
+better review quality under different AI adoption practices,       reviewers and investigate the changes in review quality across
+we examine the interactions among human, LLM, and AI               the three eras. To understand the collaboration among human,
+agent reviewers within individual pull requests. We find that      LLM, and AI agent reviewers, we identify common human-
+no human-AI collaboration pattern consistently outperforms         AI collaboration patterns, and compare the patterns by review
+human-only review in both efficiency and quality. In the           efficiency and quality. Finally, we build explanatory models to
+agent era, reviews initiated by AI agents or involving multiple    assess the relationship between review quality and the human-
+AI agents are significantly more efficient than human-only         AI collaboration patterns, alongside traditional review-process
+reviews in Gradual AI Adoption and Rapid AI Agent Adoption.        factors (e.g., pull request characteristics).
+However, most collaboration patterns involving LLM or AI
+agent reviewers show significantly higher review quality risk
+                                                                   A. Project Selection
+than human-only review.
+   RQ3. How do human-AI collaboration patterns relate                To capture code review across the transition from human-
+to traditional factors impacting review quality? To better         centric review to LLM-assisted and agentic review, we select
+understand the factors explaining the code review quality          active GitHub projects with continuous review activity before
+issues identified in RQ2, we build explanatory logistic re-        and after the emergence of generative AI reviewers. Using
+gression models to assess the important factors related to         the GitHub advanced search [16], we identify initial candidate
+review quality. We find that once LLM and AI agent re-             projects with continuous review activity from May 2022 to
+viewers join, human-AI collaboration patterns emerge as a          February 2026. We retain projects that meet the criteria below:
+strong explanatory factor alongside traditional review factors,      • at least 100 stars [17], to ensure that a project has
+especially for Review Buddies, a smell where repeated re-               sufficient community adoption and is actively maintained;
+liance on the same reviewers may narrow review perspectives.         • created before May 2022, providing at least six months
+Meanwhile, agent-involved collaboration patterns under the              of review history before the public release of ChatGPT
+Gradual AI Adoption and Rapid AI Agent Adoption practices               in November 2022 [18]; and
+are consistently associated with larger changesets, indicating       • at least one reviewed pull request per month from May
+that these collaboration patterns are more frequently used to           2022 to February 2026, ensuring continuous review ac-
+review larger code changes.                                             tivity throughout the observation window.
+   Our work makes the following contributions:                       The criteria yield 2,490 candidate projects, with continuous
+   • We provide a large-scale empirical study of 1.02 mil-         activity from May 2022 through February 2026.
+     lion pull requests from 207 open-source GitHub projects
+     across the transitions from human-centric review to LLM-
+     assisted and agentic review. We also release a replication    B. Data Collection and Preprocessing
+     package [15] containing the longitudinal dataset to sup-         For each of the 2,490 candidate projects, we use the
+     port future research on AI reviewer adoption.                 GitHub REST API [19] to collect their reviewed pull requests
+   • We characterize the adoption of LLM and AI agent              and associated review conversations, including review events,
+     reviewers in projects and quantify the association between    reviewer identities, timestamps, pull request decisions after
+     the adoption practices and review quality, giving practi-     review (i.e., accepted if merged or rejected if closed without
+     tioners evidence to guide their adoption of AI reviewers.     merge), and review comments from each reviewer.
+   • We model review quality across the three generative AI           Labeling reviewers. To distinguish human reviewers from
+     review eras, jointly considering human-AI collaboration       automated reviewers, we label each reviewer account with the
+     patterns and the traditional factors (e.g., pull request      reviewer type represented by the tool behind the account at
+     characteristics, review activity). We show that human-AI      the time of review. We first use the GitHub REST API [19]
+     collaboration patterns and these traditional review factors   to distinguish human and bot accounts. For bot accounts, we
+     both remain important for explaining review quality.          manually inspect the official web documentation of the cor-
+   • We present the first large-scale quantitative studies of      responding tool to determine whether the account represents
+     agentic code review, analyzing how AI reviewer adoption       a rule-based bot (e.g., GitHub Actions [20]), a traditional
+     evolves across the Pre-LLM, LLM, and Agent eras.              machine-learning review tool (e.g., Amazon CodeGuru Re-
+                                                                   viewer [21]), an LLM reviewer (e.g., LlamaPReview [22]), or
+                   II. C ASE S TUDY S ETUP                         an AI agent reviewer (e.g., Claude Code [23]). To validate that
+   This section details the case study setup. We describe          the AI agent reviewer labels reflect agentic review behavior,
+our data collection and analysis approaches. The detailed          we manually inspected a statistically representative sample
+approaches for each RQ are presented in the Sec. III-A–III-C.      of 384 agent-era pull requests involving AI agent reviewers,
+   An overview of our study is shown in Fig. 1. Starting from      corresponding to a 95% confidence level and a 5% margin of
+2,490 candidate GitHub projects with continuous review activ-      error [24]. Among these sampled pull requests, 360 contained
+ity, we retain 207 with sufficient reviewed pull requests across   evidence of agentic behavior, such as planning, retrieval of
+                                                                                                                                                                  3
+
+
+
+
+                      Sec II. A & B
+                                                     RQ1.Approach        Sec II.C, D & E             RQ1, 2 & 3.Approach
+
+     Project       Data Collection          207                                                                                     RQ1. AI Adoption
+    Selection       Collect review        projects                                                  Assess review quality
+                                                                        Define Metrics                                              Practices
+                    conversations        with 1.02     Cluster
+                                                                      Sec II.C PR Types
+                                           million     projects                                      Mine and examine               RQ2. Human-AI Review
+                                                                    Sec II.D Review Quality
+      2,490       Classify reviewers     reviewed       by AI                                       collaboration patterns          Collaboration Patterns
+                                                                     Sec. II.E Explanatory
+     GitHub                                 PRs        adoption
+                                                                             Factors              Build explanatory models          RQ3. Factors of Review
+     Projects
+                  Identify review eras                                                            (using factors in Sec.II.E )      Efficiency and Quality
+
+
+                                                     Fig. 1: Overview of our approach.
+
+TABLE I: Pull request (PR) categories adopted from Li et                     TABLE II: Code review smell taxonomy and detection rules
+al. [5].                                                                     adapted from Doğan and Tüzün [13].
+ Category        Description                                                 Smell         Potential Side Effect                 Detection Rule
+ Chore           Routine maintenance or configuration tasks.                 Sleeping      Delayed decisions may cause           Time from PR creation to final
+ Fix             Corrects bugs.                                              Review        context loss or block                 decision exceeds two days.
+ CI              Updates CI/CD pipelines or workflow configurations.                       downstream work.
+ Feature         Adds or implements new functionality.
+ Performance     Tries to improve speed or efficiency.                       Review        Repeated reliance on the same Same reviewer (human, LLM,
+ Refactor        Restructures existing code without changing behavior.       Buddies       reviewers may narrow review or AI agent) reviews at least
+ Documentation   Updates or adds documentation.                                            perspectives.                 50% of an author’s PRs.
+ Style           Adjusts formatting or naming conventions.
+                                                                             Large     Large changes may reduce                  Code churn exceeds 500
+ Test            Adds or modifies test cases.
+                                                                             Changeset reviewer focus and feedback               changed lines of code.
+ Build           Modifies build process or dependencies.
+                                                                                       effectiveness.
+ Other           Unclassified or mixed-purpose changes.
+                                                                             Ping-         Excessive back-and-forth may          PR has more than three
+repository context, or commit actions. For the remaining                     Pong          indicate inefficient                  change-request iterations from
+                                                                                           communication or rework.              human or AI reviewers.
+24 sampled cases with only natural-language comments, we
+checked project documentation and configuration files and                    Missing       Missing context may weaken            PR description is empty or
+                                                                             Context       reviewer understanding and            lacks linked issue/context
+found no evidence that agentic review was disabled. Since                                  feedback usefulness.                  information.
+official documentation identifies these reviewers as AI agents,
+                                                                             Lack of       Missing review may let defects No human, LLM, or AI agent
+we label these cases as involving AI agent reviewers.                        Review        or maintainability issues enter reviewer other than the author
+   After assigning reviewer labels, we define review eras for                              the codebase.                   participates.
+each project based on the first participation of each LLM or
+AI agent reviewer. For each project, its pre-LLM era includes                a statistically representative sample of 384 pull requests with
+all reviewed pull requests before any generative AI reviewer                 95% confidence level and 5% margin of error [24]. Comparing
+participates. Its LLM era starts with the first reviewed pull                manual labels against LLM classifications yields a Cohen’s κ
+request involving an LLM reviewer and continues until the                    [26] of 0.91, indicating almost perfect agreement between the
+first reviewed pull request involving an AI agent reviewer.                  human and GPT-4.1-mini classifications.
+The project’s agent era starts with the first reviewed pull
+request involving an AI agent reviewer. Because review eras                  D. Review Quality Evaluation
+are defined separately for each project, each era’s start time
+                                                                                As projects shift from human-centric review toward agentic
+and end time vary across projects. After defining the review
+                                                                             review, we examine whether these transitions are associated
+eras, we retain only projects with more than 400 reviewed
+                                                                             with changes in review efficiency and review quality risks. As
+pull requests in each era to reduce the influence of one-off or
+                                                                             shown in Fig. 1, review efficiency and review smells are the
+experimental AI use and to ensure sufficient review activity for
+                                                                             shared review-quality measures used across all three RQs.
+within-project statistical comparisons [24]. Finally, we obtain
+                                                                                1) Review Efficiency: To assess changes in user-visible
+1.02 million reviewed pull requests from 207 projects.
+                                                                             review efficiency, we follow prior work [27] and measure the
+                                                                             number of days from the creation of a pull request to the
+C. Pull Request Types                                                        final review decision. Since larger changes may require more
+   As shown in Fig. 1, all three RQs use pull request type as                review effort, we normalize the review duration by the size of
+a shared measure. We therefore describe here how each pull                   the code change in thousands of lines of code (KLOC) [27]:
+request is assigned a type.                                                                                     Tdecision − Tcreation
+                                                                                     Review Efficiency =                                   (1)
+   Watanabe et al. [25] proposed 11 pull request types for                                                  # Thousand lines of code
+characterizing code-change purpose, with the full taxonomy                   where Tcreation is the timestamp of the creation of the pull
+shown in Table I. Li et al. [5] classify pull requests using this            request and Tdecision is the timestamp of the final decision.
+taxonomy by analyzing their titles and descriptions with GPT-                   2) Review Smells: Review smells capture observable anti-
+4.1-mini. We apply the same PR-level classification process to               patterns in the review process that may reduce review ef-
+assign each pull request a type. To validate the reliability of the          fectiveness and introduce quality risks [28]. For example,
+classifications produced by GPT-4.1-mini, we manually label                  low review participation is associated with more post-release
+                                                                                                                                                           4
+
+
+
+TABLE III: Independent explanatory variables used to model how reviewer collaboration patterns and alternative factors are
+jointly associated with review efficiency and review smells. The Abbrev. column shows the shortened metric names used in
+Table VI.
+ Metric                         Abbrev.        Category              Source       Description
+ Review era                     Era            Review era            This study   The three review eras (i.e., pre-LLM, LLM, and agent eras)
+ PR type                        PR type        PR Characteristics    [5], [25]    Purpose of the pull request, such as Feature, Fix, and Chore (Table I)
+ Initial code churn             Churn          PR Characteristics    [29], [12]   Number of added and deleted lines when the pull request is opened
+ Initial files changed          Files          PR Characteristics    [29], [12]   Number of files changed when the pull request is opened
+ Initial commit count           InitCommit     PR Characteristics    [30]         Number of commits present when the pull request is created
+ Commit count                   NumCommit Review activity            [30]         Total number of commits in the PR when the review process ends
+ Inline comments                InlineThread Review activity         [31]         Number of reviewer discussion threads on specific changed lines
+ Reviewer count                 ReviewerCount Review activity        [12]         Number of unique reviewers of the pull request
+ Author experience              Author Exp     Experience            [30], [29]   Number of prior commits by the author in the same project
+ Human reviewer experience      Human Exp      Experience            [12], [11]   Mean prior reviews by the PR’s human reviewers in the same project
+ Bot reviewer experience        Rule Exp       Experience            This study   Mean prior reviews by the PR’s rule-based bot in the same project
+ ML reviewer experience         ML Exp         Experience            This study   Mean prior reviews by the PR’s ML reviewers in the same project
+ LLM reviewer experience        LLM Exp        Experience            This study   Mean prior reviews by the PR’s LLM reviewers in the same project
+ Agent reviewer experience      Agent Exp      Experience            This study   Mean prior reviews by the PR’s AI agent reviewers in the same project
+*ML stands for traditional Machine Learning, which is not generative AI.
+
+defects [29], and large code changes tend to receive less useful                                          III. R ESULTS
+review feedback [30]. Although review smells were originally                  A. RQ1: What are the common AI adoption practices and how
+defined for human code review, they remain relevant in human-                 do they relate to review quality?
+AI review because AI participation does not remove core
+review-process risks, such as missing context, repeated back-                     Motivation. With the rapid adoption of AI in software en-
+and-forth, and reliance on narrow feedback sources. We there-                 gineering [32], generative AI reviewers now participate along-
+fore use review smells as indicators of review-process quality                side reviewers across millions of open-source projects [5]. Yet,
+risk in both human-only and human-AI reviews. Following                       it remains unclear how AI reviewers are introduced and used in
+Doğan and Tüzün [13], who define code review smells and                      software projects over time and how their adoption influences
+detection rules from code review histories, we adapt six of                   the code review quality. In this research question, we aim to
+their smells that can be operationalized using our pull request               identify common AI reviewer adoption practices and measure
+review conversations, then apply these rules to each reviewed                 their effects on review quality. Our findings provide guidance
+pull request to identify the review smells, as shown in Table II.             for projects considering the adoption of AI reviewers.
+                                                                                  Approach. Identifying AI Adoption Practices. To capture
+                                                                              the adoption of LLM and AI agent reviewers in each project,
+E. Explanatory Factors for Review Efficiency and Quality                      we first construct a time series of the proportion of pull
+                                                                              requests reviewed by each reviewer type (e.g., human or AI
+   As shown in Fig. 1, we show the explanatory factors used
+                                                                              agent reviewer). Furthermore, similar to prior work [33], to
+in the RQ3 analysis. Here, we introduces traditional review
+                                                                              reduce noise caused by AI reviewer participation varying from
+factors from prior code review studies, while Section III-C
+                                                                              one pull request to the next, we aggregate the monthly pro-
+shows the modeling procedure. Prior work on code review
+                                                                              portion of pull requests reviewed by the era-specific generative
+with human reviewers shows that review quality is associated
+                                                                              AI reviewer type using era-specific AI reviewer rate (Pm,e ),
+with review process factors, including pull request character-
+                                                                              which is defined as follows:
+istics [5], review activity [30], and reviewer experience [29].                           
+Following this work, we adopt pull request characteristics,                               
+                                                                                            0 (no GenAI reviewer), e = Pre-LLM,
+                                                                                          
+review activity, and participant experience as our explanatory                            
+                                                                                                LLM
+                                                                                                         
+                                                                                  Pm,e =      Nm    /Nm × 100%,          e = LLM,          (2)
+factors, listed in Table III and grouped as follows:                                                    
+                                                                                                Agent
+                                                                                          
+   1) Pull Request Characteristics: Pull request characteristics                           Nm
+                                                                                          
+                                                                                                      /Nm × 100%,        e = Agent.
+capture the purpose and initial scope of a code change before
+review begins, including pull request type, initial code churn,                  where Nm is the total number of pull requests in month m,
+                                                                                 LLM         Agent
+initial files changed, and initial commit count (Table III).                  Nm     and Nm        are the numbers of pull requests in month
+   2) Review activity: The review activity in the pull request                m involving LLM and AI agent reviewers, respectively.
+indicates the amount of revision and discussion during the                       To make the AI adoption time series comparable across
+review process. We measure it using commit count, unique                      projects, we use linear interpolation to resample the monthly
+reviewer count, and the number of reviewer discussion threads                 Pm,e values in each era into 10 evenly spaced points, following
+opened on specific code changes.                                              prior work on time-series standardization [34], [35]. We then
+   3) Participant experience: Participant experience captures                 concatenate the three eras’ normalized segments in chronolog-
+the pull request author and reviewers’ familiarity with the                   ical order to form the final AI adoption time series. We cluster
+project before the current review. As projects now adopt LLM                  the resulting time series using soft-DTW clustering [36],
+and AI agent reviewers, we also include reviewer type (e.g.,                  [37], [35]. Soft-DTW allows time series with similar overall
+LLM reviewer) as a factor that could explain review quality.                  trajectories to be grouped even when corresponding changes
+                                                                                                                                                                                            5
+
+
+
+                                100                                                                     TABLE IV: Review quality and PR types across review eras.
+                                                                                                        We report the smells whose change is statistically significant;
+ AI reviewer share of PRs (%)
+
+
+                                 80
+                                        Rapid LLM Adoption                                              smell results are available in the replication package [15]
+                                             #proj=45
+                                 60
+                                                                                                                         Era     W/AI   Eff.   Smell% RevBud% PR Types
+                                                                 Rapid AI Agent
+                                                                   Adoption
+
+
+
+
+                                                                                                        Rapid Gradual
+                                 40                                #proj=67                                             PreLLM     — 8.5 83.8           47.8    —
+
+
+
+
+                                                                                                                AI
+                                                                                                                         LLM      8% -1.6 +3.8         +15.1    chore↑ fix↑
+                                 20                                                                                      Agent   36% -2.5* +2.0        +15.6    feat↑ refac↑ fix↑
+                                                                                  Gradual AI Adoption
+                                                                                      #proj=95
+                                                                                                                        PreLLM     — 5.4       83.6     45.9    —
+
+
+
+
+                                                                                                        LLM
+                                  0
+                                                                                                                         LLM     91% +0.6      +8.0*   +26.0*   docs↑ build↑ perf↑ style↑
+                                      Pre-LLM                LLM Era              Agent Era
+                                                                                                                         Agent   93% -0.1      +4.4*   +23.2*   perf↑
+Fig. 2: Three identified AI reviewer adoption practices as
+                                                                                                                        PreLLM     — 10.4 81.0          36.4    —
+
+
+
+
+                                                                                                        Rapid
+                                                                                                        Agent
+code review shifts from human-centric to LLM-assisted and                                                                LLM     19% -3.4 +4.4         +16.6*   perf↑ refac↑ fix↑ test↑ feat↑
+agentic review. Higher trend lines indicate greater AI reviewer                                                          Agent   76% -4.5* +2.5        +12.4    —
+participation.
+                                                                                                             platforms (e.g., Archive’s OpenLibrary [42]), with no
+occur at slightly different time points. To select the number                                                single domain dominating.
+of clusters, we calculate the silhouette score using the same                                              • Rapid LLM Adoption captures projects that adopt gener-
+soft-DTW dissimilarity [38] for different numbers of clusters.                                               ative AI reviewers early, with high LLM reviewer partic-
+The silhouette score ranges from -1 to 1, with a higher                                                      ipation (91% of pull requests on average) in the LLM era
+value indicating better-separated clusters. We find three as the                                             followed by high AI agent reviewer participation (93% of
+optimal number of clusters, with a silhouette score of 0.40,                                                 pull requests on average) in the agent era. In this practice,
+suggesting fair separation [39].                                                                             web applications make up a larger proportion of projects,
+   Quantifying Pull Request Types. To examine whether                                                        accounting for 12 of the 45 (27%).
+LLM and AI agent reviewers are used differently across pull                                                • Rapid AI Agent Adoption shows limited LLM reviewer
+request types, we use the relative participation rate metric.                                                participation in the LLM era, followed by rapid AI agent
+The relative participation rate is computed as follows:                                                      reviewer uptake in the agent era. In this practice, LLM
+                                   NtAI / NtAI + Ntnon-AI
+                                                                                                            reviewers participate in 19% of pull requests on average
+  Relative participation ratet = AI         AI + N non-AI
+                                                              (3)                                           during the LLM era, followed by AI agent reviewer
+                                  Nother / Nother    other                                                   participation in 76% of pull requests in the agent era. This
+   where NtAI and Ntnon-AI denote pull requests of type t                                                    practice contains projects from large companies such as
+reviewed with and without an LLM or AI agent reviewer,                                                       Microsoft [43] (12 projects) and Google [44] (3 projects).
+                  AI          non-AI
+respectively. Nother  and Nother     denote pull requests of all                                           Gradual AI Adoption and Rapid AI Agent Adoption
+other types with and without these reviewers.                                                           show significantly more efficient reviews in the agent era.
+   This metric compares the AI reviewer participation rate for                                          Table IV shows the review efficiency and review smell rate
+type-t pull requests against that for all other types. We then                                          of each practice per era. From the pre-LLM to the agent era,
+use a chi-square test [40], which measures the associations be-                                         review time drops by 2.5 days/KLOC for Gradual AI Adop-
+tween categorical variables, to determine whether AI reviewer                                           tion, and by 4.5 days/KLOC for Rapid AI Agent Adoption.
+participation differs significantly across pull request types.                                          However, Rapid LLM Adoption shows no significant change
+   Comparing Review Quality. To examine differences in                                                  across review eras. This suggests that early, heavy reliance on
+review quality across eras within each AI adoption practice,                                            LLM reviewers does not necessarily improve review efficiency,
+we compare the review efficiency and review smell metrics                                               whereas projects that gradually adopt AI reviewers or shift
+defined in Section II-D. Specifically, the pre-LLM era captures                                         rapidly in the agent era show significant efficiency gains.
+code review practices before generative AI reviewers are                                                   Rapid LLM Adoption Adoption have a significantly
+adopted, so we use it as the baseline for comparing review                                              higher review smell rate than their pre-LLM baseline,
+efficiency and the prevalence of each review smell in the                                               for both the LLM and agent eras. As listed in Table IV,
+LLM and agent eras. Since the metric values do not follow                                               review smells significantly increase in Rapid LLM Adoption,
+a normal distribution, we use the Wilcoxon signed-rank test                                             by 8.0% points in the LLM era and 4.4% points in the
+with Bonferroni correction [40] for significance testing.                                               agent era. This increased smell rate is especially reflected
+   Results. We identify three AI adoption practices: Grad-                                              in Review Buddies (i.e., repeated assignment of the same
+ual AI Adoption (46% of 207 studied projects), Rapid LLM                                                reviewer), which rises by 26% in the LLM era and 23.2%
+Adoption (22%), and Rapid AI Agent Adoption (32%).                                                      in the agent era from the pre-LLM baseline. Other review
+Fig. 2 illustrates the three identified AI reviewer adoption                                            smell types did not show significant increases in our full smell
+practices. Below, we describe each practice.                                                            analysis. These results suggest that Rapid LLM Adoption may
+   • Gradual AI Adoption shows a steady transition from                                                 increase reliance on the same LLM reviewer accounts (e.g.,
+      human-centric review to generative AI reviewer par-                                               LlamaPReview [22]), which narrows review perspectives and
+      ticipation. LLM reviewers participate in only 8% of                                               reduces feedback diversity.
+      pull requests on average in the LLM era, whereas AI                                                  In Gradual AI Adoption, LLM reviewers are utilized
+      agent reviewers participate in 36% of pull requests in                                            significantly more in reviewing maintenance (chore) and
+      the agent era. The projects span diverse domains, from                                            bug-fixing pull requests, whereas AI agent reviewers par-
+      operating systems (e.g., RT-Thread [41]) to educational                                           ticipate significantly more often in feature or refactoring
+                                                                                                                                   6
+
+
+
+pull requests. For this adoption practice, LLM reviewers             reviewer, then by an AI agent reviewer, then by a human
+participate more often in chore pull requests (2.0 times the         reviewer again before acceptance.
+rate of other types) and fix pull requests (1.2 times) during the       We then abstract reviewer interaction sequences into col-
+LLM era. In contrast, during the agent era, AI agent reviewers       laboration patterns using Markov chains with expectation-
+participate more often in feature pull requests (1.4 times) and      maximization, following prior software engineering process
+refactoring pull requests (1.3 times). This pattern suggests that,   analyses [45], [46], [47]. A Markov chain represents one
+with the gradual shift toward agentic code review, AI-reviewed       candidate collaboration pattern by estimating the probability
+tasks move from routine maintenance and bug fixing toward            of the first reviewer category and the transition probabilities
+more context-aware work such as feature development and              between reviewer categories. Expectation-maximization fits
+refactoring. In Rapid LLM Adoption, generative AI reviewer           multiple Markov chains to the reviewer interaction sequences
+participation is spread across several pull request types in the     and assigns each pull request sequence to the chain that best
+LLM era and is only concentrated in performance pull requests        explains its reviewer transitions. To select the number of
+in the agent era. In Rapid AI Agent Adoption, generative AI          collaboration patterns, we fit models with different candidate
+reviewer participation is concentrated in several pull request       numbers of Markov chains and compare them using the
+types during the LLM era but does not concentrate on any             Bayesian Information Criterion (BIC) [48]. BIC is a model-
+single type in the agent era.                                        selection criterion that balances goodness of fit against model
+                                                                     complexity, with lower BIC values indicating a better-fitting
+     Summary for RQ1                                                 model. The lowest-BIC model yields 10 collaboration patterns,
+    We identify three AI reviewer adoption practices:                which we use in the subsequent analysis.
+    Gradual AI Adoption, Rapid LLM Adoption, and Rapid                  Measuring Review Quality. To measure the quality and
+    AI Agent Adoption. Rapid LLM Adoption significantly              efficiency of AI participation in the code review process, we
+    increases review smells, whereas Gradual AI Adoption             compare the collaboration patterns involving generative AI
+    and Rapid AI Agent Adoption significantly improve                against human-only code review.
+    review efficiency in the agent review era.                          (1) Review Efficiency: Within each adoption pattern and era,
+                                                                     we use the Scott-Knott Effect Size Difference (ESD) test [49],
+                                                                     [50] to rank collaboration patterns by review efficiency. The
+                                                                     Scott-Knott ESD test ranks collaboration patterns by signifi-
+B. RQ2: What is the impact of human-AI collaboration pat-            cant differences in review efficiency, allowing us to identify
+terns on code review quality?                                        the most efficient patterns within the same practice and era.
+   Motivation. The AI adoption practices capture how projects           (2) Review Smells: We compare the prevalence of review
+adopt AI reviewers across review eras. However, they do not          smells between each AI-involved and human-only collabora-
+show how human, LLM, and AI agent reviewers interact                 tion pattern during each combination of adoption practice and
+when reviewing individual pull requests. For example, an             era, using chi-square tests with Bonferroni correction [40],
+AI reviewer may initiate the review, or an AI reviewer may           since smell presence is categorical.
+join the code review only after human reviewers initiate the            Comparing Pull Request Types. To identify whether
+discussion. Various interaction sequences can frequently re-         collaboration patterns are associated with different pull re-
+occur and therefore emerge as collaboration patterns. In this        quest types (e.g., bug fixing), we compare the distribution of
+research question, we aim to identify collaboration patterns         the pull request types defined in Table I between each AI-
+and examine their impact on review quality. Understanding            involved collaboration pattern and human-only review. Since
+these collaboration patterns can guide developers in deciding        collaboration patterns and pull request types are categorical,
+when and how to involve human, LLM, and AI agent reviewers           we use chi-square tests with Bonferroni correction [40] within
+during code review.                                                  each adoption practice and era.
+   Approach. To analyze the collaboration patterns between              Results. In the LLM era, human-bot and multi-LLM col-
+human and AI reviewers, we represent each pull request as            laboration patterns are as efficient as human-only review
+an ordered sequence of review comments labeled by reviewer           in Gradual AI Adoption and Rapid AI Agent Adoption.
+type (e.g., AI agent reviewer). We then group these sequences        However, for Rapid LLM Adoption, all LLM-involved
+into collaboration patterns and compare their associations with      review patterns are significantly slower than human-only
+review efficiency and quality across different review eras.          review. Table V shows the Scott-Knott ESD efficiency rank
+   Identifying Collaboration Patterns. To capture reviewer           for collaboration patterns within each adoption practice and
+participation within each pull request, we record the temporal       review era. As listed in Table V, LLM-Assist reviews are less
+sequence of reviewer types from pull request-level review            efficient than human-only reviews across all three adoption
+comments and the review decision of the pull request (i.e.,          practices (R2–R3 vs. R1). Multi-LLM reviews are as efficient
+accepted or rejected). We order the comments by timestamp            as human-only reviews under Gradual AI Adoption and Rapid
+and record the reviewer type (e.g., LLM reviewer) of each            AI Agent Adoption (both R1), but are less efficient under
+comment, preserving repeated participation by the same re-           Rapid LLM Adoption (R2 vs. R1). In Multi-LLM reviews,
+viewer type, and end each sequence with the pull request             the LLM reviewer contributes a median of two comments, and
+decision. For example, Human → Agent → Human →                       in 75% of these pull requests, human reviewers respond with
+accepted represents a pull request reviewed first by a human         only a single comment before the review ends. By contrast,
+                                                                                                                                                               7
+
+
+
+TABLE V: Prevalence of each human-AI review collaboration                                    prevalence ranges from 69% to 76% for human-only reviews
+pattern, its review efficiency rank, review smell prevalence,                                and from 78% to 94% for patterns involving AI across the
+and the pull request types associated with each pattern. Effi:                               LLM and agent eras. This higher smell prevalence is mainly
+Scott-Knott ESD rank result for review efficiency; R1 = most                                 driven by Review Buddies, which rises from 16% for human-
+efficient. Smell (%): percentage of pull requests with at least                              only reviews to 60% for LLM-involved patterns and 53% for
+one review smell. PR Type: for Human-Only rows, the top-                                     agent-involved patterns on average [15]. The other smells do
+1 common pull request types with their percentages (e.g.,                                    not follow this trend, with Sleeping Review declining and
+feat(46) = 46% are feature pull requests). For other rows,                                   Large Changeset staying flat across eras [15]. These results
+pull request types that are significantly more frequent than                                 suggest that repeated use of the same AI reviewer or model
+in Human-Only reviews within the same era.                                                   identity may reduce reviewer diversity and narrow review per-
+          Collaboration   Gradual AI Adoption Rapid LLM Adoption Rapid Agent Adoption        spectives. Practitioners could adopt more collaborative multi-
+             Pattern      Effi. Smell PR Type Effi. Smell PR Type Effi. Smell PR Type
+                                                                                             agent setups that distribute review across several agents and
+                          R2                     R2                   R2
+Pre-LLM
+
+
+
+
+          Human-Only           75 feat(46)            72 feat(46)          75 feat(43)
+          Human-Bot       R2   84↑ chore↑        R1   86↑             R2   84↑
+                                                                                             encourage knowledge transfer, so that the review process does
+          Human-Bot-ML R1      88↑ chore↑ fix↑   R1   82↑ chore↑ fix↑ R1   87↑ feat↑         not depend on a single default AI reviewer.
+          Human-Only      R1    76 feat(41)      R1    69 chore(32)   R1   72 feat(33)          AI-involved collaboration patterns are associated with
+                          R1                     R2                   R1                     different pull request types across adoption practices and
+LLM
+
+
+
+
+          Human-Bot            82↑ chore↑             78↑ fix↑             88↑
+          LLM-Assist      R2   81↑               R3   87↑ fix↑        R2   83↑ feat↑         eras. As shown in Table V, under Gradual AI Adoption,
+          Multi-LLM       R1    81 chore↑ feat↑ R2    86↑ feat↑ fix↑ R1    81↑ fix↑
+                                                                                             several AI-involved patterns, such as Multi-LLM, LLM-Bot-
+          LLM-Bot-Assist R1    94↑ chore↑ refac↑ R2   80↑ docs↑ fix↑ R2    87↑ fix↑ refac↑
+          Human-Only      R3    75 feat(42)      R1    74 feat(34)    R2   71 feat(39)
+                                                                                             Assist, and Multi-Agent, are associated with chore pull re-
+          Human-Bot       R2   83↑ chore↑        R2    73 fix↓ docs↑ R2    84↑               quests more often than human-only review. Under Rapid LLM
+                          R2                     R1   84↑ fix↓ chore↑ R1                     Adoption, most AI-involved patterns in the LLM era are
+Agent
+
+
+
+
+          Agent-Init           78↑ chore↑                                  80↑ chore↑
+          Agent-Assist    R3   84↑               R2   84↑ fix↓ feat↑ R2    83↑               associated with bug-fixing pull requests and are less efficient
+          Multi-Agent     R1   83↑ chore↑        R1   83↑ fix↓ docs↑ R1    82↑ fix↑          than human-only review (R2–R3 vs. R1). In the agent era of
+          Agent-ML-Assist R3   86↑               R2   84↑ feat↑       R2   84↑
+                                                                                             Rapid LLM Adoption, fix pull requests become significantly
+                                                                                             less frequent for several AI-involved patterns, such as Agent-
+in LLM-Assist reviews, humans comment first and often                                        Init and Multi-Agent, while other patterns are associated with
+continue the discussion after the LLM comment, resulting in                                  documentation, chore, or feature pull requests. These results
+more human back-and-forth than in human-only reviews (with                                   suggest that, under Rapid LLM Adoption, agent-era collabo-
+medians of four and two human comments, respectively; see                                    ration patterns change the types of pull requests involving AI
+our replication package [15]). This suggests that a single LLM                               more than they change review efficiency.
+comment is often insufficient to resolve a pull request by itself.
+Instead, reviewers still need continued human-AI back-and-                                        Summary for RQ2
+forth before reaching a decision.
+                                                                                                 Collaboration patterns with LLM or AI agent reviewers
+   In the agent era, agent-init and multi-agent reviews                                          show significantly higher review buddies than human-
+are significantly faster than human-only review under                                            only review. In the agent era, agent-init and multi-agent
+Gradual AI and Rapid AI Agent Adoption. As listed in                                             reviews are significantly faster than human-only review
+Table V, agent-initiated and multi-agent reviews rank ahead                                      in Gradual AI and Rapid AI Agent Adoption, but show
+of human-only review (R1–R2 vs. R2–R3) for both Gradual                                          no significant difference in Rapid LLM Adoption.
+AI and Rapid AI Agent Adoption. However, we do not
+observe a significant efficiency difference from human-only
+review under Rapid LLM Adoption. In the agent era of
+Rapid LLM Adoption, human-only review ranks first in review                                  C. RQ3: How do human-AI collaboration patterns relate to
+efficiency, with 61% of its pull requests resolved in a two-turn                             traditional factors impacting review quality?
+exchange [15]. This indicates that human review is already fast                                 Motivation. In RQ1 and RQ2, we find that review quality
+in this practice. Furthermore, we observe that in agent-init and                             differs significantly across AI adoption practices and human-
+multi-agent reviews, the agents take over the inspection step                                AI collaboration patterns. However, this quality difference may
+in 75% to 95% of these pull requests, posting a summary                                      not necessarily result from AI collaboration patterns or AI
+of the code change, after which the human responds with a                                    adoption practices, and may be explained by other factors of
+single short comment. For example, after the agent summarizes                                the review process, such as reviewer experience and review
+a bug fix, the human replies “I cannot reproduce the bug,                                    activity (e.g., commit count, inline discussion threads) within
+but the change looks very reasonable to me.”, after which the                                a pull request [12], [11]. We therefore examine whether review
+pull request is merged. This suggests that agent reviewers can                               quality is more strongly associated with collaboration patterns
+support the inspection step and provide a useful starting point                              or with alternative factors in the review process (e.g., pull
+for the review, potentially reducing the exchanges needed from                               request characteristics) . This analysis helps identify the factors
+human reviewers.                                                                             associated with better review quality, guiding what developers
+   Pull requests reviewed only by human reviewers exhibit                                    could consider when designing agentic review pipelines.
+significantly lower review smell prevalence than most AI-                                       Approach. To examine how traditional review factors and
+involved collaboration patterns. Table V shows that smell                                    human-AI collaboration factors are associated with review
+                                                                                                                                      8
+
+
+
+quality, we build explanatory models for each AI adoption           values indicate that the explanatory variables better distinguish
+practice and review era, using the following process.               efficient reviews from inefficient ones or smelly from non-
+   Training Explanatory Model. To examine how our ex-               smelly reviews. To avoid evaluation on the same data used to
+planatory factors are associated with review quality, we use        train the model, we train each model (9+27=36 models in total)
+logistic regression [51], [52], [53]. Logistic regression es-       on 90% of the data within each combination of AI adoption
+timates how each factor is associated with the probability          practice and review era, and use the remaining 10% held-out
+of an efficient review or the presence of a review smell            test set to measure AUC [51].
+while accounting for the other factors in the model. In each           Estimating Factor Importance. We follow prior modeling
+model, the independent variables include the collaboration          analyses [51], [12] by adding our explanatory features to the
+patterns (identified in Sec. III-B), pull request characteris-      model one at a time and applying a likelihood ratio chi-
+tics (e.g., initial code churn), review activity (e.g., commit      square test [40]. A p-value below 0.05 from the likelihood
+counts during the review), and participant experience(e.g.,         ratio chi-square test indicates that the newly added factor
+human reviewer experience in the same project), which are           significantly improves model fit beyond the factors already
+listed in Table III. The dependent variable is a binary review      included. For example, consider a logistic regression model
+outcome that captures whether a review is efficient or whether      with efficient review as the dependent variable, where re-
+it contains a given review smell, which is labeled as follows:      viewer collaboration pattern and pull request type are already
+   (1) Review efficiency analysis: The review efficiency metric     included as independent variables. When review activity is
+is continuous (#days/KLOC), so we discretize it into “effi-         added as another independent variable, the likelihood-ratio chi-
+cient” and “inefficient” classes. Within each adoption practice     square test compares the expanded model with the previous
+and review era, pull requests below the median #days/KLOC           model that includes only reviewer collaboration pattern and
+are labeled “efficient”, and the rest are labeled “inefficient”.    pull request type. A p-value below 0.05 shows that review
+This yields nine efficiency models (i.e., 3 practices × 3 eras)     activity significantly improves model fit after those variables
+in total, which estimate whether the explanatory variables are      have already been considered. This analysis helps determine
+associated with efficient review.                                   which variables (e.g., review activity) have an independent
+   (2) Review smells analysis: For each selected review smell,      explanatory contribution to review efficiency or review smells.
+the dependent variable is binary, indicating whether a pull         To this end, we first measure a baseline prediction (Pbase ) by
+request contains that smell. Because the review smell models        setting all variables to their baseline values (i.e., median values
+are trained separately for each adoption practice and review        for numeric variables and reference categories for categorical
+era, each modeled smell must include enough pull requests           variables). We then compute a second prediction (Pchanged ) by
+with and without that smell in every model. Therefore, we           changing only the target variable by a typical amount (i.e.,
+focus on the three most prevalent smells among modeled pull         increasing a numeric variable by one standard deviation or
+requests: Review Buddies (46.9%), Sleeping Review (38.6%),          setting a categorical variable to the target category), while
+and Large Changeset (20.6%). This yields 27 smell models in         keeping all other variables at their baseline values [58], [12].
+total (3 smells × 3 practices × 3 eras), which estimate whether     We then calculate the impact percentage as follows:
+the explanatory variables are associated with each smell.                                             Pchanged − Pbase
+   Processing explanatory variables. Since highly correlated              Impact Score (Imp%) =                        × 100%      (4)
+                                                                                                           Pbase
+variables can distort model estimates [52], [54], we com-
+pute the Variance Inflation Factor (VIF) for each variable in          Positive Imp% indicates a higher predicted probability of
+Table III. VIF measures how much a variable’s variance is           the modeled outcome, and negative Imp% indicates a lower
+inflated by its correlation with the other variables [55]. All      predicted probability. By dividing each effect by the baseline
+variables yielded a VIF below 5 [51], so none are removed.          probability (Pbase ), Imp% places variables with different units
+To reduce the influence of extreme values, we then apply            and ranges on a common scale. We can therefore directly
+a log transformation to each numeric variable with positive         compare the practical impact of each significant variable (e.g.,
+skew [53]. For categorical variables (e.g., collaboration pattern   the number of reviewers) and identify which factors are most
+and pull request types), we use dummy encoding. For collab-         strongly associated with review efficiency or review smells.
+oration patterns, human-only review serves as the reference            Results. We organize our findings by review efficiency and
+category. For pull request type, the “feature” type serves as       three selected review smells. We discuss each outcome below.
+the reference category. Thus, coefficients for dummy-encoded        (1) Review Efficiency. Greater reliance on AI reviewers
+collaboration patterns are interpreted relative to human-only       does not necessarily translate into more efficient code
+review, and those for pull request types are interpreted relative   reviews, as traditional review factors continue to play an
+to feature pull requests [51].                                      important role. Table VI presents the impact scores of the
+   Measuring the goodness of fit. To analyze how well the           significant explanatory factors for each outcome. In the Pre-
+explanatory models distinguish between the binary review            LLM era, author experience and pull request characteristics
+quality classifications, we use the Area Under the ROC              (e.g., chore and refactoring pull request types) are the primary
+Curve (AUC) [56], [57] to assess whether the explanatory            factors associated with review efficiency. For example, author
+models provide sufficient separation between the binary review      experience is associated with lower review delay across the
+outcomes used in our analysis. An AUC of 0.5 indicates              three adoption practices, with impact scores from -17 to -22
+random separation, while substantially larger (or smaller)          in the Pre-LLM era. In the LLM era, collaboration patterns
+                                                                                                                                                                                                                   9
+
+
+
+TABLE VI: Impact of collaboration patterns and traditional factors on review delay (lack of efficiency) and review smells
+across review eras and AI-adoption practices. Green text indicates a significantly better outcome (e.g., lower review delay),
+whereas red text indicates a significantly worse outcome. Blank cells indicate non-significant associations (p >= 0.05 and
+|impact| < 10%.).
+                                                                                                                                     Review Smells
+                                 (1) Lack of Efficiency (Review Delay)
+                                                                                         (2) Review Buddies                           (3) Sleeping Review                        (4) Large Changeset
+                  Factor       Pre-LLM            LLM            Agent        Pre-LLM           LLM              Agent       Pre-LLM          LLM            Agent       Pre-LLM         LLM           Agent
+                Multi-Agent                                  −50 +37 −13                                    +220 +250 +513                               −48       −16                             +29 −60 +54
+                                                             −37 +39 −16                                                                                 −36 +42 −26                               +27 −55 +20
+Collaboration
+
+
+
+
+                Agent-Init                                                                                  +200 +249 +605
+                Agent-ML                                     −11 +50                                        +246 +269 +678                                    +94                                  +48 −44
+                Agent-Assist                                      +53 +13                                   +174 +227 +418                                    +88 +26                              +25 −51 +29
+                LLM-Bot                           +33 +28                                 +220 +2K +130                                 +26 +124 +56                                     −44 −41
+                LLM-Assist                  +28 +45 +30                                   +65 +2K +62                                   +45 +214 +79                                     −43
+                Human-Bot                         +17 +12 −21              +287 +1K +283 +170 +2K +108 +197 +96 +437           −14            +46 +32 −24              −21           −18 −35 +38 +14 +26 +20
+                build                  −18             −20 +16         −40 −61       −15 −86 −43 −20 −41 −55 −19 −10 −38 −26 −26 −22 −14                      −24 −25      −31       −47 +52 +29        +20 +44
+Traditional
+
+
+
+
+                chore        −32 −41 −24 −30 −11 −12                   −25 +19 +52 +27          −39 −30 +14 −25            −40 −50 −42 −48 −33 −40 −14 −28 −32 +31                   +29                     +11
+                refactor     −11 −16 −12          −10        −11                +34 +29 +25 −19 +20 +17 −12 +33                −22 −14        −24             −19      +32 +12       +14      +15 +26 +15
+                Author Exp −17 −22 −18 −12                   −15       −14 +115 +238 +151 +72 +516 +67 +93 +228 +116 −19 −24 −22 −19 −23 −24 −17 −24 −18                   +12 +10       +10       +12       +20
+                NumCommit                                                       −14                   +10                  +36 +31 +28 +48 +70 +41 +29 +27 +37 +95 +100 +73 +96 +73 +77 +74 +49 +76
+                InlineThread +11 +20 +15 +12           +15 +12         +10                      +16 −19                −15 +30 +36 +30 +45 +43 +51 +30 +26 +27 +16 +12               +33 +44       +32 +30 +24
+                                 I
+                                M
+
+                                         ra ent
+
+                                                     I
+
+                                           id M
+
+                                         ra ent
+
+                                                     I
+
+                                           id M
+
+                                                   nt
+
+
+                                                     I
+
+                                                   M
+
+                                                    nt
+
+
+                                                     I
+
+                                                   M
+
+                                                    nt
+
+
+                                                     I
+
+                                                   M
+
+                                                    nt
+
+
+                                                     I
+
+                                           id M
+
+                                         ra ent
+
+                                                     I
+
+                                                   M
+
+                                         ra ent
+
+                                                     I
+
+                                           id M
+
+                                         ra ent
+
+                                                     I
+
+                                                   M
+
+                                         ra ent
+
+                                                     I
+
+                                           id M
+
+                                         ra ent
+
+                                                     I
+
+                                           id M
+
+                                                   nt
+                              lA
+
+
+
+
+                                         ap l A
+
+
+
+
+                                         ap l A
+
+
+
+
+                                                   A
+
+
+
+
+                                                   A
+
+
+
+
+                                                   A
+
+
+
+
+                                         ap l A
+
+
+
+
+                                                   A
+
+
+
+
+                                         ap l A
+
+
+
+
+                                                   A
+
+
+
+
+                                                   A
+
+
+
+
+                                                   A
+                                                 ge
+
+
+
+
+                                                 ge
+
+
+
+
+                                                 ge
+
+
+
+
+                                                 ge
+
+
+
+
+                                                ge
+                             LL
+
+
+
+
+                                               LL
+
+
+
+
+                                               LL
+
+
+
+
+                                               LL
+
+
+
+
+                                               LL
+
+
+
+
+                                               LL
+
+
+
+
+                                               LL
+
+
+
+
+                                               LL
+
+
+
+
+                                               LL
+
+
+
+
+                                               LL
+
+
+
+
+                                               LL
+
+
+
+
+                                               LL
+                                                 g
+
+
+
+
+                                                 g
+
+
+
+
+                                                 g
+
+
+
+
+                                                 g
+
+
+
+
+                                                 g
+
+
+
+
+                                                 g
+
+
+
+
+                                                g
+                                               al
+
+
+
+
+                                               al
+
+
+
+
+                                               al
+
+
+
+
+                                               al
+
+
+
+
+                                               al
+
+
+
+
+                                               al
+
+
+
+
+                                               al
+                         ua
+
+
+
+
+                                               a
+
+
+
+
+                                               a
+
+
+
+
+                                               a
+
+
+
+
+                                               a
+                                               A
+
+
+
+
+                                               A
+
+
+
+
+                                               A
+
+
+
+
+                                               A
+
+
+
+
+                                               A
+
+
+
+
+                                               A
+
+
+
+
+                                               A
+
+
+
+
+                                               A
+
+
+
+
+                                               A
+
+
+
+
+                                               A
+
+
+
+
+                                               A
+
+
+
+
+                                               A
+                                            du
+
+
+
+
+                                            du
+
+
+
+
+                                            du
+
+
+
+
+                                            du
+
+
+
+
+                                            du
+
+
+
+
+                                            du
+
+
+
+
+                                            du
+
+
+
+
+                                            du
+
+
+
+
+                                            du
+
+
+
+
+                                            du
+
+
+
+
+                                            du
+                              id
+
+
+
+
+                                            id
+
+
+
+
+                                            id
+
+
+
+
+                                            id
+
+
+
+
+                                            id
+
+
+
+
+                                            id
+
+
+
+
+                                            id
+
+
+
+
+                                            id
+
+
+
+
+                                            id
+
+
+
+
+                                            id
+
+
+
+
+                                            id
+
+
+
+
+                                            id
+                         d
+
+
+
+                                           id
+
+
+
+
+                                           id
+
+
+
+
+                                           id
+
+
+
+
+                                           id
+
+
+
+
+                                           id
+
+
+
+
+                                           id
+                      ra
+
+
+
+
+                                         ra
+
+
+
+
+                                         ra
+
+
+
+
+                                         ra
+
+
+
+
+                                         ra
+                             ap
+
+
+
+
+                                         ap
+
+
+
+
+                                         ap
+
+
+
+
+                                         ap
+
+
+
+
+                                         ap
+
+
+
+
+                                         ap
+
+
+
+
+                                         ap
+
+
+
+
+                                         ap
+                                   ap
+
+
+
+
+                                        ap
+
+
+
+
+                                        ap
+
+
+
+
+                                        ap
+
+
+
+
+                                        ap
+
+
+
+
+                                        ap
+
+
+
+
+                                        ap
+
+
+
+
+                                        ap
+
+
+
+
+                                        ap
+
+
+
+
+                                        ap
+
+
+
+
+                                       ap
+
+
+
+
+                                       ap
+                     G
+
+
+
+
+                                       G
+
+
+
+
+                                       G
+
+
+
+
+                                       G
+
+
+
+
+                                       G
+
+
+
+
+                                       G
+
+
+
+
+                                       G
+
+
+
+
+                                       G
+
+
+
+
+                                       G
+
+
+
+
+                                       G
+
+
+
+
+                                       G
+
+
+
+
+                                       G
+                         R
+
+
+
+
+                                      R
+
+
+
+
+                                      R
+
+
+
+
+                                      R
+
+
+
+
+                                      R
+
+
+
+
+                                      R
+
+
+
+
+                                      R
+
+
+
+
+                                      R
+
+
+
+
+                                      R
+
+
+
+
+                                      R
+
+
+
+
+                                      R
+
+
+
+
+                                      R
+                                  R
+
+
+
+
+                                      R
+
+
+
+
+                                      R
+
+
+
+
+                                      R
+
+
+
+
+                                      R
+
+
+
+
+                                      R
+
+
+
+
+                                      R
+
+
+
+
+                                      R
+
+
+
+
+                                      R
+
+
+
+
+                                      R
+
+
+
+
+                                      R
+
+
+
+
+                                      R
+involving LLMs or bots are generally associated with higher                                                      with impact scores ranging from +27 to +70 for commits and
+review delay (i.e., lower efficiency), while traditional re-                                                     from +26 to +51 for inline discussion threads. By contrast,
+view factors remain relevant but less consistently, particularly                                                 pull requests submitted by authors with more prior experience
+for author experience and refactoring. In the agent era, AI                                                      in the same project, as well as build and chore pull requests,
+agent collaboration becomes the dominant factor associated                                                       are associated with a lower probability of Sleeping Review,
+with review efficiency. Specifically, multi-agent and agent-init                                                 with impact scores ranging from −10 to −50. In the LLM
+collaboration patterns are negatively associated with review                                                     era, LLM-Assist and LLM-Bot-Assist are associated with a
+delay (i.e., higher efficiency) under Gradual AI Adoption and                                                    higher probability of Sleeping Review, with impact scores
+Rapid AI Agent Adoption. However, under Rapid LLM Adop-                                                          ranging from +26 to +214. In the agent era, Multi-Agent and
+tion, where traditional review factors are no longer significant,                                                Agent-Init patterns are associated with a lower probability of
+AI collaboration patterns remain consistently associated with                                                    Sleeping Review in Gradual AI Adoption and Rapid AI Agent
+higher delay and therefore lower review efficiency, suggesting                                                   Adoption, with impact scores ranging from −16 to −48. By
+that projects relying more on AI-assisted reviews, without                                                       contrast, under Rapid LLM Adoption, agent patterns such as
+the influence of traditional review factors, do not necessarily                                                  Agent-Init and Agent-ML are associated with a much higher
+achieve more efficient reviews.                                                                                  probability of Sleeping Review, with impact scores of +42
+(2) Review Buddies. Build pull requests are often associated                                                     and +94.
+with fewer Review Buddies across review eras, suggest-                                                           (4) Large Changeset. Agent-involved collaboration patterns
+ing more diverse reviewer participation for maintenance-                                                         under Gradual AI Adoption and Rapid AI Agent Adoption
+oriented tasks. As shown in Table VI, build, chore, and                                                          are often associated with a higher likelihood of Large
+refactoring pull requests exhibit negative associations with                                                     Changeset. As shown in Table VI, among traditional factors,
+Review Buddies under the Rapid LLM Adoption in the LLM                                                           only build pull requests show mixed associations with Large
+era (−43, −39, and −19) and the Agent era (−55, −25, and                                                         Changeset across practices and eras. Other factors, including
+−12). This pattern is also observed for build pull requests                                                      commit count, inline discussion threads, author experience,
+under Rapid AI Agent Adoption, where build pull requests                                                         chore and refactoring pull requests, show positive significant
+exhibit negative associations with Review Buddies across the                                                     associations where they appear. In the agent era, significant
+three eras (−15, −20, and −19). This suggests that these                                                         agent-involved collaboration patterns show positive associa-
+maintenance-oriented pull requests are less likely to rely on                                                    tions with Large Changeset under Gradual AI Adoption and
+repeated reviewer pairings and instead involve a more diverse                                                    Rapid AI Agent Adoption, with impact scores ranging from
+set of reviewers. However, refactoring pull requests show                                                        +25 to +48 and from +20 to +54, respectively. These findings
+positive associations with Review Buddies under Rapid AI                                                         suggest that agent-involved collaboration is more frequently
+Agent Adoption across the three eras (+29, +20, and +33),                                                        associated with the review of larger code changes than in the
+indicating more repeated reviewer pairings for this pull request                                                 Pre-LLM and LLM eras.
+type. Furthermore, author experience is consistently positively
+associated with Review Buddies across all review eras, indi-
+cating that more experienced authors are more likely to review                                                           Summary for RQ3
+with recurring collaborators, whereas less experienced authors
+                                                                                                                       Traditional review factors remain important after gen-
+tend to participate in more diverse review interactions.
+                                                                                                                       erative AI reviewers are adopted. Agent-era collabora-
+(3) Sleeping Review. In the Agent era, multi-agent and
+                                                                                                                       tion patterns reduce Sleeping Review under Gradual AI
+agent-init reviews are associated with fewer Sleeping Re-
+                                                                                                                       Adoption and Rapid AI Agent Adoption, but they are
+views under Gradual AI Adoption and Rapid AI Agent
+                                                                                                                       also associated with more Review Buddies and larger
+Adoption. Across the three review eras, pull requests with
+                                                                                                                       changesets.
+more commits and more inline discussion threads are consis-
+tently associated with a higher probability of Sleeping Review,
+                                                                                                                                    10
+
+
+
+                      IV. I MPLICATIONS                               example, the identified collaboration patterns include LLM-
+   In this section, we discuss the implications of our findings       involved patterns in the agent era, such as LLM-Assist. How-
+for practitioners, tool builders, and researchers.                    ever, these older patterns do not have sufficient support (less
+   Adopting AI reviewers selectively rather than uniformly.           than 5%), so we exclude them from the pairwise comparisons
+Our results show that AI reviewer adoption practices are asso-        reported in Table V. The complete pattern results and their
+ciated with differences in review quality. Gradual AI Adoption        frequencies are available in our replication package [15].
+and Rapid AI Agent Adoption are associated with faster                   Threats to internal validity. Our logistic regression models
+reviews, while Rapid LLM Adoption is associated with lower            in RQ3 are explanatory, not causal. The associations we report
+review quality. Therefore, practitioners may consider adopting        reflect statistical relationships between factors and review
+AI reviewers selectively, based on pull request context and           efficiency and quality within each practice and era, but do not
+observed review efficiency and quality, rather than applying the      imply that changing one factor will directly cause a change in
+same AI reviewer configuration uniformly across pull requests.        review efficiency or review smells.
+   Building context-aware support for human-AI review                    Threats to external validity. Given the rapid evolution of
+decisions. Our findings identify several signals that can inform      AI reviewer capabilities, the collaboration patterns and review
+AI reviewer assignment, including human-AI collaboration              quality associations that we observe may shift as tools become
+patterns, pull request type, changeset size, discussion activity,     more sophisticated. Our dataset covers activity from May 2022
+and author or reviewer history. Tool builders can use these sig-      through February 2026, providing a current longitudinal view
+nals to help practitioners decide whether a pull request should       of AI reviewer adoption. While findings specific to individual
+remain human-led, use lightweight LLM summarization, or               tools may evolve, our longitudinal analysis across the pre-
+involve AI agent inspection.                                          LLM, LLM, and agent eras provides a baseline and reference
+   Balancing AI collaboration with traditional review prac-           point for future studies to track how AI reviewer adoption and
+tices. Our findings show that AI collaboration does not uni-          review quality continue to change.
+formly improve review quality. While some agent-era collab-
+oration patterns are associated with fewer Sleeping Reviews,                              VI. R ELATED WORK
+they are also associated with more Review Buddies and
+                                                                         Code review practices. Code review is a fundamental
+larger changesets. Traditional review factors, such as author
+                                                                      quality assurance practice where developers examine code
+experience and review activity, remain strongly associated
+                                                                      changes before integration. Prior work has shown how review
+with review efficiency and review smells. Practitioners should
+                                                                      intervals and participation converge across diverse organiza-
+therefore integrate AI reviewers alongside established review
+                                                                      tions [9], characterized modern review practices at scale [10],
+practices rather than relying on AI collaboration alone.
+                                                                      introduced code review smell taxonomies [13], and shown that
+   Studying developer decisions behind human-AI review
+                                                                      reviewer experience and changeset characteristics influence
+practices. AI review practices vary across projects, but our re-
+                                                                      review comment quality [30]. As AI reviewers enter code
+sults do not explain why developers choose particular human-
+                                                                      review, recent studies have evaluated LLM-assisted review
+AI review practices. Future research can build on our results
+                                                                      tools in specific settings. Cihan et al. [14] find that LLM-
+through interviews or surveys to understand why developers
+                                                                      assisted review may increase pull request review time despite
+assign AI reviewers to some pull requests, how they interpret
+                                                                      high comment resolution rates. Aðalsteinsson et al. [59] find
+AI feedback, when they keep humans in the lead, and how
+                                                                      that LLM-assisted review reduces reviewer cognitive load
+these decisions shape review efficiency and quality.
+                                                                      and improves comprehension. Sun et al. [60] find that LLM
+   Developing benchmarks that reflect pull request con-
+                                                                      reviewers produce concise comments that are more likely to
+text. Evaluating AI reviewers only by generic issue-finding
+                                                                      lead to code changes. In this study, we move beyond evaluating
+ability may miss important differences across review contexts.
+                                                                      individual AI review tools in isolation and analyze how review
+Researchers and tool builders can use signals such as pull
+                                                                      practices evolve as projects transition from human-centric
+request type, changeset size, discussion activity, author or
+                                                                      review to agentic review. We examine this transition at the
+reviewer history, and human-AI collaboration pattern to design
+                                                                      project level and pull-request level by identifying AI reviewer
+benchmarks across contexts such as routine maintenance, bug
+                                                                      adoption practices and human-AI collaboration patterns.
+fixing, refactoring, and large changesets. Such benchmarks
+would help assess when AI reviewers provide useful support               Review efficiency and quality factors. Prior work has
+and when human-led review remains necessary.                          studied technical and social factors associated with code re-
+                                                                      view efficiency and quality in human-centric review processes.
+                                                                      The factors include organizational structure and developer rela-
+                  V. T HREATS TO VALIDITY                             tionships [11], past review participation and patch description
+   Threats to construct validity. In our analysis, the agent          length [12], and reviewer experience and changeset charac-
+era denotes a chronological period in a project’s review history      teristics [30]. Such factors help explain why some reviews
+rather than guaranteeing that every AI reviewer during that pe-       complete faster or produce more useful feedback, but they
+riod is an AI agent. A project enters the agent era after its first   were developed mainly for human-only review settings. In this
+pull request involving an AI agent reviewer, but may continue         study, we extend these review outcome factors to the transition
+to use other LLM reviewers afterward. Therefore, agent-era            from human-centric to agentic review. We model review
+pull requests can still contain LLM reviewer participation. For       outcomes together with human-AI collaboration patterns, pull
+                                                                                                                                                        11
+
+
+
+request characteristics, review activity, and participant experi-              [11] O. Baysal, O. Kononenko, R. Holmes, and M. W. Godfrey, “Investigating
+ence to examine whether efficiency and quality differences are                      technical and non-technical factors influencing modern code review,”
+                                                                                    Empirical Software Engineering, vol. 21, no. 3, pp. 932–959, Jun 2016.
+associated mainly with AI reviewer participation or also with                       [Online]. Available: https://doi.org/10.1007/s10664-015-9366-8
+the alternative factors.                                                       [12] P. Thongtanunam, S. McIntosh, A. E. Hassan, and H. Iida, “Review
+                                                                                    participation in modern code review,” Empirical Software Engineering,
+                      VII. C ONCLUSION                                              vol. 22, no. 2, pp. 768–817, Apr 2017. [Online]. Available:
+                                                                                    https://doi.org/10.1007/s10664-016-9452-6
+   In this study, we analyze 1.02 million pull requests from                   [13] E. Doğan and E. Tüzün, “Towards a taxonomy of code review smells,”
+207 GitHub projects to understand how code review quality                           Information and Software Technology, vol. 142, p. 106737, 2022.
+evolves across three review eras. We identify three AI reviewer                     [Online]. Available: https://doi.org/10.1016/j.infsof.2021.106737
+                                                                               [14] U. Cihan, V. Haratian, A. İçöz, M. K. Gül, Ö. Devran, E. F.
+adoption practices and find that Gradual AI Adoption and                            Bayendur, B. M. Uçar, and E. Tüzün, “Automated code review
+Rapid AI Agent Adoption are associated with faster reviews                          in practice,” in 2025 IEEE/ACM 47th International Conference on
+but no improvement in review smells, while Rapid LLM                                Software Engineering: Software Engineering in Practice (ICSE-SEIP),
+                                                                                    2025, pp. 425–436. [Online]. Available: https://doi.org/10.1109/ICSE-S
+Adoption is associated with higher review-smell prevalence                          EIP66354.2025.00043
+and no efficiency gain. Within individual pull requests, agent-                [15] Anonymous, “AI review evolution,” https://anonymous.4open.science/r/
+init and multi-agent reviews reach a decision faster under                          CodeReviewEvolve-7917, 2026, accessed: 2026-02-26.
+                                                                               [16] GitHub, “GitHub advanced search,” https://github.com/search/advanced,
+Gradual AI and Rapid AI Agent Adoption, while they carry                            Feb. 2026, accessed: 2026-06-30.
+review smells more often than human-only reviews. We further                   [17] J. Coelho, M. T. Valente, L. L. Silva, and E. Shihab, “Identifying
+show that, beyond traditional factors, human-AI collaboration                       unmaintained projects in github,” in Proceedings of the 12th ACM/IEEE
+                                                                                    International Symposium on Empirical Software Engineering and
+patterns remain strongly associated with review efficiency and                      Measurement, ser. ESEM ’18. New York, NY, USA: Association for
+quality.                                                                            Computing Machinery, 2018. [Online]. Available: https://doi.org/10.1
+   Together, these findings suggest that developers should                          145/3239235.3240501
+                                                                               [18] Wikipedia contributors, “ChatGPT,” https://en.wikipedia.org/wiki/Chat
+adopt AI reviewers selectively, taking into account their adop-                     GPT, 2025, accessed: 2025-12-30.
+tion history, who reviews each pull request and when, and                      [19] GitHub, “GitHub REST API,” https://docs.github.com/en/rest?apiVersi
+the characteristics of each pull request. In future work, we                        on=2026-03-10, Feb. 2026, accessed: 2026-2-24.
+                                                                               [20] GitHub, Inc., “GitHub actions bot details,” https://github.com/marketp
+aim to study how agentic review systems can improve review                          lace/actions/bot-details, Jan. 2026, accessed: 2026-01-01.
+efficiency while preserving the quality standards established                  [21] Amazon Web Services, “Amazon CodeGuru Reviewer,” https://docs.a
+in human code review.                                                               ws.amazon.com/codeguru/latest/reviewer- ug/welcome.html, 2025,
+                                                                                    accessed: 2026-04-09.
+                             R EFERENCES                                       [22] JetXu-LLM, “LlamaPReview: Evidence-based, low-noise AI code re-
+                                                                                    viewer,” https://github.com/marketplace/llamapreview, gitHub
+ [1] Hugh Langley, “Google says 75% of the new code is AI-generated,”               Marketplace app page. Accessed: 2026-06-23.
+     https://www.businessinsider.com/google-ai-generated-code-75-gemin         [23] Anthropic, “Claude 3.7 Sonnet and Claude Code,” https://www.anthro
+     i-agents-software-2026-4, April 2026, accessed: 2026-06-30.                    pic.com/news/claude-3-7-sonnet, Feb. 2025, accessed: 2026-05-25.
+ [2] GitHub, “A new AI developer joins GitHub,” https://github.blog/news-      [24] T. Dybå, V. B. Kampenes, and D. I. Sjøberg, “A systematic review
+     insights/octoverse/octoverse-a-new-developer-joins-github-every-               of statistical power in software engineering experiments,” pp. 745–755,
+     second-as-ai-leads-typescript-to-1/, October 2025, updated February 28,        2006. [Online]. Available: https://doi.org/10.1016/j.infsof.2005.08.009
+     2026. Accessed: 2026-06-30.                                               [25] M. Watanabe, H. Li, Y. Kashiwa, B. Reid, H. Iida, and A. E.
+ [3] Lee Boonstra, “Google review bottleneck,” https://cloud.google.com/t           Hassan, “On the use of agentic coding: An empirical study of
+     ransform/when-ai-writes-the-code-who-reviews-it-cto-google-cloud,              pull requests on github,” ACM Transactions on Software Engineering
+     2026, accessed: 2026-06-16.                                                    and Methodology, Mar. 2026, just Accepted. [Online]. Available:
+ [4] Matthias Patzak, “Amazon review bottleneck,” https://aws.amazon.com            https://doi.org/10.1145/3798166
+     /blogs/enterprise-strategy/your-ai-coding-assistants-will-overwhelm       [26] K. E. Emam, “Benchmarking kappa: Interrater agreement in software
+     -your-delivery-pipeline-heres-how-to-prepare, Jan. 2026, accessed:             process assessments,” Empirical Software Engineering, vol. 4, no. 2,
+     2026-06-16.                                                                    pp. 113–133, Jun 1999. [Online]. Available: https://doi.org/10.1023/A:
+ [5] H. Li, H. Zhang, and A. E. Hassan, “The rise of ai teammates                   1009820201126
+     in software engineering (se) 3.0: How autonomous coding agents            [27] D. Izquierdo-Cortazar, N. Sekitoleko, J. M. Gonzalez-Barahona, and
+     are reshaping software engineering,” 2025. [Online]. Available:                L. Kurth, “Using metrics to track code review performance,” in
+     https://arxiv.org/abs/2507.15003                                               Proceedings of the 21st International Conference on Evaluation and
+ [6] S. Zhong, Y. Zou, and B. Adams, “Developer-llm conversations: An               Assessment in Software Engineering, ser. EASE ’17. New York,
+     empirical study of interactions and generated code quality,” 2025.             NY, USA: Association for Computing Machinery, 2017, p. 214–223.
+     [Online]. Available: https://arxiv.org/abs/2509.10402                          [Online]. Available: https://doi.org/10.1145/3084226.3084247
+ [7] Z. Rasheed, M. A. Sami, M. Waseem, K.-K. Kemell, X. Wang,                 [28] M. Chouchen, A. Ouni, R. G. Kula, D. Wang, P. Thongtanunam, M. W.
+     A. Nguyen, K. Systä, and P. Abrahamsson, “Ai-powered code                      Mkaouer, and K. Matsumoto, “Anti-patterns in modern code review:
+     review with llms: Early results,” 2025. [Online]. Available: https:            Symptoms and prevalence,” in 2021 IEEE International Conference on
+     //arxiv.org/abs/2404.18496                                                     Software Analysis, Evolution and Reengineering (SANER), 2021, pp.
+ [8] Thomas Dohmke, “Coding agent for Copilot,” https://github.blog/news            531–535. [Online]. Available: https://doi.org/10.1109/SANER50967.2
+     -insights/product-news/github-copilot-meet-the-new-coding-agent/,              021.00060
+     May 2025, accessed: 2026-01-01.                                           [29] S. McIntosh, Y. Kamei, B. Adams, and A. E. Hassan, “An
+ [9] P. C. Rigby and C. Bird, “Convergent contemporary software peer                empirical study of the impact of modern code review practices
+     review practices,” in Proceedings of the 2013 9th Joint Meeting on             on software quality,” Empirical Software Engineering, vol. 21,
+     Foundations of Software Engineering, ser. ESEC/FSE 2013. New                   no. 5, pp. 2146–2189, Oct 2016. [Online]. Available: https:
+     York, NY, USA: Association for Computing Machinery, 2013, p.                   //doi.org/10.1007/s10664-015-9381-9
+     202–212. [Online]. Available: https://doi.org/10.1145/2491411.2491444     [30] A. Bosu, M. Greiler, and C. Bird, “Characteristics of useful code
+[10] C. Sadowski, E. Söderberg, L. Church, M. Sipko, and A. Bacchelli,              reviews: An empirical study at microsoft,” in 2015 IEEE/ACM 12th
+     “Modern code review: a case study at google,” in Proceedings of                Working Conference on Mining Software Repositories, 2015, pp.
+     the 40th International Conference on Software Engineering: Software            146–156. [Online]. Available: https://doi.org/10.1109/MSR.2015.21
+     Engineering in Practice, ser. ICSE-SEIP ’18. New York, NY, USA:
+     Association for Computing Machinery, 2018, p. 181–190. [Online].
+     Available: https://doi.org/10.1145/3183519.3183525
+                                                                                                                                                           12
+
+
+
+[31] S. Zhong, S. Noei, Y. Zou, and B. Adams, “Human-ai synergy in                    of the 2009 SIAM International Conference on Data Mining (SDM),
+     agentic code review,” 2026. [Online]. Available: https://arxiv.org/abs/26        pp. 401–412. [Online]. Available: https://doi.org/10.1137/1.9781611972
+     03.15911                                                                         795.35
+[32] A. E. Hassan, H. Li, D. Lin, B. Adams, T.-H. Chen, Y. Kashiwa,              [48] S. Watanabe, “A widely applicable bayesian information criterion,” The
+     and D. Qiu, “Agentic software engineering: Foundational pillars and a            Journal of Machine Learning Research, vol. 14, no. 1, p. 867–897,
+     research roadmap,” 2026. [Online]. Available: https://arxiv.org/abs/25           Mar. 2013. [Online]. Available: https://dl.acm.org/doi/10.5555/2567709
+     09.06216                                                                         .2502609
+[33] M. Wessel, A. Serebrenik, I. Wiese, I. Steinmacher, and M. A.               [49] E. Jelihovschi, J. C. Faria, and I. B. Allaman, “Scottknott: A package
+     Gerosa, “Effects of adopting code review bots on pull requests to                for performing the scott-knott clustering algorithm in r,” Trends in
+     oss projects,” in 2020 IEEE International Conference on Software                 Computational and Applied Mathematics, vol. 15, no. 1, p. 003–017,
+     Maintenance and Evolution (ICSME), 2020, pp. 1–11. [Online].                     Mar. 2014. [Online]. Available: https://doi.org/10.5540/tema.2014.015.
+     Available: https://doi.org/10.1109/ICSME46990.2020.00011                         01.0003
+[34] M. Lepot, J.-B. Aubin, and F. H. Clemens, “Interpolation in time            [50] M. Ouf, S. Noei, Z. Van Iterson, M. Guizani, and Y. Zou, “An empirical
+     series: An introductive overview of existing methods, their performance          analysis of community and coding patterns in oss4sg vs. conventional
+     criteria and uncertainty assessment,” Water, vol. 9, no. 10, 2017.               oss,” arXiv preprint arXiv:2601.03430, 2026.
+     [Online]. Available: https://doi.org/10.3390/w9100796                       [51] P. Tourani and B. Adams, “The impact of human discussions on
+[35] S. Noei, H. Li, and Y. Zou, “An empirical study on release-                      just-in-time quality assurance: An empirical study on openstack and
+     wise refactoring patterns,” Proceedings of the ACM on Software                   eclipse,” in 2016 IEEE 23rd International Conference on Software
+     Engineering, vol. 2, no. FSE, Jun. 2025. [Online]. Available:                    Analysis, Evolution, and Reengineering (SANER), 2016, pp. 189–200.
+     https://doi.org/10.1145/3715734                                                  [Online]. Available: https://doi.org/10.1109/SANER.2016.113
+[36] F. Petitjean, A. Ketterlin, and P. Gançarski, “A global averaging method    [52] T. A. Ghaleb, D. A. da Costa, Y. Zou, and A. E. Hassan, “Studying
+     for dynamic time warping, with applications to clustering,” Pattern              the impact of noises in build breakage data,” IEEE Transactions on
+     Recognition, vol. 44, no. 3, pp. 678–693, 2011. [Online]. Available:             Software Engineering, vol. 47, no. 9, pp. 1998–2011, 2021. [Online].
+     https://doi.org/10.1016/j.patcog.2010.09.013                                     Available: https://doi.org/10.1109/TSE.2019.2941880
+[37] M. Cuturi and M. Blondel, “Soft-dtw: a differentiable loss function for     [53] Y. Kamei, E. Shihab, B. Adams, A. E. Hassan, A. Mockus,
+     time-series,” in Proceedings of the 34th International Conference on             A. Sinha, and N. Ubayashi, “A large-scale empirical study of
+     Machine Learning - Volume 70, ser. ICML’17. JMLR.org, 2017, p.                   just-in-time quality assurance,” IEEE Transactions on Software
+     894–903. [Online]. Available: https://dl.acm.org/doi/10.5555/3305381.3           Engineering, vol. 39, no. 6, pp. 757–773, 2013. [Online]. Available:
+     305474                                                                           https://www.doi.org/10.1109/TSE.2012.70
+[38] P. J. Rousseeuw, “Silhouettes: A graphical aid to the interpretation        [54] S. Noei, H. Li, and Y. Zou, “Detecting refactoring commits in machine
+     and validation of cluster analysis,” Journal of Computational and                learning python projects: A machine learning-based approach,” ACM
+     Applied Mathematics, vol. 20, pp. 53–65, 1987. [Online]. Available:              Transactions on Software Engineering and Methodology, vol. 34, no. 3,
+     https://doi.org/10.1016/0377-0427(87)90125-7                                     Feb. 2025. [Online]. Available: https://doi.org/10.1145/3705309
+[39] M. Kanwal, M. A. Khan, N. Ismat, N. A. Khan, and A. A.                      [55] R. M. O’brien, “A caution regarding rules of thumb for variance
+     Khan, “Machine learning approach to classification of online                     inflation factors,” Quality & Quantity, vol. 41, no. 5, pp. 673–690, Oct
+     users by exploiting information seeking behavior,” IEEE Access,                  2007. [Online]. Available: https://doi.org/10.1007/s11135-006-9018-6
+     vol. 12, pp. 53 234–53 249, 2024. [Online]. Available: https:               [56] A. P. Bradley, “The use of the area under the roc curve in
+     //doi.org/10.1109/ACCESS.2024.3383444                                            the evaluation of machine learning algorithms,” Pattern Recognition,
+[40] S. Boslaugh and D. P. A. Watters, Statistics in a nutshell,                      vol. 30, no. 7, pp. 1145–1159, 1997. [Online]. Available: https:
+     1st ed. USA: O’Reilly & Associates, Inc., 2008. [Online]. Available:             //doi.org/10.1016/S0031-3203(96)00142-2
+     https://dl.acm.org/doi/book/10.5555/1461408                                 [57] C. Yu, S. Noei, H. Zhang, and Y. Zou, “An empirical study on the
+[41] “RT-Thread, an open source IoT Real-Time Operating System (RTOS),”               characteristics of reusable code clones,” ACM Transactions on Software
+     https://github.com/RT-Thread/rt-thread, accessed: 2026-06-30.                    Engineering and Methodology, Jan. 2026, just Accepted. [Online].
+[42] “Open Library, an open, editable library catalog, building towards a web         Available: https://doi.org/10.1145/3793251
+     page for every book ever published.” https://github.com/internetarchive     [58] E. Shihab, Y. Kamei, B. Adams, and A. E. Hassan, “Is lines of code
+     /openlibrary, accessed: 2026-06-30.                                              a good measure of effort in effort-aware models?” Information and
+[43] “Azure Command-Line Interface,” https://github.com/Azure/azure-cli,              Software Technology, vol. 55, no. 11, pp. 1981–1993, 2013. [Online].
+     accessed: 2026-06-30.                                                            Available: https://doi.org/10.1016/j.infsof.2013.06.002
+[44] “Flutter Packages, a collection of useful packages maintained by the        [59] F. S. Aðalsteinsson, B. B. Magnússon, M. Milicevic, A. N.
+     Flutter team,” https://github.com/flutter/packages, accessed: 2026-06-           Davidsson, and C.-H. Cheng, “Rethinking code review workflows
+     30.                                                                              with llm assistance: An empirical study,” in 2025 ACM/IEEE
+[45] T. Moon, “The expectation-maximization algorithm,” IEEE Signal                   International Symposium on Empirical Software Engineering and
+     Processing Magazine, vol. 13, no. 6, pp. 47–60, 1996. [Online].                  Measurement (ESEM), 2025, pp. 488–497. [Online]. Available:
+     Available: https://doi.org/10.1109/79.543975                                     https://doi.org/10.1109/ESEM64174.2025.00013
+[46] M. Song, C. W. Günther, and W. M. P. van der Aalst, “Trace clustering       [60] K. Sun, H. Kuang, S. Baltes, X. Zhou, H. Zhang, X. Ma,
+     in process mining,” in Business Process Management Workshops,                    G. Rong, D. Shao, and C. Treude, “Does ai code review lead to
+     D. Ardagna, M. Mecella, and J. Yang, Eds. Berlin, Heidelberg:                    code changes? a case study of github actions,” IEEE Transactions
+     Springer Berlin Heidelberg, 2009, pp. 109–120. [Online]. Available:              on Software Engineering, pp. 1–17, 2026. [Online]. Available:
+     https://doi.org/10.1007/978-3-642-00328-8_11                                     https://doi.org/10.1109/TSE.2026.3688237
+[47] R. P. J. C. Bose and W. M. van der Aalst, “Context aware trace
+     clustering: Towards improving process mining results,” in Proceedings
+

@@ -1,0 +1,599 @@
+                                         Cross-Model LLM Code Review: Should you use Claude to review
+                                                            Codex or vice versa?
+                                                                            Zuodong Xiang                                                                         Yike Zhang
+                                                                   University of California, Davis                                                        Johns Hopkins University
+                                                                                USA                                                                                USA
+                                                                     shawnzxiang@gmail.com                                                                  zykk0330@gmail.com
+
+                                                                           YueMing Zhang                                                                           Hailu Xu
+                                                            California State University, Long Beach                                               California State University, Long Beach
+                                                                              USA                                                                                   USA
+                                                             Simon.Zhang01@student.csulb.edu                                                                hailu.xu@csulb.edu
+
+                                         Abstract                                                                                        1    Introduction
+                                         Developers increasingly use two coding agents together: one writes                              Many coding workflows now involve more than a single LLM call.
+                                         a draft, and the other reviews it. However, it is not clear whether                             A developer asks one agent to write a draft and a second agent to
+                                         the pairing is worth its cost and time, or whether the order of the                             review it before the change lands, and the second pass starts to
+                                         pairing matters. We run a controlled experiment on 116 recent hard                              behave like a software engineer reviewing code. The two arrange-
+arXiv:2607.21656v1 [cs.SE] 22 Jul 2026
+
+
+
+
+                                         and medium LiveCodeBench tasks with Claude Opus 4.7 and Codex                                   ments we see most often in practice are Claude Opus 4.7 [1] writing
+                                         GPT-5.5 across six conditions to approximate a software practi-                                 with Codex GPT-5.5 [28] reviewing, and the reverse, with Codex
+                                         tioner’s workflow: both solo baselines, both cross-model orderings,                             GPT-5.5 writing and Claude Opus 4.7 reviewing. Each pairing can
+                                         and both same-model orderings. The reviewer sees the problem                                    change the workflow’s final result. A different model, commonly
+                                         and the writer’s draft but cannot execute tests, which approximates                             equipped with different knowledge and expertise, is now respon-
+                                         a code review step. Claude Opus 4.7 review raises Codex GPT-5.5                                 sible for catching things that the first one missed. But it can also
+                                         drafts from 71.6% to 89.7% (𝑝 𝐵𝐻 = .001); Codex GPT-5.5 self review                             cause regressions, replace a working solution with a worse one, or
+                                         raises them to 84.5% (𝑝 𝐵𝐻 = .022). The reverse direction does not                              simply add cost and latency without measurable benefit.
+                                         pay off: Codex GPT-5.5 reviewing Claude Opus 4.7 drafts drops the                                   Today’s code generation leaderboards rank single models in
+                                         pass rate from 91.4% to 82.8% (𝑝 𝐵𝐻 = .046), and Claude Opus 4.7                                isolation. They do not address which of two available agents should
+                                         self review leaves the 91.4% baseline unchanged. Our evaluation                                 write, which should review, whether the second pass is worth its
+                                         indicates that the useful pairing is asymmetric: use Claude Opus                                cost, or which direction the pairing should run to yield the best
+                                         4.7 to review Codex GPT-5.5, not the other way around.                                          correctness. Claude Opus 4.7 writing and Codex GPT-5.5 reviewing
+                                                                                                                                         is not the same workflow as the reverse, even though the two
+                                         CCS Concepts                                                                                    models involved are identical.
+                                         • Computing methodologies → Intelligent agents; • Software                                          We study this as a role assignment problem between a writer and
+                                         and its engineering → Software verification and validation.                                     a reviewer. The setup approximates a software engineer’s workflow:
+                                                                                                                                         a single review pass with no execution feedback, so the measured
+                                         Keywords                                                                                        effect is the review intervention itself rather than tool use, iteration,
+                                         Agentic Coding, LiveCodeBench, Self Code Review, LLM, Claude,                                   or memory of earlier attempts. The reviewer reads the problem
+                                         Codex                                                                                           statement and the writer’s draft and writes a final program; it cannot
+                                                                                                                                         run the code or query a test runner. This is also commonly referred
+                                         ACM Reference Format:                                                                           to as static review: the pre-CI inspection step a developer or code
+                                         Zuodong Xiang, Yike Zhang, YueMing Zhang, and Hailu Xu. 2026. Cross-
+                                                                                                                                         review bot performs before any tests run.
+                                         Model LLM Code Review: Should you use Claude to review Codex or vice
+                                         versa?. In Proceedings of Agentic Software Engineering (SE 3.0): The Rise of
+                                                                                                                                             The experiments use LiveCodeBench, a continuously updated
+                                         AI Teammates (Agentic SE @ KDD ’26). ACM, New York, NY, USA, 9 pages.                           benchmark of self contained competitive programming problems
+                                         https://doi.org/10.1145/nnnnnnn.nnnnnnn                                                         sourced from recent online judges, designed to reduce the risk of
+                                                                                                                                         contamination in code evaluation [15]. All problems we use were
+                                         This work is partially supported by US NSF Award #2436427.
+                                                                                                                                         released after 2025, after the training cutoffs of Claude Opus 4.7
+                                         Permission to make digital or hard copies of all or part of this work for personal or           and Codex GPT-5.5, so neither model could have memorized their
+                                         classroom use is granted without fee provided that copies are not made or distributed           solutions during training. Each task is a single file Python problem
+                                         for profit or commercial advantage and that copies bear this notice and the full citation
+                                         on the first page. Copyrights for components of this work owned by others than the              with a problem statement, optional starter code, and a hidden test
+                                         author(s) must be honored. Abstracting with credit is permitted. To copy otherwise, or          suite. Tasks carry difficulty labels (easy, medium, hard), and we
+                                         republish, to post on servers or to redistribute to lists, requires prior specific permission   use only the hard and medium difficulty tiers to approximate real
+                                         and/or a fee. Request permissions from permissions@acm.org.
+                                         Agentic SE @ KDD ’26, Jeju, Korea                                                               life software engineering tasks worth using agents. We pool the
+                                         © 2026 Copyright held by the owner/author(s). Publication rights licensed to ACM.               two difficulty tiers and compare six conditions: Claude Opus 4.7
+                                         ACM ISBN 978-x-xxxx-xxxx-x/YYYY/MM                                                              solo, Codex GPT-5.5 solo, Claude output reviewed by Codex, Codex
+                                         https://doi.org/10.1145/nnnnnnn.nnnnnnn
+Agentic SE @ KDD ’26, August 10, 2026, Jeju, Korea                                            Zuodong Xiang, Yike Zhang, YueMing Zhang, and Hailu Xu
+
+
+output reviewed by Claude, Claude output reviewed by Claude, and          model to repair its own code from execution traces [7]. Olausson
+Codex output reviewed by Codex. LiveCodeBench fits this question          et al. ask whether self-repair is a silver bullet for code generation
+well because the same problem can be evaluated repeatedly under           and find that the gain depends on whether the repair model is
+different writer and reviewer assignments against a common hidden         meaningfully stronger than the draft model [27]. On HumanEval
+test evaluator, which isolates the review pass without changing the       and APPS with Code Llama, GPT-3.5, and GPT-4, same model self
+task distribution. All writer and reviewer turns use the vendors’         repair produces only modest accuracy improvements because it is
+high reasoning effort setting, which uses more tokens, cost, and          bottlenecked by the model’s ability to provide useful feedback on its
+latency than medium effort. We report pass rate together with             own code; the largest gains appear when a stronger model repairs
+reviewer fixes, regressions, latency, and cost.                           a weaker model’s drafts, and human level debugging substantially
+   In this paper, we focus on the following questions:                    outperforms self generated feedback. Our same model conditions
+RQ1. Does a reviewer pass improve overall correctness?                    will reproduce this finding but with execution feedback removed.
+                                                                          Recent work also shows that memory can change LLM agent behav-
+RQ2. Does the value of a reviewer pass depend on which model
+                                                                          ior [23], and that LLM outputs exhibit non-trivial variance across
+writes and which model reviews?
+                                                                          repeated runs even under fixed conditions [11, 40]. Our experiment
+RQ3. When does the reviewer step fix the draft, and when does it          isolates a related but distinct case: the reviewer is a different model,
+regress it?                                                               runs once, has no execution feedback, and has no memory of prior
+RQ4. Are correctness gains worth added cost and latency?                  attempts. This removes iteration and tool use, so that the measured
+                                                                          effect can be attributed to the cross-model review pass itself.
+   Review effectiveness in our experiments turns out to be asym-
+metric. Claude Opus 4.7 is the strongest solo writer in the sample,
+Claude Opus 4.7 reviewing Codex GPT-5.5 drafts recovers most
+of the gap between Codex GPT-5.5 solo and Claude Opus 4.7 solo,           2.3    Multi agent and agentic coding
+and Codex GPT-5.5 reviewing Claude Opus 4.7 drafts makes the              CodeT and LEVER use generated tests or learned verification to
+pipeline worse. We analyze this asymmetry through paired correct-         improve code outputs [5, 26]. Multi agent debate work shows that
+ness tests, fix/regression counts, and cost-latency trade-offs, then      two language-model instances can improve factuality or divergent
+derive a workflow recommendation: review is most useful when              thinking by critiquing each other [9, 21]; this is a natural framing
+the initial draft comes from Codex GPT-5.5.                               of two models reviewing one another, although that line studies
+                                                                          open-ended reasoning rather than executable programs. Multi-LLM
+2 Background and Related Work                                             combinations have also been used in domain forecasting tasks such
+                                                                          as financial sentiment [39], robot tasks [36, 38], and LLMs have been
+2.1 Code generation benchmarks                                            integrated with reinforcement learning for portfolio optimization
+Code generation evaluation has usually been organized around              [35]. ChatDev and MetaGPT assign software-development roles
+standalone model performance. HumanEval made functional cor-              across multiple agents [13, 30]. AgentCoder and CodeCoR study
+rectness a central measure for generated code [6], and MBPP ex-           role-based coding workflows [14, 29]. Other work studies capability
+tended this style of evaluation to short Python programming tasks         composition across multi-agent pipelines from a safety angle [16].
+[2]. APPS moved the setting toward harder programming-challenge           In contrast, our workflow has one writer, one static reviewer, no
+problems [12], and AlphaCode showed that large-scale generation           generated tests, and no execution feedback for the reviewer.
+and filtering can reach nontrivial competitive programming per-
+formance [19]. LiveCodeBench addresses benchmark saturation
+and contamination by collecting recent coding contest problems            2.4    Code review and LLM reviewers
+over time from LeetCode, AtCoder, and Codeforces, tagging each
+                                                                          Modern code review supports defect detection, knowledge transfer,
+problem with its public release date [15]. The release date metadata
+                                                                          and shared code quality [3, 31]. In human teams, review is not only
+lets evaluators score a model only on problems published after its
+                                                                          a bug finding and for readability, it is also a coordination point
+training cutoff, which controls for the data leakage documented
+                                                                          where a second engineer decides whether to ship as is, lightly edit,
+on older static benchmarks. LiveCodeBench also reports several
+                                                                          or reject a proposed change. This role structure is similar to what
+evaluation scenarios beyond code generation, including self repair,
+                                                                          multi agent coding workflows are beginning to imitate when one
+code execution, and test output prediction.
+                                                                          LLM drafts code and another LLM inspects it.
+   Prior work also argues that quality should be reported together
+                                                                             Prior work studies review-comment generation and code re-
+with efficiency rather than in isolation [10, 17, 32, 37]. This mat-
+                                                                          finement [20, 34]. Recent LLM-focused work finds that apparent
+ters even more for review workflows because a reviewer pass adds
+                                                                          success on code refinement often reflects memorization rather than
+another model call, more tokens, and more latency. We therefore
+                                                                          comprehension [22], and that LLM reviewers can systematically
+treat pass rate, cost, latency, fixes, and regressions as a set of mea-
+                                                                          overcorrect on requirement conformance [18]. These findings mo-
+surements rather than a leaderboard number.
+                                                                          tivate a stricter evaluation target for LLM review. It is not whether
+                                                                          the reviewer produces plausible comments, but whether the final
+2.2     Iterative refinement and self debug                               submitted program is more correct than the writer’s original draft.
+Self-Refine and Reflexion study a single model that improves its          We measure the correctness of the final program after a review pass
+own output through feedback turns [24, 33]. Self-Debug teaches a          and separately count reviewer fixes and regressions.
+Cross-Model LLM Code Review: Should you use Claude to review Codex or vice versa?                             Agentic SE @ KDD ’26, August 10, 2026, Jeju, Korea
+
+
+                                                                                    Table 1: Experimental conditions. All turns use high reason-
+                 Listing 1: Writer prompt template
+                                                                                    ing effort.
+You are an expert competitive programmer. Solve the following
+      programming problem.
+                                                                                     ID     Writer                Reviewer                 Role type
+PROBLEM:
+{problem}                                                                            A      Claude Opus 4.7       –                        Solo baseline
+{starter_code}
+                                                                                     O      Codex GPT-5.5         –                        Solo baseline
+Your task:                                                                           AO     Claude Opus 4.7       Codex GPT-5.5            Cross-model
+1. Produce a complete, runnable Python solution
+2. Handle edge cases; optimize first for correctness, then for
+                                                                                     OA     Codex GPT-5.5         Claude Opus 4.7          Cross-model
+      performance                                                                    AA     Claude Opus 4.7       Claude Opus 4.7          Same-model
+3. Output only the final solution inside <solution> tags
+                                                                                     OO     Codex GPT-5.5         Codex GPT-5.5            Same-model
+<solution>
+# final python code here
+</solution>
+                                                                                    parser. The prompt templates are fixed across models and con-
+                                                                                    ditions. The artifact includes the exact prompt files and per task
+                                                                                    prompt hashes.
+              Listing 2: Reviewer prompt template                                       Listings 1 and Listing 2 define the two role-specific prompt tem-
+You are an expert code reviewer. Review the following solution to a                 plates used throughout the study. The writer prompt instructs the
+      competitive programming problem.                                              model to solve the competitive programming task from the pro-
+                                                                                    vided problem statement and starter code, prioritizing correctness,
+PROBLEM:
+{problem}                                                                           edge-case handling, and computational efficiency. To ensure a uni-
+{starter_code}                                                                      form output artifact, the writer is required to return only a complete
+SUBMITTED SOLUTION:
+                                                                                    runnable Python solution enclosed within <solution> tags.
+{writer_output}                                                                         The reviewer prompt receives the same task specification to-
+                                                                                    gether with the writer generated solution. Rather than providing
+Your task:
+1. Identify any bugs, incorrect logic, missing edge cases, or                       feedback or commentary, the reviewer performs a static code re-
+      inefficiencies                                                                view and must return a final executable program. Reviewers are
+2. Produce a final corrected solution - either the original if it                   explicitly instructed to reason solely from code inspection and are
+      is correct, or an improved version
+3. Do NOT run or test the code; reason purely from code inspection                  not allowed to execute or test the program.
+                                                                                        Both prompts enforce an identical output format consisting ex-
+Output only the final solution inside <solution> tags. Do not
+      include explanations outside the tags.
+                                                                                    clusively of a Python solution wrapped in <solution> tags. This
+<solution>                                                                          design removes variation arising from the explanatory text and
+# final python code here                                                            allows all experimental conditions to be evaluated using the same
+</solution>
+                                                                                    downstream extraction and scoring pipeline. Task-specific content
+                                                                                    is injected through placeholders corresponding to the problem state-
+                                                                                    ment, the starter code, and, when applicable, the draft produced by
+3 Methodology                                                                       the writer. Holding the task specification and output format con-
+3.1 Task Setting and Prompts                                                        stant while varying only the role assignment and model identity
+                                                                                    isolates the effects of review and cross-model collaboration.
+Each task is a hard or medium LiveCodeBench code generation
+problem. We did not include the easy category given they are trivial
+                                                                                    3.2    Conditions
+for LLMs and software practitioners to solve at this point. The
+writer receives the problem statement, any starter code, and is                     Table 1 lists the six conditions. Throughout the paper we use com-
+asked for a complete Python solution inside <solution> tags.                        pact labels: "A" for Anthropic Claude Opus 4.7, "O" for OpenAI
+   In a solo baseline, a parsed writer draft is submitted directly to               Codex GPT-5.5.
+the LiveCodeBench evaluator. In a reviewed condition, the same                         Two-letter labels are in writer then reviewer order, so AO is
+writer artifact becomes the submitted solution shown to a reviewer                  Claude output reviewed by Codex, and OA is Codex output re-
+model, which also receives the original problem and starter code.                   viewed by Claude. The solo baselines give us standalone perfor-
+The reviewer is instructed to inspect the draft for bugs, missing                   mance. The two same-model conditions tell us whether a second
+edge cases, incorrect logic, and inefficiencies, then write a final                 pass helps at all when there is no model diversity. The two cross-
+program inside <solution> tags: either the original draft if it is                  model conditions answer the model role assignment question and
+correct or a corrected version if it is not. The reviewer cannot run                let us see whether direction matters.
+the code, query a test runner, see hidden tests, or inspect execution
+traces. This is the static review setting introduced in Section 1. All              3.3    Execution and Cost Accounting
+final artifacts are parsed through the same tag-based extractor be-                 The runs used claude-opus-4-7 through Claude Code 2.1.50 and
+fore evaluation, so the measured difference between conditions is                   gpt-5.5 through Codex CLI. Both runs set reasoning.effort =
+the added review pass rather than a change in evaluator or output                   high. Each turn had a 3,000-second CLI timeout. A timed-out turn
+Agentic SE @ KDD ’26, August 10, 2026, Jeju, Korea                                                Zuodong Xiang, Yike Zhang, YueMing Zhang, and Hailu Xu
+
+
+Table 2: Pooled complete case metrics across hard and medium LiveCodeBench tasks. SID is the change in Pass Rate relative to
+the writer’s solo baseline; Reg. rate is the share of tasks where the writer-only baseline passed but the reviewed condition failed.
+
+          Condition                                               Pass     Pass Rate [95% CI]      SID    Cost/task     Latency     Reg. rate
+          Baselines
+          A: Claude Opus 4.7 solo                                  106        .914 [.862,.957]       –         $.226       86.2s             –
+          O: Codex GPT-5.5 solo                                     83        .716 [.629,.793]       –         $.190       38.5s             –
+          Reviewed conditions
+          AO: Claude Opus 4.7 reviewed by Codex GPT-5.5             96        .828 [.759,.897]   −.086         $.382      118.0s          .112
+          OA: Codex GPT-5.5 reviewed by Claude Opus 4.7            104        .897 [.836,.948]   +.181         $.443      112.4s          .043
+          AA: Claude Opus 4.7 reviewed by Claude Opus 4.7          106        .914 [.862,.957]   +.000         $.389      135.8s          .026
+          OO: Codex GPT-5.5 reviewed by Codex GPT-5.5               98        .845 [.776,.905]   +.129         $.312       67.9s          .052
+
+
+was retried once with a doubled timeout. A task that still ended              Under the null that the two conditions are equally likely to win
+incomplete (CLI error, timeout, parse failure, or empty final artifact)       on discordant tasks, 𝑋 ∼ Binom(𝑛 10 + 𝑛 01, 1/2). We use the exact
+was retried up to four attempts. The harness records raw outputs,             two-sided McNemar p-value,
+final artifacts, prompt hashes (SHA-256), CLI versions, timestamps,                              
+                                                                                         𝑝 = min 1, 2 min 𝑃 {𝑋 ≤ min(𝑛 10, 𝑛 01 )},
+                                                                                                          
+parse metadata, retry metadata, token counts, costs, and evaluation
+results. API costs are computed from token counts and a pricing                                                                            (4)
+                                                                                                            𝑃 {𝑋 ≥ max(𝑛 10, 𝑛 01 )} .
+configuration pulled from the official websites.
+                                                                              For paired correctness comparisons, we apply BH (Benjamini-Hochberg)
+3.4     Sample, Metrics, and Statistical Tests                                correction [4] across all pairwise contrasts generated by the analy-
+We combine the complete case portions of two LiveCodeBench runs:              sis script. If 𝑝 (1) ≤ · · · ≤ 𝑝 (𝑚) are the sorted p-values, the adjusted
+one hard slice and one medium slice. Complete case analysis restricts         value is                                          
+the data to tasks for which all six conditions produced a valid                                                           𝑚
+                                                                                                          𝑞 (𝑖 ) = min 1, 𝑝 ( 𝑗 ) ,                   (5)
+evaluated artifact: a non-null evaluation result with no CLI error,                                                𝑗 ≥𝑖   𝑗
+no timeout, no parse failure, no budget-exceeded flag, and a non-             with monotone adjustment from largest to smallest p-value. Table 4
+empty final program. The pooled complete case analysis contains               reports the contrasts most relevant to the role assignment argu-
+116 tasks, with task identifiers namespaced by difficulty before              ment. To understand whether the apparent writer and reviewer
+pooling. This is a bounded controlled sample, not a leaderboard-              interaction is statistically supported beyond the per writer effects,
+scale evaluation; the artifact retains the per task metadata for future       the artifact also reports a direct AO versus OA paired contrast and
+audits.                                                                       the underlying per task pass vectors.
+   Let 𝑦𝑡𝑐 ∈ {0, 1} indicate whether task 𝑡 passed under condition
+𝑐. The pass rate is                                                           4     Results
+                                    1 ∑︁                                      Model inference ran on vendor hosted infrastructure through Claude
+                          𝑃𝑅𝑐 =              𝑦𝑡𝑐 .                   (1)
+                                  |𝑇𝑐 | 𝑡 ∈𝑇                                  Code and Codex CLI. The program is ran locally using a MacBook
+                                              𝑐
+                                                                              Air with Apple M4 chip and 16 GB RAMP (2025) that handled or-
+For a two-pass condition 𝑐 with writer model 𝑤, the improvement
+                                                                              chestration, file I/O, logging, parsing, and wall-clock timing of the
+delta compares the condition to the corresponding solo writer base-
+                                                                              remote calls.
+line 𝑏 (𝑤):
+                                                                                 The results section is organized around the four research ques-
+                           SID𝑐 = 𝑃𝑅𝑐 − 𝑃𝑅𝑏 (𝑤 ) .                  (2)       tions. Table 2 gives the complete assessment for every condition;
+We also report average cost per task, latency, and reviewer-induced           Table 3 collapses those rows into the writer-by-reviewer view; Ta-
+regressions. Regressions are tasks where the writer-only baseline             ble 4 tests paired differences on the same 116 tasks; and Figures 1–2
+passes but the reviewed condition fails. Reviewer fixes are tasks             separate correctness gains from the cost of obtaining them. Table 5
+where the writer-only baseline fails but the reviewed condition               shows various inspected cases that contained fixes and regressions.
+passes.
+   We report bootstrap 95% confidence intervals for complete case             4.1    RQ1: Does a reviewer pass improve
+pass rate. The McNemar test [25] compares two binary outcomes                        correctness?
+on the same set of items by counting only the items where the two             Table 3 summarizes the headline result and Table 2 gives the un-
+conditions disagree; it is the standard paired test for matched 0/1           derlying numbers. The main takeaway is that the answer to RQ1
+outcomes such as task-level pass/fail across two conditions. For              changes depending on who wrote the draft and reviewed the code.
+conditions 𝑎 and 𝑏, let                                                       Codex GPT-5.5 solo lands at 71.6%; the same drafts run through
+                                                                              Claude Opus 4.7 review jump to 89.7%, and through Codex GPT-5.5
+         ∑︁                              ∑︁
+  𝑛 10 =    1{𝑦𝑡𝑎 = 1, 𝑦𝑡𝑏 = 0}, 𝑛 01 =     1{𝑦𝑡𝑎 = 0, 𝑦𝑡𝑏 = 1}. (3)
+           𝑡                                      𝑡                           review to 84.5%. Claude Opus 4.7 solo is already at 91.4%; Claude
+Cross-Model LLM Code Review: Should you use Claude to review Codex or vice versa?                             Agentic SE @ KDD ’26, August 10, 2026, Jeju, Korea
+
+
+Table 3: Pass rate for each writer and reviewer pair, with                          4.3    RQ3: Fixes versus Regressions
+the delta against the writer’s solo baseline. Rows: who wrote.
+                                                                                    A pass rate hides two different reviewer behaviors: a reviewer
+Columns: who reviewed. Claude as reviewer is always helpful
+                                                                                    can fix a failing draft, or break a passing one. Figure 1 unpacks
+or neutral; Codex as reviewer is helpful only when the draft
+                                                                                    them, grouping conditions by writer with explicit fix and regression
+is its own.
+                                                                                    counts on the right. The contrast that is hardest to miss is between
+                                                                                    the two cross-model orderings: OA fixes 26 of Codex GPT-5.5’s
+                                              Reviewer                              failures while regressing only 5 of its successes (net +21), and
+      Writer                        Claude                 Codex                    AO does the opposite, fixing only 3 of Claude Opus 4.7’s failures
+                                                                                    but breaking 13 of its successes (net −10). The two same-model
+      Claude (solo 91.4%)       91.4% (±0 pp)         82.8% (−8.6 pp)               conditions sit between these poles: OO is broadly positive (21 fixes,
+      Codex (solo 71.6%)       89.7% (+18.1 pp)       84.5% (+12.9 pp)              6 regressions), and AA is at the noise floor (3 fixes, 3 regressions).
+                                                                                       In addition, we read through representative fixes and regressions
+Table 4: Selected complete case McNemar tests over the                              by hand. The supporting evidence for these examples lives in the
+shared 116 tasks. Each row compares two conditions on the                           artifact records; each record stores the writer artifact, reviewer
+same set of tasks. “First only” is the number of tasks the first                    artifact, final artifact, prompt hashes, and pass or fail outcome. The
+condition passed and the second failed; “Second only” is the                        pattern labels below are interpretive and might not be reproducible
+reverse. 𝑝 𝐵𝐻 is the BH adjusted p-value across all pairwise                        in repeated runs.
+contrasts.                                                                             Table 5 shows representative cases at the task level. Fixes in-
+                                                                                    clude Problem 3688, where OO repairs its own segment-tree state,
+                                                                                    and abc394_f, where the O reviewer replaces a failing component
+      Comparison      First only     Second only             𝑝      𝑝 𝐵𝐻            count with a tree dynamic program. Regressions include Problem
+      Per writer reviewer effects                                                   3717 (AO replaces a passing sorted-list median window with a
+      OA vs O                 26                  5     .0002     .0010             failing heap-based rewrite), arc191_a (AA rewrites the boundary
+      OO vs O                 21                  6     .0059     .0222             handling of an already passing solution), and abc389_f (OO deletes
+      AO vs A                  3                 13     .0213     .0456             a segment-tree range guard protecting an edge case).
+      AA vs A                  3                  3    1.0000    1.0000
+      AA vs AO                12                  2     .0129     .0323             4.4    RQ4: Cost and Latency Trade-Offs
+      Direct between-orderings contrast                                             A review pass is not free, as it doubles the API call count and adds
+      AO vs OA               5                   13     .0963      .1444            tens of seconds of wall-clock latency. The cost-per-token and la-
+                                                                                    tency overhead of additional LLM passes has motivated a broad line
+                                                                                    of work on efficient LLM deployment [8]. Figure 2 shows whether
+Opus 4.7 reviewing itself stays at 91.4%, and handing Claude Opus                   that extra spend buys anything. Each arrow starts at a writer’s solo
+4.7’s draft to Codex GPT-5.5 actually drops it to 82.8%.                            point and ends at one of its reviewed conditions, so the slope of the
+   The size of the two positive review effects also shows that the                  arrow tells you whether the extra cost or latency on the horizontal
+reviewer’s contribution is bounded by its relative capability rather                axis bought accuracy on the vertical axis.
+than guaranteed by simply adding a second pass. OA adds 21                             For Codex GPT-5.5 as writer, both arrows go up and to the right.
+net passes over Codex GPT-5.5 solo (104 versus 83 passing tasks),                   OO buys 12.9 pass rate points for an extra $0.12 per task and 29
+putting a workflow that begins with a Codex GPT-5.5 draft within                    seconds of latency; OA buys 18.1 points for an extra $0.25 and 74
+two passing tasks of Claude Opus 4.7 solo. OO adds 15 net passes                    seconds. OO is the cheap, fast option. For Claude Opus 4.7 as writer,
+over Codex GPT-5.5 solo while keeping cost and latency lower than                   neither arrow justifies the spend. 𝐴 → 𝐴𝐴 is flat-right: $0.16 and
+OA. In contrast, AO loses 10 net passes relative to Claude Opus 4.7                 50 seconds for zero accuracy gain. 𝐴 →𝐴𝑂 points down-and-right:
+solo and has the highest regression rate in Table 2.                                $0.16 and 32 seconds for an 8.6-point accuracy loss.
+                                                                                       Overall, Claude Opus 4.7 solo sits on the Pareto frontier and
+4.2     RQ2: Writer–Reviewer Role Assignment                                        no reviewed condition matched or exceeded it in accuracy. AA
+Table 4 reports the corresponding paired McNemar tests. For Codex                   matches A’s pass rate while adding 72% to cost and 58% to latency;
+GPT-5.5 drafts, both reviewers help after BH correction: OA im-                     every other reviewed condition has lower accuracy than A. The
+proves over O by 18.1 pp (𝑝 𝐵𝐻 = .0010) and OO by 12.9 pp (𝑝 𝐵𝐻 =                   cost versus accuracy decision worth thinking about is therefore
+.0222). For Claude Opus 4.7 drafts, same-model review is ineffective,               confined to the Codex GPT-5.5 writer column.
+while cross-model review by Codex GPT-5.5 is significantly worse
+than Claude Opus 4.7 solo (𝑝 𝐵𝐻 = .0456). AA versus AO is also                      5 Discussion
+significant (𝑝 𝐵𝐻 = .0323), indicating that the choice of reviewer
+matters even when the writer is already the stronger of the two.                    5.1 Claude self review versus Codex self review
+    The direct AO vs OA contrast does not survive BH correction                     The OO and AA rows in Table 2 and Figure 1 apply the same
+(𝑝 𝐵𝐻 = .1444), so we do not claim that the two cross-model or-                     operation, “review your own draft”, to the two writers, and yet
+derings are statistically separable as standalone conditions on this                produce opposite outcomes. The most plausible explanation is that
+sample.                                                                             the two models do different amounts of internal verification on the
+Agentic SE @ KDD ’26, August 10, 2026, Jeju, Korea                                                    Zuodong Xiang, Yike Zhang, YueMing Zhang, and Hailu Xu
+
+
+Table 5: Representative inspected cases from artifact records. These examples are not a coded taxonomy but illustrate the
+mechanisms behind the aggregate fix and regression counts.
+
+Problem          Cond. Draft Final Reviewer action                                               Interpretation
+3562              OA      fail     pass Removed code fences around a                             The reviewer corrects a submission failure on
+                                        dynamic-programming solution so the evaluator            parsing.
+                                        could parse the submitted program.
+abc394_f          AO      fail     pass Replaced an incorrect component-counting solution     This is a rare helpful AO case. The O reviewer
+                                        with a tree dynamic program.                          found the missing structural invariant.
+3688              OO      fail     pass Restored deleted values in the segment-tree state     The same model O reviewer is helpful when it
+                                        and kept the rest of the writer’s interface.          repairs one local invariant while preserving the
+                                                                                              draft’s architecture.
+3717              AO     pass      fail     Replaced a passing sorted-list median-window      The reviewer discards a correct invariant and
+                                            solution with a heap-based rewrite.               introduces a new one that fails hidden tests.
+arc191_a          AA     pass      fail     Changed optional digit accounting in an already   The same model reviewer can regress when the
+                                            passing solution.                                 second pass treats a delicate boundary case as a
+                                                                                              cleanup opportunity.
+abc389_f          OO     pass      fail     Removed a segment-tree range guard that protected A small guard deletion can break a solution that
+                                            an edge case.                                     otherwise had the right data structure.
+
+
+                       pass kept      fix     fail kept   regression              has few real catches available and tends to fall back on rewriting.
+                                                                                  Second, Claude Opus 4.7 starts from a higher pass rate baseline, so
+                 AA                                                    +3 / −3    a Claude Opus 4.7 reviewer has room to lift Codex GPT-5.5, while
+ Claude writer                                                                    a Codex GPT-5.5 reviewer can mostly only drop Claude Opus 4.7.
+                 AO                                                    +3 / −13   Both are consistent with the Olausson et al. finding that the gain
+                 OA                                                    +26 / −5   from a repair pass depends on whether the repairer is stronger than
+ Codex writer                                                                     the drafter [27]: OA is the case where the reviewer is stronger than
+                 OO                                                    +21 / −6
+                                                                                  the drafter, and AO is the reverse. Because the two models differ
+                         share of tasks (%), grouped by writer                    in baseline pass rate, this design cannot fully separate the effect of
+                                                                                  review direction from the effect of that baseline gap, so we read the
+                                                                                  cross-model comparison as descriptive of role assignment rather
+Figure 1: Per task outcomes (𝑛 = 116): stacked decomposition
+                                                                                  than as a causal claim about ordering alone.
+with conditions grouped by writer. Absolute fix and regres-
+sion counts are shown to the right of each bar.
+                                                                                  5.3     Helpful review edits whereas harmful
+                                                                                          review rewrites
+first pass. At high reasoning effort, Claude Opus 4.7 may already                 Across the cases in Section 4.3, the OA and AO reviewers differ
+catch most errors that a static reviewer could find, leaving the                  less in how often they intervene than in how do they intervene.
+second pass with little signal. Codex GPT-5.5 appears to leave more               Codex GPT-5.5 as reviewer, when uncertain, tends to discard the
+residual, catchable errors.                                                       writer’s data structure and start over (the 3717 heap rewrite and
+   The latency table supports this reading: Claude Opus 4.7 solo                  the abc389_f guard deletion are characteristic). Claude Opus 4.7
+takes 86.2 s per task against Codex GPT-5.5’s 38.5 s, consistent with             as reviewer tends to keep the writer’s interface and repair one local
+Claude Opus 4.7 spending more compute on first pass checks. If                    invariant, such as 3688 on a segment-tree fix.
+review value depends on the gap between what the writer already                      We did not measure rewrite frequency directly, so this is an
+verified and what the reviewer can add, then AA has little to add                 interpretive pattern across the artifact rather than a quantitative
+and OO has a real margin to work with.                                            claim. It suggests a concrete prompt direction for future work:
+                                                                                  instruct the reviewer to first decide whether to intervene at all, and
+5.2       Claude reviewing Codex helps whereas                                    to default to keeping the writer’s structure when in doubt.
+          Codex reviewing Claude hurts
+                                                                                  5.4     When to add a reviewer, and when not to
+The same asymmetry shows up across the two cross-model condi-
+tions in Table 3: OA gains while AO loses on the same task set with               Cost and latency turn the discussion above into a practical guideline
+the same prompts.                                                                 for this benchmark based on the sample data:
+   There are two possible hypotheses on this. First, Claude Opus                        • If the writer must be Codex GPT-5.5: use OA when accuracy
+4.7’s heavier first pass verification leaves less for any second pass to                  dominates (89.7%, +18.1 pp over Codex GPT-5.5 solo, low-
+find, so a Codex GPT-5.5 reviewer staring at a Claude Opus 4.7 draft                      est reviewed regression rate at 4.3%) and use OO when the
+Cross-Model LLM Code Review: Should you use Claude to review Codex or vice versa?                                  Agentic SE @ KDD ’26, August 10, 2026, Jeju, Korea
+
+
+                    pass rate                                                         pass rate
+
+                  100%                                                              100%
+
+                   95%                                                              95%
+                                        A                   AA                                                     A                      AA
+
+                                                                       OA                                                        OA
+
+                   85%                                                              85%
+                                                OO            AO                                        OO
+                                                                                                                                    AO
+
+
+                   75%                                                              75%
+
+
+                                O                                                             O
+
+                   65%                                                              65%
+                                $0.20        $0.30           $0.40                            40s            80s                 120s
+
+                                              cost/task                                                      latency/task
+
+                                              (a) Cost                                                        (b) Latency
+
+
+
+Figure 2: Cost versus accuracy (left) and latency versus accuracy (right) trade-offs. Circles are solo baselines; diamonds are
+reviewed conditions; arrows show what each added reviewer buys. Red arrows leave the Codex solo point; blue arrows leave the
+Claude solo point. Up is more accurate; right is more expensive or slower.
+
+
+        per task latency budget is under roughly 70 s and 84.5% is                        Our prompts are written manually, which can advantage or dis-
+        acceptable.                                                                   advantage either model. Stronger or more conservative instructions
+      • If the writer must be Claude Opus 4.7: skip review. AA matches                might reduce harmful rewrites and further tool access could change
+        A’s pass rate while adding cost and 49.6 s of latency; AO loses               both the fix rate and the regression rate. There can be further inves-
+        8.6 pp at higher cost than either solo baseline.                              tigation into how prompts can be worded differently and whether
+                                                                                      models can benefit from memory of past failures, such as prior suc-
+      • Cost per net fix: OA adds 21 net passes at an extra $0.25 per
+        task across 116 tasks, or roughly $1.40 per net fix; OO adds                  cess and failure review cases, test driven development, or feedback
+        15 net passes at an extra $0.12 per task, or roughly $0.95 per                on draft results. A related limitation is structural: in our prompt
+        net fix. AO loses 10 net passes at higher cost than either solo               the reviewer always emits a final program, so there is no separate
+        baseline, so it has no useful cost per fix number.                            “intervene?” decision. AO’s high regression rate (11.2%) is consistent
+                                                                                      with Codex GPT-5.5 over-using that rewrite affordance. A prompt
+      • If both ends are free: Claude Opus 4.7 solo is Pareto-optimal                 that asks the reviewer to first decide whether to intervene, and only
+        on this benchmark. No reviewed condition beats it on both                     then to write a final program, is a natural follow-up.
+        axes, and AA is strictly dominated by A.                                          We used "high" reasoning effort in Codex GPT-5.5 and Claude
+                                                                                      Opus 4.7; "extra high" in Codex GPT-5.5 and, more recently, "Max"
+                                                                                      in Claude Opus 4.7 are now available. Given we were initially at-
+5.5     Scope, Limitations, and Reproducibility
+                                                                                      tempting to understand whether the review step helps and which
+This study is designed for exploratory understanding rather than                      model is the better reviewer, we did not focus on different reasoning
+breadth. At 116 paired tasks drawn from hard and medium Live-                         parameters. In addition, new models are also released very often. It
+CodeBench code generation problems, the design is sufficient for                      is likely that newer versions of Claude Opus 4.7 and Codex GPT-5.5
+a first diagnostic but not for settling stable rankings across future                 have improved results. Further experiments and analysis using the
+model releases. The natural follow-up is to repeat the design on                      latest models and different reasoning efforts can provide more gran-
+larger LiveCodeBench dataset as later releases appear. Evaluating                     ular recommendations for software practitioners. Our evidence also
+the same design on a larger task sample and on additional code                        covers a single model pair, so whether the asymmetry generalizes
+benchmarks beyond LiveCodeBench would also help test whether                          beyond Claude Opus 4.7 and Codex GPT-5.5 to families such as
+these patterns generalize. The setting isolates algorithmic reasoning                 Gemini, DeepSeek, Qwen, or Grok is untested, and repeating the
+under contamination-aware evaluation using LiveCodeBench but                          design across more models, including within one family, is a direct
+does not generalize to repository-scale bug fixing, build systems, or                 way to check for consistent patterns.
+multi-file review. The static reviewer cannot execute tests, which                        The benchmark tasks are self contained Python programs with
+keeps the setting close to pre-CI code review but likely understates                  hidden tests, not patches inside a live repository. This makes cor-
+what a tool-using agent with a sandbox could achieve. Results are                     rectness measurement precise, but it does not consider areas such
+also sensitive to prompt wording and formatting instructions, and                     as API compatibility, build integration, style consistency, security
+because coding agents change quickly we pin model identifiers, CLI                    posture, and maintainability across files. Restricting to self con-
+versions, and execution dates, though future releases may shift the                   tained functions is what isolates the writer and reviewer roles from
+numbers in either direction. Cost figures are point-in-time estimates                 repository context and multi file dependencies, which is why we
+subject to pricing and caching changes.
+Agentic SE @ KDD ’26, August 10, 2026, Jeju, Korea                                                        Zuodong Xiang, Yike Zhang, YueMing Zhang, and Hailu Xu
+
+
+treat it as a first controlled diagnostic before repository scale review.          [3] Alberto Bacchelli and Christian Bird. 2013. Expectations, outcomes, and chal-
+We therefore view the results as evidence about model role assign-                     lenges of modern code review. In 2013 35th international conference on software
+                                                                                       engineering (ICSE). IEEE, 712–721.
+ment under controlled static review, not as a universal ranking of                 [4] Yoav Benjamini and Yosef Hochberg. 1995. Controlling the false discovery rate:
+either model as a software reviewer. We also score review only                         a practical and powerful approach to multiple testing. Journal of the Royal
+                                                                                       Statistical Society: Series B (Methodological) 57, 1 (1995), 289–300.
+by the correctness of the final program. Code review in practice                   [5] Bei Chen, Fengji Zhang, Anh Nguyen, Daoguang Zan, Zeqi Lin, Jian-Guang Lou,
+yields more than a pass or fail signal, including design feedback,                     and Weizhu Chen. 2022. CodeT: Code generation with generated tests. arXiv
+readability comments, and security observations, and whether LLM                       preprint arXiv:2207.10397 (2022).
+                                                                                   [6] Mark Chen, Jerry Tworek, Heewoo Jun, Qiming Yuan, Henrique Ponde
+reviewers add value along those dimensions is left to future work.                     De Oliveira Pinto, Jared Kaplan, Harri Edwards, Yuri Burda, Nicholas Joseph,
+   Lastly, for reproducibility, the released artifact1 includes the full               Greg Brockman, et al. 2021. Evaluating large language models trained on code.
+experiment configuration, prompts, raw outputs, prompt hashes,                         arXiv preprint arXiv:2107.03374 (2021).
+                                                                                   [7] Xinyun Chen, Maxwell Lin, Nathanael Schärli, and Denny Zhou. 2024. Teaching
+CLI versions, timing and token fields, and analysis scripts. Repro-                    large language models to self-debug. In International Conference on Learning
+ducing all six writer-reviewer conditions across the 116 complete                      Representations, Vol. 2024. 8746–8825.
+                                                                                   [8] Zhiyuan Cheng, Longying Lai, Yue Liu, and Yu Sun. 2026. Toward Sustainable
+case tasks costs roughly $225 in API calls (or $1.94 per task across 6                 On-Device Intelligence: A Survey on Energy-Efficient RAG Systems with Small
+conditions, see Table 2), with retries, models, and reasoning effort                   Language Models. Available at SSRN 6698538 (2026).
+configurable.                                                                      [9] Yilun Du, Shuang Li, Antonio Torralba, Joshua B Tenenbaum, and Igor Mordatch.
+                                                                                       2024. Improving factuality and reasoning in language models through multiagent
+                                                                                       debate. In Forty-first international conference on machine learning.
+6    Conclusion                                                                   [10] Yaxin Gao, Yao Lu, Zongfei Zhang, Jiaqi Nie, Shanqing Yu, and Qi Xuan. 2026.
+                                                                                       DSPC: Dual-Stage Progressive Compression Framework for Efficient Long-
+We started with a simple question: if you have two coding agents                       Context Reasoning. In ICASSP 2026 - 2026 IEEE International Conference on
+and let one write a draft while the other reviews it before the code                   Acoustics, Speech and Signal Processing (ICASSP). 19387–19391. doi:10.1109/
+                                                                                       ICASSP55912.2026.11460600
+is submitted, does the review pass help? Using Claude Opus 4.7 and                [11] Jiaming Guo, Zhichun Qi, Xiaokuan Zhao, Shuai Xu, and Hailu Xu. 2025.
+Codex GPT-5.5, we ran every writer and reviewer combination on                         LightLLM-Enhanced Multi-Robot Collaboration with Human-in-the-Loop. In
+                                                                                       2025 8th International Conference on Robotics, Control and Automation Engineering
+116 hard and medium LiveCodeBench programming problems. The                            (RCAE). IEEE, 27–32.
+reviewer saw the problem and the draft but could not run the code                 [12] Dan Hendrycks, Steven Basart, Saurav Kadavath, Mantas Mazeika, Akul Arora,
+or see test results.                                                                   Ethan Guo, Collin Burns, Samir Puranik, Horace He, Dawn Song, et al. 2021. Mea-
+                                                                                       suring coding challenge competence with APPS. arXiv preprint arXiv:2105.09938
+    The answer depends on who wrote the draft. When Codex GPT-                         (2021).
+5.5 writes, a review pass helps: Claude Opus 4.7 reviewing Codex                  [13] Sirui Hong, Mingchen Zhuge, Jonathan Chen, Xiawu Zheng, Yuheng Cheng,
+GPT-5.5 raises the pass rate from 71.6% to 89.7% (a gain of 18.1                       Jinlin Wang, Ceyao Zhang, Steven Yau, Zijuan Lin, Liyang Zhou, et al. 2024.
+                                                                                       MetaGPT: Meta programming for a multi-agent collaborative framework. In
+points), and Codex GPT-5.5 reviewing its own draft raises it to 84.5%                  International Conference on Learning Representations, Vol. 2024. 23247–23275.
+(a gain of 12.9 points). When Claude Opus 4.7 writes, a review pass               [14] Dong Huang, Jie M Zhang, Michael Luck, Qingwen Bu, Yuhao Qing, and Heming
+                                                                                       Cui. 2023. AgentCoder: Multi-agent-based code generation with iterative testing
+does not help. Claude Opus 4.7 reviewing itself leaves its 91.4%                       and optimization. arXiv preprint arXiv:2312.13010 (2023).
+pass rate unchanged, and Codex GPT-5.5 reviewing Claude Opus                      [15] Naman Jain, Alex Gu, Wen-Ding Li, Fanjia Yan, Tianjun Zhang, Sida Wang,
+4.7 drops it to 82.8% (a loss of 8.6 points). Looking at individual                    Armando Solar-Lezama, Koushik Sen, and Ion Stoica. 2025. LiveCodeBench:
+                                                                                       Holistic and contamination free evaluation of large language models for code. In
+tasks shows that a helpful review fixes a small flaw in an otherwise                   International Conference on Learning Representations, Vol. 2025. 58791–58831.
+sound draft, while a harmful review throws away a working draft                   [16] Xiaochong Jiang, Shiqi Yang, Ziwei Li, Lifei Liu, Haoran Yu, and Yichen Liu.
+and rewrites it into one that fails.                                                   2026. ChainCaps: Composition-Safe Tool-Using Agents via Monotonic Capability
+                                                                                       Attenuation. arXiv:2605.26542 [cs.CR] https://arxiv.org/abs/2605.26542
+    The implication in this paper is practical for software develop-              [17] Yuxuan Jiang, Dawei Li, and Francis Ferraro. 2026. DRP: Distilled Reasoning
+ment. If Codex GPT-5.5 writes the draft, add a review pass, and use                    Pruning with Skill-aware Step Decomposition for Efficient Large Reasoning
+                                                                                       Models. arXiv:2505.13975 [cs.CL] https://arxiv.org/abs/2505.13975
+Claude Opus 4.7 as the reviewer for the best accuracy or Codex                    [18] Haolin Jin and Huaming Chen. 2026. Are LLMs Reliable Code Reviewers? Sys-
+GPT-5.5 itself when cost and latency matter more. If Claude Opus                       tematic Overcorrection in Requirement Conformance Judgement. arXiv preprint
+4.7 writes the draft, submit it as is, because no reviewer we tested                   arXiv:2603.00539 (2026).
+                                                                                  [19] Yujia Li, David Choi, Junyoung Chung, Nate Kushman, Julian Schrittwieser, Rémi
+beats Claude Opus 4.7 working alone. The exact numbers are spe-                        Leblond, Tom Eccles, James Keeling, Felix Gimeno, Agustin Dal Lago, et al. 2022.
+cific to these two model versions and to LiveCodeBench. Future                         Competition-level code generation with AlphaCode. Science 378, 6624 (2022),
+research on areas such as modifying reviewer prompts, scaling up                       1092–1097.
+                                                                                  [20] Zhiyu Li, Shuai Lu, Daya Guo, Nan Duan, Shailesh Jannu, Grant Jenks, Deep
+the task sample, evaluating on additional code benchmarks beyond                       Majumder, Jared Green, Alexey Svyatkovskiy, Shengyu Fu, et al. 2022. Automating
+LiveCodeBench, and testing a wider range of LLM models and con-                        code review activities by large-scale pre-training. In Proceedings of the 30th ACM
+                                                                                       joint European software engineering conference and symposium on the foundations
+figurations can provide us with a deeper understanding of review                       of software engineering. 1035–1047.
+agents in the era of Agentic AI software development.                             [21] Tian Liang, Zhiwei He, Wenxiang Jiao, Xing Wang, Yan Wang, Rui Wang, Yujiu
+                                                                                       Yang, Shuming Shi, and Zhaopeng Tu. 2024. Encouraging divergent thinking
+                                                                                       in large language models through multi-agent debate. In Proceedings of the 2024
+References                                                                             conference on empirical methods in natural language processing. 17889–17904.
+ [1] Anthropic. 2025. Claude Opus 4 System Card. https://www.anthropic.com/       [22] Hong Yi Lin, Chunhua Liu, Haoyu Gao, Patanamon Thongtanunam, and
+     claude/opus. Model identifier: claude-opus-4.                                     Christoph Treude. 2025. CodeReviewQA: The code review comprehension assess-
+ [2] Jacob Austin, Augustus Odena, Maxwell Nye, Maarten Bosma, Henryk                  ment for large language models. In Findings of the Association for Computational
+     Michalewski, David Dohan, Ellen Jiang, Carrie Cai, Michael Terry, Quoc Le,        Linguistics: ACL 2025. 9138–9166.
+     et al. 2021. Program synthesis with large language models. arXiv preprint    [23] Jiayuan Liu, Tianqin Li, Shiyi Du, Xin Luo, Haoxuan Zeng, Emanuel Tewolde,
+     arXiv:2108.07732 (2021).                                                          Tai Sing Lee, Tonghan Wang, Carl Kingsford, and Vincent Conitzer. 2026. The
+                                                                                       Memory Curse: How Expanded Recall Erodes Cooperative Intent in LLM Agents.
+                                                                                       arXiv preprint arXiv:2605.08060 (2026).
+                                                                                  [24] Aman Madaan, Niket Tandon, Prakhar Gupta, Skyler Hallinan, Luyu Gao, Sarah
+1 Code and data: https://github.com/shawnzxiang/cross-model-review-code                Wiegreffe, Uri Alon, Nouha Dziri, Shrimai Prabhumoye, Yiming Yang, et al.
+Cross-Model LLM Code Review: Should you use Claude to review Codex or vice versa?                                          Agentic SE @ KDD ’26, August 10, 2026, Jeju, Korea
+
+
+     2023. Self-Refine: Iterative refinement with self-feedback. Advances in neural            Advances in neural information processing systems 36 (2023), 8634–8652.
+     information processing systems 36 (2023), 46534–46594.                               [34] Rosalia Tufano, Luca Pascarella, Michele Tufano, Denys Poshyvanyk, and
+[25] Quinn McNemar. 1947. Note on the sampling error of the difference between                 Gabriele Bavota. 2021. Towards automating code review activities. In 2021
+     correlated proportions or percentages. Psychometrika 12, 2 (1947), 153–157.               IEEE/ACM 43rd International Conference on Software Engineering (ICSE). IEEE,
+[26] Ansong Ni, Srini Iyer, Dragomir Radev, Veselin Stoyanov, Wen-tau Yih, Sida                163–174.
+     Wang, and Xi Victoria Lin. 2023. LEVER: Learning to verify language-to-code          [35] Yining Wang, Zhixiang Lu, Pin Qian, Jionglong Su, Mian Zhou, Chong Li,
+     generation with execution. In International Conference on Machine Learning.               and Zhengyong Jiang. 2025. GEMs-LLM: Integrating Large Language Mod-
+     PMLR, 26106–26128.                                                                        els with Goal-Aware Exploration for RL-Based Portfolio Optimization. In Ad-
+[27] Theo X Olausson, Jeevana Priya Inala, Chenglong Wang, Jianfeng Gao, and                   vanced Intelligent Computing Technology and Applications (Communications in
+     Armando Solar-Lezama. 2024. Is self-repair a silver bullet for code generation?.          Computer and Information Science, Vol. 2566). Springer, Singapore, 516–527.
+     In International Conference on Learning Representations, Vol. 2024. 36545–36593.          doi:10.1007/978-981-96-9949-0_43
+[28] OpenAI. 2025. Introducing GPT-5. https://openai.com/index/introducing-gpt-5/.        [36] Simon Zhang, Zhengxiong Li, Yaxuan Yin, Shuai Xu, Vipin Chaudhary, and
+     Model identifier: gpt-5.                                                                  Hailu Xu. 2025. A survey on multi-robot collaboration systems: Architectures,
+[29] Ruwei Pan, Hongyu Zhang, and Chao Liu. 2025. CodeCoR: An LLM-based                        performances, and applications. (2025).
+     self-reflective multi-agent framework for code generation. arXiv preprint            [37] Yike Zhang, Zuodong Xiang, and Hailu Xu. 2026. Performance-Efficiency Trade-
+     arXiv:2501.07811 (2025).                                                                  offs in Human Preference Prediction: A Comparative Study of Traditional Ma-
+[30] Chen Qian, Wei Liu, Hongzhang Liu, Nuo Chen, Yufan Dang, Jiahao Li, Cheng                 chine Learning and Large Language Models. In Proceedings of the 31st IEEE
+     Yang, Weize Chen, Yusheng Su, Xin Cong, et al. 2024. ChatDev: Communicative               Symposium on Computers and Communications (ISCC 2026).
+     agents for software development. In Proceedings of the 62nd annual meeting of the    [38] YueMing Zhang, Shuai Xu, Zhengxiong Li, Fangtian Zhong, Xiaokun Yang, and
+     association for computational linguistics (volume 1: Long papers). 15174–15186.           Hailu Xu. 2026. SwiftBot: A Decentralized Platform for LLM-Powered Federated
+[31] Caitlin Sadowski, Emma Söderberg, Luke Church, Michal Sipko, and Alberto                  Robotic Task Execution. The 26th IEEE International Symposium on Cluster, Cloud,
+     Bacchelli. 2018. Modern code review: a case study at google. In Proceedings of            and Internet Computing (CCGrid) (2026).
+     the 40th international conference on software engineering: Software engineering in   [39] Zijian Zhang, Rong Fu, Yangfan He, Xinze Shen, Yanlong Wang, Xiaojing Du,
+     practice. 181–190.                                                                        Haochen You, Keyan Jin, Jiazhao Shi, and Simon Fong. 2026. FinSentLLM: Multi-
+[32] Binqi Shen, Lier Jin, Hanyu Cai, Lan Hu, and Yuting Xin. 2026. The Efficiency             LLM and Structured Semantic Signals for Enhanced Financial Sentiment Fore-
+     Frontier: A Unified Framework for Cost-Performance Optimization in LLM Con-               casting. In ICASSP 2026 - 2026 IEEE International Conference on Acoustics, Speech
+     text Management. arXiv preprint arXiv:2605.23071 (2026). doi:10.48550/arXiv.              and Signal Processing (ICASSP). IEEE, 17682–17686.
+     2605.23071                                                                           [40] Yongxi Zhou, Lai Yun Choi, Jiaxi Wen, and Wenbo Ye. 2026. Accuracy, Stabil-
+[33] Noah Shinn, Federico Cassano, Ashwin Gopinath, Karthik Narasimhan, and                    ity, and Repeated-Run Reliability of Large Language Models on Deterministic
+     Shunyu Yao. 2023. Reflexion: Language agents with verbal reinforcement learning.          Programming Tasks. arXiv:2606.00920 [cs.LG] https://arxiv.org/abs/2606.00920
+

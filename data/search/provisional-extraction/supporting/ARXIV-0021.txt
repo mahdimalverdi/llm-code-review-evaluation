@@ -1,0 +1,541 @@
+                                         A Preliminary Study on Explaining Risk of Code Changes using
+                                                         LLM-Based Prediction Models
+                                                         Yalin Liu                                           Vijayaraghavan Murali                              Audris Mockus
+                                                       Kosay Jabre                                                Akshay Patel                                  David Khavari
+                                                        Rui Abreu                                                    Jun Ge                                  Nachiappan Nagappan
+                                                  Zachariah J. Carmichael                                         Weiyan Sun                                    Peter C. Rigby∗
+                                                        yalinliu@meta.com                                         Cong Zhang                                      audris@meta.com
+                                                       kosayjabre@meta.com                                      vijaymurali@meta.com                             dkhavari@meta.com
+                                                        ruiabreu@meta.com                                       akshaypatel@meta.com                              nnachi@meta.com
+                                                      craymichael@meta.com                                         jakege@meta.com                                 pcr@meta.com
+arXiv:2607.02782v1 [cs.SE] 2 Jul 2026
+
+
+
+
+                                                        Meta Platforms, Inc.                                       wysun@meta.com                                Meta Platforms, Inc.
+                                                       Menlo Park, CA, USA                                       conzhang@meta.com                               Menlo Park, CA, USA
+                                                                                                                  Meta Platforms, Inc.
+                                                                                                                 Menlo Park, CA, USA
+                                        Abstract                                                                                David Khavari, Nachiappan Nagappan, and Peter C. Rigby. 2026. A Pre-
+                                        Predictions by machine learning (ML) and artificial intelligence                        liminary Study on Explaining Risk of Code Changes using LLM-Based
+                                                                                                                                Prediction Models. In Proceedings of the 3rd ACM International Conference
+                                        (AI) models are often received skeptically unless they are paired
+                                                                                                                                on AI-Powered Software (AIware ’26), July 6–7, 2026, Montreal, QC, Canada.
+                                        with intelligible explanations. In the context of just-in-time de-                      ACM, New York, NY, USA, 9 pages. https://doi.org/10.1145/3805760.3814916
+                                        fect prediction, highlighting small portions of a software change
+                                        (diff )—beyond rule-based lints—where risk may be concentrated
+                                        has not yet been extensively investigated. In this work, we leverage                    1    Introduction
+                                        attention weights from an LLM-based Diff Risk Score (DRS) model
+                                                                                                                                In the (big) tech industry, software quality has a direct impact on
+                                        to highlight parts of a diff that the model focuses on when pre-
+                                                                                                                                revenue, and various tools are utilized to help maintain quality
+                                        dicting risk. We aggregate token-level attention into interpretable
+                                                                                                                                to the highest standards. A just-in-time defect prediction system
+                                        code units (lines, hunks, and files), and present the top-𝐾 units
+                                                                                                                                (e.g., Diff Risk Score (DRS) [1, 15]) is employed by some companies
+                                        to developers as a lightweight form of guidance during code re-
+                                                                                                                                to predict potential issues in code changes. This type of system
+                                        view. We evaluate our approach using expert-labeled changes that
+                                                                                                                                produces a risk score indicating the likelihood of a service outage
+                                        have caused real outages. Results show that the highlighted snip-
+                                                                                                                                if a particular code change is landed. If the risk is deemed high
+                                        pets cover expert-labeled outage-causing change lines 53.85% of the
+                                                                                                                                enough, developers may be prevented from landing the change,
+                                        time when highlighting the top-2 hunks, while requiring developers
+                                                                                                                                or required to take additional steps (e.g., adding tests, requesting
+                                        to review 26.28% of the changed lines on average. Because atten-
+                                                                                                                                additional review, or performing further validation).
+                                        tion is produced during standard model inference, the approach is
+                                                                                                                                    We have historically explored the use of logistic regression (LR)
+                                        scalable for large development workflows and can be surfaced in
+                                                                                                                                models for gating risky diffs (e.g., [15, 24]). These LR models are
+                                        the code review UI with low additional latency.
+                                                                                                                                trained on curated and intuitive measures, such as the number of
+                                                                                                                                code review comments and the author’s experience with that part
+                                        CCS Concepts                                                                            of the codebase. Logistic regression is a simple causal model where
+                                        • Software and its engineering → Risk management.                                       each predictor has a coefficient that shows if, and by how much,
+                                                                                                                                it increases or decreases the risk. It has been argued that causal
+                                        Keywords                                                                                models are necessary for explainability [13, 17]. More complicated
+                                        Code Risk Score, LLMs, Explainability, Applied Research                                 ML models can only tell how important a feature is to explain
+                                                                                                                                the variation in the response, but lack this simple mechanism pro-
+                                        ACM Reference Format:
+                                                                                                                                vided by logistic regression [7, 18]. Researchers have introduced
+                                        Yalin Liu, Kosay Jabre, Rui Abreu, Zachariah J. Carmichael, Vijayaraghavan
+                                        Murali, Akshay Patel, Jun Ge, Weiyan Sun, Cong Zhang, Audris Mockus,
+                                                                                                                                entire toolkits to support traditional feature-based explainability
+                                                                                                                                methods [2, 8, 10].
+                                        ∗ Rigby is also a professor at Concordia University in Montreal, QC, Canada.                A significant limitation of the LR model is its inability to fully
+                                                                                                                                utilize the textual content of a given diff (such as the raw code
+                                                                                                                                changes themselves). In contrast, the emergence of large language
+                                                                                                                                models (LLMs) has opened possibilities to employ textual and
+                                        This work is licensed under a Creative Commons Attribution 4.0 International License.   other information for risk prediction. Recent work in the software
+                                        AIware ’26, Montreal, QC, Canada                                                        engineering community, such as Diff Risk Score (DRS) [1], has
+                                        © 2026 Copyright held by the owner/author(s).
+                                        ACM ISBN 979-8-4007-2601-9/2026/07                                                      shown the promise of using state-of-the-art LLMs for gating risky
+                                        https://doi.org/10.1145/3805760.3814916                                                 code changes. By risk-aligning LLMs through fine-tuning on code
+AIware ’26, July 6–7, 2026, Montreal, QC, Canada                                                                                                 Liu et al.
+
+
+changes, summaries, and titles, DRS was able to gate risky diffs           our systems1 . While many diffs are routine, a small fraction can
+with significantly higher accuracy, capturing over 40% of outages          introduce severe incidents due to subtle interactions, incomplete
+by gating just the top 10% of diffs by risk [1]. It is important to note   validation, or misconfigurations. When systems do break, we track
+that diffs causing outages are incredibly rare (approximately two in       and report these incidents as outage (or “outages”) as part of our
+a thousand) and prediction models tend to perform poorly. Hence,           incident response process. In this work, we focus on outages that
+inherently, the coverage is low and developers need as much expla-         can be attributed to a particular landed diff, enabling root-cause
+nation and justification in order for them to seriously pay attention      analysis at the level of changed lines.
+to flagged diffs.                                                             Diffs can—and do—cause outages. During major revenue events,
+   Despite the higher accuracy of LLMs, engineers demand to know           like the holiday season, we used to conduct “code freezes” in which
+why their diffs are considered risky [3]—a risk score alone is not         we disallowed all diffs from landing in an effort to minimize outages.
+actionable. This need for an explanation is a major obstacle to the        This lowered risk at the cost of developer productivity. Recently,
+use of LLMs for risk prediction. The lack of explanation is partic-        we have moved away from this practice toward a more dynamic
+ularly problematic for larger diffs, which might contain multiple          risk management system that allows us to balance productivity and
+large files. In addition, model errors are unavoidable: even a correct     risk [1].
+high-level warning can be ignored if it does not help an engineer
+narrow down what to inspect, test, or reconsider.                          2.2     Diff Risk Score (DRS)
+   In this work, we present a pragmatic method to make LLM-based           Diff Risk Score models generate a score between 0 (no risk) and 1
+risk scores actionable by leveraging aggregated attention mapped           (maximum risk) for diffs before they land [1, 15]. The score can then
+to code hunks. When the model produces a risk score, we highlight          be used to allow the lowest risk diffs to land or block the highest risk
+which parts of the diff it attends to most strongly. We do not claim       diffs from landing (with mechanisms for exceptions in emergencies),
+causal faithfulness between the attention signal and the model’s           depending on the desired productivity-risk trade-off. In practice,
+internal reasoning; rather, we provide a low-latency highlighting          teams may tune thresholds and policies (e.g., block above a certain
+signal, validated against expert-annotated outage root causes, that        score, require additional review, or require additional testing) based
+narrows inspection to a small number of code regions.                      on their tolerance for risk and operational constraints. Figure 1
+   Our initial results show that our method covers risky lines in the      shows what developers see in the code review UI. It includes the
+diff that actually caused faults 53.85% of the time when highlighting      risk score of the diff, reasons why diff is considered risky, and
+the top-2 hunks. By providing pragmatic highlighting validated             potential next actions. It also includes a feedback mechanism to let
+against expert root-cause annotations, our approach aims to ad-            engineers provide feedback for future improvements. Our goal is
+dress a major challenge of utilizing LLM-based risk models at scale,       to strengthen this UI so that engineers can quickly determine what
+where the responsibility of determining what should and should             to inspect when a diff is flagged.
+not be released falls to the engineers writing and reviewing the
+code. Beyond increasing trust and adoption, attention-based expla-         2.3     Explaining Risk
+nations are highly scalable since attention is generated as a part
+                                                                           The DRS toolset is designed to be actionable and transparent. It
+of LLM inference. Our key contribution is to develop and evaluate
+                                                                           provides feedback on why a diff received a particular risk score
+a pragmatic highlighting approach—aggregated attention mapped
+                                                                           and suggests actions engineers can take to reduce that risk, like
+to code hunks and validated against expert-annotated outage root
+                                                                           improving test coverage or refactoring code, as shown in Figure 1.
+causes—that makes just-in-time LLM-based defect predictions ac-
+                                                                              A score alone is insufficient to achieve this objective. As an
+tionable for professional software engineers, measurably improving
+                                                                           AI/ML based approach, DRS is often seen as a black box by soft-
+over the current production baseline of no highlighting. This study
+                                                                           ware engineers. For many cases, users are informed that a diff is
+is done in a large-scale industrial context at FAANGCompany.
+                                                                           dangerous with little justification or context. This is especially the
+   The remainder of this paper is organized as follows. Section 2 dis-
+                                                                           case when using LLM-based DRS classification as opposed to lo-
+cusses FAANGCompany’s development practices and explainability
+                                                                           gistic regression based classification, where the latter offer some
+challenges. Section 3 details the use of LLMs and attention weights
+                                                                           explainability through their coefficients and feature values.
+to highlight risky code segments. Section 4 covers the datasets, met-
+                                                                              The lack of good explanations presents major barriers to the
+rics, and experimental results on explanation effectiveness as well
+                                                                           adoption of DRS:
+as user feedback. Section 5 covers related work on explainable AI in
+defect prediction. Section 6 discusses the threats to the validity of            • Reduced User Productivity: Without clear instructions,
+this work, and Section 7 concludes with a summary and discussion                   engineers struggle to unblock themselves from landing high-
+of future directions.                                                              risk diffs, compromising developer productivity.
+                                                                                 • Reduced Trust: Inaccurate results without rationale drive
+                                                                                   skepticism and decreased attention to warnings.
+2 Background
+                                                                                 • Harder Debugging and Maintenance: Debugging DRS
+2.1 Developing Software at FAANGCompany                                            without rationale is like tuning a black box, making mainte-
+At FAANGCompany, software engineers submit tens of thousands                       nance and improvement difficult.
+of pull requests (or “diffs”) every day. Each diff goes through ex-        1What is it like to write code at FAANGCompany? — FAANGCompany Tech Podcast,
+tensive automated testing, code review, canary deployment, and             Episode 55, https://engineering.fb.com/2023/09/05/web/what-like-ship-code-meta-
+more to maintain a high level of code quality and reliability in           tech-podcast/
+A Preliminary Study on Explaining Risk of Code Changes using LLM-Based Prediction Models                         AIware ’26, July 6–7, 2026, Montreal, QC, Canada
+
+
+
+
+ Figure 1: A redacted Code Review Tool UI showing risk and explainability of an outage (referred to as “SEV” in the image).
+
+
+3     Approach                                                                       to generate a one-token response (0 or 1) for whether or not the
+To tackle the above issues, we highlight parts of the diff for engi-                 diff could cause an outage. We then take the tokens’ logits as the
+neers to inspect when a diff is flagged as high risk. In contrast to                 risk likelihood. Concretely, the model produces scores for both
+feature-based explanations that summarize why a diff is risky in                     output tokens; we transform these logits into a single risk score
+terms of metadata, we focus on where the model attends within the                    that can be thresholded by downstream policy (e.g., block, require
+diff content itself.                                                                 additional review, or warn). The model used in this work leverages
+                                                                                     a LLM instance [19] which is instruction fine-tuned on historical
+                                                                                     diffs, similar to [1]. This design allows deployment with a flexible
+3.1     Overview                                                                     gating threshold to adapt to different base rates of outages across
+Our approach, depicted in Figure 2, uses an LLM to evaluate the                      products and infrastructure components. It also enables continuous
+risk of a code change (diff) potentially causing severe issues. The                  calibration as the risk distribution changes over time. The LLM
+diff is embedded into a pre-defined prompt, tokenized, and fed                       model we leverage in this work is the Llama3-70B [1].
+into the LLM, which produces a risk score based on a single logit
+output. During this inference, the transformer computes attention
+                                                                                     3.3    Explanations With Attention Weight
+weights between the generated output token and the input tokens.
+We aggregate these attention weights to produce a token-level                        Leveraging transformer attention weights for the purpose of expla-
+importance vector, then map token importances back to code units                     nation has been widely discussed [9, 14, 20, 21]. In this work, we
+(lines/hunks/files). We present the top-𝐾 units to developers as a                   use attention as a practical proxy signal to highlight portions of
+compact “review budget” intended to reduce time spent scanning                       the input the model attended to when producing its classification
+large diffs. Because attention is computed during standard inference,                output. Our objective is to provide actionable guidance (what to
+highlighting adds minimal overhead and is feasible to deploy at                      inspect) while avoiding free-form natural language rationales that
+scale in high-throughput code review workflows.                                      may hallucinate.
+
+                                                                                        Token-level attention extraction. Given a prompt with diff content
+3.2     LLM-Based Diff Risk Score Model                                              of length 𝑁 , the LLM generates a response of length 1. We obtain
+To generate risk scores using LLMs, we apply the prompt demon-                       the last-layer attention tensor for the generated token with shape
+strated in Figure 1. As shown in Figure 2, we instruct the LLM                       {𝐻, 1, 𝑁 + 1} where 𝐻 refers to the number of attention heads and
+AIware ’26, July 6–7, 2026, Montreal, QC, Canada                                                                                             Liu et al.
+
+
+Algorithm 1 Attention-based highlighting for diffs                           whitespace symbol is inserted between groupings so that down-
+  1: Input: Prompt 𝑃 containing diff; chunking scheme C; budget              stream formatting can reconstruct the original text. The special
+      𝐾                                                                      byte-token <0x0A>, which SentencePiece uses for the newline char-
+  2: Run LLM on 𝑃 to generate a one-token output and collect last-           acter, is emitted as a dedicated newline symbol with a null score
+      layer attentions                                                       (not considered for attribution of risk).
+  3: Extract attention tensor 𝐴 ∈ R1×𝑁 +1×𝐻 for the generated token             Tiktoken / BPE (pass-through). Tiktoken-family tokenizers en-
+     over input tokens                                                       code whitespace as part of the token text and do not use a word-
+                            1 Í𝐻
+  4: Pool over heads: 𝑤 𝑖 ← 𝐻 ℎ=1 𝐴1,𝑖,ℎ for 𝑖 ∈ {1, . . . , 𝑁 + 1}          boundary marker. Each raw token is therefore mapped one-to-one
+  5: Map tokens to chunks (lines/hunks/files) using parser align-            to a token grouping after splitting on literal newline characters. No
+     ment (hierarchical token grouping)                                      multi-subword merging is required.
+  6: Score each chunk as in Section 3.4.3                                       In both cases, the output is an ordered list of token grouping
+  7: Return: Top-𝐾 chunks by score                                           objects, each carrying the concatenated surface string and (the list
+                                                                             of per-subword attention scores.
+
+𝑁 + 1 is the length of input prompt plus the generated one token             3.4.2 Hierarchical Structure Recovery. Given the flat sequence of
+response. We then pool across heads by averaging to obtain a vector          token groupings, we reconstruct the diff’s hierarchy in two passes.
+𝑤 ∈ R𝑁 +1 , where 𝑤𝑖 denotes the attention weight assigned to the               Line splitting. Token groupings are partitioned into line group-
+𝑖-th input token when generating the output.                                 ings by detecting newline-delimiter tokens.
+   Mapping tokens back to code. Token-level weights are difficult               Hunk boundary detection. Within each file’s code-change section,
+for humans to interpret directly. Therefore, we map tokens back to           unified-diff hunk headers of the form @@ -a,b +c,d @@ are detected
+code units that match how developers naturally review diffs:                 via regex. Each header initiates a new hunk object; subsequent lines
+      • Line: individual changed lines (fine-grained but may lack            are classified as additions (+), deletions (-), or context based on
+        context).                                                            their leading character, and source/target line numbers are tracked
+      • Hunk: contiguous blocks of change as shown by diff tools             incrementally from the header’s start positions.
+        (contextual and commonly used in review).                               The result is a tree rooted at the diff, with interior nodes for files
+      • File: files touched by the diff (coarse-grained; useful for          and hunks and leaves for individual lines and tokens (depicted in
+        triage).                                                             Figure 3).
+We compute a unit score by aggregating token weights within                  3.4.3 Multi-Level Score Aggregation. Each node in the hierarchy
+the unit and then return the top-𝐾 scored units. In the UI, these            carries a scalar attention score. Leaf scores are the raw per-subword
+are highlighted to direct developer attention. Section 3.4 goes into         weights produced by the LLM’s attention heads; interior scores are
+further detail on the grouping and aggregation approach.                     computed by a recursive, bottom-up aggregation pass. Because
+                                                                             the semantics of “importance” differ across levels—a subword’s
+3.4       Hierarchical Token Grouping                                        contribution to its parent token is qualitatively different from a
+LLM tokenizers decompose source code into subword units whose                hunk’s contribution to its parent file—we employ type-dispatched
+boundaries rarely coincide with the constructs that developers rea-          aggregation: for each node (e.g., Hunk or Line), a type-specific
+son about during code review. A variable name such as getUserById            aggregation function is selected during the recursive traversal.
+may be split into three or more tokens, while a hunk header or                  Formally, let 𝑠 (𝑣) denote the score assigned to node 𝑣 and ch(𝑣)
+filename may be scattered across dozens. To produce explanations             the ordered children of 𝑣. For a leaf token grouping with subword
+that are actionable at the granularity of tokens, lines, hunks, and files,   scores (𝑤 1, . . . , 𝑤𝑚 ),
+we introduce a four-level hierarchy that (i) reconstitutes subword                                                  𝑚
+                                                                                                                1 ∑︁
+tokens into semantically meaningful units, (ii) recovers the diff’s                                     𝑠 (𝑣) =       𝑤𝑖 .
+                                                                                                                𝑚 𝑖=1
+structural boundaries from tokens, and (iii) recursively aggregates
+per-subword attention scores upward through the hierarchy with               For an interior node at hierarchy level ℓ with aggregation function
+level-specific aggregation.                                                  𝑓ℓ ,
+                                                                                                                                      
+                                                                                          𝑠 (𝑣) = 𝑓ℓ {𝑠 (𝑐) | 𝑐 ∈ ch(𝑣), 𝑠 (𝑐) ≠ null} .
+3.4.1 Token Reconstitution. The first stage maps a flat sequence of
+subword tokens and their associated scalar attention weights into            Children whose scores are null (e.g., whitespace symbols or nullified
+token groupings—units that correspond to whitespace-delimited                test-file tokens) are excluded from the input multiset before 𝑓ℓ is
+tokens in the original diff text. The DRS pipeline supports multiple         applied. If the resulting input is empty, 𝑠 (𝑣) = 0.
+backbone LLMs, so this logic is dependent on the tokenizer family.              The top-𝑘 sum used at the hunk level is defined as
+                                                                                                                    ∑︁ )
+                                                                                                                  min(𝑘,|x|
+   SentencePiece (word-boundary merging). SentencePiece tokeniz-                                    𝑓hunk (x) =               𝑥 (𝑖 ) ,
+ers mark word boundaries with a leading ␣ (U+2581) prefix. We                                                        𝑖=1
+scan the subword sequence left-to-right, accumulating consecutive
+                                                                             where 𝑥 (1) ≥ 𝑥 (2) ≥ · · · is the sorted order of the children’s scores.
+subwords into a single token grouping until a new boundary prefix
+is encountered. The prefix character is stripped and a synthetic             3.4.4   Practical Considerations.
+A Preliminary Study on Explaining Risk of Code Changes using LLM-Based Prediction Models                              AIware ’26, July 6–7, 2026, Montreal, QC, Canada
+
+
+
+
+Figure 2: Overview of leveraging a LLM attention matrix to highlight code snippets worth user review. The LLM takes a
+pre-defined prompt to instruct the model to distinguish the risk of a diff. The LLM generates a one-token sentence and the
+logits of the tokens — 0 and 1 — are used to infer the diff risk score. The attention matrix is aggregated to produce a {1, 𝑁 + 1}
+matrix representing each token’s correlation towards the generated token. We further chunk the code into hunks and assign
+hunk importance by aggregating their tokens’ attention weights.
+
+
+                                                 Diff                                layered on top of the raw attention signal, we nullify all token
+                                                                                     scores within files whose paths match any of a curated set of 16
+                                                                                     regular expressions covering common test-file conventions across
+                                                                                     languages. Because null scores are excluded during aggregation,
+                                  File1                        File2                 test files receive a score of zero at every level. This regex-based fil-
+                                                                                     tering is incomplete: remaining false highlights on auto-generated
+                                                                                     code suggest that stronger signals such as build-system metadata
+                        Hunk1              Hunk2              Hunk3                  or codegen signatures should be incorporated in future work.
+
+                                                                                     3.5     Implementation
+                                                                                     Our implementation leverages the Hugging Face library2 , utilizing
+                Line1           Line2                                                its unified API interface to ensure compatibility with other large
+                                                                                     language models (LLMs) [19]. The DRS service is implemented
+                                                                                     as a standalone Thrift API service3 , where clients can send diff
+        𝑡1       𝑡2       ···                                                        information, including title, summary, test, and code changes.
+                                                                                        Explanation Calculation. We embed diff information into a pre-
+Figure 3: Hierarchical grouping of diff attention scores. Sub-                       defined prompt and instruct the LLM to identify outage risk and
+word tokens (𝑡𝑖 ) are leaves; scores are aggregated bottom-up                        return a one-token response. By leveraging the logit of this token,
+through lines, hunks, and files with level-specific functions.                       we compute the risk score of the diff being risky (Section 3.3). We
+                                                                                     also obtain the attention tensor associated with generating that to-
+   Escaped-newlines. Certain tokenizers split the two-character es-                  ken and aggregate it to compute token-level weights. These weights
+cape sequence \\n across token boundaries (e.g., one token for \                     are then used solely for highlighting; they do not affect the risk
+and a separate token for n). A dedicated merge pass detects and                      score.
+rejoins these fragments before line splitting, preventing spurious                      Tokenizer-agnostic pipeline. The reconstitution and structure-
+line breaks that would corrupt hunk parsing. At the hunk level, line                 recovery stages abstract over tokenizer-specific details behind a
+splitting accepts both literal and escaped newlines as delimiters to                 common token grouping interface. Adding support for a new to-
+accommodate cross-tokenizer variation.                                               kenizer requires only a new conversion function that maps raw
+   Test-file score nullification. Code changes in test files are often               2 Hugging Face. (2022). Transformers: State-of-the-art natural language processing.
+mechanically correlated with the code under test and rarely repre-                   Retrieved from https://huggingface.co/docs/transformers/index
+sent the root cause of a risky diff. As a pragmatic engineering choice               3 https://thrift.apache.org/
+AIware ’26, July 6–7, 2026, Montreal, QC, Canada                                                                                       Liu et al.
+
+
+                                                                        these snippets contain the actual outage-causing lines:
+                                                                                                      #diffroot_cause∈explanation
+                                                                                        𝐶𝑜𝑣𝑒𝑟𝑎𝑔𝑒 =
+                                                                                                                #diffs
+                                                                        Coverage is measured at the hunk level: a diff is counted as covered
+                                                                        if at least one of the top-𝑁 highlighted hunks contains a root-
+                                                                        cause line. We intentionally operate at hunk granularity because it
+                                                                        matches how diffs are reviewed in our industrial context—engineers
+                                                                        inspect and act on hunks, not individual lines. This makes the metric
+                                                                        coarser than a line-level measure; it captures the binary decision
+                                                                        "does the highlighted region direct the engineer to the right hunk?"
+                                                                        but does not measure how precisely the highlight localizes the fault
+                                                                        within that hunk.
+                                                                        Average Review Percent (ARP) Along with delivering high cov-
+                                                                        erage, we seek to optimize developer time investment by asking
+                                                                        them to review only the most important code snippets. The Average
+                                                                        Review Percent within each diff is:
+                                                                                                                          
+                                                                                                       #explanation_lines
+                                                                                         𝐴𝑅𝑃 = 𝑎𝑣𝑔
+                                                                                                           #diff_lines
+                                                                            We evaluate the proposed explanation method on the O-RC
+Figure 4: Illustration of hunk-level highlighting, which re-
+                                                                        dataset to measure both attention-based highlighting accuracy and
+quests users to review 1 out of 2 hunks in a single file. The
+                                                                        associated developer workload. As discussed in Section 3.3, we
+highlighted hunk contains 10 line deletion and 1 line addi-
+                                                                        chunk the diff into smaller snippets for code review. In this ex-
+tion.
+                                                                        periment, we explore which highlighting granularity may work
+                                                                        best in practice. We chunk the diffs into lines, hunks and files
+                                                                        and then return the top 10/20/30 lines for line-level highlighting,
+subwords to token groupings; downstream aggregation and expla-          the top 1/2/3 hunks for hunk-level highlighting, and the top 1/2/3
+nation rendering are unchanged.                                         files for file-level highlighting. Richer evaluation alternatives exist.
+                                                                        Recall@𝑘 at the line level would measure what fraction of root-
+4 Experiment                                                            cause lines fall within the top-𝑘 highlighted lines. Coverage–effort
+                                                                        curves (plotting coverage against ARP as 𝑁 varies) would visual-
+4.1 Dataset                                                             ize the precision/effort trade-off more completely. Area Under the
+The method proposed in this work generates an explanation as            Coverage-effort curve (AUCU) would provide a single aggregate
+a side product of risk score generation—it requires no additional       measure across all operating points. We chose hunk-level coverage
+model training. However, the DRS model is trained on data that          because it corresponds to the actionable decision in our deployment:
+does not include which lines caused outages. As such, standard DRS      inspect this hunk first. The ARP metric makes the effort side of the
+model evaluation data sets are insufficient to evaluate the quality     trade-off explicit—it quantifies how much of the diff the engineer
+of explanations. To conduct a quantitative evaluation, we created       must review to achieve the reported coverage. We report results
+a an Outage Root Cause (O-RC) dataset that draws upon domain            across multiple values of 𝑁 and granularities (line, hunk, file) so
+experts to pinpoint specific code changes that caused outages. The      that the coverage–effort trade-off is visible, even though we do not
+dataset was manually curated whereby each outage is tagged by           compute a formal AUCU.
+four area experts. The main reviewer (typically the diff author)
+identifies outage-causing lines of the diff. The remaining three        4.3    Results / Observations
+engineers perform validations. If the primary expert indicates high
+                                                                        The results of our study are presented in Table 1. The line-level
+confidence, we include this diff in our dataset. All experts were
+                                                                        explanation requires a minimal amount of code review. When we re-
+instructed to find which lines of the diff were the most likely cause
+                                                                        turn the top-10 lines to developers, they only need to review 7.6% of
+of the outage or leave the entry empty if it is not triggered by diff
+                                                                        the code to cover the outage-causing area with a coverage of 30.76%.
+directly. The final dataset includes the file name and the code lines
+                                                                        As the line budget increases to 30 lines, developers have more op-
+that caused the outage. For evaluation, we use our explanatory
+                                                                        portunity to see outage-causing lines in the highlighted output, at
+method to select the 𝐾 riskiest code snippets and then compute
+                                                                        the cost of additional scanning and context reconstruction.
+whether these snippets cover the root cause lines.
+                                                                           When we return the top-1 hunk to the user, they must review
+                                                                        15.37% of the code (about 20 consecutive lines on average), which
+4.2     Evaluation Setup                                                achieves 30.76% coverage. This is worse than the top-20 line-level
+Coverage This metric measures whether our method recommends             explanation, which requires a similar review fraction. However,
+results that contain the outage root-cause lines. Our model returns     top-2 hunks achieve similar results to top-30 lines on both coverage
+the 𝑁 code snippets with the highest score. We evaluate whether         and review amount. Since hunks tend to return larger blocks of
+A Preliminary Study on Explaining Risk of Code Changes using LLM-Based Prediction Models                            AIware ’26, July 6–7, 2026, Montreal, QC, Canada
+
+
+    Table 1: Evaluation of Explanation on O-RC Dataset                               4.4       User Feedback
+                                                                                     To collect early qualitative feedback, we added our highlighting
+                                                     Review        Review            method to the code review tool and provided a user interface for
+Granularity         Threshold        Precision
+                                                      Lines        Percent           positive and negative feedback with free text entry. We received 55
+                                                                                     pieces of feedback: 7 positive and 48 negative. We treat this as early-
+                    Top 10                30.76%            10        7.60%
+                                                                                     stage debugging signal rather than a usability study—the sample
+Line                Top 20                42.30%            20       15.20%
+                                                                                     is small, uncontrolled, and self-selected. Nonetheless, the negative
+                    Top 30                53.85%            30        22.8%
+                                                                                     feedback surfaced concrete failure modes that are now under ac-
+                    Top 1                 30.76%         20.22       15.37%          tive work. Among the 48 negative responses, 17 contained textual
+Hunk                Top 2                 53.85%         34.57       26.28%          comments. These consistently pointed to three specific shortcom-
+                    Top 3                 64.38%         50.19       38.15%          ings: (1) highlighting test files and auto-generated code, where our
+                                                                                     regex-based filtering (Section 3.3) is incomplete; (2) highlighting
+                    Top 1                 50.00%         55.11       41.90%
+                                                                                     boilerplate or common patterns rather than the specific change
+File                Top 2                 69.23%         79.68       60.50%
+                                                                                     likely to trigger an issue; and (3) directional ambiguity—as previous
+                    Top 3                 92.30%        103.40       78.61%
+                                                                                     studies note [12], attention can support a prediction in either direc-
+                                                                                     tion, so highlighted code may represent reasons the diff is viewed
+       Table 2: Aggregation functions by hierarchy level.                            as less risky, not more. These are known limitations. We are ac-
+                                                                                     tively exploring stronger filtering signals (build metadata, codegen
+                                                                                     signatures) for (1), and methods to identify attention signal polarity
+                       Level          Aggregation
+                                                                                     for (3).
+                       Token                    mean
+                       Line                     mean                                 5      Related Work
+                       Hunk       top-𝑘 sum (k=20)                                   The advent of exceedingly accurate AI models and their use in
+                                                                                     science and engineering has raised fundamental questions around
+                       File                     mean
+                                                                                     what understanding means and how to attain it. Notably, AI models
+                                                                                     are accurate oracles, but do not, without additional technology,
+                                                                                     help humans understand their predictive rationale. One pragmatic
+code, an incorrect prediction of the top-1 hunk may lead to more
+                                                                                     solution from the philosophical standpoint [5] is that two conditions
+time spent in review than an incorrect prediction at the line level.
+                                                                                     are satisfied:
+   For the file-level experiment, we only include diffs where not all
+the files touched by these diffs cause outages, i.e. not all the files are                 (1) A phenomenon P can be understood if a theory T of P exists
+part of the explanation and need to be investigated. File-level results                        that is intelligible (and meets the usual logical, methodologi-
+demonstrate a trade-off: larger chunks yield higher coverage but                               cal, and empirical requirements).
+incur substantially more review. When returning the top-1 file as the                      (2) A scientific theory T is intelligible for scientists (in context
+explanation, we have a coverage of 50% with a code review percent                              C) if they can recognise qualitatively characteristic conse-
+of 41.9% (55 lines on average). When we return the top-3 files,                                quences of T without performing exact calculations.
+although we achieve 92% coverage, users must review the majority                     In case of DRS predictions, the key question is to what extent the
+of each diff on average (78.61%). Based on these observations, we                    highlighted risky parts of the diff are “intelligible” to an engineer
+find that the top-2 hunks may be the most pragmatic granularity.                     making decisions about the change.
+Although line-level explanation has higher coverage when review                         According to Krenn et al. [11], an AI system can contribute to
+cost is on-par with hunk-level, it can be too fine-grained to be easily              new scientific understanding as a “computational microscope” with
+comprehended in isolation. When highlighted lines are sporadically                   the ability to acquire information not yet attainable through ex-
+distributed throughout a diff, users must still read surrounding                     perimental means; as a “resource of inspiration” or an artificial
+lines to understand context, implicitly increasing review effort.                    muse, expanding the scope of human imagination and creativity; as
+In contrast, file-level explanations are often too coarse grained                    an “agent of understanding”, replacing the human in generalizing
+for actionable debugging or validation. Hunk-level explanation                       observations and transferring new scientific concepts to different
+provides a balance: hunks naturally segment diffs by context and                     phenomena, and conveying these insights to human scientists. In
+often correspond to the unit of review in real-world workflows. By                   the case of DRS, the LLM without highlighting serves as a micro-
+showing the top 2 hunks, we achieve 53.85% coverage with users                       scope showing which diffs may cause outages, but it becomes a
+reviewing 26.28% of each code change on average. We conclude that                    more useful “agent of understanding” when it can also indicate
+hunk 2 level provides the best balance of coverage, review lines,                    where to inspect.
+and review percentage.                                                                  Explanation is key for understanding [4], and engineers and
+   Table 2 summarizes the aggregation choices used in production,                    scientists are not satisfied without it. AI methods have a long his-
+which were selected empirically based on a held-out validation set.                  tory of dealing with explainability. From early rule-based expert
+We rationalize the performance of top-𝑘 aggregation as it captures                   systems through to decision trees, explainability typically took
+concentrated signal (a few high-attention lines) while bounding                      the form of revealing underlying rules and branch weights. Newer
+the influence of very large hunks.                                                   methods like random forest obscured the rules, but one could still
+AIware ’26, July 6–7, 2026, Montreal, QC, Canada                                                                                                        Liu et al.
+
+
+estimate the importance of each feature used in prediction. Deep         weights may be influenced by prompt structure or formatting, and
+learning upended previous approaches to explainability. According        not solely by semantic properties of the change.
+to Xu et al. [22], the primary approach with deep learning models
+is post-hoc explanation: a result is inferred then an explanation is     7    Conclusions & Future Work
+generated. Post-hoc explanation tries to (a) provide analytic state-
+                                                                         This paper presented how LLMs are used at FAANGCompany to
+ments; (b) show saliency maps via feature importance—in our case,
+                                                                         generate a score of how likely a diff will lead to an outage—a sys-
+to highlight a subset of a change; (c) give explanations by example.     tem we call Diff Risk Score (DRS) [1]. In this paper, by leveraging
+In the context of defect prediction, previous work includes fitting      attention weights, we proposed a pragmatic highlighting approach
+simple models to explain more complex models [6]. That might look        that uses aggregated attention, mapped to code hunks, to direct
+like predicting risk with an LLM, but explaining those predictions       engineers toward the parts of the change most associated with
+with a logistic regression model.                                        the predicted level of risk.. We experimented at multiple levels:
+   A systematic review of the literature on explainable AI in soft-      line, hunk, and file. To balance the coverage against the number
+ware engineering [16] shows that defect prediction is the most           of lines that an engineer needs to review, our initial results show
+common target, but that explainability is mostly investigated for        that displaying the top-2 hunks to engineers is sufficient. We found
+traditional rather than deep learning methods [23]. Hence, our
+                                                                         a coverage of 53.85% while highlighting an average of 34 lines
+contribution is both relevant and timely. The survey finds that vi-
+                                                                         accounting for 26% of the total lines in a diff.
+sualization and explanations in natural language are particularly           While our work is preliminary, our key contribution is the de-
+uncommon in the field of explainable AI for software engineering.        velopment and validation of a pragmatic highlighting signal based
+   Note, however, that the focus of this paper is to show that our       on aggregated attention and expert-annotated outage root causes.
+approach is useful at scale at FAANGCompany, rather than a sys-          This signal makes just-in-time LLM-based defect predictions ac-
+tematic comparison with other approaches.                                tionable for professional engineers, measurably improving over the
+                                                                         current production baseline of no highlighting. This approach may
+6    Limitations                                                         increase engineer trust in the model and help them mitigate risks
+   Generalizability. Generalizing from empirical studies in software     associated with their changes.. This has the potential to improve
+engineering is difficult because of a large number of potentially        the reliability and trustworthiness of DRS models, enabling their
+relevant context variables. The study was performed at FAANG-            broader deployment in a variety of industry settings. Furthermore,
+Company, so the results might be different elsewhere. However,           our attention-based highlighting is highly scalable and efficient for
+the software systems under study involve millions of lines of code       real-world, large-scale software development workflows (such as
+and thousands of developers some of whom are collocated while            the one at FAANGCompany).
+others collaborate across multiple locations across the world. The          Future work will focus on refining this approach, exploring its
+systems also span a range of domains from social network products        applications in other domains, and evaluating its impact on both
+and virtual and augmented reality to software engineering infras-        software quality and developer productivity. Promising directions
+tructure. While the desire to prevent outages is common among all        include incorporating additional signals (e.g., file history or test
+(big tech) companies, the specific DRS tool we use may be unique         coverage) to reduce false highlights, and developing methods that
+to this study at present, but it could be of great value more broadly.   distinguish attention associated with a high-risk prediction from
+Our (preliminary) evaluation represents only a snapshot in time;         attention associated with the opposite.
+the distribution may shift over time and for other domains or types
+of risk.                                                                 References
+                                                                          [1] Rui Abreu, Vijayaraghavan Murali, Peter C Rigby, Chandra Maddila, Weiyan
+   Construct Validity. We have used two measures: the existence of            Sun, Jun Ge, Kaavya Chinniah, Audris Mockus, Megh Mehta, and Nachiappan
+overlap with triggering entities and the percent of code highlighted.         Nagappan. 2025. Moving Faster and Reducing Risk: Using LLMs in Release
+                                                                              Deployment. ICSE 2025 (2025).
+Even experts who annotated our diffs may not be 100% accurate as          [2] Vijay Arya, Rachel K. E. Bellamy, Pin-Yu Chen, Amit Dhurandhar, Michael Hind,
+to what exact lines caused the outage; we plan to conduct future              Samuel C. Hoffman, Stephanie Houde, Q. Vera Liao, Ronny Luss, Aleksandra
+                                                                              Mojsilović, Sami Mourad, Pablo Pedemonte, Ramya Raghavendra, John Richards,
+studies with more users to determine if the approach is effective in
+                                                                              Prasanna Sattigeri, Karthikeyan Shanmugam, Moninder Singh, Kush R. Varshney,
+practice. We assume that highlighting helps developers identify and           Dennis Wei, and Yunfeng Zhang. 2022. AI Explainability 360: Impact and Design.
+fix problems, but we have not yet measured downstream outcomes                Proceedings of the AAAI Conference on Artificial Intelligence 36, 11 (Jun. 2022),
+                                                                              12651–12657. doi:10.1609/aaai.v36i11.21540
+such as reduced time-to-resolution or reduced post-landing incident       [3] Hoa Khanh Dam, Truyen Tran, and Aditya Ghose. 2018. Explainable software an-
+rates. We plan to conduct follow-up studies to understand how de-             alytics. In Proceedings of the 40th international conference on software engineering:
+velopers interpret highlighted snippets and how that interpretation           New ideas and Emerging results. 53–56.
+                                                                          [4] Henk W De Regt. 2020. Understanding, values, and the aims of science. Philosophy
+affects decision-making.                                                      of Science 87, 5 (2020), 921–932.
+                                                                          [5] Henk W De Regt and Dennis Dieks. 2005. A contextual approach to scientific
+   Internal Validity. We make an assumption that the attention                understanding. Synthese 144 (2005), 137–170.
+                                                                          [6] Geanderson Esteves, Eduardo Figueiredo, Adriano Veloso, Markos Viggiato, and
+accurately reflects areas of the code that need inspection, but there         Nivio Ziviani. 2020. Understanding machine learning software defect predictions.
+may be better ways to indicate and explain the risk. We intentionally         Automated Software Engineering 27, 3 (2020), 369–392.
+avoided some approaches we deemed too risky such as asking the            [7] Daniel Fryer, Inga Strümke, and Hien Nguyen. 2021. Shapley values for feature
+                                                                              selection: The good, the bad, and the axioms. Ieee Access 9 (2021), 144352–144360.
+model to provide natural language explanation that may produce            [8] Brian Hu, Paul Tunison, Brandon RichardWebster, and Anthony Hoogs. 2023.
+hallucinations or factually incorrect claims. Additionally, attention         Xaitk-saliency: An open source explainable ai toolkit for saliency. In Proceedings
+A Preliminary Study on Explaining Risk of Code Changes using LLM-Based Prediction Models                                     AIware ’26, July 6–7, 2026, Montreal, QC, Canada
+
+
+     of the AAAI Conference on Artificial Intelligence, Vol. 37. 15760–15766.             [16] Ahmad Haji Mohammadkhani, Nitin Sai Bommi, Mariem Daboussi, Onkar Sabnis,
+ [9] Sarthak Jain and Byron C Wallace. 2019. Attention is not explanation. arXiv               Chakkrit Tantithamthavorn, and Hadi Hemmati. 2023. A systematic literature
+     preprint arXiv:1902.10186 (2019).                                                         review of explainable AI for software engineering. arXiv preprint arXiv:2302.06065
+[10] Narine Kokhlikyan, Vivek Miglani, Miguel Martin, Edward Wang, Bilal Alsallakh,            (2023).
+     Jonathan Reynolds, Alexander Melnikov, Natalia Kliushkina, Carlos Araya, Siqi        [17] Judea Pearl. 2019. The seven tools of causal inference, with reflections on machine
+     Yan, and Orion Reblitz-Richardson. 2020. Captum: A unified and generic model              learning. Commun. ACM 62 (2019), 54–60.
+     interpretability library for PyTorch. arXiv preprint arXiv:2009.07896 (2020).        [18] Mukund Sundararajan and Amir Najmi. 2020. The many Shapley values for model
+[11] Mario Krenn, Robert Pollice, Si Yue Guo, Matteo Aldeghi, Alba Cervera-Lierta,             explanation. In International conference on machine learning. PMLR, 9269–9278.
+     Pascal Friederich, Gabriel dos Passos Gomes, Florian Häse, Adrian Jinich, Ak-        [19] Hugo Touvron, Louis Martin, Kevin Stone, Peter Albert, Amjad Almahairi, Yas-
+     shatKumar Nigam, et al. 2022. On scientific understanding with artificial intelli-        mine Babaei, Nikolay Bashlykov, Soumya Batra, Prajjwal Bhargava, Shruti Bhos-
+     gence. Nature Reviews Physics 4, 12 (2022), 761–769.                                      ale, et al. 2023. Llama 2: Open foundation and fine-tuned chat models. arXiv
+[12] Shengzhong Liu, Franck Le, Supriyo Chakraborty, and Tarek Abdelzaher. 2021.               preprint arXiv:2307.09288 (2023).
+     On exploring attention-based explanation for transformer models in text clas-        [20] Martin Tutek and Jan Šnajder. 2020. Staying true to your word:(how) can attention
+     sification. In 2021 IEEE International Conference on Big Data (Big Data). IEEE,           become explanation? arXiv preprint arXiv:2005.09379 (2020).
+     1193–1203.                                                                           [21] Bingyang Wen, KP Subbalakshmi, and Fan Yang. 2022. Revisiting attention
+[13] Prashan Madumal, Tim Miller, Liz Sonenberg, and Frank Vetere. 2020. Explain-              weights as explanations from an information theoretic perspective. arXiv preprint
+     able reinforcement learning through a causal lens. In Proceedings of the AAAI             arXiv:2211.07714 (2022).
+     conference on artificial intelligence, Vol. 34. 2493–2500.                           [22] Feiyu Xu, Hans Uszkoreit, Yangzhou Du, Wei Fan, Dongyan Zhao, and Jun Zhu.
+[14] Rupayan Mallick, Jenny Benois-Pineau, and Akka Zemmari. 2022. I Saw: A                    2019. Explainable AI: A brief survey on history, research areas, approaches and
+     Self-Attention Weighted Method for Explanation of Visual Transformers. In 2022            challenges. In Natural language processing and Chinese computing: 8th cCF interna-
+     IEEE International Conference on Image Processing (ICIP). 3271–3275. doi:10.1109/         tional conference, NLPCC 2019, dunhuang, China, October 9–14, 2019, proceedings,
+     ICIP46576.2022.9897347                                                                    part II 8. Springer, 563–574.
+[15] Audris Mockus, Rui Abreu, Peter C Rigby, David Amsallem, Parveen Bansal,             [23] Jinqiang Yu, Michael Fu, Alexey Ignatiev, Chakkrit Tantithamthavorn, and Peter
+     Kaavya Chinniah, Brian Ellis, Peng Fan, Jun Ge, Bingjie He, Kelly Hirano, Sahil           Stuckey. 2024. A Formal Explainer for Just-In-Time Defect Predictions. ACM
+     Kumar, Ajay Lingapuram, Andrew Loe, Megh Mehta, Venus Montes, Maher Saba,                 Transactions on Software Engineering and Methodology 33, 7 (2024), 1–31.
+     Gursharan Singh, Matt Steiner, Weiyan Sun, Siri Uppalapati, and Nachiappan           [24] Yunhua Zhao, Kostadin Damevski, and Hui Chen. 2023. A systematic survey of
+     Nagappan. 2025. Leveraging Risk Models to Improve Productivity for Effective              just-in-time software defect prediction. Comput. Surveys 55, 10 (2023), 1–35.
+     Code Un-Freeze at Scale. ACM Trans. Softw. Eng. Methodol. (March 2025). doi:10
+     .1145/3722216                                                                        Received 2026-02-15; accepted 2026-03-28
+

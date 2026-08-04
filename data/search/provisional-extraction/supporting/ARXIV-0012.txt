@@ -1,0 +1,562 @@
+                                                Self-Improving AI Coding Agents Through
+                                               Accumulated Behavioral Rules: A Closed-Loop
+                                                               Framework
+                                                                         Aditya Aggarwal                                     Nahid Farhady Ghalaty
+                                                                             Microsoft                                              Microsoft
+                                                                  aditya.aggarwal@microsoft.com                               nahidf@microsoft.com
+
+
+
+                                            Abstract—LLM-based coding agents repeat the same classes            (3) prompt engineering with static instructions [7], which cap-
+                                         of mistakes across sessions because they lack a mechanism to           tures some conventions but does not evolve with experience.
+                                         retain corrections from human review feedback. We present a            None of these implements a feedback loop in which review
+                                         closed-loop framework in which every accepted review com-
+                                         ment is codified as a persistent behavioral rule, progressively        outcomes automatically strengthen future agent behavior.
+                                         expanding the set of error classes the agent can self-detect.             We propose a fourth approach, accumulated behavioral
+                                         The framework combines an accumulating rule set in a version-          rules, built on one core insight:
+                                         controlled instruction file, a self-review checklist executed before
+                                                                                                                    Every accepted review comment is a self-review
+arXiv:2607.13091v1 [cs.SE] 13 Jul 2026
+
+
+
+
+                                         code submission, and automated validation that ensures rule-
+                                         set integrity as it grows. In deployment across a 35+ service              rule. When a reviewer catches something the agent
+                                         microservices platform, the rule set grew from 5 to 18 behavioral          missed, codify the pattern so the agent catches it next
+                                         rules, 15+ language-specific standards, and a 15-item self-review          time. The goal is zero avoidable review comments.
+                                         checklist, all derived from real review feedback. We present
+                                         empirical results from 11 recorded working sessions spanning              This paper describes the architecture of a system that
+                                         code generation, PR review, incident investigation, and cross-         implements this principle, reports on its deployment in a
+                                         service refactoring. We observe that accumulated rules shift           production environment with quantitative empirical results,
+                                         review effort from low-level correctness toward design-level vali-
+                                                                                                                and positions the contribution against the growing body of
+                                         dation, achieve a measured 0% recurrence rate for ruled-against
+                                         error classes, and transfer across heterogeneous agent interfaces.     work on experiential learning for LLM agents [23].
+                                         We compare our approach against related work in experiential              We make the following contributions:
+                                         LLM learning (Reflexion, ExpeL, Voyager) and automated code               C1: A closed-loop framework that converts accepted human
+                                         review (CodeReviewer, SWE-bench agents), showing that our
+                                                                                                                review feedback into persistent behavioral rules, creating a
+                                         framework achieves persistent cross-session learning without
+                                         weight updates, operates on production codebases rather than           ratchet effect where the set of prevented error classes grows
+                                         synthetic benchmarks, and addresses an orthogonal dimension            monotonically over time.
+                                         (behavioral consistency over time) that existing benchmarks do            C2: An operational memory mechanism for coding agents
+                                         not measure. The result is a coding agent that improves with           implemented through version-controlled instruction files rather
+                                         every review cycle, accumulating the engineering wisdom of its
+                                         human collaborators without changing a single model weight.            than weight updates, making it model-agnostic, tool-agnostic,
+                                            Index Terms—large language models, code review, behavioral          and immediately deployable.
+                                         rules, self-improving agents, software engineering                        C3: Empirical results from 11 recorded working sessions
+                                                                                                                (code generation, PR review, cross-service refactoring, inci-
+                                                                I. I NTRODUCTION                                dent investigation) showing rule accumulation dynamics, error-
+                                            AI coding agents powered by Large Language Models                   class suppression rates, and knowledge transfer patterns.
+                                         have demonstrated remarkable capability in code generation,               C4: A systematic comparison against related work in ex-
+                                         bug fixing, and code review [1], [2]. A persistent limitation,         periential LLM learning (Reflexion [13], ExpeL [14], Voy-
+                                         however, is their inability to learn from session to session.          ager [15]) and automated code review (CodeReviewer [4],
+                                         When a human reviewer catches an error in AI-generated code            SWE-agent [16]), identifying the orthogonal dimension (per-
+                                         (say, disposing of a resource whose lifetime is managed by a           sistent behavioral consistency across sessions) that our frame-
+                                         framework-level factory), the agent will reproduce the same            work addresses and existing benchmarks do not measure.
+                                         mistake in the next session because it has no mechanism to
+                                         retain that correction.                                                A. Scope and Positioning
+                                            Current approaches to improving LLM coding quality fall
+                                         into three categories: (1) fine-tuning on curated code datasets,          To preempt a natural question, “Is this just disciplined
+                                         which is expensive and organization-specific; (2) retrieval-           prompt engineering?”, we clarify what the framework is and
+                                         augmented generation (RAG), which surfaces relevant code               is not.
+                                         context but does not encode behavioral constraints; and                   This framework is:
+   •  A persistent organizational memory mechanism for                               into five sections, though the specific section names and con-
+      coding-agent behavior, where memory content is derived                         tent are domain-dependent. For example, in our deployment:
+      exclusively from accepted review outcomes.                                        1) Behavioral Rules: High-level operational guardrails
+   • A repeat-error prevention system that converts point                                   (e.g., “Never commit without user approval”).
+      corrections into class-level constraints.                                         2) Code Standards: Language-specific rules derived from
+   • A shared, version-controlled knowledge artifact that is                                review feedback (e.g., “Never use string interpolation in
+      reusable across models, tools, and team members.                                      log calls; use message templates”).
+   This framework is not:                                                               3) Self-Review Checklist: A numbered checklist that
+   • Weight updates, model retraining, or reinforcement learn-                              agents execute before approving any code.
+      ing from human feedback (RLHF) [6].                                               4) Anti-Patterns: Specific patterns the agent is prohibited
+   • A replacement for human review. It augments review by                                  from generating, with explanations and correct alterna-
+      eliminating previously-seen error classes, freeing review-                            tives.
+      ers for higher-order concerns.                                                    5) Workflow Rules: Automatic triggers that tell agents
+   • A proof of semantic correctness; it prevents known failure                             when to invoke specific tools or sub-agents based on
+      modes, not all possible failures.                                                     the task type.
+   • A general-purpose memory system. It is scoped to                                   The critical property is that the file is append-friendly and
+      coding-agent behavioral constraints within a defined                           monotonically growing. Rules are added and occasionally
+      codebase.                                                                      refined but rarely removed, accumulating the team’s collective
+   The distinction from static prompt engineering is the feed-                       engineering judgment over time.
+back loop. The instruction file is not written once and main-
+                                                                                     B. Rule Representation
+tained passively. It grows as a direct function of review
+outcomes, with each new rule traceable to a specific accepted                           While rules are stored as human-readable Markdown, each
+comment. This makes the system self-improving in a way that                          rule implicitly conforms to a structured schema:
+static instruction files are not.                                                    Rule ID: R17
+   Having framed what the contribution is and is not, we                             Category: Architecture
+                                                                                     Trigger Origin: Human PR reviewer
+now describe the framework that implements the closed loop,                          Scope: New internal HttpClient registrations
+starting with the structured instruction file that holds the                         Constraint: Add client to AllowIPV4Internal
+accumulated rules.                                                                                SSRF policy
+                                                                                     Rationale: Prevent runtime SSRF policy
+                                                                                                  validation failures
+                 II. F RAMEWORK A RCHITECTURE                                        Checklist Map: Self-review item #9
+   The framework comprises several interconnected compo-                             Added: 2026-02-28
+                                                                                     Traced To: PR review comment on missing
+nents. We describe each below, then formalize the rule repre-                                     SSRF allowlist entry
+sentation and lifecycle. Fig. 1 provides a visual overview of
+the closed-loop process.                                                                This schema serves three purposes: (1) it makes origin
+                                                                                     tracking concrete, linking each rule to the review event that
+                   1. Agent generates/modifies code                                  produced it; (2) it maps rules to self-review checklist items,
+                                   ↓                                                 creating a verifiable bridge between the instruction file and
+                  2. Agent runs self-review checklist                                the pre-submission check; and (3) it supports future tooling
+                                   ↓
+                                                                                     for conflict detection and rule effectiveness scoring.
+                3. Human reviewer provides feedback
+                                   ↓                                                 C. The Feedback Loop
+               4. Accepted comments codified as rules
+                                   ↓                                                   The self-improvement cycle operates in five steps:
+           5. Updated instruction file loaded in next session                          1) The agent generates or modifies code in response to a
+                           ⟲ Back to Step 1
+                                                                                           task.
+Fig. 1. The closed-loop feedback cycle. Each accepted review comment is                2) The agent executes its self-review checklist before pre-
+codified as a persistent behavioral rule in a version-controlled instruction file,
+expanding the agent’s self-review capability for all subsequent sessions.
+                                                                                           senting the code.
+                                                                                       3) A human reviewer examines the code and provides
+                                                                                           feedback.
+A. The Structured Instruction File                                                     4) For each accepted comment that identifies a generaliz-
+   At the center of the framework is a structured instruction                              able class of mistake (not a one-off typo), a new rule is
+file that LLM-based coding agents load as system context at                                added to the instruction file.
+the start of every session. Several emerging conventions exist                         5) The updated instruction file is loaded in all subsequent
+for this mechanism (e.g., AGENTS.md, rules files, instruction                              sessions, preventing recurrence.
+files), all following the same principle: a version-controlled                         This creates a ratchet effect: the set of error classes the
+Markdown file that shapes agent behavior. The file is organized                      agent can self-detect grows monotonically. The instruction file
+serves as organizational memory that persists across sessions,        • Agent definition files have valid frontmatter and required
+models, and tool boundaries.                                            fields.
+                                                                      • Skill directories contain properly structured instruction
+D. Rule Lifecycle and Governance                                        files.
+   Because the rule set grows monotonically, governance is            • Knowledge documents carry freshness dates, flagging
+
+essential to maintain quality. We address four operational              stale content.
+questions:                                                            • The instruction file contains all required sections.
+
+   Who decides whether a comment represents a class of                • Automation scripts exist and tool-server configurations
+
+mistake versus a one-off issue? The engineer who receives               are well-formed.
+the review feedback makes this judgment. The heuristic is:            This validation supports the monotonic-growth principle:
+“Would this mistake plausibly recur in a different context?” If     the rule set can grow safely because every addition is validated
+yes, it becomes a rule.                                             against a known-good schema.
+   When is an existing rule refined instead of adding a
+new rule? When a new review comment reveals that an                 G. Session Continuity
+existing rule is too broad or too narrow, the existing rule is         The framework maintains session continuity through two
+updated in place. The rule ID is preserved; the constraint text     mechanisms: (1) a session handoff file capturing in-progress
+is sharpened. Section III-E describes a concrete example.           work, pending reviews, and suggested next actions; and (2) a
+   How are duplicate or overlapping rules handled? The in-          task log providing a chronological record of completed work.
+struction file is reviewed periodically for redundancies. When      Together, these ensure that accumulated knowledge includes
+two rules cover overlapping ground, the more specific rule          not only behavioral rules but also ongoing work context.
+subsumes the general one.
+   Who owns arbitration when two rules conflict? The                              III. D EPLOYMENT E XPERIENCE
+instruction file lives in a shared repository where changes
+require pull requests. Conflicting rules are resolved by the team   A. Environment
+through the normal review process.                                     The framework was deployed in a large-scale microservices
+                                                                    platform comprising 35+ services on a managed container
+E. Illustrative Rule Examples
+                                                                    orchestration platform with service mesh. The codebase spans
+   To make the framework concrete, we present five represen-        approximately 50,000+ lines of shared infrastructure code.
+tative rules from the deployed instruction file:                    LLM-based coding agents were used for code generation,
+   1) Resource lifetime management. A reviewer caught               review, architecture investigation, incident response, and cross-
+       the agent wrapping a factory-created HttpClient in           service refactoring across multiple agent interfaces, all reading
+       a using block. The rule states that HttpClient               the same instruction file.
+       instances from IHttpClientFactory must not be
+       disposed by the caller.                                      B. Rule Accumulation Over Time
+   2) Structured logging. A reviewer flagged string interpo-          Over a multi-week deployment period, the rule set grew as
+       lation in log calls. The rule requires message templates     shown in Table I.
+       to preserve structured log properties.
+   3) Boolean logic correctness. The agent generated an in-                                     TABLE I
+       correct guard clause using !A || !B || !C (always                  RULE S ET C OMPOSITION AT E ND OF O BSERVATION P ERIOD
+       true by De Morgan’s law). The rule requires !A && !B
+       && !C for conjunctive negation.                                            Component                         Count
+   4) Null safety enforcement. A reviewer caught the null-                        Behavioral Rules                     18
+                                                                                  Code Standards (typed language)     15+
+       forgiving ! operator. The rule requires ?? throw new                       Self-Review Checklist Items          15
+       ArgumentException(...) for explicit validation.                            Anti-Pattern Rules                    6
+   5) Security configuration. The agent registered a new                          Custom Agent Definitions             13
+                                                                                  Operational Skills                   10
+       internal HTTP client without adding it to the                              Knowledge Documents                   6
+       SSRF allowlist policy. The rule requires every new
+       HttpClient registration include an SSRF policy en-
+       try.
+                                                                    C. Knowledge Source Distribution
+F. Workspace Validation as Reliability Mechanism                       Analysis of the first 18 accumulated behavioral rules reveals
+   As the rule set grows, it becomes a critical organizational      four distinct sources of learning, as shown in Table II.
+artifact. A malformed rule addition could silently degrade the         The dominance of human reviewer feedback (39%) validates
+system. The framework includes automated validation that            the core premise: human review is the highest-quality signal
+runs at session start:                                              for rule generation.
+                           TABLE II                                                      IV. E XPERIMENTAL R ESULTS
+                K NOWLEDGE S OURCE D ISTRIBUTION
+                                                                    A. Experimental Setup
+       Source                  Count (%)   Description                 Deployment context: A microservices platform with 35+
+       Human PR reviewers        7 (39%)   Domain-specific          services, 13 custom agent definitions, 10 operational skills,
+       Automated review bots     4 (22%)   Formatting, style        and 6 shared knowledge documents. Two agent interfaces
+       Self-discovered           4 (22%)   Proactive analysis
+       Production errors         3 (17%)   Runtime failures
+                                                                    consumed the same shared instruction file.
+                                                                       Data sources: (1) A chronological task log with 11 dated
+                                                                    entries; (2) version-controlled instruction file with 2 committed
+                                                                    revisions and continuous local growth; (3) persistent memory
+D. Observed Effects                                                 files totaling 4 topic-specific documents; (4) 36 PR reviews
+   Suppression of previously-seen error classes: Across             across 6 repositories.
+11 recorded working sessions following rule additions, we           B. Rule Accumulation Dynamics
+observed no recurrences of any ruled-against pattern within
+                                                                      Table III shows the growth of the rule set across the
+the observation window (see Section IV; this should be read as
+                                                                    observation period.
+suppression under the observed deployment conditions rather
+than a permanent property of the underlying model).
+                                                                                                TABLE III
+   Shift in review focus: Reviewers reported spending less                     RULE S ET G ROWTH OVER O BSERVATION P ERIOD
+time on mechanical issues and more on architectural appro-
+priateness and design trade-offs.                                                   Week    Behav.    Code     Check-        Cum.
+                                                                                            Rules     Stds.     list         Sess.
+   Cross-interface transfer: Rules added through one agent
+interface immediately benefited sessions conducted through a                         0         5         3        0            0
+                                                                                     1        10         8        9            3
+different interface, because all interfaces consumed the same                        2        16        12       13            6
+instruction file.                                                                    3        18        15       15            9
+                                                                                     4        18       15+       15           11
+   Onboarding acceleration: New team members inherited
+the full accumulated rule set immediately, bypassing the
+learning curve that originally produced those rules.                   The accumulation rate follows a logarithmic curve: rapid
+   Specificity correlated with effectiveness: Early rules were      initial growth tapering as the rule set covers the most fre-
+broad. Later rules were precise. Specific, actionable rules were    quently encountered patterns. The combined instruction file
+more reliably followed than general guidance.                       grew to approximately 4,809 words (∼6,250 tokens), consum-
+                                                                    ing less than 5% of a 128K-token context window.
+
+E. Rule Conflicts: A Concrete Example                               C. Error-Class Recurrence Analysis
+                                                                       Table IV shows the central result: zero recurrences across
+   We encountered one genuine rule conflict. Rule 1
+                                                                    all tracked error classes.
+stated: “All IDisposable types MUST use using
+declarations.” Rule 8 stated: “HttpClient from                                                  TABLE IV
+IHttpClientFactory must NOT be disposed by                                  E RROR -C LASS R ECURRENCE A FTER RULE A DDITION
+the caller.” These directly contradicted each other for
+factory-created instances.                                                  Error Class                       Rule    Post-        Recur-
+                                                                                                             Added    rule         rences
+   Resolution was straightforward: Rule 1 was refined with a
+                                                                            Factory HttpClient disposal      W1-S3       8           0
+scope qualifier. The conflict was detected during a code review             String interpolation in logs     W1-S2       9           0
+and resolved as a factual question—which framework behavior                 Null-forgiving !                 W1-S3       8           0
+is correct?—rather than a judgment call.                                    Config in lambda                 W1-S3       8           0
+                                                                            Missing SSRF allowlist           W2-S4       7           0
+                                                                            throw ex vs throw                W1-S1      10           0
+F. Multi-Interface Behavioral Transfer                                      Missing enum converter           W2-S5       6           0
+                                                                            Redundant re-computation         W1-S3       8           0
+   Persistent behavioral rules transfer across heterogeneous                De Morgan’s violation            W1-S1      10           0
+agent interfaces. IDE-integrated agents excelled at code analy-             Total                                       74           0
+sis (full repository context, symbol resolution), while terminal-
+based agents excelled at execution (querying issue trackers,           Across 9 tracked error classes with 74 cumulative post-
+running database queries). Both loaded the same instruction         rule session-exposures, zero recurrences were observed. We
+file and benefited equally from accumulated rules.                  emphasize that this is an observational result inside a single
+   This suggests that behavioral rule sets can serve as a shared    deployment, not a controlled experiment: the absence of
+memory layer for multi-agent architectures [10], [11] where         recurrence within the window does not establish a permanent
+specialized agents handle different phases of the development       guarantee, and is bounded by the threats to validity discussed
+workflow.                                                           in Section VIII.
+D. Review Comment Category Shift                                                                TABLE VIII
+                                                                                        M EMORY L AYER A RCHITECTURE
+   We analyzed 36 PR reviews across 6 repositories, catego-
+rizing comments using criteria adapted from prior code review               Layer               Scope            Persist.        Words
+studies [17], [18]. Table V shows the distribution.                         Shared instr.       All agents       Permanent       3,181
+                                                                            Personal rules      Single dev       Permanent       1,628
+                            TABLE V                                         Session memory      Single conv.     Ephemeral       Variable
+        R EVIEW C OMMENT D ISTRIBUTION (36 PR S , 6 R EPOS )
+
+             Comment Category               Count      %                                          TABLE IX
+                                                                                       S ESSION ACTIVITY D ISTRIBUTION
+             Architecture / Design              12    33%
+             API design / Contracts              7    19%                           Activity Type              Sessions     Rules
+             Performance (complexity)            5    14%
+             Auth / Security                     4    11%                           Code generation + PR          4          9
+             Cosmos query correctness            3     8%                           PR review                     3          4
+             Mechanical correctness              3     8%                           Incident investigation        2          3
+             Code style / Formatting             2     6%                           Cross-service arch.           1          1
+                                                                                    Repo maintenance              1          1
+
+  Mechanical correctness and style issues account for only
+14% of review comments, while architecture, API design, and
+performance account for 66%.                                         H. Session Task Diversity
+                                                                        Table IX shows that the framework applies beyond code
+E. Knowledge Transfer Patterns                                       generation.
+  We classified 15 documented review learnings by transfer              PR reviews and incident investigations contributed 39% of
+characteristics (Table VI).                                          rules despite being non-generative tasks.
+
+                          TABLE VI
+                K NOWLEDGE T RANSFER TAXONOMY
+                                                                                               V. D ISCUSSION
+
+      Transfer Type            Count       Example                   A. Summary of Findings
+      Same-repo, same class          6     IDisposable across svcs      Three findings emerge from the deployment. First, the
+      Cross-repo, same class         4     Enum converter transfer   closed-loop pattern is feasible: 18 behavioral rules, 15+
+      Cross-tool, same rules         3     IDE → terminal
+      Cross-task-type                2     Code gen → review         language-specific code standards, and a 15-item self-review
+                                                                     checklist (Tables I, II) were derived directly from accepted
+  60% of knowledge transfers (9/15) crossed repository or tool       human review feedback and stored in version-controlled in-
+boundaries, confirming that tool-agnostic encoding enables           struction files consumed by multiple agent surfaces without
+broad applicability.                                                 any model-side change.
+                                                                        Second, accumulated rules suppress the recurrence of
+F. Rule Specificity Evolution                                        previously-corrected error classes within the observation win-
+                                                                     dow. Across 9 tracked error classes and 74 cumulative post-
+  Table VII tracks the linguistic specificity of rules over time.
+                                                                     rule session exposures, no recurrences were observed (Ta-
+                                                                     ble IV). We deliberately frame this as an observational result:
+                            TABLE VII
+                   RULE S PECIFICITY OVER T IME                      it establishes that the suppression effect is large enough to be
+                                                                     visible inside a four-week deployment without a controlled
+              Period       General       Specific    Ratio           baseline, but it is not equivalent to a statistical guarantee.
+              Week 1           4            6        0.60            The limits of this measurement—single-team scope, absence
+              Week 2           4           12        0.75            of an A/B control, single primary language—are discussed in
+              Week 3–4         4           14        0.78            Section VIII.
+                                                                        Third, the encoded knowledge transfers across heteroge-
+  The specificity ratio increases monotonically, reflecting both     neous agent tools, repositories, and task types. 60% of ob-
+specific new rules from concrete review comments and refine-         served knowledge-transfer events (9/15) crossed repository,
+ment of existing general rules.                                      tool, or task-type boundaries (Table VI), and rules added
+                                                                     through one agent interface were observed to take effect
+G. Multi-Layer Memory Architecture                                   immediately in sessions conducted through a different in-
+  The framework evolved a three-layer memory architecture            terface (Section IV). The mechanism that makes this work
+(Table VIII).                                                        is the choice of representation: declarative natural-language
+  Total persistent memory: ∼4,809 words (∼6,250 tokens),             constraints in plain Markdown are consumable by any LLM-
+consuming <5% of a 128K context window.                              based agent that loads the file as system context.
+B. Match and Contribution                                          in an episodic memory buffer, achieving 91% pass@1 on
+   Engineering management of an emerging technol-                  HumanEval.
+ogy. LLM-based coding agents are an emerging engineer-                Key differences: (1) Reflexion’s memory is episodic and
+ing capability whose behavior is normally opaque and non-          does not transfer to new sessions; our rules persist perma-
+reproducible across sessions. The framework operationalizes        nently. (2) Reflexion uses self-generated feedback; we use
+such agents inside an existing engineering workflow—code           human expert feedback. (3) Reflexion measures pass rate
+review—so that organizational engineering knowledge be-            improvement on isolated problems; we measure error-class
+comes a first-class, auditable artifact rather than tacit knowl-   suppression across diverse production tasks.
+edge that is lost between sessions. Because the approach is           The two approaches are complementary: Reflexion for
+vendor- and tool-agnostic, it is directly applicable to other      within-session iteration, accumulated rules for preventing
+engineering organizations adopting AI coding agents at scale.      known mistakes from the start. Concretely, a Reflexion-style
+   Governance of an emerging technology. The framework             trajectory generated inside a single problem-solving episode
+provides an explicit governance model for agent behavior:          is discarded when the episode ends, so a mistake fixed in
+every rule has an identifiable origin (a review event), an owner   episode n can re-appear in episode n + 1. Our rules cross
+(the engineer who accepted the comment), a change record           the session boundary by construction: once a human-accepted
+(the pull request that added the rule), and a position in a        comment is codified, every subsequent session—potentially
+self-review checklist that runs before code submission. This       using a different model or agent surface—loads it as part of its
+makes the agent’s operational behavior auditable, reviewable,      operating context. The two mechanisms operate on different
+and managed using the same engineering practices that already      timescales (sub-episode vs. inter-session) and on different
+exist for other production artifacts.                              feedback sources (model self-critique vs. human expert), and
+   Practical frameworks. The paper describes a deployable          can be combined without conflict.
+artifact—a structured instruction file with a rule schema,
+                                                                   C. ExpeL: Experiential Learning Across Tasks
+lifecycle, validation, and feedback loop—rather than a research
+prototype. The deployment used only standard infrastructure           Zhao et al. [14] introduce ExpeL, where agents au-
+(Git, Markdown, pull-request review, plain-text validation         tonomously gather experiences and extract natural language
+scripts) and required no fine-tuning, no model-specific tooling,   insights.
+and no specialized memory backends. Other organizations can           Key differences: (1) ExpeL learns from autonomous experi-
+reproduce the pattern with infrastructure they already operate.    ence; we learn from human review. (2) ExpeL transfers within
+   Implementation challenges. We report concrete opera-            the same task type; our rules transfer across fundamentally
+tional issues so adopters can anticipate them: a real rule         different task types. (3) ExpeL’s insights may include hallu-
+conflict and its resolution (Section III-E), the governance        cinated generalizations; our rules are human-validated. The
+questions that the rule lifecycle must answer (Section II-         validation requirement is not a stylistic preference: because
+D), and the validity threats that bound the empirical results      the rule set is loaded as authoritative context in every session,
+(Section VIII). The honest limitations (single-team scope,         an incorrect rule would amplify rather than correct errors.
+single language, four-week observation period, absence of a        Tying every rule to an accepted human review comment
+controlled baseline) are surfaced rather than hidden.              provides a verifiable provenance that ExpeL’s autonomous
+   Value creation. Two value channels are documented. First,       insight extraction does not.
+recurrence of previously-corrected error classes is suppressed
+within the deployment window, freeing reviewer attention for       D. Voyager: Persistent Skill Libraries
+higher-level concerns: 66% of observed PR review comments             Wang et al. [15] introduce Voyager, building an ever-
+concerned architecture, API design, or performance, while          growing skill library of executable code in Minecraft.
+only 14% remained on mechanical correctness (Table V). Sec-           Both systems demonstrate that persistent, version-controlled
+ond, the accumulated rule set acts as a transferable onboarding    knowledge enables compounding capability growth. The key
+artifact: new team members inherit the organization’s full         difference is representation: Voyager stores executable code
+review history immediately, compressing the learning curve         functions; we store declarative constraints in natural language.
+that originally produced those rules.
+                                                                   E. Pre-trained Code Review Models
+         VI. C OMPARISON WITH R ELATED W ORK
+                                                                      Li et al. [4] and Tufano et al. [5] propose pre-trained models
+A. Comparison Framework                                            for automated code review.
+  Table X provides a structured comparison across key di-             Key differences: (1) These approaches fine-tune model
+mensions.                                                          weights; we inject rules through context. (2) Their knowledge
+                                                                   is frozen at training time; ours accumulates in real-time.
+B. Reflexion: Verbal Reinforcement Within Sessions                 (3) They generalize across public repositories; we capture
+  Shinn et al. [13] propose Reflexion, where LLM agents            organization-specific conventions invisible in public code-
+verbally reflect on task feedback and maintain reflective text     bases.
+                                                                 TABLE X
+                                             S YSTEMATIC C OMPARISON WITH R ELATED A PPROACHES
+
+             Dimension           Reflexion        ExpeL       Voyager      CodeRev.     SWE-agent     OpenClaw        Ours
+             Learning signal    Self-verbal      Self-exp.     Env.         Pre-train    Env. exec.   User conv.    Human rev.
+             Persistence         Episodic         Partial    Skill lib.     Weights        None        Personal      VC rules
+             Cross-session          No            Partial      Yes           Model          No           Yes           Yes
+             Weight updates         No              No         No             Yes           No           No             No
+             Feedback source       Self            Self       Game         Train data      Tests         User      Human exp.
+             Domain             Benchmarks      Benchmarks   Minecraft     OSS repos    SWE-bench      General      Production
+             Recurrence prev.      N/M             N/M         N/M            N/A          N/M           N/A       0% (74 exp.)
+             Human-in-loop          No              No         No          Train only       No           Yes        Every cycle
+
+
+
+F. SWE-bench Agents                                                         4) Tool-agnostic encoding: Rules are structured Mark-
+   SWE-bench [12] and its agent implementations [16], [19],                    down readable by any LLM. Cross-interface transfer
+[20] evaluate LLM agents on isolated GitHub issue resolution.                  confirmed across 2 platforms (Table VI).
+The state-of-the-art resolves 20–40% of SWE-bench Lite                      5) Validated growth: Every rule addition is checked by
+issues.                                                                        automated validation.
+   Our framework addresses an orthogonal dimension: SWE-                    6) Shared ownership: The instruction file lives in a shared
+bench asks “Can you solve this issue?” while we ask “Do                        repository with PR-based changes.
+you avoid known mistake classes?” There is currently no
+benchmark evaluating behavioral consistency over time.                         VIII. L IMITATIONS AND T HREATS TO VALIDITY
+
+G. Self-Taught Optimizer, Self-Refine, and Self-Debugging                    Context window constraints: Current rule sets (∼6,250
+   Zelikman et al. [21] propose STOP, where LLMs recursively              tokens) are within modern limits, but unbounded growth could
+improve their own scaffolding code. Madaan et al. [3] propose             require hierarchical organization or summarization.
+Self-Refine, where LLMs iteratively improve their outputs                    Rule conflicts: We encountered one conflict (Section III-E).
+through self-generated critique. Chen et al. [22] propose Self-           Automated conflict detection would reduce reliance on manual
+Debugging via rubber-duck-style explanation. All three oper-              identification.
+ate within a single execution context; our framework captures                Governance at scale: The current model works for a
+improvements permanently.                                                 single team. Multiple teams would require hierarchical or
+                                                                          namespaced rule sets, plus a clear policy for resolving cross-
+H. Memory-Augmented LLM Systems                                           team rule conflicts. Without that, a centrally-maintained rule
+   MemoryBank [8] and related systems provide LLMs with                   set risks either fragmenting along team lines or accumulating
+persistent memory mechanisms. Our approach is architec-                   contradictions that silently degrade agent behavior. We treat
+turally simpler: rules are stored in plain-text Markdown files            scaled governance as an open problem rather than a solved
+that are version-controlled, human-readable, and auditable.               one.
+                                                                             Lack of controlled baseline or ablation: We do not have
+I. Personal AI Assistants with Persistent Memory                          a parallel control group, and we did not run a paired ablation
+   OpenClaw [24] provides persistent memory and skill li-                 comparing the framework against static prompt engineering or
+braries for personal AI assistants. Key differences: (1) Open-            a no-rule baseline on the same task stream. The suppression
+Claw’s memory comes from free-form conversations; our rules               and review-shift results should therefore be read as initial
+come from accepted code review feedback. (2) OpenClaw                     empirical evidence, not as a causal proof. A future A/B
+is single-user; our framework is team-level. (3) OpenClaw                 deployment (rule-loading agent versus rule-free agent, run on
+remembers facts; our framework prevents error classes through             the same incoming task queue) would close this gap and is
+declarative constraint injection.                                         described under Future Work.
+                                                                             Generalizability and barriers to adoption: The frame-
+                 VII. D ESIGN P RINCIPLES
+                                                                          work’s value depends on three preconditions that may not hold
+  Through iterative deployment, we identified six principles:             in every organization: (i) a code review culture that produces
+  1) Monotonic growth: Rules are added and refined but not                accepted, written comments at sufficient rate; (ii) engineers
+     removed, echoing the continuous improvement principle                willing to spend a small amount of additional time per
+     in DevOps practice [9].                                              accepted comment to codify it as a rule; and (iii) tooling
+  2) Specificity over generality: Concrete, actionable con-               whose agent surfaces actually load and respect a project-level
+     straints outperform abstract guidance. Specificity ratio             instruction file. Where any of these is missing, the feedback
+     increased from 0.60 to 0.78 (Table VII).                             loop will starve or be ignored. We expect the strongest
+  3) Origin tracking: Each rule traces to the review com-                 adoption in mid- to large-sized engineering organizations that
+     ment or production event that inspired it.                           already practice peer review on every change.
+   Statistical significance: The reported counts (74 post-rule       to 18 behavioral rules, 15+ code standards, and a 15-item
+exposures across 9 error classes, 36 PRs across 6 reposito-          self-review checklist. We observed no recurrences across 9
+ries, 11 sessions) are small in absolute terms. Although the         tracked error classes within 74 cumulative post-rule session-
+observed effects (no recurrences within the window, a clear          exposures during the observation window—an observational
+shift toward design-level review comments) are consistent            result whose limits are made explicit in Section VIII. Review
+across the dataset, the sample is not large enough to make           comments shifted toward design-level concerns (66% archi-
+a formal statistical significance claim and we do not report p-      tecture/API/performance vs. 14% mechanical correctness), and
+values. Larger, longer deployments are needed before tighter         rules transferred across boundaries in 60% of observed events.
+quantitative claims are appropriate.                                    Compared to related approaches, our framework uniquely
+                                                                     combines human-sourced feedback with permanent cross-
+A. Threats to Validity
+                                                                     session persistence without weight updates. It addresses behav-
+   Single deployment environment: All observations are from          ioral consistency over time—a dimension existing benchmarks
+one organization. Effects may differ in other codebases or           do not measure. The approach requires no fine-tuning, no
+languages.                                                           model-specific infrastructure, and no changes to existing LLM
+   Language specificity: The deployment used a typed lan-            architectures.
+guage with strong framework conventions. Languages with
+weaker compile-time constraints, or codebases with less con-         Operationalizing the Framework in an Enterprise Setting
+sistent framework usage, may both generate a different distri-
+bution of review comments and benefit less from rule-based              For an engineering organization considering adoption, the
+suppression.                                                         framework reduces to a small set of operational practices that
+   Reviewer quality dependency: Rule quality depends on              can be introduced incrementally without changing the existing
+human review quality. Incorrect rules amplify errors, and a          toolchain:
+noisy review culture can poison the rule set faster than the           1) Add a project-level instruction file (e.g., AGENTS.md)
+validation step can catch.                                                under version control, with sections for behavioral rules,
+   Observation period: Four weeks and 11 sessions provide                 language-specific code standards, and a self-review
+initial evidence but are insufficient for long-term growth                checklist.
+dynamics. In particular, the framework’s behavior at the point         2) Define a rule promotion convention in the team’s pull-
+where the rule set saturates the available context window has             request template: when a reviewer accepts a comment
+not yet been observed.                                                    that describes a generalizable mistake, the author either
+                                                                          adds a rule in the same PR or files a follow-up to do so.
+               IX. T HE M ISSING B ENCHMARK
+                                                                       3) Wire the file into every agent surface the team already
+   Existing coding benchmarks measure static capability: can              uses (IDE-integrated assistants, terminal-based agents,
+the agent solve problem X right now? No existing benchmark                review bots) so they all consume the same context. No
+measures behavioral consistency over time.                                model change is needed.
+   We propose that such a benchmark would consist of:                  4) Add a lightweight validation step (a script in CI or
+   1) A rule corpus: Curated behavioral rules from real                   a pre-commit hook) that verifies the instruction file is
+      review feedback.                                                    well-formed and that new rules follow the schema.
+   2) Seed tasks: Code generation tasks that naturally trigger         5) Treat the file as a shared artifact: changes go through
+      ruled-against patterns.                                             pull-request review, just like code, so the rule set inherits
+   3) Temporal evaluation: A sequence of tasks where earlier              the team’s existing governance.
+      tasks produce corrections and later tasks test persistence.
+   4) Cross-session boundary: The critical test is whether           Future Research Directions
+      corrections survive session boundaries.
+                                                                       Several directions follow naturally from this work and from
+   This would complement SWE-bench, HumanEval, and
+                                                                     the limitations identified in Section VIII:
+CodeReview benchmarks by adding a temporal learning di-
+mension.                                                               1) A controlled A/B study comparing rule-loading agents
+                                                                          against rule-free baselines on the same incoming task
+                         X. C ONCLUSION                                   stream, with pre-registered metrics for review-comment
+   We have presented a closed-loop framework for self-                    volume, defect escape rate, and reviewer time-on-task.
+improving AI coding agents through accumulated behavioral              2) Cross-organization replication in different program-
+rules. The key insight is that human review feedback, when                ming languages, codebase sizes, and review cultures, to
+codified as persistent and version-controlled rules, creates a            test the boundary conditions of the suppression effect.
+ratchet effect: the set of error classes the agent can self-detect     3) A behavioral-consistency benchmark (sketched in
+grows monotonically.                                                      Section IX) that complements SWE-bench and Hu-
+   In production deployment across 35+ microservices over                 manEval by measuring whether a corrected mistake
+11 recorded sessions, the rule set grew from 5 initial rules              stays corrected across session boundaries.
+   4) Automated rule proposal and conflict detection:
+      agents proactively suggesting candidate rules from clus-
+      ters of similar review comments, and flagging pro-
+      posed rules that contradict existing ones before they are
+      merged.
+   5) Multi-team governance models that allow team-
+      specific rule sets to compose without producing silent
+      contradictions, including provenance tracking when a
+      rule is promoted from a team scope to an organization-
+      wide scope.
+   Human review does not merely correct AI-generated code;
+in this framework, it permanently upgrades future agent be-
+havior.
+                              R EFERENCES
+ [1] M. Chen et al., “Evaluating large language models trained on code,”
+     arXiv preprint arXiv:2107.03374, 2021.
+ [2] Y. Fan et al., “Large language models for software engineering: A
+     systematic literature review,” ACM Trans. Softw. Eng. Methodol., 2024.
+ [3] A. Madaan et al., “Self-refine: Iterative refinement with self-feedback,”
+     in Proc. NeurIPS, 2023.
+ [4] Z. Li et al., “Automating code review activities by large-scale pre-
+     training,” in Proc. ESEC/FSE, 2022.
+ [5] R. Tufano et al., “Using pre-trained models to boost code review
+     automation,” in Proc. ICSE, 2022.
+ [6] L. Ouyang et al., “Training language models to follow instructions with
+     human feedback,” in Proc. NeurIPS, 2022.
+ [7] D. Zhou et al., “Least-to-most prompting enables complex reasoning in
+     large language models,” in Proc. ICLR, 2023.
+ [8] W. Zhong et al., “MemoryBank: Enhancing large language models with
+     long-term memory,” in Proc. AAAI, 2024.
+ [9] G. Kim et al., The DevOps Handbook. IT Revolution Press, 2016.
+[10] S. Hong et al., “MetaGPT: Meta programming for a multi-agent collab-
+     orative framework,” in Proc. ICLR, 2024.
+[11] C. Qian et al., “Communicative agents for software development,” in
+     Proc. ACL, 2024.
+[12] C. E. Jimenez et al., “SWE-bench: Can language models resolve real-
+     world GitHub issues?” in Proc. ICLR, 2024.
+[13] N. Shinn et al., “Reflexion: Language agents with verbal reinforcement
+     learning,” in Proc. NeurIPS, 2023.
+[14] A. Zhao et al., “ExpeL: LLM agents are experiential learners,” in Proc.
+     AAAI, 2024.
+[15] G. Wang et al., “Voyager: An open-ended embodied agent with large
+     language models,” arXiv preprint arXiv:2305.16291, 2023.
+[16] J. Yang et al., “SWE-agent: Agent-computer interfaces enable automated
+     software engineering,” arXiv preprint arXiv:2405.15793, 2024.
+[17] A. Bacchelli and C. Bird, “Expectations, outcomes, and challenges of
+     modern code review,” in Proc. ICSE, 2013.
+[18] C. Sadowski et al., “Modern code review: A case study at Google,” in
+     Proc. ICSE-SEIP, 2018.
+[19] Y. Zhang et al., “AutoCodeRover: Autonomous program improvement,”
+     in Proc. ISSTA, 2024.
+[20] C. S. Xia et al., “Agentless: Demystifying LLM-based software engi-
+     neering agents,” arXiv preprint arXiv:2407.01489, 2024.
+[21] E. Zelikman et al., “Self-taught optimizer (STOP): Recursively self-
+     improving code generation,” in Proc. COLM, 2024.
+[22] X. Chen et al., “Teaching large language models to self-debug,” arXiv
+     preprint arXiv:2304.05128, 2023.
+[23] X. Li, “A review of prominent paradigms for LLM-based agents:
+     Tool use (including RAG), planning, and feedback learning,” in Proc.
+     COLING, 2025.
+[24] P. Steinberger, “OpenClaw: Personal AI assistant,” https://github.com/
+     openclaw/openclaw, 2025.
+

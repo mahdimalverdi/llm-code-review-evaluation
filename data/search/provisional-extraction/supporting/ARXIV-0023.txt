@@ -1,0 +1,845 @@
+                                         Same Scrutiny, More Time: Eye Tracking Insights into Reviewing
+                                                              LLM-Labelled Code
+                                                             Ranim Khojah                                      Francisco Gomes de Oliveira                                   Mazen Mohamad
+                                               Chalmers University of Technology                                          Neto                                      RISE Research Institutes of Sweden
+                                                 and University of Gothenburg                                 Chalmers University of Technology                        and Chalmers University of
+                                                     Gothenburg, Sweden                                         and University of Gothenburg                                   Technology
+                                                     khojah@chalmers.se                                             Gothenburg, Sweden                                    Gothenburg, Sweden
+                                                                                                                 francisco.gomes@cse.gu.se                               mazen.mohamad@ri.se
+
+                                                                                             Julian Frattini                                        Philipp Leitner
+                                                                              Chalmers University of Technology                          Chalmers University of Technology
+arXiv:2606.26505v1 [cs.SE] 25 Jun 2026
+
+
+
+
+                                                                                and University of Gothenburg                               and University of Gothenburg
+                                                                                    Gothenburg, Sweden                                         Gothenburg, Sweden
+                                                                                    julfrat@chalmers.se                                     philipp.leitner@chalmers.se
+
+                                         Abstract                                                                                        Keywords
+                                            Modern software development increasingly involves the use                                    Large language models, Code review, Eye tracking
+                                         of large language models (LLMs) to generate code. Despite their                                 ACM Reference Format:
+                                         rapid advancement, LLMs remain prone to errors and hallucina-                                   Ranim Khojah, Francisco Gomes de Oliveira Neto, Mazen Mohamad, Julian
+                                         tions, emphasizing the importance of careful code inspection. How-                              Frattini, and Philipp Leitner. 2018. Same Scrutiny, More Time: Eye Tracking
+                                         ever, in practice, developers’ trust in LLM-generated code and                                  Insights into Reviewing LLM-Labelled Code. In Proceedings of The IEEE/ACM
+                                         their willingness to review it thoroughly may differ from these                                 Automated Software Engineering Conference (ASE’26). ACM, New York, NY,
+                                         recommendations. How developers actually behave when review-                                    USA, 12 pages. https://doi.org/XXXXXXX.XXXXXXX
+                                         ing LLM-generated code remains largely unexplored. In this study,
+                                         we conduct a Wizard-of-Oz experiment to examine how software                                    1    Introduction
+                                         engineers behave when code is explicitly labeled as LLM-generated                                  In the current era of AI-assisted software development, devel-
+                                         during a code review task. We collect both behavioral data and par-                             opers have been relying on large language models (LLMs) and
+                                         ticipant feedback through eye-tracking and exit interviews. Com-                                LLM-chatbots for code generation and modification [26], some-
+                                         bining Bayesian data analysis with qualitative analysis, we found                               times even reaching a high level of usage in what practitioners
+                                         that while the thoroughness of code review did not change for                                   call vibe coding.1 However, such use cases come with changes in
+                                         participants, they spent more time fixating on LLM-labelled code,                               the role of software developers. Particularly, code review becomes
+                                         indicating that the label itself influences attention. Practitioners                            a central task to ensure that LLM-generated code is correct, se-
+                                         also adapted their review strategy for LLM-labelled code by assess-                             cure, and compliant with established practices [27]. This is also
+                                         ing the code based on specific criteria (e.g., logical correctness),                            consistent with many LLM policies in the software industry, where
+                                         or using the prompt to guide their review. These findings inform                                the validation of LLM-generated code and extra attention towards
+                                         LLM-based tool design on labelling while incorporating the prompt                               hallucinated content is becoming essential [25].
+                                         as a software artifact. Our study reveals a gap between reviewers’                                 Code review is not only a technical activity but also a social and
+                                         intentions and actual reviewing behaviour, highlighting the need                                cognitive process shaped by developers’ motivations, experiences,
+                                         for software companies to revisit their AI policies (particularly re-                           and team dynamics [21]. Prior studies show that developers en-
+                                         garding LLM-assisted development) to better support developers                                  gage in code review for a range of goals beyond defect detection,
+                                         in reviewing LLM-generated code.                                                                including knowledge transfer, team awareness, and shared owner-
+                                                                                                                                         ship [3, 20]. These interpersonal factors often rely on implicit trust,
+                                         CCS Concepts                                                                                    e.g., in teams where reviewers approve changes with expectations
+                                         • Software and its engineering → Software verification and                                      that authors will address issues without further scrutiny [20].
+                                         validation; Collaboration in software development.                                                 This raises an important question: how do such judgment- and
+                                         Permission to make digital or hard copies of all or part of this work for personal or
+                                                                                                                                         experience-driven behaviours translate when the author is not a
+                                         classroom use is granted without fee provided that copies are not made or distributed           human, but an AI system? Developers may apply the same level of
+                                         for profit or commercial advantage and that copies bear this notice and the full citation       care and scrutiny to LLM-generated code, or adjust their behaviour
+                                         on the first page. Copyrights for components of this work owned by others than the
+                                         author(s) must be honored. Abstracting with credit is permitted. To copy otherwise, or          based on prior experiences and perceptions of AI. Understanding
+                                         republish, to post on servers or to redistribute to lists, requires prior specific permission   these patterns can help teams design more effective review practices.
+                                         and/or a fee. Request permissions from permissions@acm.org.                                     This includes reinforcing consistent review strategies or addressing
+                                         ASE’26, Munich, Germany
+                                         © 2018 Copyright held by the owner/author(s). Publication rights licensed to ACM.               systematic differences in how code is assessed.
+                                         ACM ISBN 978-1-4503-XXXX-X/2018/06
+                                         https://doi.org/XXXXXXX.XXXXXXX                                                                 1 https://www.ibm.com/think/topics/vibe-coding
+ASE’26, October 12–16, 2026, Munich, Germany                                                                                      Khojah et al.
+
+
+   We conduct a Wizard-of-Oz (WoZ) experiment with 32 partici-          the stimulus that the researcher wants to analyse separately, such
+pants to investigate how software engineers behave when review-         as specific functions or code blocks. In turn, gaze data is collected
+ing code that is either labelled as LLM-generated or left unlabelled,   through two primary measures, each capturing a different aspect
+thereby shaping how participants perceive its origin in a controlled    of reading behaviour.
+setting. We quantitatively analyse the gaze data collected from            Fixations occur when the eye remains stationary at a point
+an eye-tracking device to examine how long and thoroughly par-          for more than 200 ms, indicating that the participant is actively
+ticipants review LLM-labelled code. Additionally, exit interviews       processing (not just looking at) the content at that location. In code
+capture the reviewing strategies developers adopt when they per-        review, the total fixation duration within an AOI reflects how long
+ceive code as LLM-generated. Our research questions are:                a developer spends reviewing a particular piece of code.
+                                                                           Saccades are rapid eye movements that connect two fixations,
+RQ1. To what extent does the presence of labels identify-               reflecting how the eye scans across the stimulus. Shorter saccades
+ing code as LLM-generated affect how developers visually                indicate a more detailed inspection, commonly observed when
+process the code during review?                                         readers aim to understand the meaning of the stimulus (e.g., what
+   We use Bayesian data analysis (BDA) to compare the fixation          the code does) [8], or process difficult content [37]. In contrast,
+durations and saccade (scan) lengths of participants when review-       longer saccades indicate broader scanning and potential skipping.
+ing code labelled and not labelled as LLM code. We found that even      Consequently, in the context of code review, saccade length is a
+though the level of thoroughness (saccade lengths) is comparable,       suitable proxy for the thoroughness of a reviewer’s inspection.
+the participants spent more time fixating on code that is labelled as      Fixations and saccades are complementary and not correlated [37].
+LLM-generated (up to 60% for more complex code).                        Combining them (e.g., through gaze paths) reveals patterns of eye
+                                                                        movements (e.g., transitions and order) that provide insights into
+RQ2. What reviewing approaches do developers adopt when                 visual exploration strategies and cognitive processing [18].
+reviewing code perceived as LLM-generated?
+   We qualitatively analysed the 32 gaze paths together with the
+exit interviews to understand how participants approached review-
+ing code perceived as LLM-generated with respect to their trust and     3   Related Work
+assumptions. Many participants (n = 20, 62.5%) reported no change          As LLMs become increasingly common in software develop-
+in their evaluation criteria between labelled and unlabelled code,      ment, many companies adopt them in their development processes
+while 12 participants applied different evaluation criteria, such as    [25]. However, LLMs struggle with code-related tasks, particularly
+placing greater emphasis on logical correctness or code quality.        in terms of correctness, code quality, and other context-specific
+Independent of this, 14 participants used the prompt during their       limitations [22]. To manage these limitations, organisations often
+review, treating it either as a requirement to validate against or as   establish policies that govern the use of LLM-generated code [25].
+contextual documentation.                                               More specifically, these policies often highlight the need for code
+                                                                        review and verification when generating code, but do not specify
+   This work makes several contributions: (i) unlike previous re-       how the reviews should be conducted.
+search, we go beyond the quality of LLM-generated code and isolate         Code review is a well-established practice in software engineer-
+the impact of perceived code provenance (LLM vs. human) through         ing and serves as an essential step to detect bugs and improve code
+our WoZ experimental design. Moreover, (ii) our replicable experi-      quality [3]. Beller et al. [5] present a taxonomy of changes result-
+mental protocol can be adopted by software organisations to shape       ing from modern code review and show that the majority of these
+their AI policies regarding using LLMs in development and evaluate      changes are evolvability changes (e.g., structure and documenta-
+how their developers perceive and respond to LLM-generated code         tion), while the remaining 15% are functional changes (e.g., larger
+in practice; (iii) our findings suggest that the broader context of     defects and logic). In addition, code comprehension and understand-
+LLM-generated code (e.g., the prompt) acts as a software artifact       ability have been found to be a central challenge in effective code
+that can support the design of LLM-integrated IDE features. Finally,    review [3], where reviewers often require specific information, such
+(iv) the shared scripts and data from our BDA [2] provide a ro-         as code context and correct understanding, to conduct a thorough
+bust and nuanced approach that accounts for individual differences      review [35]. However, as LLM-generated code becomes increas-
+across participants and (v) act as prior data for future experiments.   ingly prevalent in software companies, it remains unclear whether
+                                                                        developers approach the review of LLM-generated code differently
+                                                                        from human-written code.
+2    Eye Tracking in Software Engineering                                  Investigating this requires methods that go beyond self-reports
+   Eye tracking is a method used to record and analyse where            and outcome measures. Eye tracking studies, in particular, have
+and how long a person visually processes an artifact. Eye tracking      been widely used to investigate visual attention in software engi-
+studies in software engineering are typically built around four key     neering tasks, especially for code comprehension [34], program
+concepts, as outlined by Grabinger et al. [18]. The stimulus is the     repair [42], and code review [7, 9]. Chandrika et al. [9] found that
+visual artifact presented to the participant. In code-related tasks,    there is a correlation between the fixation duration on buggy code
+this is typically source code displayed in an integrated development    and the number of bugs found. Similarly, Park et al. [34] conducted
+environment (IDE) or a code review tool. The stimulus is then           an eye tracking study on code comprehension and found that logi-
+segmented into areas of interest (AOIs), which are regions of           cal correctness does not impact the total review time, but following
+Same Scrutiny, More Time: Eye Tracking Insights into Reviewing LLM-Labelled Code                                         ASE’26, October 12–16, 2026, Munich, Germany
+
+
+a readability rule (minimise nesting) decreases the duration of fixa-                (1) Preperation                      (2) Code review session
+tions when reviewing the code.                                                            Prepare controlled
+   Prior work has examined how the perceived origin of code in-                              environment                                                  (3) Exit interview
+fluences review behaviour. Bertram et al. [7] showed that labelling                                                        4 files, 7 areas of interest
+code as machine-generated alters both attention and trust, with
+reviewers shifting their gaze from code to tests when patches are
+                                                                                        Design review tasks
+                                                                                                                          Eye tracker
+                                                                                                                                                          +
+                                                                                                  Pilot study
+presented as automated. Similarly, Tang et al. [42] studied how
+developers validate and repair code generated by GitHub Copilot,                                                           Fixations and                      Review strategy
+                                                                                                                                             Gaze paths
+finding that awareness of LLM-generated code leads to increased                                                              saccades                            and trust
+
+search effort and more frequent gaze transitions between code and                    (5) Research outcome                 (4) Data analysis
+comments. These studies suggest that code provenance plays a role
+in shaping how developers allocate attention during review.                             Impact of LLM label
+                                                                                                                            Conduct Bayesian analysis
+                                                                                         on visual behaviour
+   Our work builds on these findings by focusing specifically on
+LLM-generated code in a controlled code review setting. Unlike                              Changes in
+                                                                                                                            Conduct qualitative analysis
+                                                                                        reviewing approach
+prior work, which compares actual LLM-generated and human-
+written code, we employ a Wizard-of-Oz design in which all code is
+human-written but presented as either LLM-generated or not. This                             Figure 1: The process we followed in the study
+allows us to isolate the effect of perceived code provenance from
+differences in code quality, strengthening internal validity. Further-
+more, beyond quantitative eye-tracking measures, we incorporate                     4.1      Participants Selection
+qualitative analysis of gaze paths and exit interviews to understand                   We recruited 32 software engineering practitioners of different
+how reviewers interpret and act on these perceptions, revealing                     roles who work across 20 software organisations (see Table 1). These
+their reviewing strategies and underlying reasoning.                                organisations vary in size and domain and are located in three cities
+                                                                                    across two countries in Europe.3 When selecting the participants,
+                                                                                    we only invited practitioners who are familiar with Python and
+4    Experimental Setup
+                                                                                    actively use version control and pull requests.
+   To understand how developers actually behave when reviewing
+LLM-generated code, we conducted a within-subject experiment                        Table 1: Number of participants for each role and average
+with a crossover design, following the guidelines of Vegas et al. [43].             years of experience in the software industry.
+The process we followed is illustrated in Figure 1. We first set up the
+experimental environment by controlling unwanted factors that
+                                                                                     Role                                                         N       Avg. years of exp.
+could disturb eye-tracking measurements, such as screen bright-
+ness and external lighting. Then, we employed a WoZ approach [6]                     Software Developer / Engineer                                20                      7.0
+                                                                                     Test & QA Roles                                               4                      3.6
+where we designed four pull requests (PRs) and applied LLM labels                    Data Scientist / Engineer                                     2                      6.0
+to selected code segments, where the entire code was, in fact, writ-                 Research-Oriented Engineer                                    2                     13.5
+                                                                                     Game Developer                                                2                      3.3
+ten by human developers (the wizard) [38]. Label design and code                     Security Engineer                                             1                     15.0
+segment selection were refined through a pilot study.                                DevOps Engineer                                               1                      9.0
+   During a 1-hour session, we used an eye tracker while partici-                    Total                                                        32                7.0 ± 5.1
+pants reviewed four Python files presented as PRs2 . Across the four
+PRs, two files contained one or two pieces of code labelled as LLM-
+generated, i.e., labelled areas of interest. The order of pull requests
+and label assignments was rotated across participants so that the                   4.2      Defining the Code Review Tasks
+same areas of interest were reviewed both with and without a label                     Participants reviewed four Python files (on average, 77 ± 10 lines
+by different participants. The session ended with an exit interview                 of code), each presented as a pull request in a review session that
+on the review approach and trust in LLM tools.                                      lasted up to 10 minutes. For simplicity, each pull request introduced
+   We applied Bayesian data analysis to the eye-tracking data (fix-                 a single, self-contained file with newly added code. We did not
+ations and saccades) to assess whether the presence of an LLM                       provide any tests to focus on participants’ code comprehension and
+label impacted the thoroughness and time participants spent re-                     manual verification rather than their ability to run or debug tests.
+viewing the labelled code. We qualitatively analysed the interview                     Pull request selection. To ensure the pull request files are rep-
+data together with the gaze paths to understand how participants                    resentative of real-world code, we base the files in the pull re-
+adjusted their reviewing behaviour and which factors influenced                     quests on Python code from two popular open-source projects,
+these changes.                                                                      namely Requests4 (651 contributors, ∼10k forks; storage.py and
+                                                                                    temperature.py) and Home Assistant5 (4,646 contributors, ∼37k
+                                                                                    3 The specific locations will be revealed after the double blind review process to avoid
+                                                                                    compromising the authors’ anonymity.
+2 No formal ethics committee approval was required to review the study as per the   4 https://github.com/psf/requests
+
+university’s guidelines and national regulations.                                   5 https://github.com/home-assistant/core
+ASE’26, October 12–16, 2026, Munich, Germany                                                                                                   Khojah et al.
+
+
+forks; sessions.py and utils.py). To ensure that the code we use
+is entirely written by human developers, we used the official ver-
+sion of the repositories before the release of ChatGPT and GitHub
+Copilot (i.e., before October 2021). To ensure that review tasks can
+be completed within 10-minute time limit, we selected a subset of
+lines of code from each file to compose a new standalone file for the
+review task (e.g., we removed lines that included logging or invoked
+dependencies from other files). By avoiding dependencies across
+multiple files or mixed changes, we reduced potential confounding
+factors that might lead participants to prioritize certain parts of the
+code for reasons unrelated to the presence of the LLM label.
+   Labelling code. The experiment includes one treatment condition
+in which selected code segments, that is, AOIs, are labelled as LLM-
+generated, and one control condition in which the same AOIs appear
+without the label. Depending on the participant, an AOI was either
+labelled as LLM-generated or left unlabelled. Across the four files,
+we defined seven AOIs of varying sizes (see Table 2).                         Figure 2: Standalone code in temperature.py (AOI 4, labelled)
+
+Table 2: Areas of interest, their corresponding file, and size
+in lines of code (LoC).
+
+                      AOI 1             AOI 2       AOI 3            AOI 4
+   File        sessions.py      sessions.py     storage.py   temperature.py
+   LoC                   6               10             25                5
+                      AOI 5             AOI 6       AOI 7                —
+   File    temperature.py           utils.py      utils.py               —
+   LoC                  4                  2            21               —
+
+
+   The selection of which segments receive the treatment (i.e.,
+AOIs) was driven by covering different granularities, such as self-
+contained functions (Figure 2) and individual lines within functions
+(Figure 3). Then, refinements of the selection of segments and the
+                                                                                  Figure 3: Inline code in sessions.py (AOI 1, labelled)
+label format were informed by a pilot study with three Ph.D. stu-
+dents. Their feedback helped identify code patterns that participants
+would plausibly perceive as LLM-generated.                                    and code smell categories. These were distributed across labelled
+   The label consisted of a comment header indicating that the code           and unlabelled code segments to mitigate biases caused by unequal
+was generated by a fictional LLM tool called CodeForgeAI, which               concentrations of issues.
+we introduced to avoid biases stemming from participants’ prior
+experiences with existing tools and to focus only on their perception         Table 3: Overview of injected faults and code smells per file.
+of LLMs in general. To enhance realism, the label also included a
+generation timestamp and the prompt used to produce the code.
+                                                                               File             Type          Categories                                N
+The header and the associated code segment were highlighted in
+                                                                                                Faults        Checking, O-O Messages, Algorithm          3
+the IDE to visually distinguish them from the rest of the file.                storage.py
+                                                                                                Code Smells   Speculative generality, Duplicated code    2
+    Fault and code smell injection. To simulate realistic code review          temperature.py
+                                                                                                Faults        Initialization, Algorithm                  3
+                                                                                                Code Smells   Dead code, Magic numbers                   2
+scenarios, we injected faults and code smells so that reviewers
+would encounter issues that could plausibly require attention dur-                              Faults        Algorithm, Checking                        4
+                                                                               sessions.py
+                                                                                                Code Smells   Unneeded comments, Bad func. name          2
+ing the review. We did not evaluate detecting these issues and
+                                                                                                Faults        Checking, O-O Messages, Initialization     4
+informed participants that we would not assess their performance               utils.py
+                                                                                                Code Smells   Security risk, Bad function name           2
+as it is outside the scope of the study. The injected faults follow the
+categorizations of Python fault injection proposed by Marques et
+al. [28], focusing on faults that are syntactically valid but semanti-
+                                                                                 Order of pull requests. In our experimental design, we have 4
+cally incorrect code, such as using an incorrect variable, expression,
+                                                                              periods (individual review sessions) and 2 sequences (order in which
+or function call. For code smells, we followed established categories
+                                                                              treatment or control is presented), which resulted in 8 possible
+from a widely used catalogue.6 Table 3 shows the injected faults
+                                                                              orders of the pull requests that we present in Table 4. The pull
+6 https://refactoring.guru/refactoring/smells                                 requests were arranged so that each pull request appears with both
+Same Scrutiny, More Time: Eye Tracking Insights into Reviewing LLM-Labelled Code                                         ASE’26, October 12–16, 2026, Munich, Germany
+
+
+treatments in the same session: once with LLM-generated labels                     another party’s actions while perceiving risks posed by the trustee
+and once without, while ensuring that the two pull requests from                   (in this case, LLM-generated code) [4].
+the same project appear consecutively. For example, storage.py
+appears exactly twice in the first period; in O1 with labelled code,               4.4      Data analysis
+and in O5 without any labels. With 32 participants, this results in                   Bayesian data analysis (BDA). To infer the direction and strength
+four participants being assigned to each sequence.                                 of effects between relevant variables, we conduct BDA [31] within
+                                                                                   a framework for statistical causal inference [39] based on Pearl’s
+Table 4: Pull request orders per participant. An asterisk (*)                      model of causality [36]. We choose BDA over frequentist meth-
+indicates labelled code. storage.py and temperature.py in                          ods (e.g., null hypothesis significance testing) because it provides
+Home Assistant; sessions.py and utils.py in Requests.                              richer insights [14], preserves uncertainty [31], and models un-
+                                                                                   derlying properties of the data [19], which is useful for analysing
+ Ord.    Period 1           Period 2          Period 3           Period 4          non-normally distributed data like fixation durations and saccade
+ O1      storage.py*     temperature.py       sessions.py*    utils.py             lengths in this study. Moreover, BDA coupled with our causal infer-
+ O2      temperature.py* storage.py           utils.py*       sessions.py          ence framework allows us to differentiate correlations from causal
+ O3      sessions.py*    utils.py             storage.py*     temperature.py       effects [36] and draw more reliable conclusions [15].
+ O4      utils.py*       sessions.py          temperature.py* storage.py
+                                                                                      Our analysis follows a three-step process [39]: In the first model-
+ O5      storage.py         temperature.py* sessions.py          utils.py*
+ O6      temperature.py     storage.py*     utils.py             sessions.py*      ing step, we define our hypotheses and construct a directed, acyclic
+ O7      sessions.py        utils.py*       storage.py           temperature.py*   graph (DAG) representing variables (nodes) connected by (assumed)
+ O8      utils.py           sessions.py*    temperature.py       storage.py*       causal relationships. In our experiment, we formulate two hypothe-
+                                                                                   ses investigating the effect of the presence of the LLM label on the
+                                                                                   total duration of fixations and on the saccade lengths within the
+4.3     Data collection                                                            areas of interest.
+                                                                                      Our DAG (Figure 4) represents the relationships between the
+    Each participant had to complete three main steps: pre-study
+                                                                                   main variables of interest (“LLM label”, “Fixation duration”, and
+questionnaire, code review session, and the exit interview.
+                                                                                   “Saccade length”), along with variables arising from the crossover
+    The pre-study questionnaire obtained written consent to par-
+                                                                                   design (i.e., period, sequence, and carryover). It further includes
+ticipate in the study, with data anonymized, and allowed partici-
+                                                                                   covariates that may influence the outcome, such as the participant
+pants to opt out at any time. It collected information about the role
+                                                                                   and the area of interest.
+and years of experience. It also included three Likert-scale items
+confirming participants’ familiarity with Python and their confi-
+dence in writing and understanding Python code. The Likert-scale
+                                                                                         Period         Sequence                Carryover effect
+items were phrased as statements to which participants indicated                                                                                        Participant ID
+
+their level of agreement.                                                                         LLM label        Fixation duration   Saccade length   Area of interest
+    The code review session took place in a controlled environment
+with fixed ambient lighting and screen brightness, using a two-
+screen setup. The main screen (2560 × 1140) displayed pull request                 Figure 4: DAG for the impact of LLM label (yellow) on fixation
+files in PyCharm7 , while participants wrote comments and selected                 duration and saccade length (purple), with covariates (grey).
+their review decision according to GitHub pull request options
+(approve, comment, or request changes)8 on a secondary screen                         In the next identification step, we determine which variables
+(1080 × 1920). We recorded eye movements using a Tobii Pro Spark                   should be conditioned on to estimate the causal effect of interest
+eye tracker attached to the lower edge of the main screen at a                     while mitigating confounding [39]. In causal inference, conditioning
+frequency of 60 Hz, with gaze data captured via the CodeGRITS                      refers to including variables in a regression model to block alter-
+plugin [41] and mapped to specific code elements.                                  native paths through which bias could arise. Confounding occurs
+    The session began with eye tracker calibration, after which par-               when a variable influences both the treatment and the outcome, po-
+ticipants were briefed on their role and the task context: they were               tentially creating a spurious association between them [31]. In our
+working in a company with an AI policy permitting the use of an in-                study, for example, the period (at what time a participant reviewed
+ternal chatbot (CodeForgeAI) for code generation, on the condition                 a particular AOI) can potentially affect participants’ behavior in
+that the generated code is explicitly labelled in the codebase.                    what is called the maturation or exhaustion effect [43], making it
+    After reviewing all four pull requests, we conducted a 10-minute               necessary to condition on it to avoid bias. Additionally, covariates
+semi-structured exit interview with each participant covering                      such as area of interest do not act as confounders but AOIs should
+their review strategies, their company’s AI policy, and their trust                still be included to improve the precision of the effect estimation
+and opinions on the use of LLMs for code-related tasks. Interview                  by accounting for systematic variation across code segments [10].
+questions related to trust were based on Mayer et al.’s [30] definition,              In the estimation step, we formulate one regression model with
+which operationalises trust as the willingness to be vulnerable to                 prior distributions per hypothesis. Both outcome variables are pos-
+7 https://www.jetbrains.com/pycharm/                                               itive quantities. We model the distribution of the outcome vari-
+8 https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/       able fixation duration as a gamma distribution, as it emerges from
+reviewing-changes-in-pull-requests/about-pull-request-reviews                      the sum of individual measurements [32]. As the data-generating
+ASE’26, October 12–16, 2026, Munich, Germany                                                                                                                                              Khojah et al.
+
+
+process of saccade lengths is less clear ontologically, we compare                      posterior estimates and 95% credibility intervals (CIs) for the ef-
+models using gamma and lognormal distributions and select the                           fects of our factors (𝛾 Label ), namely LLM label, the area of interest,
+latter for its better fit [44]. Moreover, we include hierarchical ef-                   and their interaction 𝜏. Recall that our model also accounts for
+fects [11] and interaction effects [1]. Hierarchical effects account                    period, sequence, and carryover effects (see Section 4.4). An effect
+for the nested structure of the data, such as observations grouped                      is considered credible when its CI does not include zero. Positive
+within users (user ID). Interaction effects capture situations where                    estimates indicate longer fixation duration or longer saccade length
+the effect of one variable depends on another, for example, between                     when receiving the treatment, i.e., seeing the “LLM-generated”-
+LLM-label and area of interest, since the label influence may vary                      label, whereas negative estimates indicate shorter values.
+across different code segments. The following formula shows the                            For fixation duration, the effect of the LLM label is credible (𝛾𝐿𝑎𝑏𝑒𝑙 :
+main parts of the Bayesian regression model for fixation durations.                     95% CI = [0.09, 0.56], 𝜇 = 0.33) as the intervals of the posterior
+                                                                                        distributions do not overlap with zero. The estimate (𝜇) is positive,
+    fixation ∼ 𝐺𝑎𝑚𝑚𝑎 (𝛼, 𝛽 )                                                      (1)   indicating that participants spent more time fixating on code when
+    log(𝛼 ) = 𝛿 + 𝛿 PID + 𝛾𝐿𝑎𝑏𝑒𝑙 · Label + 𝛾𝐴𝑂𝐼 · AOI + ·𝜏Label×AOI · Label · AOI (2)   labelled as LLM-generated compared to identical unlabelled code.
+              + 𝛾𝑆𝑒𝑞 · Sequence + 𝛾𝑃 · Period + 𝛾𝐶𝑂 · Carryover                   (3)   In contrast, the period and carryover effects are not credible. This
+         𝛽 = 𝐺𝑎𝑚𝑚𝑎 (10, 0.5)                                                      (4)   suggests that file review order and prior exposure to labelled code
+   Equation 1 models the total fixation duration using a Gamma                          did not influence fixation durations, supporting the validity of the
+distribution parameterized by a shape parameter 𝛼 and a rate pa-                        counterbalanced design.
+rameter 𝛽, which is suitable for modeling positive, right-skewed                           The interacting effect between the LLM label and the AOIs (Fig-
+data such as fixation times. In summary, the model estimates how                        ure 5) shows where in the code the label effect is most pronounced.
+the presence of the LLM label and other factors influence fixation                      First, the CIs are large due to individual differences between partic-
+duration, while accounting for differences between participants                         ipants (e.g., with regard to their reading speed), which is expected.
+and the structure of the experiment.
+   The shape parameter 𝛼 (Equations 2) is modeled as a function
+                                                                                        Total fixation duration (seconds)
+                                                                                                                                                                           LLM Label
+                                                                                                                            80
+of our factors (on a log scale to ensure positive values). The model                                                        70                                                  Absent
+includes a global intercept (𝛿) and participant-specific varying inter-                                                     60                                                  Present
+cepts (𝛿 PID ) to account for individual differences in baseline fixation                                                   50
+behaviour. We then include the main effects of the LLM label (𝛾𝐿𝑎𝑏𝑒𝑙 ),                                                     40
+the area of interest (𝛾𝐴𝑂𝐼 ), and their interaction (𝜏Label×AOI ). Finally,                                                 30
+we adjust for sequence, period, and carryover effects to account for                                                        20
+the crossover design [43]. Positive coefficients (𝛾𝑥 ) correspond to                                                        10
+longer fixation durations.                                                                                                   0
+   Equation 4 specifies a prior for the rate parameter 𝛽 using a                                                                 AOI 1   AOI 2   AOI 3    AOI 4     AOI 5       AOI 6       AOI 7
+Gamma distribution. Similar weakly informative priors are assigned                                                                                Area of Interest (AOI)
+
+to all other coefficients (𝛿, 𝛾, and 𝜏) [46], but are omitted for brevity.
+Afterwards, we perform prior predictive checks to confirm their                         Figure 5: The effect of the presence of an LLM label on the
+appropriateness [31]. Once assessing that the training process con-                     total fixation duration per area of interest.
+verged accordingly [16] and no diagnostic suggested issues [31],
+we evaluate the model. The details of our BDA workflow, along                              Second, review times for labelled code are either comparable to
+with scripts and explanations, are in our replication package.                          or longer than those for the same unlabelled code. This difference
+                                                                                        is more pronounced (up to 15 seconds) for code that requires more
+   Qualitative Analysis. We complement the statistical results with                     time to review (more than 20 seconds) and is negligible otherwise.
+a qualitative analysis of the exit interviews, alongside gaze path                         In practice, while differences in seconds may seem minor, they
+visualizations showing how participants moved across lines of code                      are substantial in relative terms, especially since they concern fix-
+during each pull request review. Three authors jointly analysed                         ation time alone, not the full time spent on review. For instance,
+three interviews in an initial session and established initial themes                   reviewing 6 lines of code in sessions.py (AOI 1) with an aver-
+related to trust, reviewing strategy, and self-reported behavioural                     age time of 15 seconds, an additional 5 seconds is approximately a
+changes. The remaining interviews were analysed by four authors                         33% increase in reviewing duration. For more complex code, as in
+across six sessions. Each session involved two authors, where any                       AOI 3 in storage.py (25 lines of code), reviewers spent an extra 15
+disagreements were discussed and resolved on the spot. As the                           seconds, a 60% increase. Our results suggest that there is no mean-
+analysis progressed, more concrete codes emerged around how                             ingful difference when reviewing very short code, but the time tax
+participants used the label and criteria they applied during review.                    imposed by reviewing LLM contributions grows significantly the
+                                                                                        more complex the code becomes. Given that contemporary LLMs
+5      LLM Label Impact on Reviewing Behaviour                                          are able to generate pull requests of substantial size, including gen-
+   Here, we report the results of our Bayesian data analysis on                         erating full files or making simultaneous non-trivial changes in
+how the presence of a label indicating LLM-generated code affects                       multiple places in the code base [24, 45], this finding is concerning.
+review duration and thoroughness, measured through duration                                Note that spending more time reviewing a piece of code in gen-
+of fixations and saccade lengths. The Bayesian model produces                           eral is not necessarily due to the size of the code but rather its
+Same Scrutiny, More Time: Eye Tracking Insights into Reviewing LLM-Labelled Code                                                                                   ASE’26, October 12–16, 2026, Munich, Germany
+
+
+complexity. For example, AOI 4 in temperature.py (in Figure 2)                                                            for the two shortest codes (AOI 5 in temperature.py, 4 lines, and
+and AOI 1 in sessions.py (in Figure 3) are of comparable length                                                           AOI 6 in utils.py, 2 lines). Although there is no clear rationale
+(5 vs 6 lines of code). However, AOI 4 is simpler and follows the                                                         behind the difference in saccade lengths, the 20–25 pixel difference
+same pattern and style as in previous functions in the same file,                                                         we observe corresponds roughly to the length of a single word,
+while AOI 1 involves more complex and nested conditions. This                                                             which we argue is not significant in practice, and unlike the fixation
+also aligns with what some participants mentioned in their inter-                                                         duration, this effect does not appear to scale with code complexity
+views: if they encountered a complex LLM-generated code, their                                                            or length. This also aligns with the work by Bertram et al. [7]
+first intuition was that the complexity was unnecessary.                                                                  on average saccade lengths when reviewing machine-generated
+                              “If there’s some really odd code — not necessarily bad, just strangely complex — if a
+                                                                                                                          code as opposed to human-written code. There were no significant
+                              human wrote it, I’d think: okay, they went through the effort of writing this, so there’s   differences in the saccades, and they were around 100 pixels on
+                              probably a reason behind it (...) But if it’s an AI-written function, it immediately        average.
+                              jumps out at me like: oh, this is strange” (game developer, 2.5 years of experience)
+                                                                                                                             Therefore, when our participants reported a more careful or
+   Some participants also acknowledged that the margin of faults                                                          thorough review process, this reflected mainly in the total fixation
+that LLMs produce grows with the size of the code.                                                                        duration (i.e., review time) rather than a more detailed review. The
+                                                                                                                          entire code (whether labelled or not) was reviewed in approximately
+                              Takeaway: Practitioners spend more time fixating and reviewing                              the same thoroughness (with 85-110 pixel length scans).
+                              code that is labelled as LLM-generated. This effect grows stronger
+                              in more complex code since it is expected that the complexity of                                Takeaway: Practitioners review LLM-labelled code with the same
+                              LLM-generated code may be unnecessary.                                                          thoroughness as unlabelled code. Participant statements regarding
+                                                                                                                              more careful reviews of LLM contributions appear to translate into
+   To complement the fixation duration results, we examine saccade                                                            longer reviewing time, but not more thorough reviews.
+lengths, which capture how developers scan the code. Shorter sac-
+cades indicate a more thorough “line-by-line” review, while longer
+saccades indicate broader scans. Most of our participants described                                                       6     Changes in Reviewing Behaviour
+in the exit interview that their general reviewing strategy consisted                                                        The quantitative results show that developers spent more time
+of going over the code in a top-down manner, then following the                                                           fixating on code labelled as LLM-generated. To understand what
+execution path when they encountered a called function. Many also                                                         drives this pattern and why the gap between self-reported careful
+mentioned that they reviewed LLM-labelled code more thoroughly                                                            review and actual gaze behaviour exists, we qualitatively analysed
+even when they did not show a strong mistrust of LLMs.                                                                    two data sources for all 32 participants: (i) gaze timelines from the
+                              “It was good to mark that [the code] was AI-generated. And, of course, I approach it a      review sessions and (ii) the exit interviews. By cross-referencing
+                              bit more thoroughly, although, in my experience, [LLMs] are performing very well            these sources, we examined how participants approached the review
+                              in real life” (software engineer, 2.5 years of experience)
+                                                                                                                          task, which beliefs and evaluation criteria shaped their judgments,
+   However, the gaze data we collected revealed that the presence                                                         and how the perceived provenance of the code, that is, whether it
+of an LLM-label does not change the length of saccades within                                                             was believed to come from an LLM or a human developer, influenced
+an area of interest (𝛾 Label : 95% CI = [-0.07, 0.10], 𝜇 = 0.01). The CI                                                  their attention, reviewing strategy, or inspection criteria.
+overlaps with zero, indicating a non-significant effect of the LLM
+labels. This is also apparent in Figure 6, showing the impact of the                                                      6.1       Attention to LLM-Labelled Code
+label on saccade lengths per area of interest.                                                                               Many participants (n=20, 62.5%) reported that their reviewing
+                                                                                                                          approach and criteria did not change between labelled and
+                              150                                                             LLM Label
+                                                                                                                          unlabelled code. As a result, they described applying the same
+Length of saccades (pixels)
+
+
+
+
+                              140                                                                    Absent               reviewing standards regardless of how the code was presented.
+                              130
+                                                                                                     Present
+                              120                                                                                             “Pretty soon, I just decided that it’s all code. I need to review it all quite carefully
+                                                                                                                              anyway, so I treated it as any other code” (software engineer, 12 years of
+                              110                                                                                             experience)
+                              100
+                                90                                                                                            However, even participants who reported no change in strategy
+                                80                                                                                        still tended to briefly pay attention to the prompt or LLM-labelled
+                                70                                                                                        segments. This additional attention was not described as a delib-
+                                       AOI 1       AOI 2      AOI 3    AOI 4      AOI 5          AOI 6      AOI 7         erate strategy, but rather as a quick, instinctive check for obvious
+                                                               Area of Interest (AOI)
+                                                                                                                          issues. In their interviews, these participants often expressed a gen-
+                                                                                                                          eral mistrust of LLMs, possibly reinforced by previous experiences
+Figure 6: The effect of the presence of an LLM label on the                                                               with LLMs and the fact that their companies’ AI policies are broad
+saccade lengths (in pixels) per area of interest.                                                                         and offer little concrete guidance on the use of LLM-generated code.
+
+   While the effect is comparable for most areas of interest, with a                                                          “I would take a glance to see if it is doing something absolutely stupid, or else, I would
+                                                                                                                              depend on the test cases” (software engineer, 8 years of experience)
+difference of 2-3 pixels, we notice gaps in the opposite directions
+ASE’26, October 12–16, 2026, Munich, Germany                                                                                                             Khojah et al.
+
+
+   This suggests that, although participants perceived their review-        higher-trust participants: a similar reviewing flow across labelled
+ing approach as consistent, the presence of the LLM label subtly            and unlabelled files, moving from top to bottom through the code,
+influenced their attention.                                                 but with more time spent on LLM-labelled segments.
+                                                                               In contrast, participants with lower trust in AI expected LLM-
+   Takeaway: Participants following a consistent reviewing strategy         generated code to contain more logical errors. These expectations
+   still showed an unconscious attentional pull toward LLM-labelled         were often based on prior experiences with LLM-based tools, which
+   code, highlighting a gap between stated reviewing intent and actual      they described as prone to misunderstanding prompts and produc-
+   behaviour. This gap appears to be shaped by prior experiences and        ing semantically incorrect code. As a result, their review focused
+   underlying mistrust of LLM-generated code.                               more strongly on verifying logical correctness and reasoning about
+                                                                            the behaviour of the code.
+6.2     Shifts in Evaluation Criteria
+   Some participants (n=12, 37.5%) adjusted the evaluation crite-
+ria applied to LLM-labelled code. Rather than reviewing all code
+using the same standards, these participants adjusted what they
+looked for depending on whether the code was perceived as LLM-
+or human-generated. These shifts in criteria were closely tied to par-
+ticipants’ expectations about the types of mistakes made by LLMs
+versus human developers. In particular, trust and prior experience
+with AI played a central role in shaping these expectations.
+   Participants who expressed relatively higher trust in AI tended
+to expect fewer logical errors in LLM-generated code, but more
+issues related to code quality or consistency. As a result, their
+review focus shifted toward aspects such as readability, adherence
+to coding conventions, and consistency with the rest of the codebase
+(e.g., use of variables, libraries, or style), rather than strict logical
+correctness. Despite this shift in criteria, their overall reviewing
+                                                                            Figure 8: Gaze paths for a software developer (2 years ex-
+flow often remained similar across labelled and unlabelled files,
+                                                                            perience, O5) reviewing storage.py (unlabelled, top) and
+typically following a top-down inspection of the code.
+                                                                            utils.py (LLM-labelled, bottom).
+
+                                                                               Figure 8 illustrates the gaze paths for a software developer who
+                                                                            inspected the LLM-labelled code for logical errors. They believe
+                                                                            that the logical errors that a human developer can make are usually
+                                                                            captured by the tests. However, they believe that “the range of
+                                                                            mistakes [LLMs] do is much broader than a human”, and many of
+                                                                            them can go undetected by unit tests and linters.
+                                                                              “The type of problems that a developer might do might get caught in other things like
+                                                                              linting or test cases, but I believe that the AI-generated might pass those but still be
+                                                                              logically wrong” (software developer, 2 years of experience)
+
+                                                                               One reason that some participants described is that such faults
+                                                                            are more likely to occur at the integration level rather than at
+                                                                            the unit level. In the utils.py file (bottom), the developer spent
+                                                                            around two minutes reviewing the first labelled code segment (gaze
+                                                                            spanning between seconds 80–200). They also revisited the sec-
+Figure 7: Gaze paths for a software test manager (6 years                   ond labelled segment later in the review (around line 37 at second
+experience, O5) reviewing storage.py (unlabelled, top) and                  500), whereas in the unlabelled storage.py file (top), they instead
+utils.py (LLM-labelled, bottom).                                            returned to the beginning of the file (line 1 at second 350).
+                                                                               Across these participants, we did not observe a consistent gaze
+   For example, a test manager with 6 years of experience men-              pattern that clearly distinguishes those who changed their eval-
+tioned that when they see LLM-generated code, they trust it more            uation criteria from those who did not. However, the gaze data
+than human-written code. This is because they expect to see more            suggest that differences in expectations influence how attention
+logical errors in human-written code, but still believe that “AI makes      is allocated within the file, for example through revisits or tar-
+quality problems more than the humans”. Therefore, they mentioned           geted inspection of specific segments. Our findings suggest that
+that they did not pay much attention to the LLM-labelled code               changes in reviewing behaviour are not uniform, but are shaped by
+unless they had extra time. While individual gaze paths varied, this        participants’ expectations of the strengths and limitations of LLM
+participant’s gaze (Figure 7) reflects the general tendency among           code.
+Same Scrutiny, More Time: Eye Tracking Insights into Reviewing LLM-Labelled Code                                                               ASE’26, October 12–16, 2026, Munich, Germany
+
+
+
+              Takeaway: Reviewers adjusted what they look for in LLM-labelled                               “I was pointing out the discrepancy and telling them that: oh, did you actually intend
+                                                                                                            to have this code, or is there some discrepancy between what you said and what AI
+              code. Depending on their trust in AI, they prioritize logical correct-                        generated for you?” (software engineer, 1.5 years of experience)
+              ness or code quality, showing that prior expectations shape evalua-
+              tion criteria, even when the overall review process remains similar.               In contrast, participants who treated the prompt as documen-
+                                                                                              tation used it to support their understanding of the code, rather
+                                                                                              than a reference for validation. Their review behaviour typically
+6.3                    Interpreting and Using the Prompt
+                                                                                              followed a label-first pattern, where they first read the prompt
+    Now, we focus on how participants, regardless of the evaluation                           to form an understanding of the functionality, then inspected the
+criteria, interact with the LLM label itself, specifically, the prompt                        code.
+embedded in the label. Rather than acting solely as a marker of
+code provenance, the prompt provides additional information that                                             0                                                                     Label
+participants incorporate into their review. From the interviews,                                                                                                                   Labelled AOI
+                                                                                                                                                                                   Out of AOI
+among those who reported using the prompt in their review (n=14),                                           20                                                                     Writing feedback
+
+
+
+
+                                                                                              Line Number
+two groups emerged: (i) participants who treated the prompt as a
+requirement description (n=5), and (ii) those who treated it as                                             40
+documentation (n=7). Two participants reported using both.
+                                                                                                            60
+    These two interpretations reflect different ways of using the
+prompt during a review. When treated as a requirement, the                                                  80
+prompt becomes an external reference against which the code is                                                   0         100          200           300           400          500              600
+validated, shifting the reviewer’s focus to alignment. In this case,                                                                            Time (seconds)
+reviewers implicitly ask: “Did the LLM produce what was asked?”
+In contrast, when treated as documentation, the prompt serves                                 Figure 10: Gaze path in temperature.py (security engineer,
+as contextual information to support understanding, shifting the                              15 years experience, O2).
+focus to comprehension, asking: “What is this code doing?”.
+    Participants who treated the prompt as a requirement adjusted
+                                                                                                 Figure 10 shows an example of this behaviour for a security
+their review behaviour accordingly. Rather than reviewing the code
+                                                                                              engineer with 15 years of experience. Unlike the requirement-based
+in isolation, they repeatedly compared the code against the prompt
+                                                                                              pattern, this participant exhibits fewer shifts between label and
+to verify whether the generated output matched the intended spec-
+                                                                                              code. Instead, they fixate on the prompt first (yellow), followed by
+ification. This resulted in a characteristic back-and-forth gaze pat-
+                                                                                              a cluster of fixations on the labelled code (purple), suggesting a
+tern between the label and the corresponding code segments.
+                                                                                              sequential process of understanding followed by inspection. In this
+               0                                                         Label
+                                                                                              case, the prompt was treated as a code artifact and was assessed
+                                                                         Labelled AOI         with the rest of the code.
+                                                                         Out of AOI
+              20                                                         Writing feedback
+                                                                                                            “I wrote that the prompt is unclear (...), usually AI makes mistakes when the prompt
+Line Number
+
+
+
+
+                                                                                                            is unclear, and it makes things up” (software developer, 8 years of experience)
+              40
+                                                                                                 While the number of passes through the file varied, this label-first
+              60                                                                              strategy was common among participants in this group.
+              80
+                   0       100       200         300         400        500             600                 Takeaway: When reviewers use the prompt during code review,
+                                            Time (seconds)
+                                                                                                            they adopt two approaches: as a requirement to validate alignment
+                                                                                                            between intent and code, or as documentation to support code com-
+Figure 9: Gaze path in temperature.py (software engineer, 10                                                prehension. These interpretations shift the focus of review from code
+years experience, O7).                                                                                      alone to the relationship between code and its perceived origin.
+
+   Figure 9 illustrates this behaviour for a software engineer with
+10 years of experience. The participant frequently shifts between                             7                  Implications
+the prompt (yellow) and the labelled code (purple), indicating an                                Trusting LLMs takes a different form than trusting human de-
+ongoing validation process. This gaze pattern was consistent across                           velopers. We learned that the relationship between trust and the
+participants in this group and reflects a shift in the nature of the                          reviewing behaviour is asymmetric. In other words, practitioners
+task: from understanding the logic of the code to verifying whether                           who trust LLMs do not necessarily spend less time reviewing LLM-
+the code generation worked as intended. Which is in line with                                 generated code, nor do they review it less thoroughly. For example,
+prior observations by Tang et al. [42], where developers similarly                            one of the participants who expressed a strong trust towards LLMs
+shifted between prompt and code to resolve mismatches between                                 is a software test manager (gaze paths in Figure 7). Despite their
+intended and generated behaviour. In some cases, this also led                                trust, they still reviewed the two unlabelled PRs (presuming they
+our participants to question whether discrepancies were due to                                have no LLM-generated content) in less time than the two with
+incorrect implementation or unclear intent of the author of the pull                          labelled codes. However, they focused on reviewing the labelled
+request.                                                                                      code in terms of quality over logical correctness.
+ASE’26, October 12–16, 2026, Munich, Germany                                                                                        Khojah et al.
+
+
+   On the other hand, most of the participants expressed mistrust           More specifically, our participants expressed the importance of
+towards LLMs at varying levels. This resulted in a difference in the     knowing the original intent behind the generated code, especially
+behaviour (in terms of review time) only for more complex code           because LLMs do not always produce code that clearly reflects
+snippets (see Figure 5) with no big difference in the saccade lengths,   what was asked. The prompt was also useful to understand LLM-
+that is, the thoroughness of the review. In fact, many of them re-       generated code that tends to be unnecessarily complex. A similar
+ported that they did not treat LLM-labelled code any differently and     behaviour was observed by Tang et al. [42] when developers re-
+followed the same reviewing strategy they used for code written          paired code generated by GitHub Copilot. Consequently, we argue
+by human developers, just while being “careful”. These differences       that there is a need to add mechanisms to code generation and re-
+in behaviour, despite mistrust, support the claims that acceptance       view tools to map code to the prompt(s) used to generate it, ideally
+of generated software artifacts does not reflect trust [4].              in a way that does not disrupt the reviewing flow.
+   However, measuring self-reported trust and carefulness is diffi-         To improve the usability of such a tool, we encourage LLM-based
+cult, and research should not use them solely as a proxy to predict      tool designers to keep the prompt-to-code traceability available
+behaviour. Combining them with objective behavioural measures,           within the development environment and on-demand to give re-
+e.g., eye tracking, can help capture the gap between how carefully       viewers access to the context they need, without adding noise for
+developers think they are reviewing vs. how they actually are. Bet-      those who do not need it. We also learned that storing prompts
+ter operationalisation of trust in experiments is still needed; for      as code comments or any code artifact is not ideal (this may, for
+instance, accounting for interpersonal familiarity, as some partic-      example, conflict with company coding practices or clean code
+ipants reported reviewing PRs from known or more senior col-             principles [29]). Instead, prompts should be treated as a separate
+leagues less thoroughly, which is a factor to capture in future work.    artifact that can be stored and accessed as code metadata. This is
+                                                                         particularly relevant for multi-turn interactions, where the full con-
+    AI Policies need to define the LLM-code verification process. Re-    versation history (not just a single prompt) needs to be preserved.
+flecting on the different reviewing approaches that the participants
+followed for LLM-labelled code (see Section 6), we notice a gap
+between organisational policies and individual practices. While          8   Validity Threats
+software organisations set AI policies that mandate a more “careful”        The crossover design induces threats to internal validity [43],
+verification of LLM-generated code, there is no specification of         e.g., the learning effect over multiple periods or an optimal sequence
+what this means in practice. This has resulted in software engineers     effect. We mitigate these by adjusting for them in our analyses [13,
+merely improvising cautiousness. Sometimes, this meant checking          43], which not only factors out the effects from the phenomenon of
+if the code aligns with the intent of the developer, and other times     interest but also allows us to determine that they did not affect our
+it reflects in focusing on a specific aspect related to LLMs’ limi-      experiment. In addition, to reduce the risk of hypothesis guessing,
+tations, e.g., code quality. However, for many, they do not review       participants were invited to take part in a code review study without
+LLM-generated code any differently than any human-written code,          being informed that LLM-generated code was involved.
+even if they see the need to “be extra careful.”                            The external validity may be threatened by missing unob-
+    Similarly, the gaze data showed that while developers reviewed       served variables. For example, the participants’ stance towards
+LLM-generated code as thoroughly as human-written ones, they             LLM-generated code may affect their trust and, hence, moderate
+planned their time for reviewing such code based on perceived            the effect of the LLM-label. Consequently, the quantitative results
+complexity. Therefore, AI policies need to define a structured verifi-   may not generalize to a more or less trusting sample of subjects.
+cation process, including constraints on the size of LLM-generated       We are unable to mitigate the threat from these unmeasurable mod-
+code (e.g., discouraging entire-file generation) and specifying when     erators. Therefore, we define our DAG (see Figure 4) to scope our
+it is submitted for review; ideally early in development, before         causal assumptions explicitly and confine it to observable variables.
+blocks grow large and complex. This is particularly important since         Additionally, participants may behave differently under eye-
+research envisions a change in the role of a software developer          tracking equipment than in natural settings. This is an inherent
+to focus more on code verification [12, 40]. Such needs were also        trade-off of controlled experiments needed to isolate the effect of
+highlighted by Nahar et al. [33] regarding standardising responsible     interest. To reduce obtrusiveness, participants reviewed in a quiet
+AI evaluation to mitigate ethical and legal issues for organisations.    room with one author seated facing away. Moreover, while the
+The process should also clarify responsibilities, as our participants    PRs used in the study may not fully reflect real-world code review
+were torn about whether the responsibility of verifying the LLM-         environments, we selected code from large and active open-source
+generated code lies with the original developer or the reviewer.         projects to ensure representation of collaborative development that
+                                                                         we observe in the software industry. However, participants still
+   The prompt is an artifact that should be available on-demand. Al-     reviewed a reduced version of these code files and were described
+though our experiment focused on marking code as LLM-generated,          as entirely new, whereas real PRs typically contain a mix of added,
+the label we designed also included additional metadata such as the      deleted, and modified lines. Despite this, such a scenario is not
+LLM used, the date and time of generation, and the prompt (mainly        unrealistic, as some introduce entirely new modules or features.
+to make the label feel realistic). However, we found that these             To support construct validity, we use well-established eye-
+details, particularly the prompt and the LLM used, were unexpect-        tracking metrics that capture visual attention [18]. We triangulate
+edly important to many participants, revealing that prompt-to-code       our analysis by combining quantitative measures, gaze paths, and
+traceability is valuable during code review.                             qualitative data from exit interviews.
+Same Scrutiny, More Time: Eye Tracking Insights into Reviewing LLM-Labelled Code                                         ASE’26, October 12–16, 2026, Munich, Germany
+
+
+   Any subjective step in the BDA, e.g., DAGs, distribution family                 References
+for outcome variables, and prior probability distributions, implies                 [1] Herman Aguinis and Ryan K Gottfredson. 2010. Best-practice recommendations
+a potential threat to conclusion validity. We mitigate them by                          for estimating interaction effects using moderated multiple regression. Journal
+                                                                                        of organizational behavior 31, 6 (2010), 776–786. doi:10.1002/job.686
+following established principles, i.e., domain expertise pooling [17],              [2] Anonymous. 2026. Replication package for the paper "Same Scrutiny, More Time:
+maximum entropy criterion [23], and uninformative priors [46].                          Eye Tracking Insights into Reviewing LLM-Labelled Code". doi:10.5281/zenodo.
+                                                                                        19238394
+                                                                                    [3] Alberto Bacchelli and Christian Bird. 2013. Expectations, outcomes, and chal-
+                                                                                        lenges of modern code review. In 2013 35th International Conference on Software
+9    Conclusion                                                                         Engineering (ICSE). IEEE, San Francisco, CA, USA, 712–721. doi:10.1109/ICSE.
+                                                                                        2013.6606617
+   Prior research has often argued that LLM-generated code needs                    [4] Sebastian Baltes, Timo Speith, Brenda Chiteri, Seyedmoein Mohsenimofidi,
+to be carefully reviewed to avoid hallucinations, security issues,                      Shalini Chakraborty, and Daniel Buschek. 2026. On the Need to Rethink Trust in
+or accruing technical debt more generally. In our work, we have                         AI Assistants for Software Development: A Critical Review. IEEE Transactions on
+                                                                                        Software Engineering (2026), 1–18. doi:10.1109/TSE.2026.3659804
+studied the question of whether developers actually treat LLM-                      [5] Moritz Beller, Alberto Bacchelli, Andy Zaidman, and Elmar Juergens. 2014. Mod-
+generated code differently during code review. We conducted an                          ern code reviews in open-source projects: which problems do they fix?. In Proceed-
+                                                                                        ings of the 11th Working Conference on Mining Software Repositories (Hyderabad,
+eye tracking study with 32 software practitioners, measuring fix-                       India) (MSR 2014). Association for Computing Machinery, New York, NY, USA,
+ations and saccades when reviewing LLM-labelled vs. unlabelled                          202–211. doi:10.1145/2597073.2597082
+identical code. Crucially, all code in our study was written by human               [6] Niels Ole Bernsen, Hans Dybkjær, and Laila Dybkjær. 1994. Wizard of oz pro-
+                                                                                        totyping: How and when. Proc. CCI Working Papers Cognit. Sci./HCI, Roskilde,
+developers: we employed a WoZ design in which no code was ac-                           Denmark (1994), 67.
+tually LLM-generated. This allows us to attribute any behavioural                   [7] Ian Bertram, Jack Hong, Yu Huang, Westley Weimer, and Zohreh Sharafi.
+differences solely to developers’ perception of the code’s origin,                      2020. Trustworthiness Perceptions in Code Review: An Eye-tracking Study.
+                                                                                        In Proceedings of the 14th ACM / IEEE International Symposium on Empirical
+independent of the actual quality or style of any particular LLM.                       Software Engineering and Measurement (ESEM) (Bari, Italy) (ESEM ’20). Asso-
+We find that reviewers indeed fixate on LLM-generated code for a                        ciation for Computing Machinery, New York, NY, USA, Article 31, 6 pages.
+                                                                                        doi:10.1145/3382494.3422164
+longer time. However, this effect only becomes visible for longer                   [8] Ralf Biedert, Jörn Hees, Andreas Dengel, and Georg Buscher. 2012. A ro-
+or more complex code. We do not observe a meaningful difference                         bust realtime reading-skimming classifier. In Proceedings of the Symposium
+in saccades, which is an operationalisation of how thoroughly the                       on Eye Tracking Research and Applications (Santa Barbara, California) (ETRA
+                                                                                        ’12). Association for Computing Machinery, New York, NY, USA, 123–130.
+code is studied. Based on qualitative data and individual gaze paths,                   doi:10.1145/2168556.2168575
+we observe important individual differences between participants                    [9] K R Chandrika, J Amudha, and Sithu D Sudarsan. 2017. Recognizing eye tracking
+with regard to how they perceive LLM-generated code and interact                        traits for source code review. In 2017 22nd IEEE International Conference on
+                                                                                        Emerging Technologies and Factory Automation (ETFA). IEEE, San Francisco, CA,
+with the prompts.                                                                       USA, 1–8. doi:10.1109/ETFA.2017.8247637
+   We conclude that, while developers are often distrustful of LLM-                [10] Carlos Cinelli, Andrew Forney, and Judea Pearl. 2024. A crash course in good
+                                                                                        and bad controls. Sociological Methods & Research 53, 3 (2024), 1071–1104. doi:10.
+generated code and spend more time reviewing it, this additional                        1177/00491241221099552
+time does not translate into a more thorough review as measured                    [11] Neil A Ernst. 2018. Bayesian hierarchical modelling for tailoring metric thresholds.
+via saccade lengths. This suggests that there is a need for specific                    In Proceedings of the 15th international conference on mining software repositories.
+                                                                                        Association for Computing Machinery, New York, NY, USA, 587–591. doi:10.
+policies and instructions for how to review LLM-generated code,                         1145/3196398.3196443
+going beyond general guidance to be “extra careful”. We also find                  [12] Samuel Ferino, Rashina Hoda, John Grundy, and Christoph Treude. 2025. Walking
+that prompts (input to LLM code generation) can serve as a valu-                        the Tightrope of LLMs for Software Development: A Practitioners’ Perspective.
+                                                                                        arXiv:2511.06428 [cs.SE] https://arxiv.org/abs/2511.06428
+able aid during code review, helping reviewers verify alignment                    [13] Julian Frattini, Davide Fucci, and Sira Vegas. 2024. Crossover Designs in Software
+between intent and generated code. We recommend that prompts                            Engineering Experiments: Review of the State of Analysis. In 2024 ACM/IEEE
+                                                                                        International Symposium on Empirical Software Engineering and Measurement
+be treated as code metadata and made available on-demand within                         (ESEM). ACM, Association for Computing Machinery, New York, NY, USA, 482–
+the development environment, rather than embedded as comments.                          488. doi:10.1145/3674805.3690754
+Designing tools that support this form of prompt-to-code traceabil-                [14] Carlo A Furia, Robert Feldt, and Richard Torkar. 2019. Bayesian data analy-
+                                                                                        sis in empirical software engineering research. IEEE Transactions on Software
+ity without disrupting the review flow is an important direction for                    Engineering 47, 9 (2019), 1786–1810. doi:10.1109/TSE.2019.2935974
+future work.                                                                       [15] Carlo A Furia, Richard Torkar, and Robert Feldt. 2023. Towards causal analysis of
+                                                                                        empirical software engineering data: The impact of programming languages on
+                                                                                        coding competitions. ACM Transactions on Software Engineering and Methodology
+                                                                                        33, 1 (2023), 1–35. doi:10.1145/3611667
+Data Availability Statement                                                        [16] Andrew Gelman and Donald B Rubin. 1992. Inference from iterative simulation
+                                                                                        using multiple sequences. Statistical science 7, 4 (1992), 457–472. doi:10.1214/ss/
+   All material, scripts, and protocols are available in our replication                1177011136
+package [2]. We cannot share the interview transcripts and raw                     [17] M Maria Glymour, Sander Greenland, et al. 2008. Causal diagrams. Modern
+data since they might break the anonymity of our participants or                        epidemiology 3 (2008), 183–209.
+                                                                                   [18] Lisa Grabinger, Naser Al Madi, Roman Bednarik, Teresa Busjahn, Fabian Engl,
+their organizations.                                                                    Timur Ezer, Hans Gruber, Florian Hauser, Jonathan I. Maletic, Unaizah Obaidellah,
+                                                                                        Kang-il Park, Bonita Sharif, Zohreh Sharafi, Lynsay Shepherd, and Jürgen Mottok.
+                                                                                        2025. A Cookbook for Eye Tracking in Software Engineering. In Proceedings
+                                                                                        of the 6th European Conference on Software Engineering Education (ECSEE ’25).
+Acknowledgment                                                                          Association for Computing Machinery, New York, NY, USA, 60–76. doi:10.1145/
+   We thank all participants for their time and willingness to take                     3723010.3723018
+                                                                                   [19] Lucas Gren and Richard Berntsson Svensson. 2021. Is it possible to disregard
+part in this study. This work was partially supported by the Wal-                       obsolete requirements? a family of experiments in software effort estimation.
+lenberg AI, Autonomous Systems and Software Program (WASP)                              Requirements Engineering 26, 3 (2021), 459–480. doi:10.1007/s00766-021-00351-7
+funded by the Knut and Alice Wallenberg Foundation. Icons used                     [20] Lo Gullstrand Heander, Emma Söderberg, and Christofer Rydenfält. 2026. Code
+                                                                                        review as decision-making - building a cognitive model from the questions asked
+in illustrations are downloaded from flaticon.com.
+ASE’26, October 12–16, 2026, Munich, Germany                                                                                                                       Khojah et al.
+
+
+     during code review. Empirical Software Engineering 31, 3 (Jan. 2026), 41 pages.       [42] Ningzhi Tang, Meng Chen, Zheng Ning, Aakash Bansal, Yu Huang, Collin McMil-
+     doi:10.1007/s10664-025-10791-2                                                             lan, and Toby Jia-Jun Li. 2024. Developer Behaviors in Validating and Repairing
+[21] Lo Heander, Emma Söderberg, and Christofer Rydenfält. 2025. Support, Not                   LLM-Generated Code Using IDE and Eye Tracking. In 2024 IEEE Symposium on
+     Automation: Towards AI-supported Code Review For Code Quality and Beyond.                  Visual Languages and Human-Centric Computing (VL/HCC). IEEE, San Francisco,
+     Association for Computing Machinery, New York, NY, USA, 591–595. https:                    CA, USA, 40–46. doi:10.1109/VL/HCC60511.2024.00015
+     //doi.org/10.1145/3696630.3728505                                                     [43] Sira Vegas, Cecilia Apa, and Natalia Juristo. 2016. Crossover Designs in Software
+[22] Xinyi Hou, Yanjie Zhao, Yue Liu, Zhou Yang, Kailong Wang, Li Li, Xiapu Luo,                Engineering Experiments: Benefits and Perils. IEEE Transactions on Software
+     David Lo, John Grundy, and Haoyu Wang. 2024. Large Language Models for                     Engineering 42, 2 (2016), 120–135. doi:10.1109/TSE.2015.2467378
+     Software Engineering: A Systematic Literature Review. ACM Trans. Softw. Eng.          [44] Aki Vehtari, Andrew Gelman, and Jonah Gabry. 2017. Practical Bayesian model
+     Methodol. 33, 8, Article 220 (Dec. 2024), 79 pages. doi:10.1145/3695988                    evaluation using leave-one-out cross-validation and WAIC. Statistics and com-
+[23] Edwin T. Jaynes. 2012. Probability Theory: The Logic of Science. Cambridge                 puting 27 (2017), 1413–1432. doi:10.1007/s11222-016-9696-4
+     University Press. doi:10.1017/cbO9780511790423                                        [45] Miku Watanabe, Hao Li, Yutaro Kashiwa, Brittany Reid, Hajimu Iida, and
+[24] Carlos E. Jimenez, John Yang, Alexander Wettig, Shunyu Yao, Kexin Pei, Ofir Press,         Ahmed E. Hassan. 2026. On the Use of Agentic Coding: An Empirical Study
+     and Karthik Narasimhan. 2024. SWE-bench: Can Language Models Resolve Real-                 of Pull Requests on GitHub. ACM Trans. Softw. Eng. Methodol. (March 2026).
+     World GitHub Issues? arXiv:2310.06770 [cs.CL] https://arxiv.org/abs/2310.06770             doi:10.1145/3798166 Just Accepted.
+[25] Ranim Khojah, Mazen Mohamad, Linda Erlenhov, Francisco Gomes de                       [46] Jeff S. Wesner and Justin P.F. Pomeranz. 2021. Choosing priors in Bayesian
+     Oliveira Neto, and Philipp Leitner. 2026. Large Language Model Company Poli-               ecological models by simulating from the prior predictive distribution. Ecosphere
+     cies and Policy Implications in Software Organizations. IEEE Software 43, 1 (2026),        12, 9 (2021), e03739:1–e03739:11. doi:10.1002/ecs2.3739
+     64–72. doi:10.1109/MS.2025.3622039
+[26] Ranim Khojah, Mazen Mohamad, Philipp Leitner, and Francisco Gomes de
+     Oliveira Neto. 2024. Beyond Code Generation: An Observational Study of Chat-
+     GPT Usage in Software Engineering Practice. Proc. ACM Softw. Eng. 1, FSE, Article
+     81 (July 2024), 22 pages. doi:10.1145/3660788
+[27] Michael R. Lyu, Baishakhi Ray, Abhik Roychoudhury, Shin Hwei Tan, and Patana-
+     mon Thongtanunam. 2025. Automatic Programming: Large Language Models
+     and Beyond. ACM Trans. Softw. Eng. Methodol. 34, 5, Article 140 (May 2025),
+     33 pages. doi:10.1145/3708519
+[28] Henrique Marques, Nuno Laranjeiro, and Jorge Bernardino. 2021. Injecting
+     software faults in Python applications. Empirical Software Engineering 27, 1
+     (2021), 20. doi:10.1007/s10664-021-10047-9
+[29] Robert C Martin. 2009. Clean code: a handbook of agile software craftsmanship.
+     Pearson Education, Hoboken, NJ, USA.
+[30] Roger C Mayer, James H Davis, and F David Schoorman. 1995. An integrative
+     model of organizational trust. Academy of management review 20, 3 (1995),
+     709–734.
+[31] Richard McElreath. 2018. Statistical rethinking: A Bayesian course with examples
+     in R and Stan. Chapman and Hall/CRC, Boca Raton, FL, USA. doi:10.1201/
+     9781315372495
+[32] Bhaswati Mukherjee, Ashutosh Gupta, and SK Upadhyay. 2010. A Bayesian study
+     for the comparison of generalized gamma model with its components. Sankhya
+     B 72, 2 (2010), 154–174.
+[33] Nadia Nahar, Christian Kästner, Jenna Butler, Chris Parnin, Thomas Zimmer-
+     mann., and Christian Bird. 2025. Beyond the Comfort Zone: Emerging Solutions
+     to Overcome Challenges in Integrating LLMs into Software Products. In 2025
+     IEEE/ACM 47th International Conference on Software Engineering: Software Engi-
+     neering in Practice (ICSE-SEIP). Association for Computing Machinery, New York,
+     NY, USA, 516–527. doi:10.1109/ICSE-SEIP66354.2025.00051
+[34] Kang-il Park, Jack Johnson, Cole S Peterson, Nishitha Yedla, Isaac Baysinger, Jairo
+     Aponte, and Bonita Sharif. 2024. An eye tracking study assessing source code
+     readability rules for program comprehension. Empirical Software Engineering 29,
+     6 (2024), 160.
+[35] Luca Pascarella, Davide Spadini, Fabio Palomba, Magiel Bruntink, and Alberto
+     Bacchelli. 2018. Information Needs in Contemporary Code Review. Proc. ACM
+     Hum.-Comput. Interact. 2, CSCW, Article 135 (Nov. 2018), 27 pages. doi:10.1145/
+     3274404
+[36] J. Pearl. 2009. Causality. Cambridge University Press, Cambridge, UK. https:
+     //books.google.se/books?id=f4nuexsNVZIC
+[37] Keith Rayner. 2009. Eye movements and attention in reading, scene perception,
+     and visual search. The quarterly journal of experimental psychology 62, 8 (2009),
+     1457–1506.
+[38] Laurel D. Riek. 2012. Wizard of Oz studies in HRI: a systematic review and
+     new reporting guidelines. J. Hum.-Robot Interact. 1, 1 (July 2012), 119–136.
+     doi:10.5898/JHRI.1.1.Riek
+[39] Julien Siebert. 2023. Applications of statistical causal inference in software
+     engineering. Information and Software Technology 159 (2023), 107198. doi:10.
+     1016/j.infsof.2023.107198
+[40] Auste Simkute, Lev Tankelevitch, Viktor Kewenig, Ava Elizabeth Scott, Abi-
+     gail Sellen, and Sean Rintel. 2025. Ironies of Generative AI: Understand-
+     ing and Mitigating Productivity Loss in Human-AI Interaction.                Inter-
+     national Journal of Human–Computer Interaction 41, 5 (2025), 2898–2919.
+     arXiv:https://doi.org/10.1080/10447318.2024.2405782 doi:10.1080/10447318.2024.
+     2405782
+[41] Ningzhi Tang, Junwen An, Meng Chen, Aakash Bansal, Yu Huang, Collin McMil-
+     lan, and Toby Jia-Jun Li. 2024. CodeGRITS: A Research Toolkit for Developer
+     Behavior and Eye Tracking in IDE. In Proceedings of the 2024 IEEE/ACM 46th
+     International Conference on Software Engineering: Companion Proceedings (Lisbon,
+     Portugal) (ICSE-Companion ’24). Association for Computing Machinery, New
+     York, NY, USA, 119–123. doi:10.1145/3639478.3640037
+

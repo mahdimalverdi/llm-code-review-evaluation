@@ -12,7 +12,7 @@ The review remains a targeted structured review. A dated supplementary identific
    - Assign new project IDs only after duplicate resolution; do not count the 132 screening inclusions as final studies yet.
    - Preserve the recorded eligibility criterion, evidence location, rationale, tier, reviewer, and date.
    - The initial exact-ID/title pass found 1 direct match to an existing paper (P05) and 131 unmatched candidates: 52 `core` and 79 `supporting`. Review the 52 core candidates first; this ledger is a triage aid, not a final duplicate decision.
-   - The 52-record core queue is materialized in `data/search/core-reconciliation-queue.csv` with provisional IDs P72–P123. Two records (P108/EXT-0028 and P116/EXT-0030) are now flagged as external duplicate/companion candidates; 50 remain for independent version and metadata verification. These IDs must not be cited or treated as final until verification is complete.
+   - The 52-record core queue is materialized in `data/search/core-reconciliation-queue.csv` with provisional IDs P72–P123. All 52 notes pass validation; 50 are marked `extracted_pending_final_freeze` and two records (P108/EXT-0028 and P116/EXT-0030) remain external duplicate/companion candidates. These IDs must not be cited or treated as final until the evidence-set freeze.
 
 2. **Resolve the supplied external-source candidates.**
    - `data/search/external-candidate-screening.csv` contains 30 identifier-level records: 9 already in the corpus, 8 already in the arXiv queue, and 13 still requiring independent title/abstract verification.
