@@ -273,6 +273,7 @@ Add one row after each substantial work session. Keep entries concise and link t
 | 2026-08-04 | 6 | Audited citation-key integrity across synthesis and draft Markdown files | 64 used keys checked; no missing bibliography key | Perform semantic citation audit after corpus freeze |
 | 2026-08-04 | 3 | Synchronized local PDF acquisition, core reconciliation, and extraction checkpoint ledgers | 136 local PDFs no longer marked pending; 52 core records have validated notes; 50 held for final freeze and 2 duplicate/companion records retained | Process supporting records only where full text is available, then freeze the evidence set |
 | 2026-08-04 | 3 | Completed supporting-text acquisition and provisional extraction packet preparation | 70 supporting texts and 70 packets are present under `data/search/provisional-extraction/supporting/`; packets remain provisional until duplicate, tier, and evidence-location decisions are frozen | Resolve supplementary duplicates and freeze the final evidence set |
+| 2026-08-04 | 6–7 | Completed representative calibration, Crossref bibliography audit, dataset rebuild, and final PDF build | Sample notes P01, P72, P88, P100, P123, P124, and P125 passed validation; 121 records and 1208 evidence rows rebuilt; 36 bibliography records audited; PDF built with no unresolved citations or references | Perform final semantic claim review and submission-quality pass |
 | YYYY-MM-DD | _Phase_ | _Describe completed work_ | _Link output or record result_ | _State the next concrete action_ |
 
 ## Known Blockers and Risks
