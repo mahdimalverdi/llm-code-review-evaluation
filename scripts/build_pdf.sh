@@ -55,9 +55,9 @@ run_pdflatex() {
   fi
 
   if [[ -f "$log_file" ]] && grep -q "File ended while scanning use of" "$log_file"; then
-    echo "WARN: pdflatex hit a transient aux read error; retrying once." >&2
-    pdflatex -interaction=nonstopmode -halt-on-error paper.tex
-    return $?
+    echo "WARN: pdflatex found a truncated aux file; removing aux state for a clean pipeline retry." >&2
+    rm -f paper.aux paper.bbl paper.blg paper.brf paper.out paper.toc
+    return 1
   fi
 
   echo "ERROR: pdflatex failed. Check build/paper.log if it is still present." >&2

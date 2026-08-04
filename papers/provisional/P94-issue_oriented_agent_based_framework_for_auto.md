@@ -11,7 +11,7 @@
 | Source | arXiv |
 | arXiv | `2511.00517v1` |
 | Screening tier | `core` |
-| Reconciliation status | New candidate after initial local matching |
+| Reconciliation status | Crossref title/DOI match found; publisher metadata requires final verification |
 | Metadata status | local_arxiv_metadata |
 | Evidence status | Full-text eligibility recorded; extraction not yet completed |
 

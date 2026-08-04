@@ -25,7 +25,7 @@ PER_PAGE = 10
 REQUEST_SLEEP_SECONDS = 1.0
 MAX_REQUEST_RETRIES = 5
 
-REPORT_PATH = "build/openalex_bib_upgrade_report.tsv"
+REPORT_PATH = "data/search/openalex_bib_upgrade_report.tsv"
 
 BIB_CANDIDATES = (
     "references.bib",
@@ -643,12 +643,17 @@ def main() -> int:
         with report_path.open(encoding="utf-8", newline="") as handle:
             previous_rows = list(csv.DictReader(handle, delimiter="\t"))
         for previous in previous_rows:
-            if previous.get("action") == "upgraded":
+            if previous.get("action") in {
+                "upgraded",
+                "candidate_below_threshold",
+                "no_published_candidate",
+                "false_positive_reverted",
+            }:
                 completed_keys.add(previous.get("key", ""))
         report_rows.extend(
             [[row.get(column, "") for column in report_rows[0]] for row in previous_rows]
         )
-        print(f"[openalex] loaded checkpoint: {len(completed_keys)} upgraded entries will be skipped", flush=True)
+        print(f"[openalex] loaded checkpoint: {len(completed_keys)} completed entries will be skipped", flush=True)
 
     changed_entries: list[BibEntry] = []
 
