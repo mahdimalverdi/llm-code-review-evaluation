@@ -42,6 +42,7 @@ The local corpus contains 71 full-text records. It combines direct code-review s
 - All notes pass the canonical structural validator.
 - All IDs have bibliography entries.
 - Cross-paper synthesis covers the full corpus.
+- The arXiv full-text queue has been screened in the reviewed ledger: 140 records, 132 included and 8 excluded.
 - Search-history reconstruction and independent selection/calibration remain incomplete.
 - The current review must not be called a completed SLR until those requirements are satisfied.
 

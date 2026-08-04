@@ -6,9 +6,9 @@ The review remains a targeted structured review. A dated supplementary identific
 
 ## Resume in this order
 
-1. **Finish full-text eligibility screening for the arXiv queue.**
-   - `data/search/arxiv-full-text-screening-reviewed.csv` contains 19 included, 1 excluded, and 120 pending records.
-   - Review in small batches; record an exact eligibility criterion, page/section location, rationale, tier, reviewer, and date.
+1. **Integrate the completed arXiv full-text screening.**
+   - `data/search/arxiv-full-text-screening-reviewed.csv` now contains 140 reviewed records: 132 included and 8 excluded; no records remain pending.
+   - Preserve the recorded eligibility criterion, evidence location, rationale, tier, reviewer, and date.
    - Keep direct generated-review-comment and review-agent studies `core`; retain workflow, security, reviewer-burden, evaluator-validity, and context studies only as `supporting` when they satisfy the protocol.
 
 2. **Resolve the supplied external-source candidates.**

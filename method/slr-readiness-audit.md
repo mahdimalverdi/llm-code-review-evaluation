@@ -54,7 +54,8 @@ The extraction checkpoint is ready for a completion commit only when:
 ## Recommended next work
 
 1. Re-run database searches if the seminar requires the formal SLR label.
-2. Conduct independent calibration on a sample of selection, extraction, and tier decisions.
-3. Complete sentence-level citation and publisher-metadata verification.
-4. Add denominator-based descriptive counts after the final included set is frozen.
-5. Visually inspect and copyedit the generated PDF.
+2. Reconcile the completed arXiv full-text screening ledger with the canonical screening table and integrate the 132 included records.
+3. Conduct independent calibration on a sample of selection, extraction, and tier decisions.
+4. Complete sentence-level citation and publisher-metadata verification.
+5. Add denominator-based descriptive counts after the final included set is frozen.
+6. Visually inspect and copyedit the generated PDF.

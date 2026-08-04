@@ -23,7 +23,7 @@ The raw Atom responses are retained with the query identifiers. Candidates are d
 
 | Source | Status on 2026-08-02 | Consequence |
 |---|---|---|
-| arXiv | Executed and recorded | 293 unique candidates pending screening |
+| arXiv | Executed and recorded | 293 unique candidates; title/abstract screening retained 140 for full text, of which 132 were included and 8 excluded |
 | Semantic Scholar | Attempted; public API returned HTTP 429 | Retry required; do not treat as zero results |
 | ACM Digital Library | Attempted; search URL was unavailable to the current retrieval environment | Execute the same documented query manually or with institutional access |
 | IEEE Xplore | Attempted; search URL was unavailable to the current retrieval environment | Execute the same documented query manually or with institutional access |
@@ -44,4 +44,4 @@ Title/abstract screening uses the existing core, supporting, and exclusion crite
 
 ## Reporting restriction
 
-The review remains a targeted structured review during this amendment. It may be called an SLR only after the remaining source searches, screening decisions, full-text decisions, and final included set are documented.
+The review remains a targeted structured review during this amendment. The arXiv full-text decisions are now documented, but the review may be called an SLR only after the remaining source searches, screening decisions, full-text decisions, and final included set are documented.
