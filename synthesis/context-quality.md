@@ -26,6 +26,24 @@ A useful framework should evaluate context quality, not just context size.
 
 ## Context-Related Evidence from Papers
 
+### Evidence added at the 121-study freeze
+
+The supplementary studies reinforce that context quality is a selection problem,
+not a context-volume problem. Repository-scale and issue-oriented systems use
+broader context to improve grounding, but their gains depend on retrieval,
+filtering, and task alignment [@p76_wang2026_swe_review_closing_the_loop_on;
+@p79_sun2026_improving_llm_based_go_code_re;
+@p85_zhang2026_reporeviewer_a_local_first_mul]. Conversely, retrieval
+can introduce distracting or mismatched evidence, so additional context may
+reduce review quality [@p93_meng2025_when_more_retrieval_hurts_retr]. Workflow
+studies further show that developers may prefer context on demand rather than a
+maximal automatic review generated up front [@p110_a_alsteinsson2025_rethinking_code_review_workflo].
+
+Accordingly, the context model should report at least provenance, relevance,
+freshness, granularity, and acquisition cost. Context availability is not a
+substitute for these properties, and repository-scale access should not be
+treated as evidence that the selected context was useful.
+
 | Paper | How Context Appears | Key Evidence | Implication |
 |---|---|---|---|
 | P01 — DeepCRCEval | Contextual adequacy is one of the quality dimensions. | Some comments require more file-level or surrounding context than the snippet provides. | Context adequacy affects whether a comment can be judged useful or complete. |

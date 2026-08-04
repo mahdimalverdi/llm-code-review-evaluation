@@ -3,7 +3,7 @@
 ## 1. Identification
 
 - Project ID: `P88` (provisional)
-- Citation key: `p88_zhang2026_aacr_bench_evaluating_automatic_code_review`
+- Citation key: `p88_zhang2026_aacr_bench_evaluating_automati`
 - Full reference: Lei Zhang; Yongda Yu; Minghui Yu; Xinxin Guo; Zhengqi Zhuang; Guoping Rong; Dong Shao; Haifeng Shen; Hongyu Kuang; Zhengfeng Li; Boge Wang; Guoan Zhang; Bangyu Xiang; Xiaobin Xu. “AACR-Bench: Evaluating Automatic Code Review with Holistic Repository-Level Context.” arXiv:2601.19494v3, 2026.
 - DOI/URL: `https://arxiv.org/abs/2601.19494v3`
 - Review date: 2026-08-04

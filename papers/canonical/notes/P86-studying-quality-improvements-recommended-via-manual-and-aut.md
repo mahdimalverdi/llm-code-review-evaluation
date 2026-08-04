@@ -3,7 +3,7 @@
 ## 1. Identification
 
 - Project ID: `P86` (provisional)
-- Citation key: `p86_crupi2026_studying_quality_improvements_recommended`
+- Citation key: `p86_crupi2026_studying_quality_improvements_`
 - Full reference: Giuseppe Crupi; Rosalia Tufano; Gabriele Bavota. “Studying Quality Improvements Recommended via Manual and Automated Code Review.” ICPC 2026; arXiv:2602.11925v1.
 - DOI/URL: `https://doi.org/10.1145/3794763.3794809`; `https://arxiv.org/abs/2602.11925v1`
 - Review date: 2026-08-04

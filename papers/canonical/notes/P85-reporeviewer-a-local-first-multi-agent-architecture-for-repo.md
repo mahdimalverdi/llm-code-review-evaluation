@@ -3,7 +3,7 @@
 ## 1. Identification
 
 - Project ID: `P85` (provisional)
-- Citation key: `p85_zhang2026_reporeviewer_a_local_first_multi_agent`
+- Citation key: `p85_zhang2026_reporeviewer_a_local_first_mul`
 - Full reference: Peng Zhang. “RepoReviewer: A Local-First Multi-Agent Architecture for Repository-Level Code Review.” arXiv:2603.16107v1, 2026.
 - DOI/URL: `https://arxiv.org/abs/2603.16107v1`
 - Review date: 2026-08-04

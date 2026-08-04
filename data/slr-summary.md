@@ -21,19 +21,17 @@
 | 2021 | 2 |
 | 2022 | 2 |
 | 2023 | 3 |
-| 2024 | 14 |
+| 2024 | 15 |
 | 2025 | 49 |
-| 2026 | 36 |
-| NR | 11 |
+| 2026 | 46 |
 
 ## Publication types
 
 | Type | Studies |
 |---|---:|
-| `preprint_or_other` | 45 |
-| `conference` | 42 |
-| `journal` | 23 |
-| `other` | 11 |
+| `preprint_or_other` | 52 |
+| `conference` | 44 |
+| `journal` | 25 |
 
 ## RQ1 failure types
 

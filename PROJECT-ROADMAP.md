@@ -21,19 +21,19 @@ The current review must be described as a **targeted structured literature revie
 
 | Area | Current state | Evidence |
 |---|---|---|
-| Local evidence corpus | 71 records: 41 core, 24 supporting, and 6 peripheral | `data/slr-summary.md` |
-| Paper notes | 71 authoritative notes; all pass the eleven-section structural validator | `papers/slr-review-progress.md` |
-| Structured extraction | 71 study-level rows and 550 coded evidence rows | `data/slr-extraction.csv`; `data/slr-coding-evidence.csv` |
+| Frozen evidence corpus | 121 records: 91 core, 24 supporting, and 6 peripheral | `data/slr-summary.md`; `data/search/final-corpus-freeze-register.csv` |
+| Paper notes | 121 canonical notes; all pass the eleven-section structural validator | `papers/canonical/notes/` |
+| Structured extraction | 121 study-level rows and 1,208 coded evidence rows | `data/slr-extraction.csv`; `data/slr-coding-evidence.csv` |
 | Canonical synthesis | Taxonomy, evaluation dimensions, context model, trade-off framework, and research gap drafted | `synthesis/` |
 | Manuscript | Twelve section files exist; several sections remain short or provisional | `drafts/paper/sections/` |
 | Reproducible arXiv amendment | 293 unique records screened by title/abstract; 140 assessed at full text; local acquisition state synchronized | `method/search-protocol-amendment.md`; `data/search/` |
-| arXiv full-text queue | 132 included for consideration and 8 excluded; 52 core records extracted and held for final freeze; 70 supporting records have local text and extraction packets | `data/search/arxiv-full-text-screening-reviewed.csv`; `data/search/core-reconciliation-queue.csv`; `data/search/provisional-extraction/supporting/` |
-| External candidate export | 18 duplicates, 3 full-text includes, 8 provisional includes, and 1 exclusion | `data/search/external-candidate-screening.csv` |
+| arXiv full-text queue | 132 included for consideration and 8 excluded; 50 unique core records entered the frozen corpus, 2 duplicate records were resolved, and 70 supporting records remain a non-canonical evidence reserve | `data/search/arxiv-full-text-screening-reviewed.csv`; `data/search/core-reconciliation-queue.csv`; `data/search/provisional-extraction/supporting/` |
+| External candidate export | 19 duplicates, 3 full-text includes, 7 access-limited records outside the frozen denominator, and 1 exclusion | `data/search/external-candidate-screening.csv` |
 | External acquisition | 9 already downloaded, 3 newly downloaded, and 9 metadata-only records | `data/search/external-pdf-acquisition.csv` |
 | Citation-key integrity | 125 citation blocks checked across 22 synthesis and draft files; all 64 used keys exist in the bibliography | Audit completed 2026-08-04 |
 | Review label | Targeted structured review; formal SLR criteria are not yet met | `method/slr-readiness-audit.md` |
 
-The 132 arXiv inclusions are full-text screening outcomes, not 132 automatically accepted additions to the 71-record evidence corpus. Duplicate and companion resolution, relevance weighting, and corpus-freeze decisions are still required.
+The 132 arXiv inclusions are full-text screening outcomes, not 132 automatically accepted additions. The freeze admitted 50 unique core studies to the 71-record baseline, producing a 121-study corpus. Two duplicate records and 70 supporting candidates remain outside the added-study denominator; the supporting records are retained as a traceable evidence reserve rather than silently counted as canonical studies.
 
 ## Roadmap Overview
 
@@ -42,9 +42,9 @@ The 132 arXiv inclusions are full-text screening outcomes, not 132 automatically
 | 0 | Protocol and project foundations | Complete | Review protocol, RQs, controlled vocabulary, and reporting boundary | Scope, RQs, eligibility criteria, extraction fields, and synthesis method are documented |
 | 1 | Baseline 71-paper corpus | Complete | Canonical notes, quality appraisal, and structured extraction | Every P01–P71 record has one valid note, a decision, a tier, and RQ-linked evidence |
 | 2 | Initial synthesis and manuscript structure | Complete | Canonical synthesis files and twelve manuscript section files | All framework components and manuscript sections exist in draft form |
-| 3 | Supplementary search consolidation | In progress | Deduplicated and reconciled candidate set | Every supplementary candidate has a final duplicate, include, or exclude outcome supported by evidence |
-| 4 | Final evidence-set freeze | In progress | Provisional freeze register for supplementary core candidates; duplicate companions resolved | Each included study appears exactly once with a stable ID and final evidence tier |
-| 5 | Evidence integration and data rebuild | Planned | Updated notes, bibliography, matrices, extraction data, and summary counts | All frozen studies pass validation and all generated datasets rebuild successfully |
+| 3 | Supplementary search consolidation | Complete for the dated amendment | Deduplicated and reconciled candidate set with explicit access limitations | Every amendment candidate has a screening, duplicate, reserve, or access-limited outcome |
+| 4 | Final evidence-set freeze | Complete | Frozen 121-study register; duplicate companions resolved | Each included study appears exactly once with a stable ID and final evidence tier |
+| 5 | Evidence integration and data rebuild | In progress | Updated notes, bibliography, matrices, extraction data, and summary counts | All frozen studies pass validation and all generated datasets rebuild successfully |
 | 6 | Evidence and citation assurance | Planned | Semantic citation audit, metadata verification, and calibration record | High-impact claims are traceable; metadata issues are resolved or disclosed; calibration is documented |
 | 7 | Manuscript completion and quality control | Planned | Submission-ready Markdown, LaTeX, and PDF | All sections are coherent, denominator-based results are current, and the PDF passes visual inspection |
 | 8 | Submission package | Not started | Final manuscript and reproducibility package | Submission checklist is complete and the review label matches achieved search coverage |
@@ -99,13 +99,13 @@ Current focus:
 - [x] Complete full-text screening decisions for the 140-record arXiv queue.
 - [x] Triage the 30 externally supplied candidate records.
 - [x] Validate and log three newly acquired external PDFs.
-- [ ] Reconcile all arXiv inclusions with P01–P71, external candidates, and other preprint/publisher versions.
+- [x] Reconcile the 52 core arXiv candidates with the baseline corpus and external records; resolve P108 and P116 as duplicates.
 - [x] Generate an initial arXiv-to-corpus reconciliation ledger using exact arXiv-ID and title-similarity matching.
 - [x] Generate a provisional queue for the 52 unmatched core candidates with local arXiv metadata.
 - [x] Record the seven provisional external inclusions and their required full-text/access-resolution actions.
 - [ ] Resolve the metadata conflict recorded for EXT-0012.
 - [x] Acquire local text and create provisional extraction packets for the 70 supporting records selected from the full-text screen.
-- [ ] Update `method/next-session-todo.md` and search documentation whose counts predate completed screening.
+- [x] Update `method/next-session-todo.md` and screening documentation to reflect the 121-study freeze.
 - [ ] Execute or formally close the remaining planned source searches: Semantic Scholar, ACM Digital Library, IEEE Xplore, ScienceDirect, SpringerLink, Google Scholar, and Scopus.
 - [ ] Record exact queries, dates, native result counts, deduplication counts, and access limitations for every executed source.
 
@@ -118,17 +118,17 @@ Exit criteria:
 
 ### Phase 4 — Final Evidence-Set Freeze
 
-Status: `Planned`
+Status: `Complete`
 
-- [ ] Define whether the submission uses only the baseline corpus or an expanded corpus.
-- [ ] Apply an explicit relevance and evidence-weighting rule to the 132 arXiv inclusions.
-- [ ] Assign stable P-IDs only to studies accepted into the final evidence set.
-- [ ] Treat preprints and published versions as one study unless a documented reason requires separate treatment.
-- [ ] Freeze each study as core, supporting, or peripheral exactly once.
-- [ ] Produce a final included-study register and final exclusion counts with reasons.
+- [x] Use an expanded corpus consisting of the 71-study baseline and 50 unique supplementary core studies.
+- [x] Apply the direct core-relevance rule to the supplementary full-text inclusions; retain the 70 supporting records outside the canonical denominator.
+- [x] Assign stable P-IDs only to accepted studies and preserve duplicate rows for provenance.
+- [x] Treat preprints and published versions as one study unless a documented reason requires separate treatment.
+- [x] Freeze each canonical study as core, supporting, or peripheral exactly once.
+- [x] Produce the final freeze register and exclusion/access-limitation ledgers.
 - [x] Produce a provisional freeze register for the 52 core reconciliation candidates; retain resolved duplicate rows for provenance.
 - [x] Resolve P108/EXT-0028 and P116/EXT-0030 as duplicate search-queue records.
-- [ ] Record the freeze date and version or commit identifier.
+- [x] Record the freeze in commit `8ade6e0` on 2026-08-04.
 
 Exit criteria:
 
@@ -138,15 +138,15 @@ Exit criteria:
 
 ### Phase 5 — Evidence Integration and Data Rebuild
 
-Status: `Planned`
+Status: `In progress`
 
-- [ ] Create canonical notes for newly included studies using the eleven-section template.
-- [ ] Add verified bibliography records to `references/references.bib` without duplicate entries.
+- [x] Create canonical notes for newly included studies using the eleven-section template.
+- [x] Add bibliography records to `references/references.bib` without duplicate entries; retain explicit verification flags where publisher metadata remains unresolved.
 - [ ] Update `matrices/paper-pool.md` and `matrices/cross-paper-synthesis.md`.
 - [ ] Integrate new evidence into the taxonomy, dimensions, context model, trade-off framework, and research gap.
 - [ ] Create `synthesis/final-framework.md` as the consolidated framework specification.
-- [ ] Rebuild `data/slr-extraction.csv`, `data/slr-coding-evidence.csv`, and `data/slr-summary.md`.
-- [ ] Re-run the note validator and dataset checks.
+- [x] Rebuild `data/slr-extraction.csv`, `data/slr-coding-evidence.csv`, and `data/slr-summary.md` for 121 studies.
+- [x] Re-run the note validator and dataset checks.
 - [ ] Recalculate RQ1–RQ6 tables using explicit denominators and evidence tiers.
 
 Exit criteria:

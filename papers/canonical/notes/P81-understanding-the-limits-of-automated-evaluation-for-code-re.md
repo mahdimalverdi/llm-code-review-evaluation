@@ -3,7 +3,7 @@
 ## 1. Identification
 
 - Project ID: `P81` (provisional)
-- Citation key: `p81_karakaya2026_understanding_the_limits_of_automated`
+- Citation key: `p81_karakaya2026_understanding_the_limits_of_au`
 - Full reference: Veli Karakaya; Utku Boran Torun; Baykal Mehmet Uçar; Eray Tüzün. “Understanding the Limits of Automated Evaluation for Code Review Bots in Practice.” EASE 2026; arXiv:2604.24525v1.
 - DOI/URL: `https://arxiv.org/abs/2604.24525v1`
 - Review date: 2026-08-04

@@ -3,7 +3,7 @@
 ## 1. Identification
 
 - Project ID: `P89` (provisional)
-- Citation key: `p89_haider2026_understanding_dominant_themes_in_reviewing`
+- Citation key: `p89_haider2026_understanding_dominant_themes_`
 - Full reference: Md. Asif Haider; Thomas Zimmermann. “Understanding Dominant Themes in Reviewing Agentic AI-authored Code.” MSR 2026; arXiv:2601.19287v1.
 - DOI/URL: `https://doi.org/10.1145/3793302.3793566`; `https://arxiv.org/abs/2601.19287v1`
 - Review date: 2026-08-04

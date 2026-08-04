@@ -2,35 +2,30 @@
 
 ## Current position
 
-The review remains a targeted structured review. A dated supplementary identification stage has been recorded, but the planned external-source searches do not yet provide exhaustive native result sets or counts. No new externally discovered study may be cited as included evidence until independent screening and full-text assessment are complete.
+The review remains a targeted structured review. The evidence set is frozen at 121 studies: 71 baseline records plus 50 unique supplementary core studies. Two supplementary records were resolved as duplicates, 70 supporting records remain outside the canonical denominator, and seven external records remain access-limited.
 
 ## Resume in this order
 
-1. **Reconcile the completed arXiv full-text screening with the baseline corpus.**
-   - `data/search/arxiv-full-text-screening-reviewed.csv` contains 140 reviewed records: 132 included and 8 excluded; no records remain pending.
-   - Match included records against P01–P71 and external candidates by arXiv ID, DOI, normalized title, and version/companion relationship.
-   - Assign new project IDs only after duplicate resolution; do not count the 132 screening inclusions as final studies yet.
-   - Preserve the recorded eligibility criterion, evidence location, rationale, tier, reviewer, and date.
-   - The initial exact-ID/title pass found 1 direct match to an existing paper (P05) and 131 unmatched candidates: 52 `core` and 79 `supporting`. Review the 52 core candidates first; this ledger is a triage aid, not a final duplicate decision.
-   - The 52-record core queue is materialized in `data/search/core-reconciliation-queue.csv` with provisional IDs P72–P123. All 52 notes pass validation; 50 are marked `extracted_pending_final_freeze` and two records (P108/EXT-0028 and P116/EXT-0030) remain external duplicate/companion candidates. These IDs must not be cited or treated as final until the evidence-set freeze.
-   - Supporting extraction is mechanically complete for 70 locally available records: text files and provisional extraction packets are under `data/search/provisional-extraction/supporting/`. The packets are evidence scaffolds and do not themselves establish final inclusion or tier.
+1. **Integrate the frozen supplementary evidence into the canonical synthesis.**
+   - Update the taxonomy, evaluation dimensions, context model, trade-off framework, research gap, and cross-paper synthesis with bounded claims from P72–P123.
+   - Distinguish evidence that confirms the baseline synthesis from evidence that changes a category, boundary, or trade-off.
+   - Keep P108 and P116 as duplicate provenance records and do not count them as independent studies.
 
-2. **Resolve the supplied external-source candidates.**
-   - `data/search/external-candidate-screening.csv` contains 30 identifier-level records: 9 already in the corpus, 8 already in the arXiv queue, and 13 still requiring independent title/abstract verification.
-   - Do not adopt supplied labels as decisions. Check the title, abstract, and official metadata; then obtain and assess the full text for studies that pass.
-   - `data/search/external-pdf-acquisition.csv` records acquired PDFs and mappings to existing preprints. Find legitimate open versions for the remaining eligible records; log unavailable/paywalled cases rather than using unaudited copies.
+2. **Rebuild the manuscript around the 121-study denominator.**
+   - Rewrite Findings by RQ with explicit denominators and evidence tiers.
+   - Expand Discussion with implications, conflicting evidence, operational trade-offs, and limits of transfer.
+   - Ensure Methodology describes the baseline, dated amendment, freeze rule, duplicate handling, and access limitations.
 
-3. **Complete external source coverage where access becomes available.**
+3. **Complete external source coverage only where authorised access becomes available.**
    - Re-run Semantic Scholar after rate limits clear.
    - Execute the documented queries in ACM Digital Library, IEEE Xplore, ScienceDirect, SpringerLink, Google Scholar, and Scopus through authorised/manual access where possible.
    - Record exact query, date, native retrieved count, deduplication result, and source-access limitation. The supplied external export is partial and cannot be used to claim exhaustive coverage.
 
-4. **Freeze the eligible set and integrate evidence.**
-   - Assign stable project IDs only after full-text inclusion and duplicate/companion resolution.
-   - Add verified bibliography records, create uniform paper notes, update extraction data, and rerun structural validation.
-   - Recalculate every reported count by evidence tier and denominator; keep reported evidence distinct from inference.
+4. **Complete assurance and submission preparation.**
+   - Perform semantic citation review, metadata verification, and documented calibration on high-impact claims and a representative sample of records.
+   - Rebuild extraction data and the PDF; visually inspect tables, figures, references, and page layout.
 
-5. **Reassess review status.**
+5. **Reassess the review label.**
    - The work may be described as an SLR only once search coverage, selection decisions, quality assessment, extraction, and final study set are fully documented. Until then retain the targeted-structured-review framing.
 
 ## Operational safeguards

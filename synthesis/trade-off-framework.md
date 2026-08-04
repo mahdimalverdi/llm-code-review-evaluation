@@ -118,6 +118,27 @@ A trade-off-aware evaluation should report more than model quality.
 
 ## Trade-off Patterns from Papers
 
+### Evidence added at the 121-study freeze
+
+The expanded corpus makes several trade-offs more explicit. Explanations can
+increase trust while also encouraging reliance on a persuasive but incorrect
+review [@p73_gao2026_evaluating_the_impact_of_expla]. Curation can improve
+naturalness or usefulness while changing the intent and distribution of the
+training target [@p75_sghaier2026_balancing_usefulness_and_natur]. Larger models
+or broader retrieval do not guarantee better review outcomes and may increase
+latency, cost, and irrelevant feedback [@p83_kumar2026_bigger_isn_t_always_better_a_c;
+@p93_meng2025_when_more_retrieval_hurts_retr]. Tool-grounded reward signals can
+improve verifiability, but they prioritize issues detectable by the selected
+tools and add serving and orchestration cost [@p107_kapadnis2025_crscore_reinforcement_learning].
+
+Operational evidence also separates generation quality from adoption. A comment
+can score well offline yet remain unaddressed because of granularity, timing,
+workflow placement, or low perceived value [@p77_lin2026_is_agentic_code_review_helpful;
+@p100_sun2025_does_ai_code_review_lead_to_co;
+@p110_a_alsteinsson2025_rethinking_code_review_workflo]. The framework should
+therefore report offline quality, preservation, coverage, escalation, adoption,
+and cost as distinct outcomes rather than combining them into one utility score.
+
 | Pattern | Evidence Source | Interpretation |
 |---|---|---|
 | LLM evaluation reduces human evaluation cost | P01 | LLM-as-evaluator can scale evaluation, but evaluator bias must be controlled. |

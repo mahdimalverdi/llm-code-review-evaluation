@@ -6,23 +6,22 @@ Future reproducible searches must be recorded row by row in `method/search-run-l
 
 | Stage | Count | Status |
 |---|---:|---|
-| Local PDF records identified | 71 | Verified from `papers/canonical/pdfs/` |
-| Unique project IDs with notes | 71 | Verified from `papers/` |
-| Markdown note files | 71 | One authoritative record for each project ID |
-| Relevance decision recorded | 71 | Recorded in `papers/slr-review-progress.md`; final three-tier evidence classification remains to be frozen |
-| Records marked completed | 71 | All unique P01–P71 authoritative records pass the structural gate |
-| Records requiring provisional/full-PDF verification | 0 | Remaining uncertainty is recorded per paper rather than as provisional status |
-| Canonical records passing the uniformity validator | 71 | P01–P71 |
+| Frozen canonical records | 121 | P01–P123 excluding duplicate identities P108 and P116 |
+| Unique project IDs with canonical notes | 121 | Verified from `papers/canonical/notes/` |
+| Relevance and evidence-tier decision recorded | 121 | 91 core, 24 supporting, and 6 peripheral records |
+| Records marked completed | 121 | All frozen canonical records pass the structural gate |
+| Access-limited external candidates outside denominator | 7 | Recorded in `data/search/provisional-external-resolution.md` |
+| Canonical records passing the uniformity validator | 121 | Validator rerun after the freeze |
 | Legacy records still requiring canonical reconstruction | 0 | None |
-| Duplicate/companion review needed | 0 | P18/P21 duplicate notes consolidated and removed |
-| Full-PDF extraction complete | 71 | All local PDFs were available for canonical reconstruction |
-| Final included set | Not yet frozen | Freeze core/supporting/peripheral tiers before reporting study counts by RQ |
+| Duplicate/companion records resolved | 2 | P108/EXT-0028 and P116/EXT-0030 are counted once |
+| Supplementary supporting reserve | 70 | Text and extraction packets retained outside the frozen denominator |
+| Final included set | 121 | Frozen on 2026-08-04; generated counts are reproducible from `data/slr-extraction.csv` |
 
 ## Supplementary reproducible identification stage
 
-The dated arXiv amendment is tracked separately from the baseline P01–P71 corpus. It produced 293 unique candidates after deduplication; 140 reached full-text assessment, with 132 included for consideration and 8 excluded. These 132 records are screening outcomes, not automatic additions to the final evidence set. Duplicate/companion resolution, project-ID assignment, extraction, quality assessment, and tier reconciliation remain pending.
+The dated arXiv amendment is tracked separately from the baseline P01–P71 corpus. It produced 293 unique candidates after deduplication; 140 reached full-text assessment, with 132 included for consideration and 8 excluded. From the 52 core candidates, 50 unique studies were admitted to the frozen corpus and two were resolved as duplicate external/search identities. Seventy supporting records were retained as an evidence reserve and were not counted as canonical additions.
 
-The supplementary external export contains 30 candidate records: 18 duplicates, 3 full-text verified inclusions, 8 provisional metadata-only inclusions, and 1 exclusion. Provisional records are not counted in the final included set.
+The supplementary external export contains 30 candidate records: 19 duplicates, 3 full-text verified inclusions, 7 access-limited metadata-only records, and 1 exclusion. Access-limited records are not counted in the final included set.
 
 ## Required fields for each record
 
@@ -34,4 +33,4 @@ Use one or more of: `out of scope`, `no review-feedback connection`, `insufficie
 
 ## Current limitation
 
-The 71-PDF corpus is suitable for a targeted structured review, but not yet for a fully reproducible systematic review claim because database search strings, dates, retrieved counts, deduplication counts, title/abstract screening counts, and full-text exclusion decisions were not preserved. These fields require a new documented search; they must not be reconstructed from the local PDF folder.
+The frozen 121-study corpus is suitable for a targeted structured review, but not for a fully reproducible systematic review claim. The original database-specific search strings, dates, retrieved counts, deduplication counts, and exclusion trail were not preserved. The dated amendment improves traceability but cannot reconstruct the historical search.

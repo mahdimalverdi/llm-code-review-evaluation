@@ -3,7 +3,7 @@
 ## 1. Identification
 
 - Project ID: `P87` (provisional)
-- Citation key: `p87_le_cong2026_patchguru_patch_oracle_inference`
+- Citation key: `p87_le_cong2026_patchguru_patch_oracle_inferen`
 - Full reference: Thanh Le-Cong; Bach Le; Toby Murray; Cristian Cadar; Michael Pradel. “PatchGuru: Patch Oracle Inference from Natural Language Artifacts.” arXiv:2602.05270v2, 2026.
 - DOI/URL: `https://arxiv.org/abs/2602.05270v2`
 - Review date: 2026-08-04

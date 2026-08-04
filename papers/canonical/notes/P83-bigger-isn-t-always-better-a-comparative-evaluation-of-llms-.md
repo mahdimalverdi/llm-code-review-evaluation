@@ -3,7 +3,7 @@
 ## 1. Identification
 
 - Project ID: `P83` (provisional)
-- Citation key: `p83_kumar2026_bigger_isn_t_always_better`
+- Citation key: `p83_kumar2026_bigger_isn_t_always_better_a_c`
 - Full reference: Shivam Pankaj Kumar; Swati Bararia; Kislay Raj. “Bigger Isn’t Always Better: A Comparative Evaluation of LLMs for Automated Code Review.” arXiv:2606.15689v1, 2026.
 - DOI/URL: `https://arxiv.org/abs/2606.15689v1`
 - Review date: 2026-08-04

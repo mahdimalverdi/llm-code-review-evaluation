@@ -91,6 +91,30 @@ Each failure type implies a different trade-off.
 
 ## Evidence Sources from Papers
 
+### Evidence added at the 121-study freeze
+
+The supplementary core studies broaden the taxonomy in three directions. First,
+they strengthen the distinction between output failure and evidence-pipeline
+failure: training-pair ambiguity, verifier failure, and nondeterministic judgment
+can make a review appear valid or invalid for reasons not attributable solely to
+the generated comment [@p72_centellas_claros2026_rethinking_training_data_for_g;
+@p101_jin2025_uncovering_systematic_failures;
+@p112_klishevich2025_measuring_determinism_in_large]. Second, adversarial and
+social failures require explicit labels alongside correctness and relevance;
+these include manipulative review content, toxic communication, and sensitivity
+to identity cues [@p78_melo2026_sevra_bench_social_engineering;
+@p82_anindya2026_toxishield_promoting_inclusive;
+@p84_janzen2026_gendered_prompting_and_llm_cod]. Third, studies of
+agentic review and generated change descriptions show that failures may arise
+across a trajectory rather than in one isolated comment [@p74_charoenwet2026_agentic_code_review_in_the_ter;
+@p102_liu2025_hallucinations_in_code_change_].
+
+These additions do not justify replacing the existing primary labels. They
+justify secondary modifiers for provenance, evaluator reliability, adversarial
+influence, and trajectory stage. This preserves a stable comment-level taxonomy
+while allowing the annotation protocol to locate failures outside the final
+surface text.
+
 The categories below are literature-derived but corpus-bounded. Direct generated-review evidence carries more weight than categories transferred from security, static-analysis, or general evaluator studies.
 
 | Paper | Useful Failure Types |

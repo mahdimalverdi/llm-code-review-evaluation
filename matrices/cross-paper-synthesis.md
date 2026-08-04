@@ -239,6 +239,53 @@ A strong contribution is a **taxonomy and trade-off-aware evaluation framework**
 - **P50:** Benchmark efficiency may not equal workflow value.
 - **P54/P66/P69:** Realistic benchmarks and richer semantic assessment improve validity but raise annotation, coverage, and cost questions.
 
+## Supplementary Core Evidence Added at the 121-Study Freeze
+
+The 50 unique supplementary core studies were admitted after duplicate and
+companion resolution. The following synthesis records only changes or material
+reinforcement to the baseline claims; it is not a paper-by-paper summary.
+
+### Data and reference validity
+
+- **P72/P75:** Training-pair selection and comment curation affect both target quality and the distribution of intents available to the model.
+- **P97/P102:** Review-comment type and change-description hallucination show that reference construction must distinguish task intent from surface similarity.
+- **P101/P112:** Verifier failure and nondeterministic judgment can create evaluation error even when the generated artifact is unchanged.
+
+### Agent and workflow validity
+
+- **P74/P76/P85/P91:** Repository-scale and agentic review distribute evidence gathering, issue detection, and response generation across trajectories; comment-level scoring alone is incomplete.
+- **P77/P100/P110:** Offline quality does not establish workflow value. Timing, granularity, addressing behavior, and developer control affect whether feedback is used.
+- **P86/P89:** Human and automated reviewers emphasize different themes and improvement types, limiting direct substitution claims.
+
+### Context selection and retrieval
+
+- **P79/P85:** Issue lists and repository-local context can improve grounding when context is selected for the review task.
+- **P93:** Additional retrieval can reduce performance when retrieved evidence is noisy or mismatched.
+- **P94/P96:** Issue-oriented decomposition and resource-aware serving make context and cost part of the intervention, not merely implementation detail.
+
+### Safety, communication, and social validity
+
+- **P78:** Review content can be a social-engineering attack surface, extending problematic feedback beyond technical incorrectness.
+- **P82/P84:** Toxicity and identity-cue sensitivity require communication-safety and bias checks in addition to factual evaluation.
+- **P90/P95:** Secure agentic review adds tool grounding and verification but inherits tool coverage and orchestration risks.
+
+### Evaluation and mitigation trade-offs
+
+- **P73:** Explanations may increase trust without guaranteeing correctness, so trust and calibrated reliance must be separated.
+- **P83:** Larger models can increase cost without a corresponding improvement across all review dimensions.
+- **P88/P98:** Holistic and multidimensional scoring improves construct coverage but increases rubric and evaluator complexity.
+- **P107:** Tool-verifiable reward signals improve grounding for detectable issue classes while narrowing evaluation to selected tools.
+- **P108/P116:** These IDs are retained as duplicate provenance records and are excluded from the 121-study denominator.
+
+### Implication for the framework
+
+The expanded evidence supports a shift from a single-comment quality model to a
+decision-oriented evaluation pipeline. The unit of analysis may be a comment,
+issue set, review trajectory, or workflow outcome. Each result should therefore
+identify its unit, evidence source, evaluator, mitigation action, preservation
+effect, coverage effect, escalation behavior, and cost. Claims should not be
+transferred across these units without an explicit argument.
+
 ## Update Rule
 
 Update this matrix after every 3–5 completed paper notes. New papers should be added only if they change at least one synthesis claim, taxonomy category, evaluation dimension, or gap statement.

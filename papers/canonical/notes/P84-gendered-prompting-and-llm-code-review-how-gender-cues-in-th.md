@@ -3,7 +3,7 @@
 ## 1. Identification
 
 - Project ID: `P84` (provisional)
-- Citation key: `p84_janzen2026_gendered_prompting_and_llm_code_review`
+- Citation key: `p84_janzen2026_gendered_prompting_and_llm_cod`
 - Full reference: Lynn Janzen; Üveys Eroglu; Dorothea Kolossa; Pia Knöferle; Sebastian Möller; Vera Schmitt; Veronika Solopova. “Gendered Prompting and LLM Code Review: How Gender Cues in the Prompt Shape Code Quality and Evaluation.” arXiv:2603.24359v1, 2026.
 - DOI/URL: `https://arxiv.org/abs/2603.24359v1`
 - Review date: 2026-08-04

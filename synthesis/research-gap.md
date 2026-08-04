@@ -24,6 +24,25 @@ This review addresses that gap by deriving an operational taxonomy, annotation p
 
 ## Current Literature Movement
 
+### Evidence added at the 121-study freeze
+
+Recent studies move toward repository-level agents, multi-stage review
+trajectories, multidimensional scoring, and direct analysis of which comments
+developers receive or act upon [@p74_charoenwet2026_agentic_code_review_in_the_ter;
+@p91_zhang2026_sphinx_benchmarking_and_modeli;
+@p97_goldman2025_what_types_of_code_review_comm;
+@p98_yu2025_fine_tuning_llms_to_analyze_mu;
+@p100_sun2025_does_ai_code_review_lead_to_co]. This movement narrows the gap
+between isolated text generation and actual review work. It does not eliminate
+the evaluation gap: the studies still use heterogeneous tasks, rubrics,
+reference construction, judge models, and workflow outcomes.
+
+The corpus-bounded gap should therefore be stated more precisely. The missing
+element is not another quality dimension in isolation. It is a reproducible
+decision framework that links failure type, evidence quality, mitigation action,
+useful-feedback preservation, review coverage, human escalation, and operational
+cost under a common reporting protocol.
+
 The analyzed papers show a clear movement in LLM-based code review evaluation.
 
 1. **From lexical similarity to quality rubrics**  

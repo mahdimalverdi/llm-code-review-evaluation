@@ -3,7 +3,7 @@
 ## 1. Identification
 
 - Project ID: `P80` (provisional)
-- Citation key: `p80_bansal2026_philosophical_dispositions_as_behavioral`
+- Citation key: `p80_bansal2026_philosophical_dispositions_as_`
 - Full reference: Kaushal Bansal. “Philosophical Dispositions as Behavioral Constraints for AI-Assisted Code Review: An Empirical Study.” arXiv:2605.23108v1, 2026.
 - DOI/URL: `https://arxiv.org/abs/2605.23108v1`
 - Review date: 2026-08-04

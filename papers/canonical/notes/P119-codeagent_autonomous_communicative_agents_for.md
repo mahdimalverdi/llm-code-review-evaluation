@@ -5,7 +5,7 @@
 | Field | Value |
 |---|---|
 | Project ID | `P119` |
-| Citation key | `p119_tang2024_codeagent_autonomous_communicative` |
+| Citation key | `p119_tang2024_codeagent_autonomous_communica` |
 | Authors | Xunzhu Tang; Kisub Kim; Yewei Song; Cedric Lothritz; Bei Li; Saad Ezzini; Haoye Tian; Jacques Klein; Tegawende F. Bissyande |
 | Year | 2024 |
 | Source | arXiv preprint, `2402.02172v5` |

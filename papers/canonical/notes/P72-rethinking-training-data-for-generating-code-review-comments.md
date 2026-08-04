@@ -3,7 +3,7 @@
 ## 1. Identification
 
 - Project ID: `P72` (provisional)
-- Citation key: `p72_centellas-claros2026_rethinking_training_data_for_g`
+- Citation key: `p72_centellas_claros2026_rethinking_training_data_for_g`
 - Full reference: Leonardo Centellas-Claros, Estefania Pakarati-Cofre, Juan Pablo Sandoval Alcocer, and Diego Elias Costa. “Rethinking Training Data for Generating Code Review Comments.” arXiv, 2026.
 - DOI/URL: `https://arxiv.org/abs/2607.25851v1`
 - Review date: 2026-08-02
