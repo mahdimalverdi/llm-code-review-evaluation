@@ -690,6 +690,7 @@ def copy_references(output_file: Path) -> None:
     # Preserve provenance in the canonical bibliography but omit internal
     # maintenance notes from the publication-facing build copy.
     bibliography = NOTE_FIELD_PATTERN.sub("", bibliography)
+    bibliography = add_misc_publication_details(bibliography)
     output_path = output_file.parent / BUILD_REFERENCES_FILE_NAME
     output_path.write_text(bibliography, encoding="utf-8")
 
@@ -707,6 +708,43 @@ def copy_references(output_file: Path) -> None:
             "Unsupported month values in bibliography after normalization: "
             + ", ".join(remaining_bad_months)
         )
+
+
+def add_misc_publication_details(bibliography: str) -> str:
+    """Make stable identifiers visible for miscellaneous bibliography items."""
+    entry_pattern = re.compile(r"@misc\{[^@]+?\n\}", re.IGNORECASE)
+
+    def normalize_entry(match: re.Match[str]) -> str:
+        entry = match.group(0)
+        eprint_match = re.search(
+            r"^\s*eprint\s*=\s*\{([^}]+)\}", entry, re.MULTILINE | re.IGNORECASE
+        )
+        archive_match = re.search(
+            r"^\s*archiveprefix\s*=\s*\{arXiv\}",
+            entry,
+            re.MULTILINE | re.IGNORECASE,
+        )
+        doi_match = re.search(
+            r"^\s*doi\s*=\s*\{([^}]+)\}", entry, re.MULTILINE | re.IGNORECASE
+        )
+        howpublished_pattern = re.compile(
+            r"^\s*howpublished\s*=\s*\{[^}]*\},?\s*\n",
+            re.MULTILINE | re.IGNORECASE,
+        )
+        entry = howpublished_pattern.sub("", entry)
+
+        if archive_match is not None and eprint_match is not None:
+            detail = f"arXiv preprint arXiv:{eprint_match.group(1)}"
+        elif doi_match is not None:
+            detail = f"doi:{doi_match.group(1)}"
+        else:
+            return entry
+        body = entry[:-2].rstrip()
+        if not body.endswith(","):
+            body += ","
+        return body + f"\n  howpublished = {{{detail}}},\n}}"
+
+    return entry_pattern.sub(normalize_entry, bibliography)
 
 
 def included_study_nocite() -> str:

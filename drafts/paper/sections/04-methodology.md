@@ -38,15 +38,15 @@ The synthesis corpus contains 121 unique full-text studies. It combines a 71-stu
 
 ### Dated supplementary amendment and corpus closure
 
-The amendment searched arXiv using documented query families and produced 293 unique title/abstract records after pooled deduplication. Full text was assessed for 140 records: 132 were retained for consideration and eight were excluded. The retained set comprised 53 core-classified records and 79 supporting candidates. Of the 53 core records, one matched a baseline study, two represented duplicate or companion versions, and 50 unique studies were admitted to the synthesis corpus. Of the 79 supporting candidates, 69 underwent reserve extraction and ten remained queued at corpus closure; none contributes to the 121-study denominator.
+The amendment searched arXiv using documented query families and produced 293 unique title/abstract records after pooled deduplication. Full text was assessed for 140 records: 132 were retained for consideration and eight were excluded. The retained set comprised 53 core-classified records and 79 non-canonical supporting-reserve candidates. Of the 53 core records, one matched a baseline study, two represented duplicate or companion versions, and 50 unique studies were admitted to the synthesis corpus. Among the 79 reserve candidates, 53 received substantive provisional extraction, 16 have extraction scaffolds only, and ten have no extraction packet. None contributes to the 121-study denominator.
 
 An external 30-record export was screened separately after corpus closure. Reconciliation found 20 duplicates, two full-text candidates retained outside the closed corpus, seven access-limited metadata-only candidates, and one exclusion. The external export therefore contributes no additional study to the 121-study denominator. Candidate-level decisions and provenance are included in the replication package.
 
 <!-- table: caption="Auditable accounting of the baseline corpus and dated search amendments." label="tab:corpus-flow-audit" -->
-| Source | Identified | Full text assessed | Corpus additions | Reserve or post-closure | Duplicates | Access-limited |
+| Source | Identified | Full text assessed | Canonical records contributed | Non-canonical reserve or post-closure | Overlaps or duplicate identities | Access-limited |
 |---|---:|---:|---:|---:|---:|---:|
 | Historical baseline | NR | 71 | 71 | 0 | NR | NR |
-| Dated arXiv amendment | 293 | 140 | 50 | 79 supporting: 69 extracted, 10 queued | 3 core identities | 0 |
+| Dated arXiv amendment | 293 | 140 | 50 | 79 supporting: 53 substantive, 16 scaffolds, 10 without packets | 3 core identities | 0 |
 | External cross-check export | 30 | 3 | 0 | 2 full-text candidates | 20 | 7 |
 
 The rows are not additive identification stages: the external export is a post-closure cross-check and overlaps the baseline and arXiv records. The corpus arithmetic is therefore `71 + 50 = 121`.
@@ -55,7 +55,7 @@ The rows are not additive identification stages: the external export is a post-c
 
 Core eligibility covered LLM-based, AI-assisted, or automated code review; generated review comments or PR feedback; code-review benchmarks and rubrics; relevant failure types; and mitigation through prompting, filtering, retrieval, verification, tool support, rewriting, or escalation. Supporting eligibility covered evaluator validity, human review, workflow value, annotation, context quality, and methodological foundations. General code generation or repair without a review connection was excluded unless retained as explicitly bounded peripheral evidence.
 
-The closed synthesis corpus assigns 91 studies to the core tier, 24 to supporting evidence, and six to peripheral evidence. The tiers indicate argumentative role, not methodological quality. Direct code-review evidence can support review-specific findings; supporting evidence defines constructs or qualifications; peripheral evidence is used only for bounded transfer claims. The 79 supplementary supporting candidates are outside these counts because they did not satisfy the full inclusion and extraction rule before corpus closure; 69 underwent reserve extraction and ten remained queued.
+The closed synthesis corpus assigns 91 studies to the core tier, 24 to supporting evidence, and six to peripheral evidence. The tiers indicate argumentative role, not methodological quality. Direct code-review evidence can support review-specific findings; supporting evidence defines constructs or qualifications; peripheral evidence is used only for bounded transfer claims. The 24 supporting-tier studies in the corpus completed the same structured extraction as the core studies. The 79 non-canonical supporting-reserve candidates did not: 53 have substantive but provisional packets, 16 have scaffolds only, and ten lack packets. They are therefore excluded from quantitative denominators because mixing partial reserve coding with the standardized study-level records would make the counts non-comparable, not merely because they were processed after corpus closure.
 
 ## Quality Appraisal
 
@@ -84,6 +84,10 @@ The complete field definitions and controlled labels are provided in the replica
 We used tabulation, thematic grouping, and framework mapping. We did not pool incompatible metrics. Initial categories were derived during cross-study synthesis and normalized into controlled vocabularies for failure types, evaluation dimensions, mitigation families, and context types. A deterministic transformation procedure produced one study-level record per included study, retained multi-valued controlled labels, and used `NR` when the extraction did not contain enough evidence. The resulting counts therefore describe coded evidence in the reviewed studies, not the prevalence of failures in deployed systems.
 
 Automated consistency checks ensure that each included study occurs once, evidence tiers do not overlap, admitted supplementary studies receive the intended tier, citations resolve, and appraisal scores are available. Findings were organized by research question. Stable study identifiers support traceability within the replication package, while citations support claims in this report. Every reported count uses the 121-study evidence pool as its denominator unless another denominator is stated.
+
+### Supporting-reserve sensitivity analysis
+
+We separately mapped the bounded synthesis claims in the 53 substantively extracted reserve packets to five framework-level themes defined before the mapping: evaluation or evaluator validity, context or grounding quality, annotation or dataset validity, human-review or workflow value, and trade-off or mitigation design. This directional analysis asks whether the reserve would require a new top-level component for RQ2, RQ5, or framework traceability. It does not compare effect sizes or add reserve records to the 121-study frequency tables. All 53 packets mapped to at least one existing theme: 26 to evaluation or evaluator validity, 25 to context or grounding quality, two to annotation or dataset validity, 29 to human-review or workflow value, and 23 to trade-off or mitigation design. No new top-level component was required. Because the mapping was conducted by the same reviewer and 26 reserve candidates lack substantive extraction, this result provides a bounded robustness check rather than evidence that the reserve cannot alter lower-level categories or relative emphasis.
 
 ## Protocol Deviations and Amendments
 

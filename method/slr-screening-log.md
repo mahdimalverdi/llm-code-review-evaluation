@@ -19,7 +19,7 @@ Future reproducible searches must be recorded row by row in `method/search-run-l
 
 ## Supplementary reproducible identification stage
 
-The dated arXiv amendment is tracked separately from the baseline P01–P71 corpus. It produced 293 unique candidates after deduplication; 140 reached full-text assessment, with 132 included for consideration and 8 excluded. The retained records comprise 53 core-classified records and 79 supporting candidates. One core record maps to baseline P05, two are duplicate/version identities, and 50 unique studies were admitted to the frozen corpus. Among the supporting candidates, 69 have aligned extraction packets and 10 remain queued; none is counted as a canonical addition. A stale ARXIV-0051 packet predates its full-text exclusion and is provenance only.
+The dated arXiv amendment is tracked separately from the baseline P01–P71 corpus. It produced 293 unique candidates after deduplication; 140 reached full-text assessment, with 132 included for consideration and 8 excluded. The retained records comprise 53 core-classified records and 79 non-canonical supporting-reserve candidates. One core record maps to baseline P05, two are duplicate/version identities, and 50 unique studies were admitted to the frozen corpus. Among the reserve candidates, 53 have substantive provisional extraction packets, 16 have extraction scaffolds only, and 10 have no packet; none is counted as a canonical record. A stale ARXIV-0051 packet predates its full-text exclusion and is provenance only.
 
 The supplementary external export contains 30 candidate records: 19 duplicates, 3 full-text verified inclusions, 7 access-limited metadata-only records, and 1 exclusion. Access-limited records are not counted in the final included set.
 

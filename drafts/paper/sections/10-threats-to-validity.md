@@ -2,7 +2,7 @@
 
 ## Search and Selection Validity
 
-The main limitation is the missing original search history. Although the initial protocol defined databases and query families, database-specific strings, dates, retrieval counts, deduplication counts, and excluded-record logs were not preserved. The 121-study corpus may therefore omit relevant work and may reflect convenience or snowballing effects. We mitigate overclaiming by reporting a targeted structured review, not a complete SLR, and by bounding gap claims to the reviewed corpus.
+The main limitation is the missing original search history. Although the initial protocol defined databases and query families, database-specific strings, dates, retrieval counts, deduplication counts, and excluded-record logs were not preserved. The 121-study corpus may therefore omit relevant work and may reflect convenience or snowballing effects. A separate directional analysis maps the 53 substantively extracted supporting-reserve packets to existing high-level themes, but 26 reserve candidates lack substantive extraction and the reserve is not suitable for the quantitative denominators. We mitigate overclaiming by reporting a targeted structured review, not a complete SLR, and by bounding gap claims to the reviewed corpus.
 
 ## Extraction Reliability
 

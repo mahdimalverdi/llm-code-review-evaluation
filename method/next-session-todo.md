@@ -2,7 +2,7 @@
 
 ## Current position
 
-The review remains a targeted structured review. The evidence set is frozen at 121 studies: 71 baseline records plus 50 unique supplementary core studies. The amendment contains 79 supporting candidates outside the canonical denominator: 69 have aligned extraction packets and 10 remain queued. One core amendment record maps to baseline P05 and two are duplicate/version identities. Seven external records remain access-limited.
+The review remains a targeted structured review. The evidence set is frozen at 121 studies: 71 baseline records plus 50 unique supplementary core studies. The amendment contains 79 non-canonical supporting-reserve candidates outside the canonical denominator: 53 have substantive provisional extraction packets, 16 have extraction scaffolds only, and 10 have no packet. One core amendment record maps to baseline P05 and two are duplicate/version identities. Seven external records remain access-limited.
 
 ## Resume in this order
 
