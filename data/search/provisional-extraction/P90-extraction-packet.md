@@ -4,7 +4,7 @@
 - arXiv: 2601.19138v1
 - Authors: Wachiraphan Charoenwet; Kla Tantithamthavorn; Patanamon Thongtanunam; Hong Yi Lin; Minwoo Jeong; Ming Wu
 - Full text: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/data/search/provisional-extraction/P90.txt`
-- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/P90-agenticscr_an_autonomous_agentic_secure_code.md`
+- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/notes/P90-agenticscr_an_autonomous_agentic_secure_code.md`
 
 ## Required extraction
 

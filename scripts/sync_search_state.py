@@ -42,7 +42,7 @@ def sync_core_queue() -> int:
     updated = 0
     for row in rows:
         project = row["provisional_project_id"]
-        notes = list((ROOT / "papers/provisional").glob(f"{project}-*.md"))
+        notes = list((ROOT / "papers/provisional/notes").glob(f"{project}-*.md"))
         if notes and row["reconciliation_status"] == "new_candidate":
             row["reconciliation_status"] = "extracted_pending_final_freeze"
             row["next_action"] = "Apply final corpus relevance/tier rule before freeze"

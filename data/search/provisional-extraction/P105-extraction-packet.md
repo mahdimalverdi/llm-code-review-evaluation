@@ -4,7 +4,7 @@
 - arXiv: 2507.19115v2
 - Authors: Shweta Ramesh; Joy Bose; Hamender Singh; A K Raghavan; Sujoy Roychowdhury; Giriprasad Sridhara; Nishrith Saini; Ricardo Britto
 - Full text: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/data/search/provisional-extraction/P105.txt`
-- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/P105-automated_code_review_using_large_language_mo.md`
+- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/notes/P105-automated_code_review_using_large_language_mo.md`
 
 ## Required extraction
 

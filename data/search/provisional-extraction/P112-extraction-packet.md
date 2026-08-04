@@ -4,7 +4,7 @@
 - arXiv: 2502.20747v1
 - Authors: Eugene Klishevich; Yegor Denisov-Blanch; Simon Obstbaum; Igor Ciobanu; Michal Kosinski
 - Full text: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/data/search/provisional-extraction/P112.txt`
-- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/P112-measuring_determinism_in_large_language_model.md`
+- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/notes/P112-measuring_determinism_in_large_language_model.md`
 
 ## Required extraction
 

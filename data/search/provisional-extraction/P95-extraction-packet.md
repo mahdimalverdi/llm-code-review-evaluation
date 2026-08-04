@@ -4,7 +4,7 @@
 - arXiv: 2510.26457v1
 - Authors: Fang Liu; Simiao Liu; Yinghao Zhu; Xiaoli Lian; Li Zhang
 - Full text: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/data/search/provisional-extraction/P95.txt`
-- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/P95-securereviewer_enhancing_large_language_model.md`
+- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/notes/P95-securereviewer_enhancing_large_language_model.md`
 
 ## Required extraction
 

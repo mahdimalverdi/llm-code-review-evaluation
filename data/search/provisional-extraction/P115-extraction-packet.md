@@ -4,7 +4,7 @@
 - arXiv: 2411.11401v3
 - Authors: Rosalia Tufano; Alberto Martin-Lopez; Ahmad Tayeb; Ozren Dabić; Sonia Haiduc; Gabriele Bavota
 - Full text: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/data/search/provisional-extraction/P115.txt`
-- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/P115-deep_learning_based_code_reviews_a_paradigm_s.md`
+- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/notes/P115-deep_learning_based_code_reviews_a_paradigm_s.md`
 
 ## Required extraction
 

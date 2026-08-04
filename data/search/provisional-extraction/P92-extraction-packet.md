@@ -4,7 +4,7 @@
 - arXiv: 2511.09223v1
 - Authors: Panya Trakoolgerntong; Tao Xiao; Masanari Kondo; Chaiyong Ragkhitwetsagul; Morakot Choetkiertikul; Pattaraporn Sangaroonsilp; Yasutaka Kamei
 - Full text: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/data/search/provisional-extraction/P92.txt`
-- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/P92-ailinkpreviewer_enhancing_code_reviews_with_l.md`
+- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/notes/P92-ailinkpreviewer_enhancing_code_reviews_with_l.md`
 
 ## Required extraction
 

@@ -4,7 +4,7 @@
 - arXiv: 2505.20206v1
 - Authors: Umut Cihan; Arda İçöz; Vahid Haratian; Eray Tüzün
 - Full text: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/data/search/provisional-extraction/P108.txt`
-- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/P108-evaluating_large_language_models_for_code_rev.md`
+- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/notes/P108-evaluating_large_language_models_for_code_rev.md`
 
 ## Required extraction
 

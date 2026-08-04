@@ -17,7 +17,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 QUEUE = ROOT / "data/search/core-reconciliation-queue.csv"
-PDF_DIR = ROOT / "papers/search-candidates/pdfs"
+PDF_DIR = ROOT / "papers/candidates/pdfs"
 NOTE_DIR = ROOT / "papers/provisional"
 OUT_DIR = ROOT / "data/search/provisional-extraction"
 CHECKPOINT = OUT_DIR / "checkpoint.tsv"

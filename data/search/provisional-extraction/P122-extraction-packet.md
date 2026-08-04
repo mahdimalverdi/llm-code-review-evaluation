@@ -4,7 +4,7 @@
 - arXiv: 2312.17485v1
 - Authors: Zelin Zhao; Zhaogui Xu; Jialong Zhu; Peng Di; Yuan Yao; Xiaoxing Ma
 - Full text: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/data/search/provisional-extraction/P122.txt`
-- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/P122-the_right_prompts_for_the_job_repair_code_rev.md`
+- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/notes/P122-the_right_prompts_for_the_job_repair_code_rev.md`
 
 ## Required extraction
 

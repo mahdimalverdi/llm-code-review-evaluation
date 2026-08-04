@@ -4,7 +4,7 @@
 - arXiv: 2507.18476v1
 - Authors: Busra Icoz; Goksel Biricik
 - Full text: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/data/search/provisional-extraction/P106.txt`
-- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/P106-automated_code_review_using_large_language_mo.md`
+- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/notes/P106-automated_code_review_using_large_language_mo.md`
 
 ## Required extraction
 

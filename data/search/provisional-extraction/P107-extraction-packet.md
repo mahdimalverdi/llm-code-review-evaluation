@@ -4,7 +4,7 @@
 - arXiv: 2506.00296v1
 - Authors: Manav Nitin Kapadnis; Atharva Naik; Carolyn Rose
 - Full text: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/data/search/provisional-extraction/P107.txt`
-- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/P107-crscore_reinforcement_learning_with_verifiabl.md`
+- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/notes/P107-crscore_reinforcement_learning_with_verifiabl.md`
 
 ## Required extraction
 

@@ -4,7 +4,7 @@
 - arXiv: 2207.11627v1
 - Authors: Shadikur Rahman; Umme Ayman Koana; Maleknaz Nayebi
 - Full text: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/data/search/provisional-extraction/P123.txt`
-- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/P123-example_driven_code_review_explanation.md`
+- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/notes/P123-example_driven_code_review_explanation.md`
 
 ## Required extraction
 

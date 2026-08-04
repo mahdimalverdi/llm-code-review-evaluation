@@ -4,7 +4,7 @@
 - arXiv: 2511.00517v1
 - Authors: Shuochuan Li; Dong Wang; Patanamon Thongtanunam; Zan Wang; Jiuqiao Yu; Junjie Chen
 - Full text: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/data/search/provisional-extraction/P94.txt`
-- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/P94-issue-oriented-agent-review.md`
+- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/notes/P94-issue-oriented-agent-review.md`
 
 ## Required extraction
 

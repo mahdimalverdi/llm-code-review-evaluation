@@ -11,7 +11,7 @@ Review one paper at a time—or run in batch/loop mode over all local PDFs—and
 
 When the user asks to process all papers, update all papers, continue to the end, or use a loop:
 
-1. Enumerate `papers/pdfs/P*.pdf` by numeric project ID (`P01`, `P02`, …), not filesystem order.
+1. Enumerate `papers/canonical/pdfs/P*.pdf` by numeric project ID (`P01`, `P02`, …), not filesystem order.
 2. For each PDF, locate the matching `papers/PXX-*.md` note. If none exists, create one from `references/paper-review-template.md`.
 3. Complete the full single-paper workflow below before moving to the next paper. Do not merely add a generic placeholder or copy the abstract.
 4. Preserve valid existing evidence, but correct unsupported claims, wrong participant counts, wrong metrics, stale RQ mappings, and conclusions that exceed the PDF.

@@ -4,7 +4,7 @@
 - arXiv: 2503.17302v1
 - Authors: John Naulty; Eason Chen; Joy Wang; George Digkas; Kostas Chalkias
 - Full text: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/data/search/provisional-extraction/P111.txt`
-- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/P111-bugdar_ai_augmented_secure_code_review_for_gi.md`
+- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/notes/P111-bugdar_ai_augmented_secure_code_review_for_gi.md`
 
 ## Required extraction
 

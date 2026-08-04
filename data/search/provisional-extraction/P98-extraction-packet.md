@@ -4,7 +4,7 @@
 - arXiv: 2509.21170v1
 - Authors: Yongda Yu; Guohao Shi; Xianwei Wu; Haochuan He; XueMing Gu; Qianqian Zhao; Kui Liu; Qiushi Wang; Zhao Tian; Haifeng Shen; Guoping Rong
 - Full text: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/data/search/provisional-extraction/P98.txt`
-- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/P98-fine_tuning_llms_to_analyze_multiple_dimensio.md`
+- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/notes/P98-fine_tuning_llms_to_analyze_multiple_dimensio.md`
 
 ## Required extraction
 

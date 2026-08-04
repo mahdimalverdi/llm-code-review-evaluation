@@ -4,7 +4,7 @@
 - arXiv: 2412.20340v2
 - Authors: Yongda Yu; Lei Zhang; Guoping Rong; Haifeng Shen; Jiahao Zhang; Haoxiang Yan; Guohao Shi; Dong Shao; Ruiqi Pan; Yuan Li; Qiushi Wang; Zhao Tian
 - Full text: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/data/search/provisional-extraction/P113.txt`
-- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/P113-distilling_desired_comments_for_enhanced_code.md`
+- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/notes/P113-distilling_desired_comments_for_enhanced_code.md`
 
 ## Required extraction
 

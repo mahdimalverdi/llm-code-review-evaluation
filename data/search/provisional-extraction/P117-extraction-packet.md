@@ -4,7 +4,7 @@
 - arXiv: 2407.02824v1
 - Authors: Lishui Fan; Jiakun Liu; Zhongxin Liu; David Lo; Xin Xia; Shanping Li
 - Full text: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/data/search/provisional-extraction/P117.txt`
-- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/P117-exploring_the_capabilities_of_llms_for_code_c.md`
+- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/notes/P117-exploring_the_capabilities_of_llms_for_code_c.md`
 
 ## Required extraction
 

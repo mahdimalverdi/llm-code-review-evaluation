@@ -4,7 +4,7 @@
 - arXiv: 2511.05302v2
 - Authors: Qianru Meng; Xiao Zhang; Zhaochen Ren; Joost Visser
 - Full text: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/data/search/provisional-extraction/P93.txt`
-- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/P93-when_more_retrieval_hurts_retrieval_augmented.md`
+- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/notes/P93-when_more_retrieval_hurts_retrieval_augmented.md`
 
 ## Required extraction
 

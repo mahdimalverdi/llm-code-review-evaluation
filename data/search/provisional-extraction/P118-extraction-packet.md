@@ -4,7 +4,7 @@
 - arXiv: 2402.03777v1
 - Authors: Hong Yi Lin; Patanamon Thongtanunam; Christoph Treude; Wachiraphan Charoenwet
 - Full text: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/data/search/provisional-extraction/P118.txt`
-- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/P118-improving_automated_code_reviews_learning_fro.md`
+- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/notes/P118-improving_automated_code_reviews_learning_fro.md`
 
 ## Required extraction
 

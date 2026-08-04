@@ -4,7 +4,7 @@
 - arXiv: 2409.19801v2
 - Authors: Atharva Naik; Marcus Alenius; Daniel Fried; Carolyn Rose
 - Full text: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/data/search/provisional-extraction/P116.txt`
-- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/P116-crscore_grounding_automated_evaluation_of_cod.md`
+- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/notes/P116-crscore_grounding_automated_evaluation_of_cod.md`
 
 ## Required extraction
 

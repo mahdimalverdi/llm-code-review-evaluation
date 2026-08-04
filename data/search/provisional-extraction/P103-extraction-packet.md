@@ -4,7 +4,7 @@
 - arXiv: 2508.02732v1
 - Authors: Sherman Wong; Jalaj Bhandari; Leo Zhou Fan Yang; Xylan Xu; Yi Zhuang; Cem Cayiroglu; Payal Bhuptani; Sheela Yadawad; Hung Duong
 - Full text: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/data/search/provisional-extraction/P103.txt`
-- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/P103-a_note_on_code_quality_score_llms_for_maintai.md`
+- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/notes/P103-a_note_on_code_quality_score_llms_for_maintai.md`
 
 ## Required extraction
 

@@ -11,6 +11,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 PAPERS = ROOT / "papers"
+CANONICAL_NOTES = PAPERS / "canonical" / "notes"
 BIB = ROOT / "references" / "references.bib"
 PROGRESS = PAPERS / "slr-review-progress.md"
 OUT_DIR = ROOT / "data"
@@ -276,7 +277,7 @@ def main() -> None:
     progress = progress_metadata()
     rows: list[dict[str, str]] = []
     audit_rows: list[dict[str, str]] = []
-    for path in sorted(PAPERS.glob("P[0-9][0-9]-*.md")):
+    for path in sorted(CANONICAL_NOTES.glob("P[0-9][0-9]-*.md")):
         pid = path.name[:3]
         num = int(pid[1:])
         text = path.read_text(encoding="utf-8")
@@ -366,11 +367,15 @@ def main() -> None:
     OUT_DIR.mkdir(exist_ok=True)
     csv_path = OUT_DIR / "slr-extraction.csv"
     with csv_path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
+        writer = csv.DictWriter(handle, fieldnames=list(rows[0]), lineterminator="\n")
         writer.writeheader(); writer.writerows(rows)
     audit_path = OUT_DIR / "slr-coding-evidence.csv"
     with audit_path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=("paper_id", "field", "code", "evidence_snippet", "source_note"))
+        writer = csv.DictWriter(
+            handle,
+            fieldnames=("paper_id", "field", "code", "evidence_snippet", "source_note"),
+            lineterminator="\n",
+        )
         writer.writeheader(); writer.writerows(audit_rows)
 
     def count_multi(field: str) -> Counter[str]:

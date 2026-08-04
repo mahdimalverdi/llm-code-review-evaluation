@@ -4,7 +4,7 @@
 - arXiv: 2508.18771v2
 - Authors: Kexin Sun; Hongyu Kuang; Sebastian Baltes; Xin Zhou; He Zhang; Xiaoxing Ma; Guoping Rong; Dong Shao; Christoph Treude
 - Full text: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/data/search/provisional-extraction/P100.txt`
-- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/P100-does_ai_code_review_lead_to_code_changes_a_ca.md`
+- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/notes/P100-does_ai_code_review_lead_to_code_changes_a_ca.md`
 
 ## Required extraction
 

@@ -4,7 +4,7 @@
 - arXiv: 2505.16339v1
 - Authors: Fannar Steinn Aðalsteinsson; Björn Borgar Magnússon; Mislav Milicevic; Adam Nirving Davidsson; Chih-Hong Cheng
 - Full text: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/data/search/provisional-extraction/P110.txt`
-- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/P110-rethinking_code_review_workflows_with_llm_ass.md`
+- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/notes/P110-rethinking_code_review_workflows_with_llm_ass.md`
 
 ## Required extraction
 

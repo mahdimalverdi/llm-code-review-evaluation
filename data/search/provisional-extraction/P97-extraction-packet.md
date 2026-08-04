@@ -4,7 +4,7 @@
 - arXiv: 2510.05450v1
 - Authors: Saul Goldman; Hong Yi Lin; Jirat Pasuksmit; Patanamon Thongtanunam; Kla Tantithamthavorn; Zhe Wang; Ray Zhang; Ali Behnaz; Fan Jiang; Michael Siers; Ryan Jiang; Mike Buller; Minwoo Jeong; Ming Wu
 - Full text: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/data/search/provisional-extraction/P97.txt`
-- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/P97-what_types_of_code_review_comments_do_develop.md`
+- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/notes/P97-what_types_of_code_review_comments_do_develop.md`
 
 ## Required extraction
 

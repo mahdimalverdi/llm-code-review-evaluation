@@ -4,7 +4,7 @@
 - arXiv: 2505.17928v2
 - Authors: Junyi Lu; Lili Jiang; Xiaojia Li; Jianbing Fang; Fengjun Zhang; Li Yang; Chun Zuo
 - Full text: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/data/search/provisional-extraction/P109.txt`
-- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/P109-towards_practical_defect_focused_automated_co.md`
+- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/notes/P109-towards_practical_defect_focused_automated_co.md`
 
 ## Required extraction
 

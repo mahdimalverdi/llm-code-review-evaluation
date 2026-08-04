@@ -4,7 +4,7 @@
 - arXiv: 2601.19494v3
 - Authors: Lei Zhang; Yongda Yu; Minghui Yu; Xinxin Guo; Zhengqi Zhuang; Guoping Rong; Dong Shao; Haifeng Shen; Hongyu Kuang; Zhengfeng Li; Boge Wang; Guoan Zhang; Bangyu Xiang; Xiaobin Xu
 - Full text: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/data/search/provisional-extraction/P88.txt`
-- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/P88-aacr-bench-evaluating-automatic-code-review-with-holistic-re.md`
+- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/notes/P88-aacr-bench-evaluating-automatic-code-review-with-holistic-re.md`
 
 ## Required extraction
 

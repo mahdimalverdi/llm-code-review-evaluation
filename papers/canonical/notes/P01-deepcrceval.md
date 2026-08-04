@@ -9,7 +9,7 @@
 | Full reference | Lu, J., Li, X., Hua, Z., Yu, L., Cheng, S., Yang, L., Zhang, F., and Zuo, C. “DeepCRCEval: Revisiting the Evaluation of Code Review Comment Generation.” FASE 2025, LNCS 15693, pp. 43–64. |
 | DOI | `10.1007/978-3-031-90900-9_3` |
 | Related extended version | arXiv:2412.18291 |
-| Source | Local PDF: `papers/pdfs/P01_DeepCRCEval_Revisiting_the_Evaluation_of_Code_Review_Comment_Generation.pdf` |
+| Source | Local PDF: `papers/canonical/pdfs/P01_DeepCRCEval_Revisiting_the_Evaluation_of_Code_Review_Comment_Generation.pdf` |
 | Review status | Full-text first pass |
 
 ## 2. Screening and proposal alignment

@@ -4,7 +4,7 @@
 - arXiv: 2510.10290v1
 - Authors: Sayan Mandal; Hua Jiang
 - Full text: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/data/search/provisional-extraction/P96.txt`
-- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/P96-grounded_ai_for_code_review_resource_efficien.md`
+- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/notes/P96-grounded_ai_for_code_review_resource_efficien.md`
 
 ## Required extraction
 

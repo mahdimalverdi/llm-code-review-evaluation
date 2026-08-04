@@ -4,7 +4,7 @@
 - arXiv: 2508.08661v1
 - Authors: Chunhua Liu; Hong Yi Lin; Patanamon Thongtanunam
 - Full text: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/data/search/provisional-extraction/P102.txt`
-- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/P102-hallucinations_in_code_change_to_natural_lang.md`
+- Provisional note: `/home/nobitex/Public/projects/personal/llm-code-review-evaluation/papers/provisional/notes/P102-hallucinations_in_code_change_to_natural_lang.md`
 
 ## Required extraction
 

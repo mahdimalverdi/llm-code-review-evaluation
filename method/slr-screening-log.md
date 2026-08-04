@@ -6,7 +6,7 @@ Future reproducible searches must be recorded row by row in `method/search-run-l
 
 | Stage | Count | Status |
 |---|---:|---|
-| Local PDF records identified | 71 | Verified from `papers/pdfs/` |
+| Local PDF records identified | 71 | Verified from `papers/canonical/pdfs/` |
 | Unique project IDs with notes | 71 | Verified from `papers/` |
 | Markdown note files | 71 | One authoritative record for each project ID |
 | Relevance decision recorded | 71 | Recorded in `papers/slr-review-progress.md`; final three-tier evidence classification remains to be frozen |
