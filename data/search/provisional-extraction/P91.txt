@@ -1,0 +1,1087 @@
+                                        Sphinx: Benchmarking and Modeling for LLM-Driven Pull Request Review
+
+                                                            Daoan Zhang†,‡ * Shuo Zhang‡ Zijian Jin‡ Jiebo Luo†
+                                                                         Shengyu Fu‡ Elsie Nallipogu‡
+                                                                     †
+                                                                       University of Rochester ‡ Microsoft
+                                                                              {daoan.zhang,jluo}@rochester.edu
+                                                         {shuzha, zijianjin, shengyfu, elsie.nallipogu}@microsoft.com
+
+
+
+
+                                                               Abstract                         intent captured in the PR description, and often the
+                                                                                                background discussed in linked issue threads. Re-
+                                            Pull request (PR) review is essential for ensur-    viewers synthesize these heterogeneous signals to
+arXiv:2601.04252v1 [cs.SE] 6 Jan 2026
+
+
+
+
+                                            ing software quality, yet automating this task
+                                                                                                produce precise, actionable feedback that improves
+                                            remains challenging due to noisy supervision,
+                                            limited contextual understanding, and inade-        code quality and reinforces good development prac-
+                                            quate evaluation metrics. We present Sphinx, a      tices. While there has been growing interest in au-
+                                            unified framework for LLM-based PR review           tomating aspects of PR review—such as acceptance
+                                            that addresses these limitations through three      prediction and comment generation—the genera-
+                                            key components: (1) a structured data genera-       tion of high-quality, contextually grounded, and
+                                            tion pipeline that produces context-rich, seman-    systematically evaluated review comments remains
+                                            tically grounded review comments by compar-
+                                                                                                underexplored. Existing datasets for this task typ-
+                                            ing pseudo-modified and merged code; (2) a
+                                            checklist-based evaluation benchmark that as-
+                                                                                                ically rely on noisy, human-authored comments,
+                                            sesses review quality based on structured cov-      which vary widely in relevance, coverage, and clar-
+                                            erage of actionable verification points, mov-       ity. Moreover, many current methods treat PRs
+                                            ing beyond surface-level metrics like BLEU;         as isolated code diffs, overlooking the rich multi-
+                                            and (3) Checklist Reward Policy Optimiza-           modal context that is critical for meaningful review
+                                            tion (CRPO), a novel training paradigm that         generation. Evaluation practices further exacerbate
+                                            uses rule-based, interpretable rewards to align     these issues by relying primarily on surface-level
+                                            model behavior with real-world review prac-
+                                                                                                text similarity metrics such as BLEU (Papineni
+                                            tices. Extensive experiments show that mod-
+                                            els trained with Sphinx achieve state-of-the-       et al., 2002) and ROUGE (Lin, 2004), which fail
+                                            art performance on review completeness and          to reflect whether a review meaningfully identifies
+                                            precision, outperforming both proprietary and       substantive issues in the proposed code changes. In
+                                            open-source baselines by up to 40% in checklist     contrast, human reviewers often operate with im-
+                                            coverage. Together, Sphinx enables the devel-       plicit or explicit checklists—verifying functional
+                                            opment of PR review models that are not only        correctness, robustness, security compliance, cod-
+                                            fluent but also context-aware, technically pre-
+                                                                                                ing conventions, and architectural alignment. How-
+                                            cise, and practically deployable in real-world
+                                            development workflows. The data will be re-
+                                                                                                ever, no existing benchmark or evaluation frame-
+                                            leased after review.                                work explicitly models this structured process. As a
+                                                                                                result, current automated systems tend to generate
+                                        Introduction                                            fluent but shallow comments, frequently missing
+                                                                                                critical issues or offering vague suggestions.
+                                        Pull Request (PR) review (Zhao et al., 2019; Zhang         To address these challenges, we introduce
+                                        et al., 2022; Yang et al., 2025) is a fundamental       Sphinx, a comprehensive framework for PR re-
+                                        practice in collaborative software development, en-     view comment generation. Rather than focusing
+                                        suring that proposed code changes are not only          solely on dataset scale, Sphinx emphasizes a struc-
+                                        functionally correct but also maintainable, stylisti-   tured data generation pipeline that tightly grounds
+                                        cally consistent, and aligned with broader project      review comments in verifiable code modifications.
+                                        requirements. An effective PR review requires a         We leverage LLMs to synthesize pseudo pend-
+                                        deep understanding of the introduced diffs, the sur-    ing solution based on the PR’s intent and com-
+                                        rounding code context, the motivation and design        pare it against the actual merged code to gener-
+                                           * Work done as an intern at Microsoft                ate review comments aligned with semantic and
+structural differences. This enables consistent, in-      • We conduct extensive experiments on the
+terpretable training signals for learning PR review-        Sphinx Benchmark, showing that models
+ers. Beyond data construction, we propose two               trained with our framework substantially out-
+complementary contributions. First, we introduce a          perform both open-source and proprietary
+Checklist-based Evaluation Framework, which                 LLMs, achieving up to 40% higher checklist
+transforms review outputs into structured check-            coverage compared to strong baselines like
+lists of verification points, allowing fine-grained         GPT-4.1.
+evaluation of how well a model captures actual
+modification intent. Second, we propose Checklist      Related Work
+Reward Policy Optimization (CRPO), a novel
+                                                       Automated PR review has been widely studied
+training paradigm that leverages these structured
+                                                       due to its high cost, time demands, and the inher-
+rewards—augmented with LLM feedback and reg-
+                                                       ent subjectivity of human reviewers (Yang et al.,
+ularized by response length—to guide models to-
+                                                       2024b; Yu et al., 2024; Lin et al., 2024; Feng et al.,
+ward producing comprehensive and precise review
+                                                       2020; Cihan et al., 2024; Lu et al., 2025; Sun et al.,
+comments. Together, Sphinx, Checklist-based Eval-
+                                                       2025). A major challenge in this field lies in the
+uation, and CRPO provide a principled foundation
+                                                       quality of training data: most existing approaches
+for advancing PR review automation—yielding
+                                                       rely on noisy, human-authored review comments
+models that are not only linguistically fluent, but
+                                                       that often lack clear grounding in the actual code
+also technically rigorous, context-aware, and prac-
+                                                       changes, leading to ambiguous supervision sig-
+tically applicable in real-world development work-
+                                                       nals (Tufano et al., 2022; Frömmgen et al., 2024).
+flows.
+                                                       In addition, evaluation practices have largely de-
+   This work makes the following contributions:
+                                                       pended on reference-based metrics such as BLEU
+                                                       and ROUGE-L(Li et al., 2022), which emphasize
+   • We propose Sphinx, a comprehensive frame-         surface-level textual similarity and fail to capture
+     work for PR review automation that combines       whether review comments are semantically accu-
+     a structured data generation pipeline, a task-    rate or actionable. While LLMs such as GPT se-
+     specific evaluation benchmark, and a reward-      ries and LLaMa-Reviewer (Lu et al., 2023) have
+     driven training strategy. Rather than relying     recently been introduced and show improved per-
+     on human-authored comments, Sphinx uses           formance through pretraining, their training objec-
+     LLMs to synthesize pseudo-modified code           tives remain loosely aligned with real-world review
+     based on PR intent and compares it to the         tasks. These models (Thongtanunam et al., 2022;
+     actual merged code to generate review com-        Sülün et al., 2021; Li et al., 2025; Naulty et al.,
+     ments that are tightly grounded in real code      2025) often lack structured guidance and struggle
+     changes.                                          to generate reviews that are precise and comprehen-
+                                                       sive, highlighting persistent limitations in data qual-
+   • We introduce a Checklist-based Evaluation
+                                                       ity, evaluation fidelity, and training methodology.
+     Framework, which derives ground-truth veri-
+                                                       To address these challenges, we propose Sphinx, a
+     fication items from structured diffs and evalu-
+                                                       unified framework that advances automated code
+     ates whether model-generated comments ad-
+                                                       review by improving all three key components of
+     dress them. This protocol enables fine-grained,
+                                                       the pipeline.
+     interpretable, and task-aligned assessment of
+     review quality, going beyond surface-level        The Sphinx Data Pipeline & Benchmark
+     text similarity.
+                                                       Despite increasing interest in automating pull re-
+   • We propose Checklist Reward Policy Opti-          quest (PR) review, existing datasets fall short in
+     mization (CRPO), a novel training paradigm        two critical ways. First, they predominantly rely on
+     that leverages checklist-derived reward sig-      noisy, human-authored review comments, which
+     nals and length-aware regularization to           often lack consistent grounding in the associated
+     guide models toward generating precise, con-      code changes, resulting in ambiguous supervision
+     cise, and contextually faithful review com-       for learning models. Second, they treat PRs in isola-
+     ments—without relying on free-form cri-           tion, ignoring the rich multi-modal context—such
+     tiques.                                           as PR descriptions, linked issue discussions, and
+surrounding code—that human reviewers routinely              associated with the PR, providing additional
+utilize. These limitations hinder the development            background context.
+of models that are capable of producing structured,
+                                                           • Original code: The original code before the
+contextually grounded, and practically useful re-
+                                                             PR was merged.
+view comments.
+   To train effective PR review models, inputs             • Merged code: The final integrated version of
+typically include PR metadata, the original code,            the code after the PR is merged into the main
+and a pseudo solution (i.e., a code variant con-             branch.
+taining plausible, review-worthy mistakes), while
+                                                        Data Filtering. At this stage, we primarily per-
+the expected output is the corresponding review
+                                                        form data filtering and annotation to ensure the
+comments. However, only PR metadata and orig-
+                                                        quality and consistency of the collected pull re-
+inal code can be reliably scraped from GitHub at
+                                                        quests. Approximately 75,000 PRs were retained
+scale. In contrast, high-quality pseudo solutions
+                                                        after filtering. We apply the following filtering cri-
+and grounded PR reviews are not directly avail-
+                                                        teria:
+able from public repositories. To bridge this gap,
+we construct the Sphinx Dataset & Benchmark,              1. Completeness Check: We verify that each
+which is designed to tightly couple review com-              crawled pull request contains all required
+ments with meaningful code modifications under               components, including diffs, PR descriptions,
+realistic project contexts. This dataset provides the        linked issues, original code, and merged code.
+necessary structure and contextual richness to en-
+                                                          2. Merged status: Only pull requests that have
+able the development of models that generate high-
+                                                             been successfully merged into the main
+quality, grounded, and actionable PR reviews.
+                                                             branch are included, as they represent re-
+The Sphinx Data Pipeline                                     viewed and accepted contributions.
+In this section, we detail our methodology for col-       3. Input Length Constraint: We retain only
+lecting, processing, integrating, and generating data        PRs that modify a single file in supported pro-
+for PR review tasks. Our overarching objective is to         gramming languages and discard those where
+construct a high-quality dataset tailored to the de-         the combined length of PR metadata and orig-
+velopment and evaluation of LLM-based PR review              inal code exceeds 32K tokens, ensuring fair
+models. To this end, we systematically designed a            comparison across most large language mod-
+data pipeline that ensures each review instance is           els. Support for multi-file changes and long-
+not only contextually grounded and semantically              context data will be added in future versions.
+meaningful but also suitable for both supervised
+                                                          4. Safety Filtering: We apply GPT-4o-based
+learning and structured evaluation. Our approach
+                                                             safety screening mechanisms to remove PRs
+emphasizes data integrity, contextual richness, and
+                                                             that potentially contain harmful, offensive, or
+alignment with real-world software development
+                                                             otherwise unsafe content.
+practices.
+                                                        LLM-Assisted PR review Generation. To con-
+Data Collection. We systematically crawl pull
+                                                        struct high-quality PR reviews, we follow a struc-
+requests from a curated set of popular, actively
+                                                        tured process involving pseudo code generation
+maintained GitHub repositories spanning five ma-
+                                                        and review synthesis:
+jor programming languages: Java, JavaScript, C++,
+C#, and Python. At this stage, we sampled approxi-        1. PR Review Instruction Generation: We
+mately 200,000 PRs as the initial dataset. For each          prompt a LLM with the PR metadata and
+pull request, we collect:                                    code diffs to generate a PR Review Instruc-
+                                                             tion, which captures the intent and objectives
+   • GT code diff: The groundtruth line-level code           of the proposed code change.
+     changes introduced by the PR.
+                                                          2. LLM Pseudo Solution: Given the original
+   • PR meta data: Natural language summaries                code and the PR Review Instruction, the LLM
+     authored by contributors describing the moti-           generates a pseudo version of the modified
+     vation and contents of the PR. Also including           code that realizes the PR’s intended function-
+     discussions, bug reports, or feature requests           ality(Simulating a PR that requires review).
+   Data generation
+                                   Original code                                             PR review
+       pipeline
+                                                                 LLM Pseudo
+                                                                   Solution
+                                     PR Review
+    PR meta data
+                                     Instruction
+
+                                                                                             PR review
+     GT code diff                                               Merged code                  Checklist
+
+
+                                                        PR review
+     PR meta data
+                                                        Checklist
+                                                                                               Score
+                                    LLM                 Generated
+     Original code
+                                                        PR review
+
+      LLM Pseudo
+        Solution                                                        Model evaluation pipeline
+
+
+Figure 1: Overview of the PR review workflow, illustrating the transition from original code through generated
+solutions to final merged code, supported by a structured data generation and model evaluation pipeline.
+
+
+  3. Comparison and Review Generation: We                prevent models from being overly biased toward
+     compare the pseudo PR code with the actual          negative (i.e., overly "mean") outputs.
+     merged code using the LLM, identifying se-
+                                                         PR Review Task Definition. Given the in-
+     mantic and structural differences. These dis-
+                                                         puts—PR diffs, PR descriptions, linked issues, and
+     crepancies are then distilled into fine-grained,
+                                                         code context—the benchmark defines the core task
+     actionable review comments that are grounded
+                                                         as generating high-quality PR review comments
+     in the intended change context.
+                                                         that (i) are grounded in the code changes, (ii)
+   This structured approach ensures that the gen-        demonstrate contextual understanding of the PR’s
+erated review comments are closely aligned with          intent, and (iii) provide actionable, constructive
+meaningful code changes, rather than superficial         feedback.
+text edits. By grounding feedback in intentional         Ground-Truth Checklist Generation. From the
+discrepancies between LLM-generated and ground-          structured diffs between modified and merged code,
+truth implementations, our method produces re-           we automatically derive a ground-truth checklist
+views that are precise, actionable, and free from        for each PR. Each checklist item corresponds to a
+the noise typically found in human-authored PR           discrete verification point, such as enforcing con-
+comments. After this stage, approximately 45,000         sistent naming conventions, ensuring proper error
+PRs were retained.                                       handling, optimizing performance-critical paths, or
+The Sphinx Benchmark Construction                        adhering to project-specific APIs. This checklist
+                                                         serves as a structured representation of what a thor-
+To construct the Sphinx benchmark, we randomly
+                                                         ough reviewer would be expected to verify based
+sample 500 data-points for each programming lan-
+                                                         on the actual code modifications.
+guage represented in the Sphinx dataset (2500 in
+total for 5 languages). Among these, 450 buggy           Evaluation Protocol. Rather than relying solely
+examples are selected, while the remaining 50 are        on lexical overlap metrics, we adopt the Checklist-
+confirmed to be bug-free. This sampling strategy         based Evaluation Framework. Specifically, for
+allows the benchmark to evaluate both the ability        each PR, the ground-truth checklist provides
+to identify defects and the precision in recognizing     the set of essential verification points. Then
+correct code changes. Including bug-free exam-           the model-generated review comments are as-
+ples reflects realistic PR review scenarios and helps    sessed using an LLM to judge whether they ad-
+equately address each checklist item. We further            • Other: Covers changes that do not clearly fall
+define a weighted scoring function that consid-               into the above categories, including documen-
+ers both buggy (checklist-based) and bug-free (no-            tation updates, build script modifications, or
+comment) cases, shown in Equation. (1).                       miscellaneous edits.
+                                                         Human Verification
+                                                    
+                                       n        (i)      We conducted a survey to evaluate the reliabil-
+                                   1 X  Sbuggy 
+   Checklist-coverage Score = λ·                 (i)
+                                                         ity of our benchmark from three perspectives:
+                                   n          Nbuggy
+                                     i=1                 Consistency between Review and Code Changes,
+                                                         Ground-Truth Checklist Completeness & Accuracy,
+                                              
+                              m      (j)
+                           1 X  Sbug-free 
+              + (1 − λ) ·             (j)
+                                                     (1) and Practical Helpfulness & Alignment with De-
+                           m        N                    veloper Needs. We sampled 30 cases and collected
+                             j=1      bug-free
+                                                         responses from 20 reviewers. The resulting Mean
+           (i)         (j)                               Opinion Score (MOS) and Inter-rater Reliability
+   Here, Sbuggy and Sbug-free denote the checklist
+coverage counts for the i-th buggy case and the j- (ICC(2,k)) were 4.13 and 0.87, respectively, demon-
+                                 (i)            (j)
+th bug-free case, respectively. Nbuggy and Nbug-free     strating the effectiveness of our benchmark. Further
+represent the number of checklist items in each          details are provided in the Appendix.
+case. For bug-free cases, the checklist contains only
+                                                         The Sphinx Model Training Pipeline
+one item: “No comment.”
+   In our experiments, n is 450 and m is 50 for          We use 41,700 examples from the Sphinx dataset
+each language and we set λ = 0.9 to emphasize            as our training set. We first apply supervised fine-
+the contribution of checklist-based cases in the final   tuning to adapt the base model to the PR review
+metric.                                                  task. Then, we perform post-training to further en-
+                                                         hance the model’s generalization ability on PR re-
+Benchmark Statistics                                     view.
+To support systematic evaluation, we construct
+a benchmark composed of 2,500 pull requests,             Supervised Finetuning (SFT) Stage
+spanning five widely-used programming languages:         In the supervised finetuning stage, we train the
+Python, JavaScript, Java, C#, and C++. For each          model using labeled data from the Sphinx dataset,
+language, the benchmark includes 450 buggy cases         where each training instance consists of PR code
+and 50 bug-free cases, as visualized in Figure 4.        diffs, PR descriptions, linked issues, and the cor-
+The buggy cases contain realistic issues drawn from      responding reference review comments. The goal
+real-world development workflows, such as logic          of this stage is to align the model’s output with
+bugs, missing validations, API misuse, and naming        high-quality, checklist-grounded review behaviors
+inconsistencies. Each bug-free case corresponds to       by minimizing the discrepancy between predicted
+a clean code change, where the appropriate review        and target comments.
+response should be “No comment.” We categorize
+                                                         Post-training Stage
+buggy samples into several semantic types, includ-
+ing:                                                     Unlike code generation tasks with deterministic
+                                                         objectives, PR review is an open-ended task that
+   • Bug Fix: Addresses an error, defect, or un-         lacks a rule-based reward function, making it espe-
+     intended behavior in the codebase to restore        cially prone to reward hacking when using heuristic
+     correct functionality.                              evaluators such as LLM-as-a-judge (Zheng et al.,
+                                                         2023). In prior work, Constitutional AI (Bai et al.,
+   • Feature / Improvement: Introduces new
+                                                         2022) addresses such alignment by generating re-
+     functionality or enhances existing features,
+                                                         wards through critiques conditioned on a small set
+     improving the capabilities or usability of the
+                                                         of handcrafted principles, formulated as:
+     system.
+
+   • Refactor / Maintenance: Involves restructur-
+                                                               R = C ∼ rθ x, {yj }nj=1 , {pj }m
+                                                                                                 
+                                                                                              j=1 ,       (2)
+     ing the code without altering its external be-
+     havior, such as code refactoring, dependency         where x is the input (e.g., a code diff), {yj } are
+     updates, or formatting adjustments.                 model responses, {pj } are guiding principles, C is
+                         Sphinx
+
+
+
+
+                                                                Benchmark
+                                                                 Statistic
+
+
+
+                                                                   Dataset Statistic
+
+
+
+
+           Dataset: 41700 in total
+          Benchmark: 2500 in total
+
+Figure 2: Data statistics of the Sphnix dataset and benchmark used for model training and evaluation. Details are in
+the Appendix.
+
+
+a free-form critique, rθ is the reward function and         review, where vague or inconsistent critiques may
+R is the resulting reward. While effective in gen-          lead to reward misalignment. Furthermore, because
+eral domains, this paradigm depends on generating           checklist items are predefined and task-specific,
+textual critiques, which can be vague, inconsistent,        this paradigm enables reproducible reward com-
+or even exploitable.                                        putation and straightforward debugging—qualities
+                                                            that are critical for scaling LLM-based evaluation
+   To address these limitations in structured tasks         in structured domains.
+like PR review, we propose replacing free-form cri-
+tiques with structured checklists derived directly             While checklist-based reward brings strong inter-
+from semantic code diffs. These checklists consist          pretability and alignment benefits, it also introduces
+of concrete, verifiable items that serve as both eval-      a potential vulnerability: longer review comments
+uation anchors and discrete reward components.              may have a higher likelihood of satisfying more
+We formalize this approach as a new reward gen-             checklist items, which can inadvertently encourage
+eration paradigm: checklist-scalar, extending the           verbose outputs and lead to reward inflation. To
+standard taxonomy of scalar, semi-scalar, and gen-          mitigate this risk, we incorporate a smooth length-
+erative paradigms. Unlike prior methods that rely           based penalty into the reward formulation. The
+on free-form output, checklist-scalar defines reward        penalty is defined based on the ratio between the
+as a function of checklist completion, offering con-        predicted and reference checklist lengths—it re-
+sistent, interpretable, and domain-aligned super-           mains zero when the prediction length is within
+vision. Checklist-scalar removes the reliance on            M × of the reference, and increases quadratically
+natural language outputs, reducing variance and             up to a cap when the length exceeds N ×. This
+mitigating reward hacking risks. This is particu-           penalty is applied multiplicatively to the final re-
+larly important in high-stakes settings such as code        ward, softly discouraging excessive verbosity while
+preserving flexibility for legitimate longer comple-     Quantitative Results
+tions. This design helps maintain the precision and
+                                                         Model Performance Analysis on the Sphinx
+conciseness of generated reviews without destabi-
+                                                         Benchmark
+lizing training.
+                                                         Table 1 summarizes the performance of a wide
+   The reward is defined as in (3), where GTi is         range of large language models (LLMs) on the
+the groundtruth code review, CLi are the gen-            Sphinx benchmark, evaluated across five program-
+erated checklist items, pθ is the checklist gen-         ming languages (JavaScript, Java, C++, Python,
+eration model and γ(|{yi }ni=1 |, |{CLi }m i=1 |) is a   and C#). We report both traditional generation met-
+smooth penalty factor based on the ratio between         rics (BLEU-1 and ROUGE-L) and our task-specific
+the predicted length |{yi }ni=1 | and the reference      metric, the Checklist Score, which better reflects
+length |{CLi }mi=1 |. The penalty remains 1 when         semantic correctness, review precision, and action-
+|{yi }i=1 | ≤ M · |{CLi }m
+      n
+                          i=1 |, and decays quadrat-     able coverage in the context of PR review.
+ically when |{yi }ni=1 | > N · |{CLi }m i=1 |, up to a      Off-the-shelf open models (highlighted in
+capped minimum.                                          green) exhibit moderate performance, with most
+   We refer to this framework as Checklist Re-           achieving Checklist Scores in the range of 20–30.
+ward Policy Optimization (CRPO), an adaptation of        Among these, Qwen2-5.72B-Ins performs the best,
+Group Relative Policy Optimization (GRPO) (Shao          attaining an average Checklist Score of 30.53, with
+et al., 2024) that integrates structured checklist re-   particularly strong results in Python (38.13) and
+wards with calibrated length control. We also re-        C# (34.05). However, even the top open models
+moved the KL loss in the original GRPO when              struggle with complex review reasoning and con-
+training. CRPO provides consistent, interpretable,       sistency across all languages, indicating limitations
+and robust reward signals without relying on free-       in general-purpose instruction tuning for this spe-
+form critiques, promoting precise and high-quality       cialized task.
+code review generation.                                     Proprietary LLMs (highlighted in orange), in-
+                                                         cluding GPT-4, Claude 3, and Gemini, demon-
+                                                         strate significantly higher Checklist Scores across
+Benchmarking and Experiment Results                      all languages. GPT-4.0 achieves the highest aver-
+                                                         age among these at 34.23, followed by Claude
+                                                         3.5 Sonnet (33.61) and Gemini 2.5 Pro (32.75).
+We conduct evaluations on a wide range of LLMs           These results underscore the benefits of large-scale
+using our newly proposed Sphinx benchmark. The           alignment and proprietary reinforcement strate-
+tested models include both commercial and open-          gies, though the closed nature of these models lim-
+source systems, including commercial models such         its transparency and adaptability. In contrast, our
+as GPT-4.1, GPT-4o etc. On the open-source side,         fine-tuned Sphinx models achieve the best over-
+we evaluate models such as DeepSeek series, Qwen         all performance by a wide margin. Sphinx-4o-SFT
+series etc. All the LLMs we used in the project          reaches an average Checklist Score of 41.12, out-
+is GPT-4o. All evaluations follow the official in-       performing GPT-4o by +6.89. These improvements
+ference settings released by the respective model        are consistent across all five languages, with no-
+developers, ensuring a fair comparison. We uni-          table gains in traditionally challenging domains
+formly apply a standardized prompt template to           like C++ (44.84) and C# (45.83). The strong perfor-
+maintain consistency across all evaluations. In ad-      mance illustrates the effectiveness of our checklist-
+dition to evaluating off-the-shelf models, we fur-       guided supervised finetuning and reward design,
+ther conduct supervised fine-tuning on both closed-      which provides the model with fine-grained, inter-
+source and open-source LLMs using the Sphinx             pretable supervision signals tailored to real-world
+dataset. Specifically, we fine-tune GPT-4o and GPT-      review practices.
+4o-mini for the closed-source setting, and Qwen2.5-         Interestingly, although BLEU-1 and ROUGE-L
+Coder-7B and Qwen2.5-Coder-14B for the open-             scores remain relatively close across many mod-
+source setting. Notice that, GPT-4o and GPT-4o-          els, the Checklist Score exhibits much higher vari-
+mini donot support GRPO training, so we just re-         ance and discriminative power. For instance, while
+port the result after SFT. More details can be seen      GPT-4 and Sphinx-40-SFT have similar ROUGE-L
+in the Appendix.                                         scores (around 14.9), their Checklist Scores differ
+                    {CLi }m                 n
+                                               
+                          i=1 ∼ pθ x, {GTi }i=1 ,                                                                            (3)
+                                        |{yi }ni=1 |, |{CLi }m       · rθ x, {yi }ni=1 , {CLi }m
+                                                                                                    
+                               R=γ                           i=1 |                             i=1
+
+
+
+                                           BLEU-1    ROUGE-L                      Checklist-coverage score
+                     Metrics
+                                            Avg.        Avg.         JS   Java    C++     Python      C#             Avg.
+            Models
+        Starcoder (Li et al., 2023)         1.64        2.60     14.53    13.56   13.95   16.28      15.58       14.78
+  Starcoder2-7B (Lozhkov et al., 2024)      1.78        2.56     15.35    18.13   15.32   18.97      16.05       16.76
+  Starcoder2-15B (Lozhkov et al., 2024)     1.65        2.65     17.34    19.06   22.67   22.58      19.28       20.19
+ LLama3.3-70B (Grattafiori et al., 2024)    7.37        8.71     16.22    17.32   21.06   22.81      25.97       20.68
+  Qwen2.5-Coder-7B (Hui et al., 2024)       10.51      12.04     14.29    17.42   26.64   28.34      25.83       22.50
+  Qwen2.5-Coder-14B (Hui et al., 2024)      11.02      12.59     17.36    20.05   28.88   30.72      28.95       25.19
+      Phi-4-14B (Abdin et al., 2024)        2.46        3.33     21.40    24.53   26.90   25.51      27.80       25.23
+     Deepseek-R1 (Guo et al., 2025)         11.07      12.13     16.74    20.72   27.87   32.60      30.09       25.60
+  Qwen2.5-Coder-32B (Hui et al., 2024)      11.74      12.06     22.32    22.40   29.03   28.24      26.17       25.63
+     Qwen3-32B (Yang et al., 2024a)         5.05        6.53     19.71    19.47   29.99   32.15      28.96       26.06
+      DeepSeek-v3 (Liu et al., 2024)        11.61      12.71     16.94    22.34   28.58   32.99      31.39       26.45
+  DSCoder-V2-L-Ins (Zhu et al., 2024)       11.40      11.70     22.31    27.76   22.79   29.00      38.57       28.09
+  Qwen3-30B-A3B (Yang et al., 2024a)        11.42      12.81     18.62    21.96   34.02   38.08      33.03       29.14
+ Qwen3-235B-A22B (Yang et al., 2024a)       10.93      12.30     19.30    23.36   32.51   38.88      34.31       29.67
+  Qwen2.5-72B-Ins (Yang et al., 2024a)      11.52      12.22     21.42    24.94   33.10   38.13      35.06       30.53
+     GPT4.1-nano (OpenAI, 2025a)            10.90      12.32     15.35    21.88   31.48   26.27      32.14       25.42
+     GPT4.1-mini (OpenAI, 2025a)            11.56      12.64     15.59    21.57   31.38   32.78      32.38       26.74
+      GPT-4omini (OpenAI, 2024)             12.24      13.65     17.98    22.56   32.80   36.73      34.13       28.84
+      GPT4o-0806 (OpenAI, 2024)             12.35      13.38     18.23    22.93   34.39   37.15      34.32       29.40
+   Claude3.5-Sonnet (Anthropic, 2024)       11.50      12.49     18.24    23.07   33.63   36.95      37.16       29.81
+      GPT-o3mini (OpenAI, 2025b)            12.65      13.45     18.03    23.84   37.68   39.73      34.94       30.84
+   Claude3.7-Sonnet (Anthropic, 2025)       11.40      12.25     19.48    25.92   35.68   38.20      37.68       31.39
+      GPT-o4mini (OpenAI, 2025b)            10.87      12.16     20.47    23.82   34.93   40.81      40.01       32.01
+    Gemini2.5-Pro (DeepMind, 2025)          11.10      12.90     21.30    26.31   38.59   40.80      36.75       32.75
+        GPT4.1 (OpenAI, 2025a)              11.50      12.52     21.82    26.46   41.85    42.4      38.62       34.23
+              Sphinx-7B                     11.52      13.15     17.56    23.80   28.34   29.43      29.53   25.73(+14.36%)
+             Sphinx-14B                     11.86      13.65     21.71    28.49   33.32   33.02      34.54   30.21(+19.92%)
+          Sphinx-4omini-SFT                 12.74      14.76     29.74    36.84   43.7    41.87      37.82   37.99(+31.72%)
+            Sphinx-4o-SFT                   12.77      14.93     33.84    40.16   44.84   41.94      44.83   41.12(+39.86%)
+
+Table 1: LLM performance on the Sphinx benchmark. We report BLEU-1, ROUGE-L, and Checklist-coverage
+scores. Green rows show off-the-shelf models, orange rows are proprietary baselines, and purple rows are fine-tuned
+models.
+
+
+substantially (34.23 vs. 41.12). This reinforces our
+earlier claim that BLEU and ROUGE do not ad-
+equately capture the semantic completeness or                                 Metrics
+technical accuracy required in PR review.                                                   BLEU-1         ROUGE-L          CLC
+                                                                     Models
+                                                                  Qwen2.5-Coder-7B           10.51           12.04          22.50
+Effectiveness of Checklist-Based Training and                       Sphinx-7B-SFT            11.89           13.08          24.10
+                                                                 Sphinx-7B-SFT-CRPO          11.52           13.15          25.73
+Optimization
+                                                                  Qwen2.5-Coder-14B          11.02           12.59          25.19
+As shown in Table 2, both supervised finetuning                     Sphinx-14B-SFT           11.67           13.15          28.38
+(SFT) and CRPO contribute to consistent perfor-                  Sphinx-14B-SFT-CRPO         11.86           13.65          30.21
+mance improvements. The checklist score increases
+                                                               Table 2: SFT & CRPO Performances. We report
+by up to +5.02 points for the 14B model (from
+                                                               BLEU-1, ROUGE-L, and Checklist-coverage scores.
+25.19 to 30.21), highlighting the effectiveness of             Both SFT and CRPO can bring performance gains.
+checklist-aligned reward signals. To better under-
+stand the learning dynamics, we visualize the mean
+critic reward and response length during CRPO
+training in Figure 3. The left plot shows a steady in-   generation. Second, we evaluate the impact of re-
+crease in reward, indicating that the model is learn-    moving the length penalty from the CRPO reward.
+ing to generate outputs better aligned with checklist    Without this regularization, BLEU and ROUGE
+objectives. Meanwhile, the average response length       scores degrade severely, despite a comparable
+remains relatively stable, suggesting that the reward    checklist coverage. This indicates that the model
+improvement is not simply due to longer responses        learns to game the reward by generating excessively
+but rather more targeted and semantically relevant       verbose outputs that superficially match checklist
+content. These results demonstrate that our rule-        terms. Lastly, we reintroduce a KL divergence loss
+based reward not only guides the model toward            during CRPO training which leads to consistent
+better checklist coverage but also promotes stable       drops across all metrics, suggesting that the base
+and efficient learning.                                  model may be not well aligned with the data dis-
+                                                         tribution in our Sphinx dataset. Overall, these re-
+                                                         sults demonstrate that each component—checklist-
+                                                         guided reward, length regularization, and train-
+                                                         ing objective—plays an essential role in achiev-
+                                                         ing high-quality, concise, and targeted code review
+                                                         generation.
+
+                                                         Qualitative Analysis
+                                                         The example shows that Sphinx-14B achieves com-
+                                                         plete checklist coverage, correctly handling both
+                                                         conditional credential setting and clearing logic. In
+                                                         contrast, Qwen2.5-14B-instruct omits key checks,
+                                                         such as verifying field presence and using elif
+                                                         to avoid overwriting existing values. Coverage is
+                                                         visually indicated with green for matched items
+Figure 3: Reward(Left)/Response Length(Right) varia-     and red for missing ones.
+tion over steps.
+                                                            Checklist Coverage: Qwen2.5-Coder2.5-
+                                                            14B-instruct vs. Sphinx-14B
+           Metrics
+                     BLEU-1    ROUGE-L      CLC Score
+ Models                                                       Groundtruth checklist
+ LLM-as-a-judge       11.07      12.24        25.12           [
+ No length penalty     3.25      4.86         25.35           "Refactor authentication check to verify
+  With KL loss        10.78      12.35        22.86           both mail_useauth and at least one
+                                                              credential (mail_u or mail_p) exist
+    Sphinx-7B         11.52      13.15        25.73           (ensures credentials are only set when
+                                                              provided)",
+                                                              "Update credential clearing logic to use
+Table 3: Ablations when using the Sphinx dataset.             an elif clause when mail_useauth is None
+                                                              (preserves existing credentials when an
+We report BLEU-1, ROUGE-L, and Checklist-coverage             empty value is intentionally submitted)"
+scores. Both SFT and CRPO can bring performance               ]
+
+gains.                                                        Qwen2.5-Coder2.5-14B-instruct           (Checklist     Coverage
+                                                              Score:0.5)
+                                                              ...
+                                                                Sets credentials if mail_useauth is checked.
+Ablation study
+                                                               Clears them if unchecked.
+To better understand the contribution of various              Missing: No check for whether mail_u or mail_p is present.
+training components in our pipeline, we conduct                 No elif logic for preserving existing credentials.
+                                                              ...
+three ablation studies. As shown in Table. 3, we
+firstly replace the checklist-based reward with an            Sphinx-14B (Checklist Coverage Score:1.0)
+                                                              ...
+LLM-as-a-judge (Zheng et al., 2023) reward. While               • Handles mail_useauth=None by clearing credentials.
+this approach yields reasonable performance, it                • Checks if mail_u or mail_p exists before setting.
+still underperforms our full model, suggesting that             • Uses elif to avoid overwriting existing values.
+                                                              ...
+general-purpose reward models may lack the neces-
+sary task-specific signal for structured code review
+Conclusion                                                 Software Engineering: Software Engineering in Prac-
+                                                           tice, pages 204–215.
+We introduce Sphinx, a comprehensive framework
+for LLM-based PR review, including a large-scale         Aaron Grattafiori, Abhimanyu Dubey, Abhinav Jauhri,
+                                                           Abhinav Pandey, Abhishek Kadian, Ahmad Al-Dahle,
+dataset and benchmark, task-aligned evaluation             Aiesha Letman, Akhil Mathur, Alan Schelten, Alex
+metric, and reward-driven training method. By com-         Vaughan, et al. 2024. The llama 3 herd of models.
+bining supervised finetuning with checklist-guided         arXiv preprint arXiv:2407.21783.
+reward optimization, our models significantly out-
+                                                         Daya Guo, Dejian Yang, Haowei Zhang, Junxiao Song,
+perform both open and proprietary baselines on             Ruoyu Zhang, Runxin Xu, Qihao Zhu, Shirong Ma,
+the Sphinx benchmark. These results highlight the          Peiyi Wang, Xiao Bi, et al. 2025. Deepseek-r1: In-
+value of structured supervision and interpretable          centivizing reasoning capability in llms via reinforce-
+reward design for open-ended code review tasks.            ment learning. arXiv preprint arXiv:2501.12948.
+Future work will explore multi-file PRs, human-          Binyuan Hui, Jian Yang, Zeyu Cui, Jiaxi Yang, Day-
+in-the-loop evaluation, and broader applications in        iheng Liu, Lei Zhang, Tianyu Liu, Jiajun Zhang,
+collaborative software development.                        Bowen Yu, Keming Lu, et al. 2024. Qwen2. 5-coder
+                                                           technical report. arXiv preprint arXiv:2409.12186.
+
+                                                         Raymond Li, Loubna Ben Allal, Yangtian Zi, Niklas
+References                                                 Muennighoff, Denis Kocetkov, Chenghao Mou, Marc
+Marah Abdin, Jyoti Aneja, Harkirat Behl, Sébastien         Marone, Christopher Akiki, Jia Li, Jenny Chim, et al.
+ Bubeck, Ronen Eldan, Suriya Gunasekar, Michael            2023. Starcoder: may the source be with you! arXiv
+ Harrison, Russell J Hewett, Mojan Javaheripi, Piero       preprint arXiv:2305.06161.
+ Kauffmann, et al. 2024. Phi-4 technical report. arXiv
+ preprint arXiv:2412.08905.                              Yingling Li, Yuhan Wu, Zi’ao Wang, Lei Huang, Junjie
+                                                           Wang, Jianping Li, and Minying Huang. 2025. Code-
+Anthropic. 2024. Claude 3.5 sonnet. https://www.           doctor: multi-category code review comment genera-
+  anthropic.com/news/claude-3-5-sonnet. Accessed:          tion. Automated Software Engineering, 32(1):25.
+  2025-05-12.
+                                                         Zhiyu Li, Shuai Lu, Daya Guo, Nan Duan, Shailesh
+Anthropic. 2025. Claude 3.7 sonnet. https://www.           Jannu, Grant Jenks, Deep Majumder, Jared Green,
+  anthropic.com/claude/sonnet. Accessed: 2025-05-          Alexey Svyatkovskiy, Shengyu Fu, et al. 2022. Au-
+  12.                                                      tomating code review activities by large-scale pre-
+                                                           training. In Proceedings of the 30th ACM Joint Eu-
+Yuntao Bai, Saurav Kadavath, Sandipan Kundu,               ropean Software Engineering Conference and Sym-
+  Amanda Askell, Jackson Kernion, Andy Jones,              posium on the Foundations of Software Engineering,
+  Anna Chen, Anna Goldie, Azalia Mirhoseini,               pages 1035–1047.
+  Cameron McKinnon, et al. 2022. Constitutional
+  ai: Harmlessness from ai feedback. arXiv preprint      Chin-Yew Lin. 2004. Rouge: A package for automatic
+  arXiv:2212.08073.                                        evaluation of summaries. In Text summarization
+                                                           branches out, pages 74–81.
+Umut Cihan, Vahid Haratian, Arda İçöz, Mert Kaan
+ Gül, Ömercan Devran, Emircan Furkan Bayendur,           Hong Yi Lin, Patanamon Thongtanunam, Christoph
+ Baykal Mehmet Uçar, and Eray Tüzün. 2024. Au-             Treude, and Wachiraphan Charoenwet. 2024. Im-
+ tomated code review in practice. arXiv preprint           proving automated code reviews: Learning from ex-
+ arXiv:2412.18531.                                         perience. In Proceedings of the 21st International
+                                                           Conference on Mining Software Repositories, pages
+Google DeepMind. 2025.            Gemini 2.5 pro.          278–283.
+  https://cloud.google.com/vertex-ai/generative-ai/
+  docs/models/gemini/2-5-pro. Accessed: 2025-05-12.      Aixin Liu, Bei Feng, Bing Xue, Bingxuan Wang,
+                                                           Bochao Wu, Chengda Lu, Chenggang Zhao, Chengqi
+Zhangyin Feng, Daya Guo, Duyu Tang, Nan Duan, Xi-          Deng, Chenyu Zhang, Chong Ruan, et al. 2024.
+  aocheng Feng, Ming Gong, Linjun Shou, Bing Qin,          Deepseek-v3 technical report.   arXiv preprint
+  Ting Liu, Daxin Jiang, et al. 2020. Codebert: A          arXiv:2412.19437.
+  pre-trained model for programming and natural lan-
+  guages. arXiv preprint arXiv:2002.08155.               Jiawei Liu and Lingming Zhang. 2025. Code-r1: Repro-
+                                                            ducing r1 for code with reliable rewards.
+Alexander Frömmgen, Jacob Austin, Peter Choy,
+  Nimesh Ghelani, Lera Kharatyan, Gabriela Surita,       Anton Lozhkov, Raymond Li, Loubna Ben Allal, Fed-
+  Elena Khrapko, Pascal Lamblin, Pierre-Antoine Man-       erico Cassano, Joel Lamy-Poirier, Nouamane Tazi,
+  zagol, Marcus Revaj, et al. 2024. Resolving code         Ao Tang, Dmytro Pykhtar, Jiawei Liu, Yuxiang Wei,
+  review comments with machine learning. In Pro-           et al. 2024. Starcoder 2 and the stack v2: The next
+  ceedings of the 46th International Conference on         generation. arXiv preprint arXiv:2402.19173.
+Junyi Lu, Lili Jiang, Xiaojia Li, Jianbing Fang, Fengjun   An Yang, Baosong Yang, Beichen Zhang, Binyuan
+  Zhang, Li Yang, and Chun Zuo. 2025. Towards prac-          Hui, Bo Zheng, Bowen Yu, Chengyuan Li, Dayi-
+  tical defect-focused automated code review. arXiv          heng Liu, Fei Huang, Haoran Wei, Huan Lin, Jian
+  preprint arXiv:2505.17928.                                 Yang, Jianhong Tu, Jianwei Zhang, Jianxin Yang,
+                                                             Jiaxi Yang, Jingren Zhou, Junyang Lin, Kai Dang,
+Junyi Lu, Lei Yu, Xiaojia Li, Li Yang, and Chun              Keming Lu, Keqin Bao, Kexin Yang, Le Yu, Mei
+  Zuo. 2023. Llama-reviewer: Advancing code re-              Li, Mingfeng Xue, Pei Zhang, Qin Zhu, Rui Men,
+  view automation with large language models through         Runji Lin, Tianhao Li, Tingyu Xia, Xingzhang Ren,
+  parameter-efficient fine-tuning. In 2023 IEEE 34th         Xuancheng Ren, Yang Fan, Yang Su, Yichang Zhang,
+  International Symposium on Software Reliability En-        Yu Wan, Yuqiong Liu, Zeyu Cui, Zhenru Zhang, and
+  gineering (ISSRE), pages 647–658. IEEE.                    Zihan Qiu. 2024a. Qwen2.5 technical report. arXiv
+                                                             preprint arXiv:2412.15115.
+John E Naulty, Eason Chen, Joy Wang, George Digkas,
+  and Kostas Chalkias. 2025. Bugdar: Ai-augmented          Dayu Yang, Tianyang Liu, Daoan Zhang, Antoine
+  secure code review for github pull requests. In 2025       Simoulin, Xiaoyi Liu, Yuwei Cao, Zhaopu Teng, Xin
+  IEEE Conference on Artificial Intelligence (CAI),          Qian, Grey Yang, Jiebo Luo, et al. 2025. Code to
+  pages 613–616. IEEE.                                       think, think to code: A survey on code-enhanced rea-
+                                                             soning and reasoning-driven code intelligence in llms.
+OpenAI. 2024. Gpt-4o technical preview. Accessed:            arXiv preprint arXiv:2502.19411.
+  2025-05-11.
+                                                           Zezhou Yang, Cuiyun Gao, Zhaoqiang Guo, Zhenhao Li,
+OpenAI. 2025a. Chatgpt (gpt-4.1). https://chat.openai.       Kui Liu, Xin Xia, and Yuming Zhou. 2024b. A sur-
+  com/chat. Accessed: 2025-05-12.                            vey on modern code review: Progresses, challenges
+                                                             and opportunities. arXiv preprint arXiv:2405.18216.
+OpenAI. 2025b.          Introducing openai o3
+  and o4-mini.           https://openai.com/index/         Yongda Yu, Guoping Rong, Haifeng Shen, He Zhang,
+  introducing-o3-and-o4-mini/. Accessed: 2025-04-            Dong Shao, Min Wang, Zhao Wei, Yong Xu, and
+  16.                                                        Juhong Wang. 2024. Fine-tuning large language
+                                                             models to improve accuracy and comprehensibility
+Kishore Papineni, Salim Roukos, Todd Ward, and Wei-
+                                                             of automated code review. ACM transactions on
+  Jing Zhu. 2002. Bleu: a method for automatic evalu-
+                                                             software engineering and methodology, 34(1):1–26.
+  ation of machine translation. In Proceedings of the
+  40th annual meeting of the Association for Computa-      Xunhui Zhang, Yue Yu, Georgios Gousios, and Ayushi
+  tional Linguistics, pages 311–318.                         Rastogi. 2022. Pull request decisions explained: An
+                                                             empirical overview. IEEE Transactions on Software
+Zhihong Shao, Peiyi Wang, Qihao Zhu, Runxin Xu,
+                                                             Engineering, 49(2):849–871.
+  Junxiao Song, Xiao Bi, Haowei Zhang, Mingchuan
+  Zhang, YK Li, Y Wu, et al. 2024. Deepseekmath:           Guoliang Zhao, Daniel Alencar da Costa, and Ying Zou.
+  Pushing the limits of mathematical reasoning in open       2019. Improving the pull requests review process us-
+  language models. arXiv preprint arXiv:2402.03300.          ing learning-to-rank algorithms. Empirical Software
+                                                             Engineering, 24:2140–2170.
+Emre Sülün, Eray Tüzün, and Uğur Doğrusöz. 2021.
+  Rstrace+: Reviewer suggestion using software arti-       Lianmin Zheng, Wei-Lin Chiang, Ying Sheng, Siyuan
+  fact traceability graphs. Information and Software         Zhuang, Zhanghao Wu, Yonghao Zhuang, Zi Lin,
+  Technology, 130:106455.                                    Zhuohan Li, Dacheng Li, Eric Xing, et al. 2023. Judg-
+                                                             ing llm-as-a-judge with mt-bench and chatbot arena.
+Tao Sun, Jian Xu, Yuanpeng Li, Zhao Yan, Ge Zhang,
+                                                             Advances in Neural Information Processing Systems,
+  Lintao Xie, Lu Geng, Zheng Wang, Yueyan Chen,
+                                                             36:46595–46623.
+  Qin Lin, et al. 2025. Bitsai-cr: Automated code re-
+  view via llm in practice. In Proceedings of the 33rd     Qihao Zhu, Daya Guo, Zhihong Shao, Dejian Yang,
+  ACM International Conference on the Foundations            Peiyi Wang, Runxin Xu, Y Wu, Yukun Li, Huazuo
+  of Software Engineering, pages 274–285.                    Gao, Shirong Ma, et al. 2024. Deepseek-coder-v2:
+                                                             Breaking the barrier of closed-source models in code
+Patanamon Thongtanunam, Chanathip Pornprasit, and
+                                                             intelligence. arXiv preprint arXiv:2406.11931.
+  Chakkrit Tantithamthavorn. 2022. Autotransform:
+  Automated code transformation to support modern
+  code review process. In Proceedings of the 44th
+  international conference on software engineering,
+  pages 237–248.
+
+Rosalia Tufano, Simone Masiero, Antonio Mastropaolo,
+  Luca Pascarella, Denys Poshyvanyk, and Gabriele
+  Bavota. 2022. Using pre-trained models to boost
+  code review automation. In Proceedings of the 44th
+  international conference on software engineering,
+  pages 2291–2302.
+Broader Impacts                                               – Bug Fix: 427 samples
+                                                              – Feature / Improvement: 13 sam-
+Sphinx can positively influence software quality
+                                                                ples
+by making code review automation more accessi-
+ble, especially in large-scale or open-source set-            – Refactor / Maintenance:      0
+tings. It may also shift human roles in review work-            samples
+flows toward higher-level reasoning and mentor-               – Other: 10 samples
+ship. However, there are risks: over-reliance on
+                                                          • C#: Contains 500 total samples, composed of
+automated suggestions could suppress diverse pro-
+                                                            50 bug-free cases and 450 buggy cases. The
+gramming practices or critical thinking. Addition-
+                                                            buggy cases are categorized into:
+ally, if left unchecked, the models may propagate
+biases present in training data, such as reinforcing          – Bug Fix: 402 samples
+specific coding conventions or overlooking non-               – Feature / Improvement: 24 sam-
+standard but valid solutions. Ensuring transparency,            ples
+human oversight, and responsible deployment will              – Refactor / Maintenance:     10
+be essential as such tools gain adoption.                       samples
+                                                              – Other: 14 samples
+Data Statistics
+                                                          • Python: Contains 500 total samples, com-
+This section provides a more granular breakdown
+                                                            posed of 50 bug-free cases and 450 buggy
+of our 2,500-sample evaluation benchmark, supple-
+                                                            cases. The buggy cases are categorized into:
+menting the statistics presented in the main body
+of the paper. The benchmark samples were meticu-              – Bug Fix: 370 samples
+lously curated from a larger corpus of real-world             – Feature / Improvement: 25 sam-
+pull requests to ensure a balanced, diverse, and                ples
+challenging evaluation set across five major pro-             – Refactor / Maintenance:     39
+gramming languages.                                             samples
+   As stated in the main text, each of the five lan-
+                                                              – Other: 16 samples
+guages contributes 500 samples to the benchmark.
+These are divided into 450 “buggy” cases, which re-       • JavaScript: Contains 500 total samples, com-
+quire a code modification, and 50 “bug-free” cases,         posed of 50 bug-free cases and 450 buggy
+which serve as a negative control where no change           cases. The buggy cases are categorized into:
+is needed. The 450 buggy samples for each lan-
+guage are further broken down into four semantic              – Bug Fix: 388 samples
+categories to represent a wide spectrum of common             – Feature / Improvement: 28 sam-
+development tasks.                                              ples
+   The specific distribution for each language is as          – Refactor / Maintenance:     22
+follows:                                                        samples
+                                                              – Other: 12 samples
+   • Java: Contains 500 total samples, composed
+     of 50 bug-free cases and 450 buggy cases. The        This detailed breakdown shows the benchmark
+     buggy cases are categorized into:                 is heavily weighted towards the Bug Fix cate-
+                                                       gory (totaling 1,981 samples), which aligns with
+       – Bug Fix: 394 samples                          the primary goal of evaluating models on auto-
+       – Feature / Improvement: 25 sam-                mated program repair. The inclusion of Feature
+         ples                                          / Improvement (115 samples), Refactor /
+       – Refactor / Maintenance:     21                Maintenance (92 samples), and Other (62
+         samples                                       samples) tasks ensures that models are also tested
+       – Other: 10 samples                             on their ability to comprehend code intent be-
+                                                       yond simple error correction. Finally, the 250
+   • C++: Contains 500 total samples, composed         bug-free samples are a crucial component for
+     of 50 bug-free cases and 450 buggy cases. The     measuring a model’s precision and its ability to
+     buggy cases are categorized into:                 avoid generating false positives on correct code.
+                         Sphinx
+
+
+
+
+                                                                Benchmark
+                                                                 Statistic
+
+
+
+                                                                   Dataset Statistic
+
+
+
+
+           Dataset: 41700 in total
+          Benchmark: 2500 in total
+
+Figure 4: Data statistics of the Sphnix dataset and benchmark used for model training and evaluation. Details are in
+the Appendix.
+
+
+Further Analysis                                            to effectively mitigate this performance dispar-
+                                                            ity. While our models exhibit improved perfor-
+Across the spectrum of tested models, from open-            mance across all languages, the gains are partic-
+source systems to top-tier proprietary APIs, a              ularly pronounced in the traditionally more diffi-
+distinct performance hierarchy among languages              cult languages like C++ and Java. This observation
+emerges. Models generally demonstrate higher pro-           supports the conclusion that our targeted training
+ficiency when reviewing code written in Python and          methodology not only enhances general code re-
+C#. This trend suggests that the syntactic structure        view capabilities but is also particularly successful
+of these languages, or perhaps the sheer volume             at instilling the nuanced understanding required to
+and quality of their representation in pre-training         navigate the complexities of these more challeng-
+corpora, makes their review tasks more tractable            ing programming domains.
+for contemporary model architectures.
+   In contrast, languages such as C++ and Java con-
+sistently prove to be more challenging for the ma-          Training details
+jority of the models. The performance gap between
+a model’s score in Python versus its score in C++ is        Supervised finetuning
+often substantial. This indicates that language fea-
+tures like manual memory management, complex               We use all the 41k data for training. All the 7B and
+type systems, and intricate template metaprogram-          14B models were trained via lora with rank set to 8.
+ming in C++ present a higher barrier for automated         The initial learning rate is 5e-5 with cosine learning
+review, demanding a more profound level of code            rate schedule. The warm up step is set to 50. The
+comprehension.                                             batch size is set to 1024. We train for 165 steps for
+   Notably, our Sphinx fine-tuning process appears         both of the two models.
+CRPO training                                          C. Practical Helpfulness & Alignment with
+We use GRPO as our base training procedure and         Developer Needs
+change the reward to the checklist reward. We          ID    Statement                       Rating (1–5)
+adopted the code in code-r1 (Liu and Zhang, 2025).
+The reward model used in all our models is o3mini.     C1    The generated review would
+The learning rate is set to 1e-6 and the roll-out is         help me improve or merge
+set to 16. The gradient accumulation step is set to          this PR more efficiently.
+4. Other hypermeters are the same with those in        C2    The checklist reflects my
+code-r1.                                                     real-world concerns when
+                                                             performing code reviews.
+Human Verification
+                                                       C3   I would trust this review &
+We used a questionnaire to assess the reliability of        checklist system in my daily
+the content. We sampled 20 cases and collected re-          workflow.
+sponses from 20 reviewers from software engineer-
+                                                       C4   Overall, the combination of
+ing field. The questionnaire we used is as follows:
+                                                            review and checklist adds
+A. Consistency between Review and Code                      value over a manual review
+Changes                                                     alone.
+
+ID    Statement                        Rating (1–5)
+                                                          We further presented the distributions of all rat-
+A1    The review accurately                            ings and a heatmap of the ratings for the first 10
+      describes the functional                         PRs.
+      changes introduced by the                           As shown in Figure. 5, the rating distribution
+      PR.                                              is strongly skewed towards the positive end, indi-
+A2    The review addresses all                         cating high overall satisfaction. The most frequent
+      major code modifications                         rating is 4, which, combined with the second most
+      shown in the diff.                               frequent rating of 5, accounts for the vast major-
+                                                       ity of the data. Lower scores (1-3) are rare. This
+A3    Each review comment is                           pattern suggests that while the quality was consis-
+      mapped to the correct line(s)                    tently perceived as high, raters were conservative,
+      or section(s) of code.                           preferring to give a "very good" (4) over a "perfect"
+A4    Suggestions or critiques in                      (5) score.
+      the review are actionable                           The rating heapmap is shown in Figure 6, this
+      given the current code.                          heatmap illustrates the ratings given by differ-
+                                                       ent raters (Rater1 to Rater20) for each question
+                                                       (Q1–Q12) across the first 10 PRs (PR1 to PR10).
+B. Ground-Truth Checklist Completeness &               The abundance of dark blue areas indicates that
+Accuracy                                               ratings are mostly concentrated near the high end
+                                                       (close to 5.0), suggesting strong agreement among
+ID   Statement                         Rating (1–5)    raters. Therefore, our benchmark shows a high de-
+B1   The checklist covers all criti-                   gree of alignment with human judgment.
+     cal aspects that should be re-
+     viewed for this PR.                               Prompts used in Sphinx
+B2   No irrelevant items are                           In this section, we present the full set of prompts
+     present in the checklist.                         used throughout the Sphinx project. These prompts
+                                                       are designed to guide LLMs in various code-related
+B3   Wording of checklist items is
+                                                       tasks, including instruction generation, code syn-
+     clear and unambiguous.
+                                                       thesis, PR review, checklist creation, and evalua-
+B4   Checklist items align with                        tion. Each prompt is carefully crafted to ensure
+     the issues actually present in                    consistency, clarity, and high-quality output across
+     the code diff.                                    different components of the system. The prompts
+        Figure 5: Rating Distributions
+
+
+
+
+Figure 6: Rating Heatmaps for the first 10 PRs
+are provided in full below for reference and repro-   Prompt for LLM-generated code
+ducibility.
+                                                      You will be provided with a partial code
+                                                      base and an issue statement explaining a
+                                                      problem to resolve.
+                                                      <issue>
+                                                      PR review instruction
+                                                      </issue>
+                                                      <code>
+                                                      Original code
+                                                      </code>
+                                                      I need you to solve this issue by regenerat-
+   PR review instruction generation prompt            ing the full file content thatyou would like to
+    Problem Definition:                               change. Please respond with the complete
+    Clearly summarize the issue or need for           edited code. Do not include explanations,
+    change based on the provided problem state-       comments, or any additional text.
+    ment, related issues, and diff code. Code
+    Editing Requirement: Provide a precise and
+    detailed specification of the necessary code
+    modifications.
+    Guidelines:
+   - Focus on code modifications only: Ig-
+    nore changes related to other file types
+   (e.g., HTML, CSS, Markdown, configura-
+    tion files).
+   - Extract Key Code Elements: Identify func-
+    tion names, variable names, classes, meth-
+    ods, etc., from Diff Format Code Changes
+    to ensure precise and well-defined modifi-
+    cations.
+   - Be specific and precise: Based on the Diff
+    Format Code Changes, clearly define the
+    modification target (function names/meth-
+    ods/variables), modification logic, and
+    input-output requirements if applicable.
+   - No business context or team discussions:
+    Describe only the necessary code changes.
+    Input:
+    Problem Statement:
+   {ps metadata}
+    Related Issues:
+   {issue_info}
+    Diff Format Code Changes:
+   {GT code_diff}
+    Output json format:
+    ["problem_definition":
+    "[Concise explanation of the issue or re-
+    quirement]",
+    "code_editing_requirement":
+    [ "modification_target": "string", "modifi-
+    cation_logic": "string", ] ]
+Prompt for PR review generation
+                                                  and areas for improvement mentioned in the
+You are presented with two versions of            code reviews.
+code:                                             Checklist Requirements:
+Generated Version: a pseudo or automati-         - Output as a plain list of strings (e.g., ["En-
+cally generated implementation (e.g., from        sure X", "Avoid Y", ...]) - Each checklist
+an AI model).                                     item must be a single string
+Reference Version: a known correct or            - Start each item with an **action verb**
+ground-truth implementation.                     (e.g., "Ensure", "Avoid", "Refactor", "Ver-
+Your job is to analyze the differences be-        ify")
+tween these two versions and provide pull        - Break down each review comment into the
+request-style comments on the generated          **smallest actionable step possible**
+version.                                         - Include a short explanation inside each
+**Generated Version**:                            string in parentheses to clarify the intent
+{LLM-generated code}                             - Be specific and avoid vague instructions
+**Reference Version**:                           (e.g., "Improve performance" → "Replace
+{Merged code}                                     nested loops with hash map lookups for
+**Your responsibilities:**                        faster access (constant time instead of linear
+Point out mistakes, logical errors, or ineffi-    time)")
+ciencies in the generated version.               - Ensure the checklist fully reflects all the
+Reference how the reference version han-          points raised in the review, covering at min-
+dles the issue more correctly or efficiently.     imum:
+Offer specific, actionable suggestions for               - Readability and clarity
+how the generated version can be improved.               - Performance and efficiency
+**Review Guidelines:**                                   - Code maintainability
+Do not explain the full logic of the reference           - Security concerns
+version—focus only on how it improves                    - Error handling and logging
+upon the generated version.                              - Naming conventions and consistency
+Frame feedback as PR comments directed                   - Framework/library usage
+at the generated code.                                   - Tests and validation
+Be specific and objective. Avoid vague sug-       Use the following sample code review to
+gestions.                                         understand how to generate the checklist:
+If both versions are correct but use different    """
+approaches, discuss trade-offs (e.g., perfor-    1. Variable names like ‘a‘ and ‘b‘ are not
+mance, readability, maintainability).             meaningful.
+If both versions are functionally equivalent      2. There is a hardcoded value ‘60‘ used mul-
+and maintain similar code quality, output         tiple times.
+"No comment."                                     3. The ‘if‘ condition in line 20 is too deeply
+If the generated version omits important          nested.
+logic or uses incorrect assumptions, high-       4. No error handling around file reading.
+light these clearly.                              5. There is no test for when the input file is
+Output your feedback as a list of PR com-         empty.
+ments, each attached to a specific problem-       """
+atic pattern or line in the generated code.       Sample Output:
+                                                  [
+                                                         "Rename variables like ’a’ and ’b’ to
+PR review checklist generation                    descriptive names (improves readability and
+                                                  maintainability)",
+Based on the following code reviews, gen-                "Replace hardcoded value ’60’ with a
+erate a comprehensive and highly detailed         named constant (avoids magic numbers and
+checklist in plain list format. The check-        improves reusability)",
+list should cover all the issues, suggestions,
+                                                    Evaluation Prompt-prompt for checklist
+      "Refactor deeply nested if-condition
+                                                    score generation
+into a separate function (enhances clarity
+and modularity)",                                   You are given a checklist (a Python list of
+      "Add error handling around file read-         strings) and a code review (a string).
+ing (prevents crash on file access failures)",      Your task is to determine how many check-
+      "Add a test case for empty input files        list items are mentioned or addressed in the
+(ensures edge case is properly handled)"            code review.
+]                                                   Return only a single number — the count
+Now use the following actual code review            of checklist items that are matched in the
+to generate the checklist:                          review.
+PR review                                           if the checklist is: ’No checklist’:
+Return only the checklist as a plain list. Do               Your task is to determine whether the
+not add any explanation or formatting.              code review truely suggestion something.
+                                                            Return only a single number.
+                                                           - If the code review contains any mean-
+                                                    ingful suggestion or feedback, return 0.
+                                                            - If the code review implies there’s
+                                                    nothing to check, return 1.
+                                                           - Ignore the purpose, change and other
+                                                    infomation. focus only on the suggestions,
+                                                    if there is no suggestion/blank suggestion,
+                                                    return 1.
+                                                    Checklist: PR review checklist
+                                                    Code review: Generated PR review
+                                                    **Only output the number.**
+Evaluation Prompt-prompt for gener-
+ated PR review
+You are an expert software engineer per-         More examples
+forming a code review on a pull request.
+You are given:                                   We provide additional examples in the following
+      - The **pull request metadata**, in-       content to illustrate how our prompts and evalua-
+cluding title and description                    tion framework operate in practice. These examples
+      - The **full original version of the       cover typical outputs from different stages of the
+modified file(s)** (before changes)              pipeline, such as PR review comments, checklist
+      - The **generated code** (generated        generation, GPT model responses, and refined re-
+code introduced in the PR.)                      views produced by the Sphinx system.
+Your job is to provide **precise, objective,
+and actionable review comments** based
+                                                    PR review
+on the changes introduced in the pull re-
+quest. Use the **full original source** for         In the SqlRegistryConfig class (around its
+understanding context and identifying prob-         field definitions), consider leveraging py-
+lems.                                               dantic’s StrictStr (as in the reference ver-
+Once you have identified issues in the code,        sion) instead of plain str. This change en-
+return them as a JSON list, enclosed in back-       forces stricter type checking and helps catch
+ticks with JSON syntax highlighting.                configuration errors earlier. It would im-
+If you find the pull request is 100% correct,       prove documentation and maintainability
+output: "No comment."                               to add descriptive docstrings for the con-
+pr meta data: <pr_metadata>                         figuration fields (registry_type and path) in
+Original code: <original_file>                      SqlRegistryConfig as demonstrated in the
+LLM-generated code: <generated_code>                reference implementation.
+PR review checklist                              Sphinx-GPT generated review
+1. Update SqlRegistryConfig field defini-        In the generated version, the SqlReg-
+tions to use pydantic’s StrictStr instead of     istryConfig class is defined as a simple data-
+plain str (enforces stricter type checking and   class with a single field (path: str). In the ref-
+catches configuration errors earlier)            erence version, SqlRegistryConfig extends
+2. Add descriptive docstrings for the reg-       RegistryConfig and uses Pydantic Strict-
+istry_type and path configuration fields in      Str for type enforcement. Consider align-
+SqlRegistryConfig (improves documenta-           ing with the reference by subclassing Reg-
+tion and maintainability)"                       istryConfig and using StrictStr for the path
+                                                 field to ensure stricter type validation and
+                                                 consistency with the rest of the codebase.
+                                                 The generated version SqlRegistryConfig
+                                                 does not include the registry_type field.
+                                                 Adding this field (and its associated doc-
+                                                 string) would improve clarity and maintain
+                                                 consistency with the reference implementa-
+                                                 tion.
+                                                 The generated version __init__ method for
+                                                 SqlRegistry accepts only a RegistryConfig
+                                                 parameter, whereas the reference version al-
+                                                 lows for an Optional Union RegistryConfig,
+                                                 SqlRegistryConfig. To improve flexibility
+                                                 and future compatibility, consider updating
+                                                 the __init__ signature to accept both types
+                                                 as in the reference version.
+                                                 The generated version omits the docstring
+                                                 comments present in the reference version
+                                                 for the SqlRegistryConfig fields. Adding
+                                                 these docstrings would enhance code read-
+                                                 ability and maintainability.
+                                                 Overall, while the core logic is functionally
+                                                 equivalent, these adjustments in configura-
+                                                 tion handling and type enforcement would
+                                                 bring the generated version closer to the
+                                                 reference implementation robustness and
+                                                 clarity.
+
+GPT generated review
+
+PR Overview
+This pull request addresses a bug related to
+the use of the SQL Registry in the Feast
+project. The changes aim to enhance the
+configuration handling for SQL-based reg-
+istries.
+- Introduced a new ‘SqlRegistryConfig‘
+class that extends ‘RegistryConfig‘ with ad-
+ditional fields specific to SQL registries.
+- Updated the ‘SqlRegistry‘ class to accept
+the new ‘SqlRegistryConfig‘ type, allowing
+for more specific configuration options.
+

@@ -1,0 +1,331 @@
+                                             Automated Code Review Using Large Language
+                                               Models at Ericsson: An Experience Report
+                                                   Shweta Ramesh                        Joy Bose                    Hamender Singh                     Ak Raghavan
+                                                      Ericsson                           Ericsson                      Ericsson                           Ericsson
+                                                  Bangalore, India                  Bangalore, India              Bangalore, India                    Bangalore, India
+                                            Shweta.Ramesh@ericsson.com           joy.bose@ericsson.com       hamender.singh@ericsson.com         ak.raghavan@ericsson.com
+
+                                            Sujoy Roy Chowdhury                  Giriprasad Sridhara                  Nishrith Saini                 Ricardo Britto
+                                                    Ericsson                        Ericsson                       Ericsson                   Ericsson
+                                                Bangalore, India              Bangalore, India             Stockholm, Sweden           Stockholm, Sweden
+                                         sujoy.chowdhury@ericsson.com giriprasad.sridhara@ericsson.com nishrith.saini@ericsson.com ricardo.britto@ericsson.com
+arXiv:2507.19115v2 [cs.SE] 31 Jul 2025
+
+
+
+
+                                            Abstract—Code review is one of the primary means of assuring        Generative AI and in particular Large Language Models
+                                         the quality of released software along with testing and static      have become very popular towards automating numerous tasks
+                                         analysis. However, code review requires experienced developers      in software engineering ranging from writing of code to
+                                         who may not always have the time to perform an in-depth review
+                                         of code. Thus, automating code review can help alleviate the        testing it. In this paper, we explore Large Language Models
+                                         cognitive burden on experienced software developers allowing        towards automatically generating code reviews for our code
+                                         them to focus on their primary activities of writing code to        in Ericsson. In particular, we rely on a relatively light weight
+                                         add new features and fix bugs. In this paper, we describe our       approach that avoided expensive pre-training and instruction
+                                         experience in using Large Language Models towards automating        fine tuning for generating code reviews. We experimented
+                                         the code review process in Ericsson. We describe the development
+                                         of a lightweight tool using LLMs and static program analysis.       with various prompts to obtain a concise yet precise code
+                                         We then describe our preliminary experiments with experienced       review. We discovered that adding contextual information to
+                                         developers in evaluating our code review tool and the encouraging   the LLM’s input prompt helped the LLM generate better
+                                         results.                                                            reviews.
+                                            Index Terms—code review, large language models, program
+                                         analysis, automated code review, LLM, llama                            Our input consists of Java code lines that have been mod-
+                                                                                                             ified (to fix a bug or add a new feature). Our solution then
+                                                               I. I NTRODUCTION                              utilizes static program analysis to extract the enclosing method
+                                                                                                             of the modified lines, thus ensuring that proper context is
+                                            There are multiple orthogonal and mutually complementary         passed to the LLM. Our aim is to provide developers timely
+                                         techniques to ensure the quality of the software. Typically,        and consistent feedback as they commit their code to version
+                                         these methods include software testing that dynamically exe-        control systems such as Gerrit and Git. Thus, we integrate
+                                         cutes the software under test to detect bugs; static program        our automated code review into the workflow to ensure early
+                                         analysis that analyzes code without running it to discover          detection of issues. Our solution aims to reduce the cognitive
+                                         problems such as a potential division by zero; and code             burden that code review imposes on experienced software
+                                         reviews which involve experienced developers reading the            developers and thus allowing them to focus on their typical
+                                         code to find issues in the software.                                primary responsibilities of writing code to add new features
+                                            Code reviews are critical to ensuring the quality and            and/or fix bugs.
+                                         maintainability of software systems. They serve as a vital             A simple but naive approach to automating the code review
+                                         mechanism for detecting bugs, improving code design, and            generation is to prompt the LLM with a text message such as
+                                         facilitating knowledge sharing among team members. Despite          “Please generate a code review for the following code”.
+                                         their importance, code reviews can be challenging due to
+                                                                                                                In reality, we observed that such simple prompts do not
+                                         the programming expertise, domain knowledge, and most
+                                                                                                             work well in practice. Thus, generating meaningful reviews
+                                         importantly, time required from the developers who are chosen
+                                                                                                             requires careful consideration of the following factors:
+                                         to review the code. These reviews often impose a significant
+                                         cognitive load on developers and are highly relying on the             • What data to prompt on? The data, the code diff in
+                                         availability of senior developers, making them a bottleneck in           our case, must be passed to LLM with the right context.
+                                         the development life cycle. Moreover, the time spent reviewing           The context is defined as the code changeset and the
+                                         code reduces the time senior developers can dedicate to their            reference method or the function on which the changes
+                                         primary responsibilities, namely, developing new features and            were made. The context in our solution is termed as the
+                                         fixing bugs.                                                             enclosing method.
+    • How to prompt? We experimented with multiple                   AI suggestions, but found that real-world adoption remains
+       prompting styles within the constraint window size of         limited due to concerns regarding accuracy, computational
+       LLMs. The prompting styles ensure that the reviews            cost, and scalability. In the paper by Fang et al. [3], models
+       are short, crisp, and human-like (typically LLMs gen-         are trained on large code repositories and review data, enabling
+       erate verbose reviews); that the reviews are related to       them to provide context-aware suggestions that improve code
+       the enclosing method (LLMs hallucinate and generate           quality beyond static analysis tools.
+       random function names, objects, etc.); and, that no code         A study [8] explores how fine-tuned LLMs can generate
+       is generated in the output (LLMs do this by default).         more readable and understandable review comments, and
+    • How to validate prompt results? Engineering various            studies the potential of LLMs to assist human reviewers by
+       prompting styles was not sufficient enough to gener-          providing relevant explanations for detected issues. A literature
+       ate good reviews. We further developed a validation           review [9] examines the use of LLMs in program repair,
+       mechanism to fine-tune the reviews generated, includ-         which overlaps with code review by identifying and suggesting
+       ing summarizing and Ranking reviews, storing reviews          fixes for bugs. They analyzed 41 studies, using mostly open-
+       generated by LLMs and validating them through human           access datasets, and found that encoder-decoder architectures
+       experts, and re-calibrating prompts using expert feed-        are good for such tasks. Another review on LLMs for code
+       back.                                                         generation tasks [1] discusses the need for repository-level
+   We also considered the following practical aspects when           evaluation, mentioning continuous integration testing and code
+developing our approach:                                             review simulations as methods to assess LLM performance in
+                                                                     real-world scenarios. This suggests that LLMs could integrate
+   • It generates relevant, concise, and accurate reviews, en-
+                                                                     with version control systems for comprehensive code analysis.
+     suring consistency with code changes while minimizing
+                                                                     A study [4] explored fine-tuning models on specialized code
+     mistakes.
+                                                                     review datasets, and found this approach required significant
+   • It is fast, cost-efficient, and easy to integrate with exist-
+                                                                     computational resources and was not necessarily cost effective
+     ing development workflows while maintaining security,
+                                                                     or feasible for organizations with limited budgets. They also
+     logging feedback for continuous improvement, and in-
+                                                                     compared fine-tuning with zero-shot and few-shot prompting
+     corporating human validation where necessary.
+                                                                     and found that few-shot learning without personas offers a bal-
+   This paper presents the approach and preliminary results of       ance between performance and efficiency. A study evaluating
+an evaluation (survey-based), offering insights into its practical   the impact of an LLM-based automated review tool in industry
+application and potential improvements. We show that our             settings [2] found that while LLM-assisted reviews improved
+approach can significantly enhance the quality of code reviews,      bug detection, they also led to increased pull request closure
+helping to alleviate the cognitive load on human reviewers and       times due to redundant or inaccurate suggestions. Moreover,
+streamlining the development process.                                the effectiveness of LLM-generated reviews is significantly
+   The remainder of the paper is organized as follows: Section       dependent on model selection, prompt engineering, and inte-
+II outlines literature related to our work. Section III describes    gration with existing development workflows [6].
+the design used in our research. Section IV lists the prompts           In contrast to [4], ours is a lightweight approach not
+we used. Section V outlines our approach. Section VI shows           relying on expensive fine tuning which requires annotated
+the preliminary results of evaluating our approach. Section VII      data, computation and so on. Compared to [2], where they
+synthesizes the analyze of our preliminary results. Finally, in      explored a commercial black-box tool for code review within
+Section VIII, we conclude the paper and discuss a research           a software development organization, we explore a lightweight
+roadmap for our work in this area.                                   home-grown approach to code review in practice at Ericsson.
+                     II. R ELATED W ORK                                                 III. R ESEARCH D ESIGN
+   Automated code review has been a key focus in software               Our research employs a structured methodology to develop
+engineering, aiming to improve software quality while re-            and evaluate an automated code review system using large
+ducing the manual effort of reviewing code. Traditional ap-          language models (LLMs). The study follows a three-step
+proaches rely on manual reviews and static analysis tools such       approach, comprising problem identification, solution devel-
+as SonarQube and Fortify, which are often time-consuming,            opment, and evaluation.
+prone to error and limited in scope to certain types of fixes
+and improvements [2].                                                A. Problem Identification and Scope Definition
+   With the advent of Large Language Models (LLMs), re-                 To begin, we analyzed the challenges faced by developers
+searchers have explored code review methods based on them.           in performing manual code reviews, focusing on determining
+Studies have shown the feasibility of using LLMs for code            a method by which code reviews can be generated at scale and
+review tasks. Recent work has also highlighted the benefits of       cheaply, given the limited availability of expert developers, as
+LLM-based tools in detecting bugs, identifying code smells,          well as the limitations of existing static analysis tools. We
+and optimizing software development workflows [5]. Another           conducted a literature review by searching for the following
+study [7] explored the use of Github Copilot and ChatGPT for         keywords in academic search engines like google scholar:
+                                                                                   IV. C ODE R EVIEW P ROMPTS
+                                                                     In this section, we describe the actual prompts we used for
+                                                                   the code review to the LLM.
+                                                                       • Simple Code Review Prompt: Provide a succinct anal-
+                                                                         ysis of the code snippet below. Only offer comments
+                                                                         if significant concerns are identified, ensuring brevity
+                                                                         without vagueness. Do not describe the functionality
+                                                                         of the code. Avoid generating new code. Focus solely
+                                                                         on critical evaluation. If the code is satisfactory, refrain
+                 Fig. 1. Research design structure.                      from commenting.
+                                                                       • Detailed Code Review Prompt: As a code reviewer, con-
+                                                                         duct a thorough analysis of the provided code snippet to
+”automated code review using LLMs”, ”review code using                   identify any significant issues, including but not limited
+large language models”, ”LLM in software engineering” and                to: runtime errors and edge cases, logic flaws and poten-
+”extracting the bounding functions of diff lines in a change re-         tial bugs, algorithm correctness, gaps in error handling,
+quest”. Our objective was to identify gaps in existing solutions         architecture and design patterns, naming conventions
+for automated code review, both in academic and industrial               and readability, performance concerns, maintainability
+contexts. Based on the results, we formulated our research               issues. If any critical issues are discovered, regardless of
+questions, focusing on how LLMs can enhance the quality                  category, provide a concise review in approximately 200
+and efficiency of code reviews while addressing constraints              words. If no issues are found, please state this explicitly.
+such as cost and latency.                                              • Security Code Review Prompt: A version that focuses
+                                                                         on security related issues.
+                                                                       • Few-Shot Prompt: Create prompt templates for few-
+B. Solution Development                                                  shot code reviews for Java and Python, tailored to the
+   We designed and implemented an automated code review                  modified lines and examples provided.
+pipeline that integrates open-source LLMs, such as Llama,              • Issue Topics Prompt: In the role of a reviewer for a re-
+mixtral and Code Llama, with program analysis techniques.                cent pull request within a large-scale real-time telecom-
+Our approach consisted of contextual understanding of code               munication system, evaluate the code snippet below
+changes by extracting the focal method or enclosing function             for potential concerns related to:Code Design: Issues
+for the diff lines involved in each change before sending to             with algorithms, data operations, function calls, object
+the LLM, providing relevant LLM prompts, and incorporating               creation, and operation sequencing.Code I/O: Concerns
+a mechanism to refine the generated reviews. The system is               related to input/output or GUI. Code Logic. Addition-
+integrated with widely used version control platforms such as            ally, if quality-related issues beyond these concerns are
+Gerrit, as well as tools such as VS Code by writing custom               present, indicate their existence in the code.
+plugins, to provide seamless review capabilities.
+
+C. Evaluation Methodology
+   To assess the effectiveness of our solution, we conducted
+a survey-based evaluation with experienced developers from
+different teams, having at least 3 years of experience and at
+the position of senior software engineer or above. The study
+involved presenting LLM-generated reviews for code snippets
+from actual Ericsson projects and gathering expert feedback on
+relevance, accuracy, and usability. For the pairwise comparison
+task, the experts were given two LLM generated code reviews
+for the same code snippet: consisting smaller and bigger LLM
+models. They were asked to compare the two code reviews
+as to which is better. The experts were not informed which
+reviews were from the smaller models. We also collated the                       Fig. 2. Steps of the code review pipeline.
+feedback from users using the code review tool, who used the
+buttons provided along with the tool to give their feedback on
+the quality of the generated code reviews.                                           V. S OLUTION OVERVIEW
+   The structure of our research design is illustrated in figure     The code review pipeline is illustrated in figure 2. The steps
+1.                                                                 of the end to end code review pipeline are as follows:
+  1) Extract latest changes: We first get a list of the latest           questions were to analyze how good the LLMs are in gen-
+     changes from the Gerrit API and show in our user inter-             erating reviews, the understand which LLMs produced better
+     face (UI). Developers can choose a specific changeset in            reviews and how good the code review tool was in practice.
+     the UI, after which the system will fetch all the changes
+     and revisions for the chosen changeset.                             A. RQ1: How good is the code review generation by the
+  2) Extract files and diffs for each change: We call the Gerrit         LLMs?
+     API to extract a list of files for each change. We then                Our survey design was as follows: We had a form with 10
+     generate and save the files. Finally, we call Gerrit APIs           code snippets from Ericsson code repository. In the form, each
+     to get the diff lines for each change and reconstruct the           code snippet was displayed along with the full code path and
+     line numbers.                                                       LLM generated reviews for that code. The experts were invited
+  3) Extract enclosing method: Our code then extracts the                to provide their comments for each of these 10 reviews: such
+     enclosing Java function for each diff, given the diff lines         as which parts of the review are relevant and which parts are
+     with the line numbers. We use the popular Tree-Sitter               not. The members of our team were available throughout the
+     parser for Java to parse the code, build the abstract               survey to address any questions. Finally, the experts’ responses
+     syntax tree, visit each method declaration and thus find            were compiled for further analysis. 9 expert developers were
+     the method(s) that enclose the modified lines. 1                    invited for the survey, out of which 8 completed the first round.
+  4) Prompt the LLM: Once we have the enclosing function,                We included 10 Java methods, varying in length between
+     we feed it to the LLM such as code llama with a suitable            long, medium and short methods. The methods were shared
+     prompt to perform a code review for the function.                   alongside the corresponding LLM reviews. The survey was
+  5) Post-processing: After we get the code review output                designed to be finished in less than an hour. Free text reviews
+     from the LLM, we perform post-processing steps such                 were also collected. A static prompt was employed for the code
+     as presenting, saving and summarizing the reviews.                  snippets, asking the LLM to ”write a critical code review for
+                                                                         following method, include only things to improve in less than
+                                                                         50 words, and do not generate code”.
+                                                                            Qualitative reviews: We obtained a mix of positive, negative
+                                                                         and neutral comments from the experts. The number of each
+                                                                         type of comments is shown in Table I.
+
+                                                                                                     TABLE I
+                                                                         R ESULTS OF A SURVEY OF EXPERTS ON THE QUALITY OF CODE REVIEWS
+
+                                                                                   Code Snippets     Positive   Neutral   Negative
+                                                                                   Long Snippets        3         2          4
+         Fig. 3. Web based user interface for the code review tool.
+                                                                                   Medium Snippets      2         2          3
+                                                                                   Short Snippets       1         4          3
+   A screenshot of the web-based user interface of the code
+review tool is shown in figure 3. The user interface allows                A sampling of the reviews is as follows:
+developers to seamlessly incorporate automated code reviews
+                                                                            • Positive comments: Experts appreciated suggestions like
+into their workflow.
+                                                                              creating meaningful variable names and noted that re-
+                                                                              views generally met expectations.
+                                                                            • Neutral comments: Feedback was mixed. Some experts
+                                                                              felt that method explanations were unnecessary or mis-
+                                                                              placed, and noted that important static fields were not
+                                                                              addressed.
+                                                                            • Negative comments: The experts criticized instances
+Fig. 4. Screenshot of the popup menu in the VS Code plugin of the code        where the LLM generated wrong variable types and
+review tool.                                                                  input parameters, where the reviews were not relevant or
+                                                                              completely incorrect, had missing abstractions, or were
+  The code review tool has been incorporated as a plugin in                   too verbose.
+Visual Studio Code. A screenshot of the pop-up menu of the
+plugin is shown in figure 4.                                             B. RQ2: Which LLM produced the best review?
+                               VI. E VALUATION                              In this pairwise comparison task, experts were given reviews
+  We have evaluated the effectiveness of our solution for                from 13B and 7B smaller LLM models, such as llama 2 13B
+automated code review with the help of user surveys with                 and code llama 7B. The task involved 9 experts, each making
+expert developers within our organization. Our three research            4 comparisons, totaling 36 pairwise evaluations across four
+                                                                         models: Llama 2 13B, Code Llama 13B, Llama 2 7B, and
+  1 https://tree-sitter.github.io/tree-sitter/                           Code Llama 7B. Table II shows the results of the pairwise
+                            TABLE II                                lines changed in change requests, which is a simple and fast
+   R ESULTS OF THE PAIRWISE COMPARISON TASK IN THE SURVEY OF        way to provide the context to the LLM, and use inexpensive
+                            EXPERTS
+                                                                    open source LLMs (like llama 2) tailored for code review.
+ LLM A versus LLM B                   Votes for A   Votes for B     Our solution can easily integrate into existing systems for
+ Code LLaMA 13B vs LLaMA 2 13B             2             1          code development. Our approach ensures fast reviews without
+ Code LLaMA 13B vs Code LLaMA 7B           2             1
+ Code LLaMA 13B vs LLaMA 2 7B              3             2          increasing API usage costs, making it practical for large-
+ LLaMA 2 13B vs Code LLaMA 7B              4             1          scale projects. Real-world developer surveys validate that our
+ LLaMA 2 13B vs LLaMA 2 7B                 2             1          method reduces redundant feedback, and enhances usability
+ Code LLaMA 7B vs LLaMA 2 7B               1             2
+                                                                    compared to existing tools.
+                                                                        For researchers, our study highlights the potential of bound-
+comparison task. The initial results of the experts indicate that   ing method-based LLM approaches in automated code review,
+the Code llama 13B model seemed to be better than the others.       opening avenues for self-refining AI reviews, prompt optimiza-
+                                                                    tion, and domain-specific model adaptation. For industry prac-
+C. RQ3: How good is the code review tool in practice?               titioners, our findings demonstrate that LLM-powered code
+                                                                    review can be scalable, cost-efficient, and easily integrated
+   We conducted a third survey of nine expert developers who
+                                                                    into existing workflows without extensive model fine-tuning,
+were requested to use our code review tool in their day to day
+                                                                    helping teams improve review speed, reduce manual effort,
+activities for fifteen days. The participants were then asked to
+                                                                    and enhance code quality.
+answer a number of questions about how useful they found
+the tool. The questions and their answers are depicted below.             VIII. C ONCLUSION AND R ESEARCH ROADMAP
+    • Did the code review tool save you time? Four of the              In this paper, we have presented an LLM based system that
+       nine developers agreed that the tool saved them time.        utilizes static program analysis for automated code reviews.
+    • Did the code review tool improve your overall coding          We include the modified lines (diff) along with the enclosing
+       efficiency? Four people agreed that it was effective or      method obtained by program analysis and feed to the LLM
+       highly effective, two said it was somewhat effective,        with a prompt to generate code reviews. We evaluated our
+       while three felt it was not very effective.                  system on our Ericsson code base by using expert developers
+    • When the review generated by the tool is not satisfac-        as the oracle. We believe that our initial results are promising.
+       tory, what is lacking in it? Four said that the review          Our work does not require the expensive fine tuning that
+       was sometimes just explaining the code, two said the         certain state of the art works require nor does it rely on an
+       reviews were factually incorrect and three said that the     external black box tool which we cannot use due to security
+       review was focusing on irrelevant areas.                     concerns.
+    • How frequently have you been using the code review               This work is an ongoing research effort aimed at improving
+       tool? Two said that they were using it on a regular basis,   accuracy, efficiency, and real-world adoption of LLM-based
+       while five said sometimes and the remaining two said         automated code reviews. In the next phases of our research,
+       they used the tool only once.                                each of about six months duration, we have a research roadmap
+   To conclude, our user surveys with experts are encouraging.      aimed to explore new advancements and make short term
+It has provided valuable insights into the strengths and weak-      improvements.
+nesses of our tool for automated code review, guiding further          We describe in some detail our future plans below:
+refinement and development of the tool.                                  • In the first phase, we plan to create a framework for
+   We also conducted a few other experiments to evaluate the               ongoing user surveys with a broader sample of devel-
+effectiveness of the LLM in generating code reviews. First was             opers and expand prompt experimentation with new and
+about adversarial prompting, where we introduced a few bugs                upcoming LLMs and prompting strategies such as zero-
+in the code snippets and fed to the LLM. For 10 short and 5                shot, few-shot, and chain-of-thought.
+medium code snippets, the LLM was able to find bugs in all               • In the second phase we intend to explore Retrieval-
+the cases, but these were relatively easy to catch logical bugs.           Augmented Generation (RAG) and Graph-RAG by re-
+Then, for 5 change IDs, we checked if the LLM left comments                trieving relevant documentation, past review decisions,
+on unchanged lines in the bounding function, and found that                and dependency graphs before generating feedback.
+it sticks to comments only about the changed lines. Finally,             • The third phase will focus on developing a multi-agent
+we measured the time it took for the LLM to generate reviews               framework using a system such as Crew AI, where
+on large (100-300 lines) code snippets, and it was around 6                specialized agents operate autonomously in parallel and
+seconds. Interestingly, for short code snippets also the LLM               handle different review tasks, continuously learning
+took a similar time, around 5-6 seconds.                                   from feedback and past review data to improve the
+                                                                           review quality and enforce consistency.
+                      VII. D ISCUSSION                                   • The final phase will focus on integrating the system with
+  Our study presents a simple approach to automated code                   various internal tools for software engineering in our
+review using LLMs. We extract the focal methods for the                    organization.
+                             R EFERENCES
+[1] L. Chen, Q. Guo, H. Jia, Z. Zeng, X. Wang, Y. Xu, J. Wu, Y. Wang, Q.
+    Gao, J. Wang, and W. Ye, ”A survey on evaluating large language models
+    in code generation tasks,” arXiv preprint arXiv:2408.16498, Aug. 2024.
+[2] U. Cihan, V. Haratian, A. Ic¸oz, M. K. G ¨ ul, D. ¨ O. Devran, E. F.
+    Bayendur, B. M. Uc¸ar, and E. Tuz¨ un, ”Automated Code Review In
+    Practice,” arXiv preprint arXiv:2412.18531, Dec. 2024.
+[3] C. Fang, N. Miao, S. Srivastav, J. Liu, R. Zhang, R. Fang, R. Tsang,
+    N. Nazari, H. Wang, and H. Homayoun, ”Large language models for
+    code analysis: Do LLMs really do their job?” in 33rd USENIX Security
+    Symposium (USENIX Security 24), pp. 829-846, 2024.
+[4] C. Pornprasit and C. Tantithamthavorn, ”Fine-tuning and prompt en-
+    gineering for large language models-based code review automation,”
+    Information and Software Technology, vol. 175, p. 107523, Nov. 2024.
+[5] Z. Rasheed, M. A. Sami, M. Waseem, K. K. Kemell, X. Wang, A. Nguyen,
+    K. Systa¨, and P. Abrahamsson, ”Ai-powered code review with llms:
+    Early results,” arXiv preprint arXiv:2404.18496, Apr. 2024.
+[6] T. Weber, M. Brandmaier, A. Schmidt, and S. Mayer, ”Significant
+    productivity gains through programming with large language models,”
+    Proceedings of the ACM on Human-Computer Interaction, vol. 8, no.
+    EICS, pp. 1-29, Jun. 2024.
+[7] X. Yu, L. Liu, X. Hu, J. W. Keung, J. Liu, and X. Xia, ”Where Are
+    Large Language Models for Code Generation on GitHub?,” arXiv preprint
+    arXiv:2406.19544, Jun. 2024.
+[8] Y. Yu, G. Rong, H. Shen, H. Zhang, D. Shao, M. Wang, Z. Wei, Y. Xu,
+    and J. Wang, ”Fine-tuning large language models to improve accuracy
+    and comprehensibility of automated code review,” ACM Transactions on
+    Software Engineering and Methodology, vol. 34, no. 1, pp. 1-26, Dec.
+    2024.
+[9] F. Zubair, M. Al-Hitmi, and C. Catal, ”The use of large language models
+    for program repair,” Computer Standards and Interfaces, vol. 103951,
+    Nov. 2024.
+

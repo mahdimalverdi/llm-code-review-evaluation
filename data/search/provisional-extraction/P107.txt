@@ -1,0 +1,1233 @@
+                                         CRScore++: Reinforcement Learning with Verifiable Tool and
+                                                      AI Feedback for Code Review
+
+                                                          Manav Nitin Kapadnis∗    Atharva Naik∗       Carolyn Rosé
+                                                                       Language Technologies Institute
+                                                                         Carnegie Mellon University
+                                                                  {mkapadni, arnaik, cprose}@cs.cmu.edu
+
+
+
+                                                                 Abstract                      For NLG tasks, the research community
+                                                                                            has primarily relied on supervised fine-tuning
+arXiv:2506.00296v1 [cs.SE] 30 May 2025
+
+
+
+
+                                             Reinforcement learning (RL) to improve         (SFT) with high-quality examples, RL from hu-
+                                             code review comment generation requires        man feedback (RLHF) (Ouyang et al., 2022),
+                                             handling unstructured outputs, making re-
+                                                                                            or RL from AI feedback (RLAIF) (Lee et al.,
+                                             inforcement learning (RL) feedback chal-
+                                             lenging. The two main RL approaches,           2024) for greater scalability. While RLVR is
+                                             namely RL with Verifiable Feedback             both scalable and verifiable, RLHF and RLAIF
+                                             (RLVR) and RL with AI Feedback (RLAIF),        depend on subjective preference signals (Ope-
+                                             offer trade-offs: RLVR provides reliable       nAI et al., 2024; Bai et al., 2022), which can
+                                             feedback for structured tasks like code gen-   introduce unintended biases into models. On
+                                             eration, while RLAIF works for unstruc-        the other hand, some of these biases may be
+                                             tured outputs but is subjective. We bridge     desirable, as evidenced by studies on using
+                                             this gap with CRScore++, an RL frame-
+                                                                                            LLMs as evaluators (a form of RLAIF) for
+                                             work that leverages both LLM-based sub-
+                                             jective feedback and verifiable signals for    software engineering tasks, which demonstrate
+                                             training. Extending CRScore, a code re-        high agreement with human evaluators and
+                                             view evaluation metric integrating LLMs        similar score distributions (He et al., 2025a;
+                                             with verifiers like linters and code smell     Wang et al., 2025a).
+                                             detectors, CRScore++ transforms these             Applying RLVR to code review is particu-
+                                             signals into training rewards. We show         larly difficult due to the open-ended nature
+                                             that CRScore++ improves a weaker stu-
+                                                                                            of textual outputs. As a result, recent work
+                                             dent model through a combination of su-
+                                             pervised fine-tuning and RL critique from a    has explored integrating LLMs with verifiable
+                                             stronger teacher model, thus enabling gener-   static analysis tools, such as linters and code
+                                             alization to novel programming languages.      smell detectors, either during inference or for
+                                                                                            data generation. These approaches have been
+                                                                                            shown to improve both the evaluation (Naik
+                                         1       Introduction                               et al., 2024) and generation (Jaoua et al.,
+                                                                                            2025a) of review comments. Building on these
+                                         In recent years, large language models (LLMs)
+                                                                                            ideas, we take steps toward leveraging verifiers
+                                         have been increasingly adopted for software
+                                                                                            in training by incorporating verifiable “facts”
+                                         engineering tasks (Zhang et al., 2023). This
+                                                                                            from static analysis tools alongside more sub-
+                                         trend has been driven in part by advancements
+                                                                                            jective LLM feedback (RLAIF). This results
+                                         in reinforcement learning (RL)-based training
+                                                                                            in a new training framework, which we call
+                                         methods, particularly those incorporating veri-
+                                                                                            CRScore++.
+                                         fiable rewards (RLVR), such as execution feed-
+                                                                                               Our framework consists of two stages: (1)
+                                         back (Le et al., 2022; Dou et al., 2024; Shojaee
+                                                                                            learning from demonstration (SFT) and (2)
+                                         et al., 2023). While these learning signals have
+                                                                                            learning from critique (Preference Optimiza-
+                                         proven effective for tasks with structured out-
+                                                                                            tion or PO), both of which incorporate verifier-
+                                         puts like code generation, applying verifiable
+                                                                                            generated “facts” into step-by-step reasoning.
+                                         rewards to natural language generation (NLG)
+                                                                                            In the SFT stage, a stronger teacher model
+                                         tasks, such as code review, remains challenging.
+                                                                                            generates code review demonstrations for a
+                                             ∗
+                                                 Equal contribution.                        student model using a chain-of-thought (CoT)
+approach that integrates relevant linter mes-           2     Related Work
+sages and code smells into the review demon-
+                                                        2.1    Code Review Automation
+stration. This builds on recent findings that
+show how incorporating external tools enhances          Recent work on automated code review lever-
+the reasoning abilities of long CoT models (Li          ages large language models (LLMs) to generate
+et al., 2025). In the PO stage, the teacher             reviews that resemble human-written reviews
+model critiques the student model’s review              (Li et al., 2022). While systematic assessment
+comments by first generating a list of expected         can be done using benchmarking datasets (Tu-
+review points (pseudo-references generated by           fano et al., 2022), conventional metrics like
+CRScore (Naik et al., 2024)), incorporating             BLEU fail to measure semantic quality of gen-
+tool outputs, and then applying CoT reasoning           erated reviews. Prior work demonstrated the
+to evaluate whether these points are addressed.         potential of LLMs as automatic code reviewers
+   Following the findings of (Sharma et al.,            (He et al., 2025b) and identified key reasoning
+2024), we use the same teacher model for both           abilities needed for code review comprehension
+the SFT and PO stages∗ . Beyond ground-                 (Lin et al., 2025), but less attention has been
+ing RLAIF with verifiable facts from tools,             paid to evaluating review comment quality. Hy-
+our framework also indirectly trains the model          brid approaches for review comment generation
+to detect code smells and linter-related issues         combining static analyzers and LLMs (Jaoua
+through CoT reasoning. A key advantage of               et al., 2025b) are promising but concentrate
+our approach is its remarkable cross-language           largely on training data or inference time aug-
+generalization capability. Models trained exclu-        mentation and, to a lesser extent, on the utiliza-
+sively on Python code achieve nearly equivalent         tion of verification signals as rewards during
+performance when generating reviews for Java            training. Wang et al. (2025b); Jaoua et al.
+and JavaScript, despite having no exposure              (2025b) and Naik et al. (2024) all show that
+to these languages during training. This re-            LLM-as-a-judge methods achieve a significant
+sult challenges the prevailing assumption that          correlation with human scores for software engi-
+language-specific training data is essential for        neering and code review evaluation. Moreover,
+high-quality code review systems.                       CRScore (Naik et al., 2024) shows that inte-
+                                                        grating static analysis tools with LLMs and
+   Our work makes three primary contributions:
+                                                        using pseudo-references can lead to a more ac-
+• Introducing a novel RL method for training
+                                                        curate signal of review quality. Based on past
+   code models that combines the benefits of
+                                                        evidence of how LLMs combined with tools
+   RLVR with the flexibility of RLAIF.
+                                                        can provide strong signals of review quality,
+• Applying this framework to integrate linters,
+                                                        our work extends this idea by using them as
+   code smell detectors, and security analyzers
+                                                        a reward signal for training LLMs to generate
+   to measure review quality for code model
+                                                        better review comments. Additionally, we also
+   training, which to the best of our knowledge
+                                                        show that supervision and knowledge obtained
+   hasn’t been explored in prior work.
+                                                        from a tool for one language (e.g. Python) can
+• Enabling generalizable learning of skills such
+                                                        lead to better reviews for unseen languages at
+   as code smell detection, code efficiency eval-
+                                                        test time (e.g. Java and Javascript).
+   uation, and assessments of security, read-
+   ability, and maintainability through step-by-        2.2    Static Analysis Integration
+   step reasoning.
+                                                        Static analysis tools provide structured signals
+• Demonstrating robust cross-language gen-
+                                                        regarding code quality by detecting code smells
+   eralization of code quality analysis abilities.
+                                                        and enforcing style and maintainability stan-
+   Models trained exclusively on Python data
+                                                        dards (Pecorelli et al., 2022). Early work lim-
+   maintain most of their performance when
+                                                        ited integration with LLMs to post-generation
+   reviewing Java and JavaScript code without
+                                                        validation, but recent research has explored
+   any language-specific fine-tuning.
+                                                        deeper synergy. Jaoua et al. (2025c) system-
+   ∗
+                                                        atically combined static analyzers and LLMs
+     To reduce OpenAI API usage costs, we distill the
+target model into an open-source reward model for the   at multiple stages, including data augmen-
+PO stage                                                tation, retrieval-augmented generation, and
+naive output concatenation, thus demonstrat-       mathematical reasoning domains (Shao et al.,
+ing that hybrid strategies can improve review      2024), where its execution stage provides clear
+relevance and coverage. However, their eval-       verification signals. Recent advances in multi-
+uation primarily relies on LLM as a judge          step reinforcement learning (Goldie et al., 2025)
+relative comparison, whereas our approach          and process supervision (Dai et al., 2025) de-
+adapts CRScore (Naik et al., 2024) with pseudo-    scribe how intermediate-level verification can
+references, which was shown to be more scal-       promote sophisticated reasoning abilities. The
+able and aligns better with human preferences.     curriculum learning approach utilized by Step-
+Additionally, we also incorporate code smell       Coder (Dou et al., 2024) incorporates segmen-
+detectors in addition to the linters and inte-     tation of code review into verifiable subtasks.
+grate them into the reasoning process of the       CRScore++ applies these concepts to natural
+model, thus showing that tool-based knowl-         language generation by leveraging static ana-
+edge learned in one language can generalize to     lyzer outputs as partial verifiers, thus providing
+others.                                            objective reward signals and at the same time
+   ReTool (Feng et al., 2025) further motivates    solving for contextual feedback generation re-
+our methodology by showing that reinforce-         quirements. The process described here solves
+ment learning over tool feedback can enhance       verification issues common for natural language
+strategic reasoning and tool utilization. We       generation settings while at the same time ben-
+extend these ideas by integrating tool signals     efiting from the learned linguistic structures.
+directly into both the demonstration and pref-
+erence optimization stages of training, enabling   3       Methodology
+our models to leverage static analysis feedback
+                                                   In this section, we elaborate on our three-
+for both review generation and cross-language
+                                                   stage methodology for aligning code review
+generalization.
+                                                   generation with verifiable static analysis sig-
+2.3   Reinforcement Learning from                  nals: (1) tool-augmented knowledge distilla-
+      Subjective Feedback                          tion, (2) direct preference optimization, and
+                                                   (3) cross-language evaluation on in-domain and
+Preference-based alignment methods like
+                                                   out-of-domain coding languages’ samples. Fig-
+RLHF (Ouyang et al., 2022) and RLAIF (Lee
+                                                   ures 1 which depicts our training workflow
+et al., 2024) face intrinsic limitations when
+                                                   and 2 shows our evaluation framework, illus-
+applied to specialized domains that require ob-
+                                                   trate the complete pipeline.
+jective assessments of quality (Mroueh, 2025).
+Although such methods improve results in sub-      3.1       Knowledge Distillation via
+jective settings (Sharma et al., 2022), their                Demonstration
+reliance on the preference of human or arti-
+                                                   We distill GPT-4o Mini’s (OpenAI, 2024)
+ficial intelligence results in biases that con-
+                                                   code review capabilities into Qwen2.5-Coder-
+flict with best practices in software engineer-
+                                                   Instruct (Hui et al., 2024) models (3B and 7B
+ing (McAleese et al., 2024). The challenge is
+                                                   models) using structured prompts (Appendix
+compounded in code review settings, where
+                                                   A.2) that integrate static analysis feedback.
+the produced feedback must balance technical
+                                                   For each Python code change in the CodeRe-
+correctness with readability for human read-
+                                                   viewer dataset (Li et al., 2022), we generate lin-
+ers. Our suggested framework resolves this
+                                                   ter feedback using Ruff† for identifying code ef-
+tension through the combination of verifiable
+                                                   ficiency issues, complexity measurements, and
+signals from static analysis with preference-
+                                                   security vulnerabilities and code smells using
+based learning, thus creating a hybrid reward
+                                                   Pyscent‡ detecting patterns like Long Method
+system grounded in both objective metrics and
+                                                   and Large Class amongst many other smells.
+linguistic quality.
+                                                      Specifically, the teacher model processes
+2.4   Reinforcement Learning from                  these inputs through a structured prompt (Ap-
+      Verifiable Rewards                           pendix A.3) requiring generation of a step-by-
+The RLVR framework has proven to be effec-             †
+                                                           https://beta.ruff.rs/
+tive in code generation (Chen et al., 2022) and        ‡
+                                                           https://github.com/whyjay17/Pyscent
+step analysis followed by concise review genera-                 JavaScript for both linter violations and code
+tion comprising of these code smells and linter                  smells.
+feedback signals. As shown in Figure 1 (Stage                       The framework used for the evaluation is a
+1), this stage combines code changes with tool                   two-phase process. First, the GPT-4o Mini
+outputs to facilitate the teacher model’s gener-                 creates a comprehensive list of topics consid-
+ation of high-quality demonstrations. We train                   ered crucial to evaluate a model with regard
+student models using standard cross-entropy                      to changes made to the code. The model
+loss over 20,888 Python samples for 2 epochs                     is prompted to identify key topics like code
+on 2 NVIDIA A100 80GB GPUs with a learn-                         smells, linter warnings, security vulnerabilities,
+ing rate of 2e-05 using the Adam (Kingma and                     compatibility issues, readability issues, perfor-
+Ba, 2017) optimizer.                                             mance impact, design patterns, and memory-
+                                                                 related issues. The process creates pseudo
+3.2      Direct Preference Optimization                          ground-truths for evaluating reviews generated
+In the second stage of our training pipeline                     by the models.
+as shown in Figure 1 (Stage 2), we enhance                          In the second step, our trained models (SFT
+alignment through preference learning using                      and SFT+DPO) generate step-by-step analysis
+5,000 Python code changes by sampling 20                         and final reviews for all test samples. The final
+candidate reviews per sample using SFT mod-                      reviews are then compared with the ground
+els. These are then scored by GPT4o-mini,                        truths of the pseudo-topics, code changes made,
+which generates a step-by-step analysis and                      and feedback provided by the tool, and are
+final review scores over a scale of 5 points on                  evaluated by GPT-4o-Mini. The rating prompt
+comprehensiveness, conciseness, and relevance                    (Appendix B.1) asks for an overall review to
+metric. We then create preference pairs (yw , yl )               identify whether all required topics have been
+with ∆score ≥ 2 for alignment training of DPO                    included and to provide three different scores:
+model.
+   The DPO objective (Rafailov et al., 2024)                       • Comprehensiveness (1-5): How well
+optimizes:                                                           does this review cover all relevant sub-
+                                                                     jects?
+
+              h                                           i      • Conciseness (1-5): Whether the review is
+                         θ (yw |x)          πθ (yl |x)
+LDPO = −E log σ β log ππref (yw |x) − β log πref (yl |x)             appropriately focused without redundancy
+                                                           (1)
+                                                                   • Relevance (1-5): The degree to which
+with β = 0.1, which balances preference adher-                       issues specified are related to the code
+ence against regularization. Training runs for 2                     modification.
+epochs using the Adam optimizer (Loshchilov
+and Hutter, 2019) with 2e-5 learning rate.                          The LLM-as-a-judge framework allows for
+                                                                 consistent review across different languages,
+3.3      Cross-language Evaluation                               despite differences in their static tool chains.
+                                                                    In cross-language generalization analysis,
+We test generalization by using Python along-
+                                                                 we compare how models trained solely with
+side Java and JavaScript code changes in the
+                                                                 Python instances perform when evaluating
+test sets from the CodeReviewer dataset as
+                                                                 Java and JavaScript code changes. This eval-
+shown in Figure 2, using the respective pro-
+                                                                 uation assesses the models’ ability to trans-
+gramming language-specific tools for evalua-
+                                                                 fer knowledge about code quality principles
+tion. For Java code patch analysis, we use
+                                                                 across language boundaries. Unlike previous
+PMD§ as a static code analysis tool and De-
+                                                                 approaches, such as that of Jaoua et al. (2025c),
+signiteJava (Sharma, 2024) for detecting code
+                                                                 which primarily trains and evaluates within the
+smells. We used PMD together with JS-
+                                                                 same language using data augmentation tech-
+NOSE (Fard and Mesbah, 2013) to develop
+                                                                 niques (DAT), our methodology specifically
+an adapted analyzer for detecting code smells
+                                                                 tests whether the implicit knowledge about
+for JavaScript. It is capable of analyzing files in
+                                                                 good coding practices, security vulnerabilities,
+   §
+       https://pmd.github.io/                                    and code smells learned from Python static
+analyzers during training can be effectively ap-                                 language-specific fine-tuning, suggesting our
+plied to entirely different programming lan-                                     approach captures fundamental code quality
+guages at inference time without additional                                      principles rather than language-specific pat-
+language-specific fine-tuning.                                                   terns. The relative performance ranking of
+                                                                                 different approaches remains consistent across
+4      Results                                                                   languages, suggesting that the benefits of our
+4.1       In-Domain Performance                                                  training methodology transfer effectively to
+                                                                                 unseen programming languages. We observe
+Table 1 presents evaluation results for code
+                                                                                 that the performance gap between in-domain
+review generation on Python code changes.
+                                                                                 (Python) and out-of-domain (Java/JavaScript)
+We observe that models trained with our
+                                                                                 is minimal for our CRScore++ models, while
+CRScore++ approach significantly outperform
+                                                                                 the gap is more pronounced for zero-shot ap-
+all baseline configurations across comprehen-
+                                                                                 proaches.
+siveness and relevance metrics. The progression
+from Zero Shot to Stage 1 to Stage 2 shows                                       4.3    Tool Utilization Analysis
+consistent improvements in these dimensions
+for both model sizes. Notably, models trained                                    Table 3 examines how effectively models use
+directly on CodeReviewer data without our ap-                                    structured prompts (Appendix B.2) to incor-
+proach perform worse than even Zero Shot con-                                    porate feedback from static analysis tools. We
+figurations. A clear trade-off emerges between                                   observe that accuracy scores remain relatively
+comprehensiveness/relevance and conciseness,                                     stable across different configurations, suggest-
+as DPO-trained models generate more thor-                                        ing that models maintain factual correctness
+ough reviews at the expense of brevity. The                                      when referencing tool output. However, cover-
+7B variants generally outperform their 3B coun-                                  age scores show a marked improvement from
+terparts, with the Stage 2 7B model achieving                                    zero shot with tools to the SFT and DPO
+the highest comprehensiveness and relevance                                      stages, indicating that our training approach
+scores among all configurations.                                                 helps models better utilize available tool feed-
+                                                                                 back. The 3B DPO model achieves the highest
+ Model                              Compre.        Conci.         Relev.
+                                                                                 coverage score, showing that smaller models
+ Qwen 3B (Zero Shot)                0.43           0.67           0.45
+ Qwen 3B (CR datasetPython only )   0.10 (-0.33)   0.58 (-0.09)   0.20 (-0.25)   can effectively learn to incorporate tool signals
+ Qwen 3B (Tool Guided)
+ Qwen 3B (Stage 1)
+                                    0.47 (+0.04)
+                                    0.59 (+0.16)
+                                                   0.67 (0.00)
+                                                   0.67 (0.00)
+                                                                  0.47 (+0.02)
+                                                                  0.58 (+0.13)
+                                                                                 through our training methodology. Although
+ Qwen 3B (Stage 2)                  0.67 (+0.24)   0.59 (-0.08)   0.64 (+0.19)   7B models show slightly higher accuracy in the
+ Qwen 7B (Zero Shot)                0.41           0.62           0.43
+ Qwen 7B (CR datasetPython only )   0.12 (-0.29)   0.56 (-0.06)   0.22 (-0.21)
+                                                                                 SFT stage, the difference in performance be-
+ Qwen 7B (Tool Guided)
+ Qwen 7B (Stage 1)
+                                    0.45 (+0.04)
+                                    0.56 (+0.15)
+                                                   0.64 (+0.02)
+                                                   0.68 (+0.06)
+                                                                  0.46 (+0.03)
+                                                                  0.55 (+0.12)
+                                                                                 tween model sizes is less pronounced for tool
+ Qwen 7B (Stage 2)                  0.69 (+0.28)   0.57 (-0.05)   0.65 (+0.22)   utilization than for overall review quality met-
+                                                                                 rics.
+Table 1: Results on in-domain Python language.
+All values rounded to two decimals. Change versus
+                                                                                 5     Discussion
+ the Zero Shot model shown in parentheses. Green
+“(+x.xx)” indicates an increase, red “(−x.xx)”                                   5.1    In-Domain Performance Analysis
+ indicates a decrease.
+                                                                                 Our experiments reveal several counterintu-
+                                                                                 itive findings about code review training
+4.2       Cross-Language Generalization                                          paradigms.       Surprisingly, models trained
+The results for Java and JavaScript code re-                                     directly on CodeReviewer’s “ground truth”
+view generation, shown in Table 2, demonstrate                                   (scraped from online code review discussions)
+strong generalization capabilities despite train-                                perform worse than zero-shot approaches. This
+ing exclusively on Python data. Both SFT and                                     validates the observation from CRScore (Naik
+DPO models maintain similar performance pat-                                     et al., 2024) that review comments scraped
+terns across languages, with Stage 2 models                                      from online discussions are often noisy, irrele-
+consistently achieving the highest comprehen-                                    vant. The Tool Guided setting demonstrates
+siveness and relevance scores for all languages.                                 improved comprehensiveness compared to zero-
+This robust cross-language transfer is partic-                                   shot, highlighting the value of integrating static
+ularly noteworthy as it occurs without any                                       analysis results. Our CRScore++ methodology
+Figure 1: Three-stage training pipeline: (A) Tool-augmented distillation, (B) Preference ranking, (C)
+Cross-language evaluation
+
+
+
+
+            Figure 2: Evaluation framework combining static verification with LLM-as-a-judge
+
+                                                           Java                                      JavaScript
+      Model
+                                         Compre.        Conci.         Relev.         Compre.        Conci.         Relev.
+      Qwen 3B (Zero Shot)                0.43           0.67           0.46           0.42           0.66           0.44
+      Qwen 3B (Tool Guided)              0.39 (-0.04)   0.67 (0.00)    0.42 (-0.04)   0.39 (-0.03)   0.67 (+0.01)   0.42 (-0.02)
+      Qwen 3B (CR datasetPython only )   0.12 (-0.31)   0.58 (-0.09)   0.22 (-0.24)   0.12 (-0.30)   0.58 (-0.08)   0.22 (-0.22)
+      Qwen 3B (Stage 1)                  0.56 (+0.13)   0.67 (-0.01)   0.55 (+0.10)   0.53 (+0.11)   0.68 (+0.01)   0.53 (+0.09)
+      Qwen 3B (Stage 2)                  0.64 (+0.21)   0.61 (-0.06)   0.61 (+0.15)   0.62 (+0.20)   0.61 (-0.06)   0.60 (+0.16)
+      Qwen 7B (Zero Shot)                0.40           0.60           0.41           0.39           0.60           0.41
+      Qwen 7B (Tool Guided)              0.38 (-0.02)   0.61 (+0.01)   0.40 (-0.01)   0.37 (-0.02)   0.59 (-0.01)   0.38 (-0.03)
+      Qwen 7B (CR datasetPython only )   0.14 (-0.26)   0.59 (-0.01)   0.24 (-0.17)   0.15 (-0.24)   0.58 (-0.02)   0.24 (-0.17)
+      Qwen 7B (Stage 1)                  0.54 (+0.14)   0.68 (+0.08)   0.53 (+0.12)   0.51 (+0.12)   0.68 (+0.08)   0.52 (+0.11)
+      Qwen 7B (Stage 2)                  0.67 (+0.27)   0.57 (-0.03)   0.63 (+0.22)   0.65 (+0.26)   0.58 (-0.02)   0.62 (+0.21)
+
+
+Table 2: Results on out-of-domain Java and JavaScript. All values rounded to two decimals. In parentheses:
+absolute change versus the Zero Shot model. The Zero Shot rows omit change annotations. Green
+“(+x.xx)” indicates an increase, red “(-x.xx)” indicates a decrease versus zero-shot.
+   Model Name                       Python                        Java                           JavaScript
+                         Avg Accuracy   Avg Coverage   Avg Accuracy    Avg Coverage   Avg Accuracy     Avg Coverage
+   Qwen 3B (Zero Shot)       2.26            1.55          2.63            1.47           2.68                1.11
+   Qwen 3B (Stage 1)         3.38            1.90          3.29            1.88           3.72                2.35
+   Qwen 3B (Stage 2)         2.97            1.62          3.07            1.72           3.02                1.42
+   Qwen 7B (Zero Shot)       2.61            1.61          3.04            1.60           3.03                1.14
+   Qwen 7B (Stage 1)         3.59            1.93          3.50            1.84           3.71                2.03
+   Qwen 7B (Stage 2)         3.29            2.01          3.12            1.44           3.20                1.80
+
+
+Table 3: Tool usage accuracy and coverage evaluation on Python, Java, and JavaScript using GPT4o-mini
+as judge.
+
+
+addresses these limitations through a two-stage             (2) DPO provides no accuracy improvements
+approach. The SFT stage (Stage 1) achieves a                over SFT, indicating tool understanding is pri-
+balance between comprehensiveness, relevance,               marily established during initial distillation, (3)
+and conciseness, integrating tool feedback while            Coverage improvements from SFT/DPO stages
+maintaining review brevity. The DPO stage                   demonstrate models learn to surface more tool-
+(Stage 2) further enhances comprehensiveness                identified issues without hallucination. These
+and relevance at the expense of some concise-               patterns imply that while preference optimiza-
+ness, suggesting that preference optimization               tion refines review quality, the core ability to
+prioritizes thorough coverage of issues over                interpret and apply tool feedback is solidified
+brevity. This comprehensiveness-conciseness                 during supervised fine-tuning. The stability of
+tradeoff offers a practical advantage, allowing             accuracy scores across configurations further
+practitioners to select either SFT models (for              validates that tool grounding prevents factual
+balanced reviews) or DPO models (for com-                   errors in generated reviews.
+prehensive analysis) based on specific require-
+ments.                                                      5.4       Human Study
+                                                            To help ensure the validity of our automated
+5.2   Cross-Language Generalization
+                                                            evaluation framework, we conducted a human
+      Patterns
+                                                            evaluation study on 100 code changes (33 per
+The strong out-of-domain performance (Ta-                   programming language: Python, Java, and
+ble 2) challenges assumptions about language-               JavaScript). Human raters conducted eval-
+specific code quality analysis. Models trained              uations on code reviews generated from four
+with CRScore++ exclusively on Python                        different model configurations: Zero Shot, Tool
+achieve comparable performance on review-                   Guided, Stage 1 (SFT), and Stage 2 (DPO).
+ing Java and JavaScript code changes, indi-                 For the Python programming language, we lim-
+cating they learn general code quality analysis             ited our evaluation to 3B models, based on the
+skills about security, maintainability, and effi-           consistent performance trends observed across
+ciency rather than language-specific heuristics.            model sizes in the automated metrics. The
+The consistent performance hierarchy across                 set up of the study was inspired by the review
+languages, with DPO models maintaining the                  quality dimension validity study from CRScore
+smallest generalization gap, suggests that pref-            (Naik et al., 2024). Annotators rated each
+erence optimization enhances the transfer of                review on a 5-point Likert scale across three di-
+fundamental software engineering knowledge.                 mensions: comprehensiveness (coverage of rel-
+This finding has significant practical implica-             evant issues), conciseness (appropriate focus),
+tions, as it enables the deployment of unified              and relevance (pertinence to code changes). We
+code review systems in polyglot codebases with-             observed moderate inter-annotator agreement
+out language-specific training.                             (0.65), indicating reliable consensus among eval-
+                                                            uators.
+5.3   Tool Interaction Dynamics                                Table 4 shows the results of human evalu-
+The tool usage analysis (Table 3) reveals three             ations, which follow the same trends as the
+key insights: (1) Model scale (3B vs 7B) has                automated evaluation. Stage 2 (DPO) models
+negligible impact on tool utilization accuracy,             achieve the top scores for comprehensiveness
+                                    Python                  Java                JavaScript
+         Model
+                            Comp.    Conc.   Rel.   Comp.   Conc.    Rel.   Comp.   Conc.    Rel.
+         3B (Zero Shot)      2.79     3.85   2.77    2.90    3.84    2.99   3.00     3.73    3.18
+         7B (Zero Shot)        -        -      -     2.97    3.59    2.81   3.21     3.92    3.21
+         3B (Tool Guided)    3.15     3.53   3.08    2.94    3.61    2.83   2.82     3.52    2.79
+         7B (Tool Guided)      -        -      -     2.93    4.04    3.05   2.65     3.42    2.82
+         3B (Stage 1)        3.56     3.71   3.17    3.76    3.88    3.46   3.72     3.81    3.44
+         7B (Stage 1)          -        -      -     3.45    3.76    3.11   3.39     3.76    3.26
+         3B (Stage 2)        3.91     3.26   3.19    3.88    3.42    3.19   4.09     3.38    3.51
+         7B (Stage 2)          -        -      -     4.39    3.18    3.41   4.12     3.24    3.48
+
+Table 4: Human evaluation results across Python, Java, and JavaScript (scores range 1-5, higher is better).
+Best scores are bolded and second-best are underlined.
+
+
+on all the metrics, with the 7B version show-          quality of code reviews, with a 56% relative im-
+ing particularly high expertise on Java (4.39)         provement in comprehensiveness for 3B models
+and JavaScript (4.12). Zero-shot approaches            and a 42% relative improvement in relevance
+show strong performance on the conciseness             compared to zero-shot baselines, (2) the emer-
+dimension, however, they lack comprehensive-           gence of intrinsic code smell and code quality
+ness and relevance. In contrast, Stage 1 (SFT)         analysis capabilities, and (3) generalizability
+models show a balanced level of performance,           across programming languages, with Python-
+often achieving second-best scores across most         trained models being able to generate high
+metrics, particularly in tests with Python. The        quality reviews for Java and Javascript and
+human subject empirical study supports the             also generalizing abilities like code smell and
+comprehensiveness-conciseness trade-off of au-         code quality analysis without explicit training.
+tomated evaluation metrics. In particular,                The results of our research highlight the
+Stage 2 models show reduced conciseness while          importance of a two-stage training approach
+showing increased comprehensiveness. Most              that first establishes foundational knowl-
+importantly, the results validate the capacity         edge through supervised fine-tuning on tool-
+of our method to generalize to other languages.        enhanced demonstrations, followed by prefer-
+Models trained exclusively with Python data re-        ence optimization to enhance key quality as-
+peatedly show strong performance trends when           pects. The fact that models trained directly
+evaluated on Java and JavaScript code reviews.         on human reviews perform worse than the un-
+This attests that CRScore++ effectively trans-         trained base LLMs points to the importance
+fers knowledge of code quality to other pro-           of incorporating objective quality metrics into
+gramming languages. More elaborate details             training. Furthermore, the small performance
+of the human study guidelines are available in         gap between in-domain and out-of-domain lan-
+the Appendix (B.5 and B.6)                             guages suggests that our approach equips the
+                                                       LLM with fundamental code quality analysis
+6   Conclusion                                         skills, enabling cross-lingual generalization.
+
+In this work, we present CRScore++, a novel            7    Future Work
+system that successfully closes the gap be-
+tween verifiable rewards and artificial intelli-       This research proposes several promising av-
+gence feedback for natural language code re-           enues for future research efforts. First, exam-
+view generation. Our method shows that com-            ining cross-paradigm transfer in clearly diverse
+bining static analysis tools with LLM judges           programming paradigms (e.g., functional pro-
+can produce partial verifiers that help align          gramming languages represented by Scala and
+LLM outputs with quality dimensions in do-             imperative programming languages by Python)
+mains lacking perfect verification. Through            would increase understanding of more univer-
+careful empirical evaluation, we have shown            sal principles of code quality. Next, applying
+that CRScore++ achieves significant improve-           Group Relative Policy Optimization (GRPO)
+ments along three critical axes: (1) improved          could provide more robust generalization of
+code quality analysis skills across different pro-   advanced aspects of software quality like test
+gramming languages. Finally, designing reward        coverage, architectural consistency, and com-
+functions that balance the trade-off between         prehensively modeling security threats. The
+comprehensiveness and conciseness without in-        said restrictions suggest that, while our result
+troducing length bias could further improve our      benefits from the combination of provable re-
+approach across diverse code review scenarios,       wards with AI feedback for reviewing code, fur-
+including repository-level reviews.                  ther research is needed to address these above
+   Other directions include the integration of       challenges. This includes expanding language
+additional static analysis techniques, such as       coverage, conducting experiments with more
+runtime performance profilers and dependency         model families, including long CoT models, im-
+analysis tools, to increase the verifiable signal    proving the integration of verifiable tools, devel-
+space, investigation of the application of our       oping reliable open-source evaluation methods,
+partial verification technique to other resource-    and verifying our findings in more diverse envi-
+limited technical natural language generation        ronments and deployment contexts, including
+projects, e.g., API documentation or security        repository-level code review.
+vulnerability reporting, and investigation of
+the variation of distillation effectiveness with     Ethics Statement
+respect to model size and architecture, which        This research adheres to ethical guidelines and
+can give useful insights on resource-constrained     copyright regulations through its use of pub-
+applications in real-world settings, especially      licly available datasets augmented with quality
+in scenarios where the availability of compu-        annotations from multiple review systems. We
+tational resources can limit the use of large        obtained all data following appropriate terms
+models.                                              of use and ensured proper citation of original
+                                                     sources. To mitigate potential risks of harmful
+8   Limitations                                      or biased content in LLM-generated pseudo-
+                                                     references, we implemented a multi-stage qual-
+First, while our human evaluation protocol is
+                                                     ity assessment protocol and excluded any po-
+methodologically sound, it was conducted with
+                                                     tentially problematic examples from our train-
+a relatively small number of data points (33
+                                                     ing pipeline. Our human evaluation was con-
+cases per language), which can limit the dis-
+                                                     ducted with voluntary participants who pro-
+covery of edge cases in real-world code review
+                                                     vided informed consent, and we compensated
+use. Second, the use of GPT-4o-mini as an
+                                                     them fairly according to standard rates. The
+evaluation metric relies on proprietary infras-
+                                                     code review techniques developed in this work
+tructure that can have hidden biases. However,
+                                                     aim to improve software quality and security,
+we mitigate this by cross-checking results with
+                                                     with possible positive implications for reducing
+human evaluation. Third, since the current im-
+                                                     vulnerabilities in deployed systems. Through-
+plementation supports only three programming
+                                                     out our methodology, we maintained awareness
+languages: Python, Java and JavaScript, there
+                                                     of potential biases in model-generated feedback
+are questions about its relevance to resource-
+                                                     and took steps to mitigate these effects by us-
+limited or domain-specific languages.
+                                                     ing diverse evaluation metrics and balanced
+   The experimental design used here has some
+                                                     test sets across programming languages.
+limitations for architectural exploration since it
+focused exclusively on the Qwen model family,
+and this might limit the insights into the va-       References
+lidity of trends across model families. We also
+                                                     Yuntao Bai, Saurav Kadavath, Sandipan Kundu,
+chose not to use long chain-of-thought (LCoT)          Amanda Askell, Jackson Kernion, Andy Jones,
+models as teacher or reward models in our              Anna Chen, Anna Goldie, Azalia Mirhoseini,
+framework to reduce cost and training time,            Cameron McKinnon, Carol Chen, Catherine
+despite their potential for better tool knowl-         Olsson, Christopher Olah, Danny Hernan-
+                                                       dez, Dawn Drain, Deep Ganguli, Dustin Li,
+edge utilization. Finally, our static analysis         Eli Tran-Johnson, Ethan Perez, Jamie Kerr,
+toolkit, while covering common code smells             Jared Mueller, Jeffrey Ladish, Joshua Lan-
+and linter violations, does not address more           dau, Kamal Ndousse, Kamile Lukosuite, Liane
+  Lovitt, Michael Sellitto, Nelson Elhage, Nicholas    Imen Jaoua, Oussama Ben Sghaier, and Houari
+  Schiefer, Noemi Mercado, Nova DasSarma,                Sahraoui. 2025a. Combining large language mod-
+  Robert Lasenby, Robin Larson, Sam Ringer,              els with static analyzers for code review genera-
+  Scott Johnston, Shauna Kravec, Sheer El Showk,         tion.
+  Stanislav Fort, Tamera Lanham, Timothy
+  Telleen-Lawton, Tom Conerly, Tom Henighan,           Imen Jaoua, Oussama Ben Sghaier, and Houari
+  Tristan Hume, Samuel R. Bowman, Zac Hatfield-          Sahraoui. 2025b. Combining large language mod-
+  Dodds, Ben Mann, Dario Amodei, Nicholas                els with static analyzers for code review genera-
+  Joseph, Sam McCandlish, Tom Brown, and Jared           tion. arXiv preprint arXiv:2502.06633.
+  Kaplan. 2022. Constitutional ai: Harmlessness
+  from ai feedback.                                    Imen Jaoua, Oussama Ben Sghaier, and Houari
+                                                         Sahraoui. 2025c. Combining large language mod-
+Bei Chen, Fengji Zhang, Anh Nguyen, Daoguang             els with static analyzers for code review genera-
+  Zan, Zeqi Lin, Jian-Guang Lou, and Weizhu              tion. arXiv preprint arXiv:2502.06633.
+  Chen. 2022. Codet: Code generation with gener-
+                                                       Diederik P. Kingma and Jimmy Ba. 2017. Adam:
+  ated tests.
+                                                         A method for stochastic optimization.
+Ning Dai, Zheng Wu, Renjie Zheng, Ziyun Wei,           Hung Le, Yue Wang, Akhilesh Deepak Gotmare, Sil-
+  Wenlei Shi, Xing Jin, Guanlin Liu, Chen Dun,           vio Savarese, and Steven C. H. Hoi. 2022. Coderl:
+  Liang Huang, and Lin Yan. 2025. Process                Mastering code generation through pretrained
+  supervision-guided policy optimization for code        models and deep reinforcement learning.
+  generation.
+                                                       Harrison Lee, Samrat Phatale, Hassan Mansoor,
+Shihan Dou, Yan Liu, Haoxiang Jia, Limao Xiong,          Thomas Mesnard, Johan Ferret, Kellie Lu,
+  Enyu Zhou, Wei Shen, Junjie Shan, Caishuang            Colton Bishop, Ethan Hall, Victor Carbune, Ab-
+  Huang, Xiao Wang, Xiaoran Fan, Zhiheng Xi,             hinav Rastogi, and Sushant Prakash. 2024. Rlaif
+  Yuhao Zhou, Tao Ji, Rui Zheng, Qi Zhang, Xuan-         vs. rlhf: Scaling reinforcement learning from hu-
+  jing Huang, and Tao Gui. 2024. Stepcoder: Im-          man feedback with ai feedback.
+  prove code generation with reinforcement learn-
+  ing from compiler feedback.                          Chengpeng Li, Mingfeng Xue, Zhenru Zhang, Jiaxi
+                                                         Yang, Beichen Zhang, Xiang Wang, Bowen Yu,
+Amin Milani Fard and Ali Mesbah. 2013. Jsnose:           Binyuan Hui, Junyang Lin, and Dayiheng Liu.
+ Detecting javascript code smells. In 2013 IEEE          2025. Start: Self-taught reasoner with tools.
+ 13th International Working Conference on Source
+ Code Analysis and Manipulation (SCAM), pages          Zhiyu Li, Shuai Lu, Daya Guo, Nan Duan, Shailesh
+ 116–125.                                                Jannu, Grant Jenks, Deep Majumder, Jared
+                                                         Green, Alexey Svyatkovskiy, Shengyu Fu, and
+Jiazhan Feng, Shijue Huang, Xingwei Qu,                  Neel Sundaresan. 2022. Automating code review
+   Ge Zhang, Yujia Qin, Baoquan Zhong,                   activities by large-scale pre-training.
+   Chengquan Jiang, Jinxin Chi, and Wanjun
+   Zhong. 2025. Retool: Reinforcement learning         Hong Yi Lin, Chunhua Liu, Haoyu Gao, Patanamon
+   for strategic tool use in llms.                       Thongtanunam, and Christoph Treude. 2025.
+                                                         Codereviewqa: The code review comprehension
+Anna Goldie, Azalia Mirhoseini, Hao Zhou, Irene          assessment for large language models. arXiv
+  Cai, and Christopher D Manning. 2025. Syn-             preprint arXiv:2503.16167.
+  thetic data generation & multi-step rl for reason-
+                                                       Ilya Loshchilov and Frank Hutter. 2019. Decoupled
+  ing & tool use. arXiv preprint arXiv:2504.04736.
+                                                          weight decay regularization. In 7th International
+                                                          Conference on Learning Representations, ICLR
+Junda He, Jieke Shi, Terry Yue Zhuo, Christoph
+                                                          2019, New Orleans, LA, USA, May 6-9, 2019.
+  Treude, Jiamou Sun, Zhenchang Xing, Xiaon-
+                                                          OpenReview.net.
+  ing Du, and David Lo. 2025a. From code to
+  courtroom: Llms as the new software judges.          Nat McAleese, Rai Michael Pokorny, Juan Fe-
+                                                         lipe Ceron Uribe, Evgenia Nitishinskaya, Maja
+Junda He, Jieke Shi, Terry Yue Zhuo, Christoph           Trebacz, and Jan Leike. 2024. Llm critics help
+  Treude, Jiamou Sun, Zhenchang Xing, Xiaoning           catch llm bugs. arXiv preprint arXiv:2407.00215.
+  Du, and David Lo. 2025b. From code to court-
+  room: Llms as the new software judges. arXiv         Youssef Mroueh. 2025. Reinforcement learning with
+  preprint arXiv:2503.02246.                             verifiable rewards: Grpo’s effective loss, dynam-
+                                                         ics, and success amplification.
+Binyuan Hui, Jian Yang, Zeyu Cui, Jiaxi Yang,
+  Dayiheng Liu, Lei Zhang, Tianyu Liu, Jia-            Atharva Naik, Marcus Alenius, Daniel Fried, and
+  jun Zhang, Bowen Yu, Kai Dang, et al. 2024.            Carolyn Rose. 2024. Crscore: Grounding auto-
+  Qwen2.5-coder technical report. arXiv preprint         mated evaluation of code review comments in
+  arXiv:2409.12186.                                      code claims and smells.
+OpenAI. 2024. Gpt-4o mini: advancing cost-             Parish, Emy Parparita, Alex Passos, Mikhail
+  efficient intelligence.                              Pavlov, Andrew Peng, Adam Perelman, Filipe
+                                                       de Avila Belbute Peres, Michael Petrov, Hen-
+OpenAI, Josh Achiam, Steven Adler, Sandhini            rique Ponde de Oliveira Pinto, Michael, Poko-
+ Agarwal, Lama Ahmad, Ilge Akkaya, Flo-                rny, Michelle Pokrass, Vitchyr H. Pong, Tolly
+  rencia Leoni Aleman, Diogo Almeida, Janko            Powell, Alethea Power, Boris Power, Elizabeth
+ Altenschmidt, Sam Altman, Shyamal Anad-               Proehl, Raul Puri, Alec Radford, Jack Rae,
+  kat, Red Avila, Igor Babuschkin, Suchir Bal-         Aditya Ramesh, Cameron Raymond, Francis
+  aji, Valerie Balcom, Paul Baltescu, Haiming          Real, Kendra Rimbach, Carl Ross, Bob Rot-
+  Bao, Mohammad Bavarian, Jeff Belgum, Irwan           sted, Henri Roussez, Nick Ryder, Mario Saltarelli,
+  Bello, Jake Berdine, Gabriel Bernadett-Shapiro,      Ted Sanders, Shibani Santurkar, Girish Sas-
+  Christopher Berner, Lenny Bogdonoff, Oleg            try, Heather Schmidt, David Schnurr, John
+  Boiko, Madelaine Boyd, Anna-Luisa Brakman,           Schulman, Daniel Selsam, Kyla Sheppard, Toki
+  Greg Brockman, Tim Brooks, Miles Brundage,           Sherbakov, Jessica Shieh, Sarah Shoker, Pranav
+  Kevin Button, Trevor Cai, Rosie Campbell, An-        Shyam, Szymon Sidor, Eric Sigler, Maddie
+  drew Cann, Brittany Carey, Chelsea Carlson,          Simens, Jordan Sitkin, Katarina Slama, Ian
+  Rory Carmichael, Brooke Chan, Che Chang, Fo-         Sohl, Benjamin Sokolowsky, Yang Song, Na-
+  tis Chantzis, Derek Chen, Sully Chen, Ruby           talie Staudacher, Felipe Petroski Such, Natalie
+  Chen, Jason Chen, Mark Chen, Ben Chess,              Summers, Ilya Sutskever, Jie Tang, Nikolas
+  Chester Cho, Casey Chu, Hyung Won Chung,             Tezak, Madeleine B. Thompson, Phil Tillet,
+  Dave Cummings, Jeremiah Currier, Yunxing             Amin Tootoonchian, Elizabeth Tseng, Preston
+  Dai, Cory Decareaux, Thomas Degry, Noah              Tuggle, Nick Turley, Jerry Tworek, Juan Fe-
+  Deutsch, Damien Deville, Arka Dhar, David            lipe Cerón Uribe, Andrea Vallone, Arun Vi-
+  Dohan, Steve Dowling, Sheila Dunning, Adrien         jayvergiya, Chelsea Voss, Carroll Wainwright,
+  Ecoffet, Atty Eleti, Tyna Eloundou, David Farhi,     Justin Jay Wang, Alvin Wang, Ben Wang,
+  Liam Fedus, Niko Felix, Simón Posada Fishman,       Jonathan Ward, Jason Wei, CJ Weinmann, Akila
+ Juston Forte, Isabella Fulford, Leo Gao, Elie         Welihinda, Peter Welinder, Jiayi Weng, Lilian
+  Georges, Christian Gibson, Vik Goel, Tarun           Weng, Matt Wiethoff, Dave Willner, Clemens
+  Gogineni, Gabriel Goh, Rapha Gontijo-Lopes,          Winter, Samuel Wolrich, Hannah Wong, Lauren
+ Jonathan Gordon, Morgan Grafstein, Scott Gray,        Workman, Sherwin Wu, Jeff Wu, Michael Wu,
+  Ryan Greene, Joshua Gross, Shixiang Shane            Kai Xiao, Tao Xu, Sarah Yoo, Kevin Yu, Qiming
+  Gu, Yufei Guo, Chris Hallacy, Jesse Han, Jeff        Yuan, Wojciech Zaremba, Rowan Zellers, Chong
+  Harris, Yuchen He, Mike Heaton, Johannes Hei-        Zhang, Marvin Zhang, Shengjia Zhao, Tianhao
+  decke, Chris Hesse, Alan Hickey, Wade Hickey,        Zheng, Juntang Zhuang, William Zhuk, and Bar-
+  Peter Hoeschele, Brandon Houghton, Kenny Hsu,        ret Zoph. 2024. Gpt-4 technical report.
+  Shengli Hu, Xin Hu, Joost Huizinga, Shantanu
+ Jain, Shawn Jain, Joanne Jang, Angela Jiang,        Long Ouyang, Jeff Wu, Xu Jiang, Diogo Almeida,
+  Roger Jiang, Haozhun Jin, Denny Jin, Shino           Carroll L. Wainwright, Pamela Mishkin, Chong
+ Jomoto, Billie Jonn, Heewoo Jun, Tomer Kaf-           Zhang, Sandhini Agarwal, Katarina Slama, Alex
+  tan, Lukasz Kaiser, Ali Kamali, Ingmar Kan-          Ray, John Schulman, Jacob Hilton, Fraser Kel-
+  itscheider, Nitish Shirish Keskar, Tabarak Khan,     ton, Luke Miller, Maddie Simens, Amanda Askell,
+  Logan Kilpatrick, Jong Wook Kim, Christina           Peter Welinder, Paul Christiano, Jan Leike, and
+  Kim, Yongjik Kim, Jan Hendrik Kirchner, Jamie        Ryan Lowe. 2022. Training language models to
+  Kiros, Matt Knight, Daniel Kokotajlo, Lukasz         follow instructions with human feedback.
+  Kondraciuk, Andrew Kondrich, Aris Konstan-
+  tinidis, Kyle Kosic, Gretchen Krueger, Vishal
+                                                     Fabiano Pecorelli, Savanna Lujan, Valentina Lenar-
+  Kuo, Michael Lampe, Ikai Lan, Teddy Lee, Jan
+                                                       duzzi, Fabio Palomba, and Andrea De Lucia.
+  Leike, Jade Leung, Daniel Levy, Chak Ming
+                                                       2022. On the adequacy of static analysis warn-
+  Li, Rachel Lim, Molly Lin, Stephanie Lin,
+                                                       ings with respect to code smell prediction. Empir.
+  Mateusz Litwin, Theresa Lopez, Ryan Lowe,
+                                                       Softw. Eng., 27(3):64.
+  Patricia Lue, Anna Makanju, Kim Malfacini,
+  Sam Manning, Todor Markov, Yaniv Markovski,
+  Bianca Martin, Katie Mayer, Andrew Mayne,          Rafael Rafailov, Archit Sharma, Eric Mitchell,
+  Bob McGrew, Scott Mayer McKinney, Chris-             Stefano Ermon, Christopher D. Manning, and
+  tine McLeavey, Paul McMillan, Jake McNeil,           Chelsea Finn. 2024. Direct preference optimiza-
+  David Medina, Aalok Mehta, Jacob Menick, Luke        tion: Your language model is secretly a reward
+  Metz, Andrey Mishchenko, Pamela Mishkin, Vin-        model.
+  nie Monaco, Evan Morikawa, Daniel Mossing,
+ Tong Mu, Mira Murati, Oleg Murk, David Mély,       Zhihong Shao, Peiyi Wang, Qihao Zhu, Runxin
+ Ashvin Nair, Reiichiro Nakano, Rajeev Nayak,          Xu, Junxiao Song, Xiao Bi, Haowei Zhang,
+ Arvind Neelakantan, Richard Ngo, Hyeonwoo             Mingchuan Zhang, Y. K. Li, Y. Wu, and Daya
+  Noh, Long Ouyang, Cullen O’Keefe, Jakub              Guo. 2024. Deepseekmath: Pushing the limits of
+  Pachocki, Alex Paino, Joe Palermo, Ashley            mathematical reasoning in open language mod-
+  Pantuliano, Giambattista Parascandolo, Joel          els.
+Archit Sharma, Sedrick Scott Keh, Eric Mitchell,        A.1.2 Java (Out-of-domain)
+  Chelsea Finn, Kushal Arora, and Thomas Kol-
+                                                        DesigniteJava provides comprehensive smell
+  lar. 2024. A critical evaluation of ai feedback for
+  aligning large language models. Advances in Neu-      detection for Java. Tables 6 and 7 list key
+  ral Information Processing Systems, 37:29166–         detected smells.
+  29190.
+                                                        A.1.3 JavaScript (Out-of-domain)
+Tushar Sharma. 2024. Multi-faceted code smell           Our custom JSNOSE-based analyzer detects
+  detection at scale using designitejava 2.0. In
+                                                        these key smells enlisted in Table 8
+  Proceedings of the 21st International Conference
+  on Mining Software Repositories, MSR ’24, page
+  284–288, New York, NY, USA. Association for
+                                                        A.2   Teacher Model Dataset Creation
+  Computing Machinery.                                        Prompt
+                                                        The system prompt is as follows:
+Tushar Sharma, Maria Kechagia, Stefanos Geor-
+  giou, Rohit Tiwari, Indira Vats, Hadi Moazen,         You are an exceptionally intelligent coding
+  and Federica Sarro. 2022. A survey on machine         assistant that consistently delivers accurate
+  learning techniques for source code analysis.         and reliable responses to user instructions.
+                                                        You are also experienced in software
+Parshin Shojaee, Aneesh Jain, Sindhu Tipirneni,         development and write concise, comprehensive,
+  and Chandan K. Reddy. 2023. Execution-based           and relevant comments while reviewing code
+                                                        changes.
+  code generation using deep reinforcement learn-
+  ing.
+                                                           The task-specific, final review comment gen-
+Rosalia Tufano, Simone Masiero, Antonio Mas-            eration with step by step analysis prompt is as
+  tropaolo, Luca Pascarella, Denys Poshyvanyk,
+  and Gabriele Bavota. 2022. Using pre-trained          follows:
+  models to boost code review automation. In Pro-       TASK PROMPT: Your task is to look at the given
+  ceedings of the 44th international conference on      git diff that represents a Python code change
+  software engineering, pages 2291–2302.                as well as linter feedback and code smells
+                                                        detected in the file. You need to write a brief,
+Ruiqi Wang, Jiyu Guo, Cuiyun Gao, Guodong Fan,          concise, comprehensive, and relevant review
+  Chun Yong Chong, and Xin Xia. 2025a. Can llms         that touches upon all the important topics in
+  replace human evaluators? an empirical study of       the code change as well as all the code smells
+  llm-as-a-judge in software engineering.               and linter feedback relevant to that code
+                                                        change.
+Ruiqi Wang, Jiyu Guo, Cuiyun Gao, Guodong Fan,          Code Change:
+  Chun Yong Chong, and Xin Xia. 2025b. Can              {code_change}
+  llms replace human evaluators? an empirical
+  study of llm-as-a-judge in software engineering.      Code Smells:
+  arXiv preprint arXiv:2502.06193.                      {code_smell_detector_messages}
+
+                                                        Linter Messages:
+Ziyin Zhang, Chaoyu Chen, Bingchang Liu, Cong
+                                                        {linter_messages}
+  Liao, Zi Gong, Hang Yu, Jianguo Li, and Rui
+  Wang. 2023. Unifying the perspectives of nlp and      Now, you should think step by step about all
+  software engineering: A survey on language mod-       the code changes, code smells, and linter
+  els for code. arXiv preprint arXiv:2311.07989.        outputs and then decide which things to include.
+                                                        Only pick the smells or linter feedback
+                                                        corresponding to the code change. Also, try to
+                                                        cover aspects like bugs, code security, code
+A     Methodology Details                               readability, maintainability, memory
+                                                        consumption, performance, good and bad design
+This appendix contains additional details               patterns, and efficiency introduced in the code
+on the implementation of our CRScore++                  change, which might be missed by these tools.
+                                                        Put your step by step analysis in a section
+method.                                                 titled "### Step-by-Step Analysis:".
+
+A.1     Code Smell Detector Details                     Generate your final review in a section titled
+                                                        "### Final Review:" so that it is easy to parse
+A.1.1     Python (In-domain)                            from your response. The output should only have
+                                                        "### Step-by-Step Analysis:"(should be
+We use PyScent for Python code smell detec-             pointwise) and "### Final Review:" (this should
+tion, focusing on structural and maintainability        be a single paragraph) sections.
+issues. Table 5 details the key smells detected.
+Smell Name                 Description
+Long Method                Methods exceeding 50 lines, hindering readability and increasing difficulty in testing and maintenance
+Long Parameter List        Methods with ¿6 parameters, indicating excessive coupling and potential confusion during method invocation
+Long Branch                Conditional structures with excessive nesting or length, creating cognitive burden and bug susceptibility
+Many Attributes            Classes with ¿15 attributes, suggesting violation of Single Responsibility Principle and excessive state complexity
+Many Methods               Classes with ¿20 methods, indicating potential violation of cohesion principles and bloated class responsibilities
+Shotgun Surgery            When a single change requires modifications across multiple classes, creating maintenance hazards and update risks
+Low Class Cohesion         Classes where member variables and methods have minimal conceptual relationships, indicating weak internal design
+Complex Code               Blocks with cyclomatic complexity ¿15, creating paths difficult to fully test and comprehend
+Long Lambda                Anonymous functions exceeding reasonable size, subverting their intended use for simple, concise operations
+Long List Comprehension    List comprehensions exceeding 80 characters, compromising the readability benefits of this Python idiom
+
+
+                                    Table 5: Python code smells detected by PyScent
+
+ Design Smell              Description
+ Broken Modularization     Poor separation of components that belong together, violating packaging principles and logical boundaries
+ Cyclic Dependency         Circular references between packages creating tight coupling that complicates testing and independent deployment
+ Hub-like Modularization   Excessive centralization where one package depends on many others, creating potential bottlenecks
+ Deep Hierarchy            Inheritance trees deeper than 5 levels, increasing complexity and reducing comprehensibility of class behavior
+ Multipath Hierarchy       Multiple inheritance paths to the same superclass, leading to potential method resolution ambiguity
+
+
+                                         Table 6: Java design smells (DesigniteJava)
+
+ Implementation Smell       Description
+ Complex Method             Methods with cyclomatic complexity ¿10, creating numerous execution paths difficult to fully test
+ Long Parameter List        Methods requiring more than 5 parameters, indicating potential design problems and complicating API usage
+ Magic Number               Unnamed numerical constants embedded in code, hampering maintainability and self-documentation
+ Empty Catch                Exception blocks that catch errors but take no recovery action, potentially hiding important failure conditions
+ Long Identifier            Variable or method names exceeding 25 characters, reducing readability despite intentions for clarity
+
+
+                                  Table 7: Java implementation smells (DesigniteJava)
+
+ Smell                      Description
+ Long Function              Functions exceeding 30 lines, creating maintenance challenges in a language often used for UI interactions
+ Excessive Globals          More than 5 global variables in a file, risking namespace pollution and implicit coupling between modules
+ Nested Callbacks           More than 3 levels of callback nesting, creating ”callback hell” that impedes code comprehension
+ JS/HTML/CSS Coupling       Direct manipulation of DOM or styles from JS code, violating separation of concerns in frontend development
+ Unused Code                Functions or variables declared but never referenced, adding unnecessary complexity and maintenance overhead
+ Closure Smells             Improperly managed closures that can lead to memory leaks or unexpected variable capture behaviors
+ Refused Bequest            Inheritance relationships where subclasses ignore significant portions of parent functionality
+
+
+                                   Table 8: JavaScript code smells (Custom JSNOSE)
+
+
+A.3      SFT Training Prompt
+                                                                          Generate your final review in a section titled
+The system prompt is same as before. The task                             "### Final Review:" so that it is easy to parse
+specific prompt is given below:                                           from your response. The output should only have
+                                                                          "### Step-by-Step Analysis:" (should be
+Your task is to look at the given git diff that                           pointwise) and "### Final Review:" (this should
+represents a Python code change. You need to                              be a single paragraph) sections
+write a brief, concise, comprehensive, and
+relevant review that touches upon all the                                A.4       Hyperparameters for Training
+important topics, code smells, vulnerabilities,
+and issues in the code change.                                                     Models
+
+Code Change:
+                                                                         We                    train                the
+{code_change}                                                            Qwen/Qwen2.5-Coder-3B-Instruct            and
+                                                                         Qwen/Qwen2.5-Coder-7B-Instruct, with flash
+Now, you should think step-by-step about all
+the code changes and identify code smells,                               attention, random seed of 42, evaluation every
+issues that would be flagged by a linter,                                100 steps (eval steps), max length padding,
+security vulnerabilities, etc. Also, try to                              train-val split of 0.1 (10% data used for
+cover aspects like bugs, code security, code
+readability, maintainability, memory                                     validation), batch size of 2, maximum training
+consumption, performance, good and bad design                            sequence length of 1024 and 2 training epochs.
+patterns, and efficiency introduced in the code                          The training is done on a single A100, 80 GB
+change. Put your step-by-step analysis in a
+section titled "### Step-by-Step Analysis:".                             GPU for 3B and double A100, 80 GB using
+hugginface recipes¶                                After generating the list above you should
+                                                   again think step-by-step about the given review
+                                                   comment and whether it addresses these topics
+                                                   and put it under a section called "###
+                                                   Step-by-Step Analysis of Review Comment:". Then
+                                                   based on your step-by-step analysis you should
+                                                   generate a score ranging from 1 (minimum value)
+                                                   to 5 (maximum value) each about how
+B       Experimental Details                       comprehensive, concise, and relevant a review
+                                                   is. A review getting a score of 5 on
+                                                   comprehensiveness addresses nearly all the
+                                                   points in the \### Topics to be Covered:"
+                                                   section while a review scoring 1 addresses none
+                                                   of them. A review getting a score of 5 on
+Further experimental details like guidelines for   conciseness only covers the topics in the \###
+human study annotation of code review quality.     Topics to be Covered:" section without wasting
+                                                   time on off-topic information while a review
+                                                   getting a score of 1 is entirely off-topic.
+                                                   Finally, a review scoring 5 on relevance is
+                                                   both concise and comprehensive while a review
+                                                   scoring 1 is neither concise nor comprehensive,
+                                                   effectively making relevance a combined score
+                                                   of conciseness and comprehensiveness. You
+B.1      LLM-as-a-judge Prompt                     should give your final rating in a section
+                                                   titled \### Final Scores:". If a review scores
+                                                   4 on comprehensiveness, 2 on conciseness, and 3
+                                                   on relevance give the final scores as shown
+                                                   below (please follow the exact format).
+Your task is to look at a given git diff that
+represents a Python code change, linter            ### Final Scores:
+feedback and code smells detected in the code      ```
+change, and a corresponding review comment         {"comprehensiveness": 4, "conciseness": 2,
+about the diff. You need to rate how concise,      "relevance": 3}
+comprehensive, and relevant a review is and        ```
+whether it touches upon all the important
+topics, code smells, vulnerabilities, and          Now start your analysis starting with the \###
+issues in the code change.                         Topics to be Covered:", followed by "###
+                                                   Step-by-Step Analysis of Review Comment:" and
+Code Change:                                       ending with the \### Final Scores:".
+{code_change}
+                                                   ### Topics to be Covered:
+Code Smells:                                       {topics_to_be_covered}
+{code_smell_detector_messages}
+
+Linter Messages:                                   B.2   CoT Evaluation Prompt
+{linter_messages}
+                                                   Your task is to look at a given git diff that
+Review Comment:                                    represents a code change, linter feedback, and
+{review_comment}                                   code smells detected in the code change. You
+                                                   will also be given some \step-by-step analysis"
+You should first generate a step-by-step list      done by a Large Language Model (LLM) that was
+of all the topics the review should cover like     asked to review the code change which
+code smells, issues that would be flagged by a     supposedly does linter like and code smell
+linter, security vulnerabilities, etc. Also,       analysis as well. You need to use the LLM’s
+the review should cover aspects like bugs, code    analysis of the code change along two
+security, code readability, maintainability,       dimensions: 1) accuracy and 2) coverage. For
+memory consumption, performance, good and bad      the \accuracy" dimension rate on a scale of 1
+design patterns, and efficiency introduced in      to 5, how factually accurate the step-by-step
+the code change. Put your analysis under a         analysis of the LLM is, given the linter
+section titled \### Topics to be Covered:".        messages and code smell detection, which can be
+                                                   taken as \ground truth". Meanwhile, the
+                                                   \coverage" rates on a scale of 1 to 5 how many
+                                                   of the linter messages and code smells are
+                                                   covered by the step-by-step analysis.
+
+                                                   Code Change:
+                                                   {code_change}
+
+                                                   Code Smells:
+    ¶
+    https://github.com/huggingface/                {code_smell_detector_messages}
+alignment-handbook/tree/main/recipes
+Linter Messages:                                   prising 33 Python, 34 Java, and 34 JavaScript
+{linter_messages}                                  instances. Four experienced software develop-
+Step by Step Analysis:                             ers evaluated the review comments generated
+{chain_of_thought}                                 by the four model variants described in Sec-
+                                                   tion 5.4. To ensure reliability, we asked annota-
+You should give your final rating in a section
+titled \### Final Scores:". If the step-by-step    tors to evaluate an overlapping subset (10% of
+analysis obtains an accuracy of 4 and coverage     total annotations) to measure inter-annotator
+of 2 with respect to the code smells and linter
+messages then you should output the results as
+                                                   agreement. The resulting Cohen’s kappa score
+shown below (please follow the exact format).      of 0.7 indicates substantial agreement among
+                                                   evaluators, confirming the consistency of our
+### Final Scores:
+```                                                human assessment methodology.
+{"accuracy": 4, "coverage": 2}
+```                                                B.4   Computational Budget
+Now provide your rating of the \Step by Step       We utilized significant computational resources
+Analysis":                                         throughout our experimental pipeline to train
+                                                   models and generate evaluation data. For
+### Final Scores:
+                                                   model training, we employed NVIDIA A100
+                                                   80GB GPUs for all variants of the Qwen mod-
+                                                   els described in Section 4. The SFT stage
+B.3    Dataset Statistics                          required approximately 8 hours of training (2
+                                                   epochs) on the 20,888 Python instances from
+Our experimental pipeline utilized multiple        the CodeReviewer dataset, while the DPO
+datasets across different training and evalua-     stage required an additional 6 hours on a sub-
+tion phases. For supervised fine-tuning (SFT),     set of 5,000 instances. For dataset prepara-
+we selected 20,888 Python code examples from       tion and evaluation, we made approximately
+the CodeReviewer dataset which is publicly         40,000 API calls to GPT-4o-mini: 20,000 calls
+available with the Apache 2.0 license‖ . We        for generating ”topics to be covered” lists and
+systematically annotated these examples with       another 20,000 for producing chain-of-thought
+static analysis signals by generating Ruff lin-    analysis and review comments. The LLM-as-
+ter feedback and PyScent code smell detec-         a-judge evaluation methodology required ad-
+tions for each code patch. Using GPT-4o-           ditional API calls proportional to our test set
+mini, we produced structured reviews contain-      sizes: approximately 1,000 calls for Python
+ing both step-by-step analysis and concise final   (evaluating 5 models), and 1,600 calls for Java
+review comments, accompanied by a compre-          and JavaScript combined (evaluating 10 mod-
+hensive ”topics to be covered” list that served    els). Our training configuration employed the
+as pseudo-references for subsequent evaluation.    AdamW optimizer with a learning rate of 2e-
+For the preference optimization (DPO) phase,       5, a batch size of 8, and a weight decay of
+we sampled a subset of 5,000 instances from the    0.01. For the DPO training phase, we used
+SFT dataset. For each instance, we generated       a β value of 0.1 to balance preference adher-
+20 diverse candidate reviews using our SFT-        ence against regularization from the reference
+trained models with varying temperature set-       model. All experiments were conducted with
+tings. These candidates were scored by GPT-        half-precision (fp16) to optimize memory usage
+4o-mini based on comprehensiveness, concise-       while maintaining numerical stability. The to-
+ness, and relevance metrics, using the previ-      tal computational budget for our experiments,
+ously generated ”topics to be covered” as eval-    including training, inference, and evaluation,
+uation criteria. We selected pairs with the        amounted to approximately 450 GPU hours on
+largest score differentials (∆ ≥ 2) for creating   A100 hardware.
+the accept/reject pairs required for DPO train-
+ing. To validate our approach through human        B.5   Codebook for Rating Code
+evaluation, we curated a balanced test set com-          Review Quality
+  ‖
+    https://huggingface.co/microsoft/              For the human evaluation, raters were pre-
+codereviewer                                       sented with model-generated code reviews
+and the corresponding code diffs. Unlike             B.7    Annotator Information
+CRScore which focused on pseudo-references,          We hired five graduate students with experi-
+our CRScore++ evaluation focused directly on         ence in writing Java, Python, and Javascript
+the quality of the review comments in relation       code. The annotation process took approxi-
+to a predefined list of ”topics to be covered” for   mately three weeks, with each annotator eval-
+each code change. These topics were systemat-        uating 33-34 examples per programming lan-
+ically generated by GPT-4o-mini and included         guage across four different model configura-
+issues flagged by static analysis tools (linters     tions. Before evaluation began, annotators par-
+and code smell detectors) as well as potential       ticipated in a comprehensive two-hour train-
+security, performance, and maintainability con-      ing session on code smell recognition, static
+cerns related to the code change. Each rater         analysis fundamentals, and quality assessment
+was provided with the original code diff, the        guidelines. We conducted calibration exercises
+generated ”topics to be covered” list, and ac-       where annotators rated the same set of exam-
+cess to the complete source files before and         ples and discussed discrepancies to align their
+after the changes. This comprehensive context        scoring approaches. We iteratively refined our
+enabled raters to make informed judgments            guidelines until achieving the reported inter-
+about review quality across three dimensions:        annotator agreement of 0.7 (Cohen’s kappa).
+comprehensiveness, conciseness, and relevance.       All annotators signed informed consent forms
+Reviews were rated on a 5-point Likert scale,        acknowledging that their evaluations would be
+with specific scoring guidelines provided to en-     used for research purposes and potentially pub-
+sure evaluation consistency.                         lished in anonymized form. The annotators
+                                                     were not informed about which model produced
+B.6    Rating Review Quality using
+                                                     which review to prevent potential biases toward
+       Topics
+                                                     specific systems. For the compensation, the
+Our method employes a ”topics to be covered”         annotators who took up this task were paid in
+approach to standardize review evaluation. Be-       30 USD in Amazon gift cards after successful
+fore evaluation, we generated a comprehensive        completion of the study.
+list of topics for each code change, encompass-
+ing:                                                 B.8    Ethics Review for Data Collection
+                                                     The human evaluation protocol for CRScore++
+ • Code smells detected by language-specific         was reviewed and approved by the institutional
+   tools (PyScent, DesigniteJava, JSNOSE)            review board (IRB) of the university the au-
+                                                     thors are affiliated with.
+ • Linter warnings from static analyzers
+   (Ruff, PMD, custom JavaScript linter)             C     More Results And Analysis
+
+ • Security vulnerabilities and potential edge       This section presents additional statistical anal-
+   cases                                             yses that complement the model performance
+                                                     results discussed in the main paper. We con-
+ • Readability, maintainability, and perfor-         duct a series of Wilcoxon Signed Rank tests
+   mance considerations                              to establish the statistical significance of differ-
+                                                     ences observed between various model config-
+Raters evaluated code reviews from four dif-         urations. All tests use an appropriate signifi-
+ferent model configurations on a 5-point Lik-        cance level (α = 0.01 or α = 0.005) to ensure
+ert scale for each dimension. Table 9 shows          robustness of our findings.
+our scoring guidelines. For comprehensiveness,
+scores ranged from 1 (covering none of the top-      C.1    Model Size Comparisons
+ics) to 5 (addressing virtually all topics). For     Table 11 examines the impact of model size by
+conciseness, scores ranged from 1 (mostly irrele-    comparing 3B and 7B variants of each configu-
+vant content) to 5 (focused entirely on relevant     ration. Interestingly, not all dimensions show
+topics). Relevance combined both aspects, rep-       significant differences between model sizes. For
+resenting overall review quality.                    the ”CR dataset Python only” and Tool Guided
+  Dimension           Score   Rule of thumb
+                         1    None of the review is related to the code change or identified topics.
+                         2    Some of the review is related to the identified topics and static analysis feedback.
+  Conciseness            3    Roughly half of the review addresses relevant topics without excessive digression.
+                         4    Most of the review effectively addresses identified topics without unnecessary content.
+                         5    The entire review precisely addresses identified topics with optimal brevity.
+                         1    Review fails to address any identified topics or static analysis findings.
+                         2    Review covers at least one code smell, linter warning, or important topic.
+  Comprehensiveness      3    Review addresses approximately half of the identified topics.
+                         4    Review covers most identified topics, including code smells and linter warnings.
+                         5    Review comprehensively addresses virtually all identified topics and static analysis findings.
+                              Relevance score represents the balance between comprehensiveness and
+  Relevance
+                              conciseness, and must fall between those two scores.
+                              When one dimension significantly underperforms, the relevance score
+                              should be weighted toward that limiting factor.
+
+                              For example: A review that identifies all relevant code smells (high
+                              comprehensiveness) but includes substantial off-topic discussion (low
+                              conciseness) should have a relevance score closer to its conciseness rating.
+
+Table 9: Scoring guidelines for evaluating code review quality in CRScore++. These rules provide a
+framework for consistent assessment across multiple annotators, focusing on how effectively reviews address
+topics identified by static analysis tools and other code quality considerations.
+
+
+approaches, conciseness scores show no statisti-                ing conciseness, suggesting that tool integration
+cally significant differences (p¿0.01), suggesting              provides substantial benefits without introduc-
+that increasing model size does not necessar-                   ing verbosity. The comparison between Stage
+ily improve review brevity. However, compre-                    1 and Stage 2 models reveals significant dif-
+hensiveness and relevance show significant im-                  ferences across all dimensions (p¡0.005), with
+provements with the larger model size in most                   Stage 2 showing enhanced comprehensiveness
+configurations, particularly for our Stage 1 and                and relevance at a small but significant cost to
+Stage 2 models. This indicates that additional                  conciseness.
+parameters enable the model to capture more
+complex relationships between code smells, lin-                 C.3      Comparison Across 7B Model
+ter warnings, and their implications.                                    Variants
+                                                                Table 13 presents similar comparisons for 7B
+C.2    Comparison Across 3B Model
+                                                                model variants. The patterns largely mirror
+       Variants
+                                                                those seen in 3B models, but with some notable
+The detailed comparisons in Table 12 reveal                     differences. Unlike the 3B comparison, there is
+several important patterns among 3B model                       no significant difference between the Zero Shot
+variants. First, models trained on the CodeRe-                  and Tool Guided approaches in the 7B setting
+viewer dataset alone consistently underper-                     across any metric (p¿0.005). This suggests that
+form across all metrics compared to other ap-                   larger models may already capture much of the
+proaches (p¡0.005), reinforcing our hypothe-                    knowledge provided by static analysis tools,
+sis that traditional supervised fine-tuning on                  making explicit tool integration less impactful.
+human-written reviews is insufficient for high-                 Both Stage 1 and Stage 2 models demonstrate
+quality review generation. The progression                      highly significant improvements over baseline
+from Zero Shot to Tool Guided to Stage 1                        approaches (p¡0.005) across most metrics. The
+to Stage 2 shows statistically significant im-                  comparison between Stage 1 and Stage 2 shows
+provements in both comprehensiveness and rel-                   significant differences in all dimensions, con-
+evance, confirming the incremental benefits of                  firming that preference optimization consis-
+our training pipeline. Notably, the transition                  tently enhances review quality independent of
+from Zero Shot to Tool Guided shows signifi-                    model size, albeit with a modest reduction in
+cant improvements in comprehensiveness and                      conciseness. This pattern is consistent with
+relevance (p¡0.005) without significantly affect-               our finding that DPO training guides models
+toward more thorough coverage of code qual-
+ity issues, sometimes at the expense of brevity.
+These statistical analyses provide strong evi-
+dence for the effectiveness of our CRScore++
+training methodology across different model
+sizes and highlight the specific contributions of
+each component in our approach. The consis-
+tent patterns of improvement across both 3B
+and 7B models demonstrate the scalability of
+our approach and its potential application to
+even larger model architectures.
+  Language                           Code Change                           Model Type                Model’s Code Change Review
+                @@ -53,7 +53,7 @@ public class ProtocGapic
+                PluginGeneratorTest {                                                         I noticed that a new parameter ”transport=grpc”
+                    model.getFiles.stream                                                     has been added to the setParameter() method.
+                    .mapProtoFile::getProto                                                   This change introduces a potential code smell
+                    .collectCollectors.toList)                                                as it increases the dependency on external
+  Java                                                                    Qwen 3B Stage 1
+                    // Only the file to generate                                              function calls. The test may now have a
+                    .addFileToGenerate”multiple services.proto”                               ”shotgun smell” due to high coupling with
+                - .setParameter”language=java”                                                external components. I recommend adding
+                + .setParameter”language=java,transport=grpc”                                 documentation for this parameter.
+                    .build;
+                @@ -124,6 +124,12 @@ function validateConfigconfig
+                    if !config.hasOwnProperty’timeout’ {
+                       config.timeout = 30000;                                                The PR adds retry functionality to the config
+                    }                                                                         validation. I see a potential code smell here
+                + if !config.hasOwnProperty’retries’ {                                        with the repetitive property checking pattern.
+                +        config.retries = 3;                                                  Linter would flag this as a violation of the
+  JavaScript                                                              Qwen 3B Stage 1
+                + }                                                                           DRY principle. Consider refactoring to use a
+                + if config.retries ¡ 0 {                                                     helper function for property validation. Also,
+                +        throw new Error’Retries cannot be negative’;                         the Error message could be more descriptive
+                + }                                                                           for debugging purposes.
+                    return config;
+                  }
+                                                                                              This change modifies the logging level from
+                @@ -85,7 +85,7 @@ class RequestHandler {
+                                                                                              generic log to debug level. This addresses a
+                  private void processRequestRequest req {
+                                                                                              common code smell related to inappropriate
+                   try {
+                                                                                              logging levels. The linter would have flagged
+                -    logger.log”Processing request ” + req.getId;
+  Java                                                                  Qwen 3B Stage 2 DPO   this as a violation of logging best practices.
+                +     logger.debug”Processing request ” + req.getId;
+                                                                                              However, there’s still a performance concern
+                   } catch Exception e {
+                                                                                              with string concatenation in logging statements
+                     handleExceptione;
+                                                                                              which should be addressed using parameterized
+                   }
+                                                                                              logging instead.
+                                                                                              The PR adds data validation before processing.
+                @@ -45,7 +45,9 @@ class DataProcessor {
+                                                                                              This addresses a code smell where input
+                  processdata {
+                                                                                              validation was missing. A linter would have
+                    if !data return null;
+                                                                                              flagged the original code for potential null
+                - return this.transformdata;
+                                                                                              reference errors. However, I notice another
+  JavaScript    + const validated = this.validatedata;                  Qwen 3B Stage 2 DPO
+                                                                                              code smell: throwing errors in the middle of
+                + if !validated throw new Error’Invalid data’;
+                                                                                              processing logic creates fragmented control flow.
+                + return this.transformvalidated;
+                                                                                              Consider returning an error result instead
+                  }
+                                                                                              following the Either pattern for better error
+                  // ... rest of the class
+                                                                                              handling.
+
+
+Table 10: Comparison of model responses across different stages for out-of-domain languages (Java and
+JavaScript). The examples highlight how our models effectively identify code smells and linter issues in
+unfamiliar languages.
+
+
+
+
+   Comparison                                                                 Comprehensiveness        Conciseness             Relevance
+                                                                              p-value statistic     p-value statistic      p-value statistic
+   Qwen 3B (CR datasetPython only ) vs. Qwen 7B (CR datasetPython only )       p¡0.01   7.50e+06    p¿0.01    8.07e+06     p¡0.01     7.50e+06
+   Qwen 3B Zero Shot vs. Qwen 7B Zero Shot                                     p¿0.01   8.34e+06    p¡0.01    8.67e+06     p¡0.01     8.49e+06
+   Qwen 3B (Tool Guided) vs. Qwen 7B (Tool Guided)                             p¿0.01   8.17e+06    p¡0.01    8.57e+06     p¿0.01     8.25e+06
+   Qwen 3B Stage 1 vs. Qwen 7B Stage 1                                         p¡0.01   8.71e+06    p¡0.01    7.73e+06     p¡0.01     8.64e+06
+   Qwen 3B Stage 2 vs. Qwen 7B Stage 2                                         p¡0.01   7.32e+06    p¡0.01    8.75e+06     p¡0.01     7.28e+06
+
+
+Table 11: Statistical significance Wilcoxon Signed Rank tests performed among Qwen 3B and 7B variants
+on comprehensiveness, conciseness, and relevance (significance level α = 0.01). We highlight statistically
+significant observations.
+  Comparison                                                   Comprehensiveness       Conciseness            Relevance
+                                                               p-value  statistic   p-value   statistic   p-value   statistic
+  Qwen 3B (CR datasetPython only ) vs. Qwen 3B Zero Shot       p¡0.005   1.48e+06   p¡0.005   5.65e+06    p¡0.005   2.57e+06
+  Qwen 3B (CR datasetPython only ) vs. Qwen 3B (Tool Guided)   p¡0.005   1.70e+06   p¡0.005   5.62e+06    p¡0.005   2.82e+06
+  Qwen 3B (CR datasetPython only ) vs. Qwen 3B Stage 1         p¡0.005   4.07e+05   p¡0.005   5.69e+06    p¡0.005   1.20e+06
+  Qwen 3B (CR datasetPython only ) vs. Qwen 3B Stage 2         p¡0.005   2.56e+05   p¡0.005   7.38e+06    p¡0.005   8.48e+05
+  Qwen 3B Zero Shot vs. Qwen 3B (Tool Guided)                  p¡0.005   8.40e+06   p¿0.005   8.07e+06    p¡0.005   8.42e+06
+  Qwen 3B Zero Shot vs. Qwen 3B Stage 1                        p¡0.005   4.77e+06   p¿0.005   8.17e+06    p¡0.005   5.36e+06
+  Qwen 3B Zero Shot vs. Qwen 3B Stage 2                        p¡0.005   3.39e+06   p¡0.005   1.00e+07    p¡0.005   4.02e+06
+  Qwen 3B (Tool Guided) vs. Qwen 3B Stage 1                    p¡0.005   4.60e+06   p¿0.005   8.21e+06    p¡0.005   5.11e+06
+  Qwen 3B (Tool Guided) vs. Qwen 3B Stage 2                    p¡0.005   3.28e+06   p¡0.005   1.01e+07    p¡0.005   3.82e+06
+  Qwen 3B Stage 1 vs. Qwen 3B Stage 2                          p¡0.005   6.30e+06   p¡0.005   9.98e+06    p¡0.005   6.51e+06
+
+
+Table 12: Statistical significance Wilcoxon Signed Rank tests performed among Qwen 3B variants on
+comprehensiveness, conciseness, and relevance (significance level α = 0.005). We highlight statistically
+significant observations.
+
+
+
+
+  Comparison                                                   Comprehensiveness       Conciseness            Relevance
+                                                               p-value  statistic   p-value   statistic   p-value   statistic
+  Qwen 7B (CR datasetPython only ) vs. Qwen 7B Zero Shot       p¡0.005   2.82e+06   p¡0.005   6.45e+06    p¡0.005   4.03e+06
+  Qwen 7B (CR datasetPython only ) vs. Qwen 7B (Tool Guided)   p¡0.005   2.87e+06   p¡0.005   6.31e+06    p¡0.005   4.05e+06
+  Qwen 7B (CR datasetPython only ) vs. Qwen 7B Stage 1         p¡0.005   7.67e+05   p¡0.005   5.31e+06    p¡0.005   1.74e+06
+  Qwen 7B (CR datasetPython only ) vs. Qwen 7B Stage 2         p¡0.005   7.20e+05   p¿0.005   8.01e+06    p¡0.005   1.31e+06
+  Qwen 7B Zero Shot vs. Qwen 7B (Tool Guided)                  p¿0.005   8.15e+06   p¿0.005   7.99e+06    p¿0.005   8.13e+06
+  Qwen 7B Zero Shot vs. Qwen 7B Stage 1                        p¡0.005   5.37e+06   p¡0.005   7.27e+06    p¡0.005   5.74e+06
+  Qwen 7B Zero Shot vs. Qwen 7B Stage 2                        p¡0.005   3.19e+06   p¡0.005   9.80e+06    p¡0.005   3.63e+06
+  Qwen 7B (Tool Guided) vs. Qwen 7B Stage 1                    p¡0.005   5.36e+06   p¡0.005   7.41e+06    p¡0.005   5.73e+06
+  Qwen 7B (Tool Guided) vs. Qwen 7B Stage 2                    p¡0.005   3.23e+06   p¡0.005   9.96e+06    p¡0.005   3.64e+06
+  Qwen 7B Stage 1 vs. Qwen 7B Stage 2                          p¡0.005   5.10e+06   p¡0.005   1.09e+07    p¡0.005   5.32e+06
+
+
+Table 13: Statistical significance Wilcoxon Signed Rank tests performed among Qwen 7B variants on
+comprehensiveness, conciseness, and relevance (significance level α = 0.005). We highlight statistically
+significant observations.
+

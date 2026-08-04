@@ -1,0 +1,401 @@
+                                                  Uncovering Systematic Failures of LLMs in Verifying Code
+                                                          Against Natural Language Specifications
+                                                                                 Haolin Jin                                                                   Huaming Chen
+                                                                        University of Sydney                                                               University of Sydney
+                                                                       Sydney, NSW, Australia                                                             Sydney, NSW, Australia
+                                                                    hjin3177@uni.sydney.edu.au                                                         huaming.chen@sydney.edu.au
+
+                                         Abstract                                                                                        1    Introduction
+                                         Large language models (LLMs) have become essential tools in soft-                               As large language models (LLMs) have demonstrated increasing
+                                         ware development, widely used for requirements engineering, code                                capability in the domain of code synthesis [3], a growing body of
+arXiv:2508.12358v1 [cs.SE] 17 Aug 2025
+
+
+
+
+                                         generation and review tasks. Software engineers often rely on LLMs                              research and tooling efforts have begun exploring their application
+                                         to assess whether system code implementation satisfy task require-                              for automated code review and verification [5, 18, 29]. Traditional
+                                         ments, thereby enhancing code robustness and accuracy. However,                                 code reviews require developers to manually verify the alignment
+                                         it remains unclear whether LLMs can reliably determine whether                                  between code logic and requirements, a process that is both time
+                                         the code complies fully with the given task descriptions, which is                              consuming and prone to human error. LLMs show significant po-
+                                         usually natural language specifications. In this paper, we uncover                              tential to reduce this burden by automating code assessments and
+                                         a systematic failure of LLMs in evaluating whether code aligns                                  suggesting improvements during the code-review process. For in-
+                                         with natural language requirements. Specifically, with widely used                              stance, recent studies have leveraged models such as GPT-4o to
+                                         benchmarks, we employ unified prompts to judge code correctness.                                evaluate code submissions and determine whether they meet qual-
+                                         Our results reveal that LLMs frequently misclassify correct code im-                            ity standards or require revisions [13].
+                                         plementations as either “not satisfying requirements” or containing                                In software engineering, verifying and validating that source
+                                         potential defects. Surprisingly, more complex prompting, especially                             code aligns with its task requirements remains a challenge [21].
+                                         when leveraging prompt engineering techniques involving expla-                                  Requirements engineering is widely recognized as crucial to clearly
+                                         nations and proposed corrections, leads to higher misjudgment                                   defining, understanding, and aligning project objectives with stake-
+                                         rate, which highlights the critical reliability issues in using LLMs as                         holder needs, thereby reducing risks associated with errors, delays,
+                                         code review assistants. We further analyze the root causes of these                             and project failures [7]. Recent studies start to investigate the po-
+                                         misjudgments, and propose two improved prompting strategies for                                 tential of LLMs to bridge this gap. Advanced models such as GPT-4o
+                                         mitigation. For the first time, our findings reveals unrecognized                               have shown promising accuracy in identifying unmet requirements
+                                         limitations in LLMs to match code with requirements. We also offer                              from textual descriptions [20], indicating their potential as reliable
+                                         novel insights and practical guidance for effective use of LLMs in                              “virtual reviewers” even without test cases or formal implementa-
+                                         automated code review and task-oriented agent scenarios.                                        tions. To further improve review effectiveness, researchers have
+                                                                                                                                         explored self-critical mechanisms within LLMs, such as the Self-
+                                         CCS Concepts                                                                                    Refine framework, where models iteratively critique and refine
+                                         • Software and its engineering → Software testing and debugging;                                their outputs without additional training [14].
+                                         • Computing methodologies → Natural language generation.                                           Ideally, LLMs should accurately understand functional require-
+                                                                                                                                         ments described in natural language and reliably judge whether
+                                                                                                                                         provided code satisfies these requirements, assisting developers in
+                                         Keywords
+                                                                                                                                         identifying defects or confirming correctness. However, in scenar-
+                                         Large Language Models, Code Review, Prompt Engineering, Code                                    ios lacking test cases or reference implementations, the reliability
+                                         Understanding                                                                                   of LLMs in performing such “description-to-code” evaluations re-
+                                         ACM Reference Format:                                                                           mains unclear. In this work, we investigate whether LLMs can
+                                         Haolin Jin and Huaming Chen. 2018. Uncovering Systematic Failures of                            correctly determine code correctness when provided with precise
+                                         LLMs in Verifying Code Against Natural Language Specifications. In Pro-                         task descriptions and correct implementations. Our preliminary ex-
+                                         ceedings of ASE’25. ACM, New York, NY, USA, 5 pages. https://doi.org/                           periments reveal a concerning phenomenon: LLMs frequently issue
+                                         XXXXXXX.XXXXXXX                                                                                 false negative judgments, incorrectly concluding that correct imple-
+                                                                                                                                         mentations fail to meet stated requirements. This systematic failure
+                                         Permission to make digital or hard copies of all or part of this work for personal or           may arise from inherent biases and hallucinations within LLMs [9],
+                                         classroom use is granted without fee provided that copies are not made or distributed           or from improper prompt designs. Models tend to overly critique
+                                         for profit or commercial advantage and that copies bear this notice and the full citation
+                                         on the first page. Copyrights for components of this work owned by others than the              correct code, resulting in a high false negative rate. Surprisingly,
+                                         author(s) must be honored. Abstracting with credit is permitted. To copy otherwise, or          our extended experiments involving varied prompt designs [28]
+                                         republish, to post on servers or to redistribute to lists, requires prior specific permission   indicate that increasing the prompt complexity, such as requiring
+                                         and/or a fee. Request permissions from permissions@acm.org.
+                                         ASE’25, Seoul, South Korea                                                                      explicit explanations and suggested corrections, counterintuitively
+                                         © 2018 Copyright held by the owner/author(s). Publication rights licensed to ACM.               leads to higher rates of misjudgment. This finding contradicts the
+                                         ACM ISBN 978-1-4503-XXXX-X/2018/06                                                              common assumption that incorporating explanatory steps typically
+                                         https://doi.org/XXXXXXX.XXXXXXX
+ASE’25, Sun 16 - Thu 20 November 2025, Seoul, South Korea                                                                                    Haolin Jin and Huaming Chen
+
+
+                                        Three Steps Prompt
+                                                                                                     • RQ3: What factors cause LLMs to incorrectly classify correct
+                                                                                                       code as faulty, and can these misjudgments be effectively
+                                        Conformance Check         Satisfiy the specification
+                                                                                                       mitigated through improved prompt design?
+
+                                                   Not satisify
+                                                                                               These research questions cover three key dimensions: understand-
+Task Specification                                                                             ing the root causes of LLMs’ misjudgments, exploring potential
+                                           Justification
+                                                                                               mitigation solutions, and evaluating their effectiveness. Subsequent
+                      LLM Code Review
+                                                                                               sections of this paper will present experiments and discussions
+  Correct Code
+                                                                           Stored in JSON      addressing each of these questions.
+                                           Fix Attempt
+                                                                                               2.2     Preliminary Experiment Setup
+                     Figure 1: Experiment Workflow.                                            To address RQ1 and RQ2, we designed a series of experiments to
+                                                                                               evaluate the performance of different LLMs on code requirement
+                                                                                               conformance tasks and to analyze the impact of prompt design. For
+enhances the reasoning and accuracy of LLMs. Instead, detailed
+                                                                                               this purpose, we selected three widely used code evaluation bench-
+prompts may inadvertently introduce biases toward excessive fault
+                                                                                               marks: HumanEval [6], MBPP (Multiple Benchmark Programming
+finding, causing models to detect non-existent errors in otherwise
+                                                                                               Problems) [4], and QuixBugs [31], providing over 700 samples for
+correct implementations.
+                                                                                               evaluation in total. In this work, we currently focus on Python as
+   In this paper, we present an empirical investigation with obser-
+                                                                                               the main programming language.
+vations that carry significant implications for automated software
+                                                                                                   HumanEval provides manually written problem descriptions,
+engineering practices. Frequent false negatives by LLMs acting as
+                                                                                               corresponding reference implementations and test cases. We used
+automated code review assistants can severely impact their prac-
+                                                                                               the provided descriptions and correct reference implementations
+tical utility, overwhelming developers with misleading feedback
+                                                                                               as model inputs, instructing models to judge if the implementation
+and potentially diminishing trust in these tools. Particularly within
+                                                                                               met the described requirements. MBPP includes programming tasks
+automated code generation pipelines, where an LLM may evaluate
+                                                                                               described in natural language along with correct implementations,
+its own generated code [17], unreliable assessments will compro-
+                                                                                               and we similarly used these correct code implementations with
+mise the overall effectiveness of automated engineering workflow.
+                                                                                               their requirement descriptions for testing. QuixBugs contains a
+Therefore, understanding why LLMs systematically misjudge cor-
+                                                                                               small set of algorithm problems with known defects. Through these
+rect implementations and identifying strategies to mitigate these
+                                                                                               diverse datasets, we covered various scenarios ranging from com-
+failures becomes crucial. By providing these novel insights, we aim
+                                                                                               petitive programming solutions to real-world bug fixes, ensuring
+to raise community awareness regarding the limitations of LLMs
+                                                                                               the generalizability of our observations.
+in code evaluation and to inform future research efforts. Overall,
+                                                                                                   Regarding model selection, we evaluated three mainstream LLMs:
+this work makes three key contributions:
+                                                                                               GPT-4o, Claude-3.5-sonnet, and Google Gemini-2.0 flash. These
+    (1) False negatives discovery – We reveal that LLMs frequently                             models were chosen as representatives of state-of-the-art indus-
+        misjudge correct code as failing to meet requirements, indi-                           try LLMs, recognized for their strong general purpose capabilities
+        cating their bias towards over-correction rather than accu-                            in code understanding and generation tasks. Their superior per-
+        rate verification.                                                                     formance makes them promising candidates for automated code
+    (2) Empirical evaluation – Using the state-of-the-art mod-                                 review [8, 19, 33]. However, precisely because of their capabilities,
+        els, our experiments highlight the key weaknesses in LLMs’                             we aimed to examine if they exhibit consistent error patterns. More-
+        ability to assess code conformance with natural language                               over, these models have consistently been among the top choices for
+        requirements.                                                                          code review and code synthesis tasks in previous works [11, 23, 27].
+    (3) Mitigation proposals with improved prompt strategies                                       Figure 1 illustrates the workflow: the LLM receives the task spec-
+        – We propose a mitigation strategy that leverages refined                              ification and corresponding correct code implementation, guided
+        prompt designs to reduce false negatives and improve as-                               by our designed prompts, the LLM then assesses whether the code
+        sessment reliability.                                                                  fulfills the stated requirements, initially performing a binary classifi-
+We will release the full replication package upon acceptance of this                           cation (“Yes” if compliant, “No” if non-compliant). These judgments
+work.                                                                                          are systematically recorded into structured JSON files for consis-
+                                                                                               tency and ease of subsequent analysis. In cases where the LLM
+2 Methodology                                                                                  incorrectly classifies a correct implementation as non-compliant
+                                                                                               (a false negative judgment), it is further instructed to articulate a
+2.1 Research Question                                                                          detailed rationale for its assessment and subsequently propose a
+To investigate the causes and implications of LLMs’ judgments in                               revised version of the code. This approach enables the collection of
+code evaluation, we propose the following research questions:                                  enriched information for subsequent analysis of misjudgments.
+      • RQ1: Without test cases, to what extent can LLMs reliably
+        assess whether a program conforms to its specification?                                2.3     Prompt Design
+      • RQ2: How does prompt design affect the accuracy of LLM-                                To ensure a fair comparison, we developed a unified three-step
+        based code evaluation?                                                                 prompt template for all models which inspired by recent advances
+Uncovering Systematic Failures of LLMs in Verifying Code Against Natural Language Specifications           ASE’25, Sun 16 - Thu 20 November 2025, Seoul, South Korea
+
+
+Table 1: Requirement-Conformance Recognition Rate                                       truth labels, and whether rationales identified real defects or hal-
+(RCRR ↑, in %) of three LLMs on the HumanEval, MBPP, and                                lucinations. To isolate the impact of prompt complexity, we de-
+QuixBugs benchmarks under three prompting approaches                                    signed three progressively more complex prompting strategies: (1)
+(Direct, Direct + Explain, and Three Step full prompt). Higher                          Direct (judgment only), (2) Direct+Explain (judgment with rea-
+RCRR indicates better recognition of correct implementa-                                soning), and (3) Full (three-step prompt consisting of judgment,
+tions as satisfying their task requirements.                                            explanation, and suggested repair). We then compared the mis-
+                                           HumanEval    MBPP       Quixbugs
+                                                                                        judgement rates across these conditions. Our evaluation metric was
+         Model             Approch
+                                            RCRR ↑     RCRR ↑      RCRR ↑
+                                                                                        the Requirement-Conformance Recognition Rate (RCRR), repre-
+                            Direct            52.4        63.7        62.5
+                                                                                        senting the accuracy with which a model correctly judges whether
+         GPT-4o         Direct + Explain      22.0        38.2        50.0
+                                                                                        a given code satisfies a natural-language requirement. The metric
+                              Full            11.0        30.9        30.0
+                                                                                        is formally defined in Equation 1:
+                            Direct            59.1        66.5        72.5
+     Gemini-2.0-flash   Direct + Explain      56.7        64.9        75.0
+                                                                                                                       𝑁 correct judgment
+                                                                                                         RCRR =                                                  (1)
+                              Full            53.0        61.5        72.5                                        𝑁 Total correct_code samples
+                            Direct            78.0        56.9        80.0
+                                                                                        Overall, our results indicate an inverse relationship between prompt
+    Claude-3-5-sonnet   Direct + Explain      69.5        66.1        77.5
+                                                                                        complexity and model performance. For instance, on the HumanEval
+                              Full            67.0        55.3        75.0
+                                                                                        dataset, GPT-4o’s RCRR declined markedly from 52.4% with the
+                                                                                        simple direct prompt to merely 11.0% using the full three-step
+in prompt engineering [1, 2, 10, 25, 30], instructing each LLM model                    prompt. It results in a substantial reduction of 41.4 percentage
+to complete the following tasks within a single round conversation:                     points. Similar trends were observed on the MBPP and QuixBugs
+     • Judgment: Read the natural language requirement and the                          datasets, with drops of 32.8 and 32.5 percentage points, respectively.
+       provided code implementation, then answer the question,                          Other models exhibited the same pattern: accuracy consistently
+       “Does the code meet the requirement?” with a simple answer                       decreased as explanation step and repair suggestions were intro-
+       “Yes” or “No”.                                                                   duced into the prompt. Notably, simpler “judgment-only” prompts
+     • Explanation: Request the model to provide a rationale for                        often yielded the best performance, particularly on HumanEval and
+       the judgment, such as explaining why it believes the code                        MBPP datasets. The consistency of these declines across diverse
+       does not meet the requirements. This covers a detailed anal-                     models and datasets underscores the robustness and generalizability
+       ysis of any discrepancies between code logic and require-                        of this phenomenon.
+       ments.
+     • Fix: If the model judged the code as not meeting the require-                    4     Finding Evaluation
+       ment, it was instructed to provide corrected code after the                      Next, we examine the underlying reasons why multi-step prompts
+       explanation. If the code was deemed correct, this step could                     negatively impact accuracy. Our analysis identifies an increased rate
+       be skipped or explicitly noted as unnecessary.                                   of false negatives as the primary factor: when models are prompted
+                                                                                        to explain and propose fixes, models become significantly more
+   Multi-stage prompting strategies have been applied for code                          prone to incorrectly classifying conforming code as erroneous. In
+evaluation task, aiming to enhance the reasoning performance of                         other words, introducing reasoning and correction steps induces an
+LLMs. One common approach first instructs the model to perform                          overcorrection bias: LLMs tend to assume flaws exist and suggest
+a step-by-step analysis of the code’s functionality, and then asks it                   unnecessary modifications, even when the provided implementa-
+to summarize the analysis with a binary decision (correct or not).                      tion is already correct. This trend is particularly surprising, given
+This approach outperforms simple prompts by encouraging LLMs                            contrasting findings from prior research that generally support
+to reason through both the requirements and the code logic before                       step-by-step prompting to improve logical reasoning accuracy. For
+making a judgment [22]. Such findings provide evidence-based                            instance, Wei et al. demonstrate that intermediate reasoning steps
+support for our design of structured, explanation-driven prompting                      significantly boost performance on complex reasoning tasks [26].
+in code evaluation. Similar two-phase prompting method have also                        In contrast, a recent work also suggest similar bias may exist in the
+been applied for program repair. For example, [24, 32] prompt LLMs                      provided code snippet [16]. Our study extends this observation by
+to first generate a chain-of-thought diagnosis of the bug, followed                     establishing a more general scenario, in which we highlight a spe-
+by providing a patch for fixing. Our prompt design is aligned with                      cific domain where the “step-by-step” approach can degrade rather
+these approaches, in which the model is initially asked to explain                      than improve model performance in code requirement verification.
+any discrepancies between the code and the requirements. It will
+use related reasoning to propose a corrected version of the code if
+the initial answer is negative.
+                                                                                        4.1        RQ1: LLM Judgment Accuracy
+                                                                                        Regarding RQ1 (the capability of LLMs to judge code correctness
+                                                                                        without test cases), we find current LLMs exhibit limited effective-
+3    Observation and Preliminary Result                                                 ness, with RCRR ranging from only 52% to 78%. This indicates that
+To address our research questions, our experiments consider dif-                        automated code-to-requirement conformance checking remains an
+ferent dimensions for LLMs: accuracy of judgment against ground                         unresolved challenge.
+ASE’25, Sun 16 - Thu 20 November 2025, Seoul, South Korea                                                                                            Haolin Jin and Huaming Chen
+
+
+
+Table 2: RCRR for LLMs on the HumanEval, MBPP, and                                          4.3.1 Two-Phase Reflective Prompt. Draws inspiration from con-
+QuixBugs benchmarks under three prompting strategies.                                       tract based reviews in software engineering [15]. It is structured in
+Original for the direct prompt and the Two-Phase Reflective                                 two stages: initially, the model explicitly extracts functional obliga-
+and Behavioral Comparison prompts markedly outperform                                       tions from natural language requirements, presenting them clearly
+the Original prompt across all models and datasets.                                         as bullet pointed lists to avoid over interpretation. In the second
+                                                                                            stage, the model audits the code implementation against each pre-
+                                                  HumanEval         MBPP        Quixbugs
+       Model                  Approch                                                       viously extracted obligation. This structured approach encourages
+                                                    RCRR ↑         RCRR ↑       RCRR ↑
+                                                                                            the model to focus on actual functional requirements rather than
+                              Original                52.4           63.7          62.5
+                                                                                            superficial implementation details or stylistic differences, thereby
+       GPT-4o           Two-Phase Reflective          72.0           48.3          70.0
+                                                                                            effectively reducing the over correction bias.
+                       Behavioral Comparison          85.4           68.9          90.0
+                              Original                59.1           66.5          72.5
+                                                                                            4.3.2 Behavioral Comparison Prompt. Inspired by traditional black-
+  Gemini-2.0-flash      Two-Phase Reflective          67.7           69.1          82.5     box software testing, separately summarizes the core functionality,
+                       Behavioral Comparison          73.8           62.5          85.0     input-output behaviors, and boundary conditions from the require-
+                              Original                78.0           56.9          80.0     ment description and then independently summarizes the function-
+  Claude-3-5-sonnet     Two-Phase Reflective          82.9           66.1          77.5     ality actually implemented in the code. Finally, these two behavior
+                       Behavioral Comparison          78.0           62.7          82.5     descriptions are explicitly compared to determine consistency.
+
+4.2      RQ2: Prompt Effectiveness                                                              Behavioral Comparison Prompt
+Addressing RQ2 (the impact of prompt design), we observe a signif-                              Please summarize the main functions and boundary conditions that the program
+                                                                                                should implement. Then read the code and describe what functions the code actually
+icant effect of prompting strategy on model performance. In partic-                             completes and how the key steps are implemented. Finally, compare the code behavior
+ular, the comprehensive three-step prompt (judgment, explanation,                               with the requirements point-by-point to determine whether they are consistent.
+and fix) causes substantial accuracy reductions of approximately 20
+to 40 percentage points compared to simpler direct prompts. GPT-4o
+                                                                                               Table 2 illustrates the effectiveness of these new prompts. Experi-
+exhibits the highest sensitivity to prompt complexity, with accuracy
+                                                                                            mental results show significant improvements in RCRR across mod-
+declines exceeding 40 percentage points on the most challenging
+                                                                                            els using the Two-Phase Reflective Prompt. For instance, GPT-4o’s
+tasks. In contrast, Gemini shows relatively greater stability, while
+                                                                                            performance on HumanEval increased from 52.4% with the original
+Claude maintains comparatively better robustness across certain
+                                                                                            prompt to 72.0%, an improvement of 61 percentage points, with
+datasets. This variability indicates that different model architectures
+                                                                                            Behavioral Comparison further elevating performance to 85.4%.
+or training methodologies respond differently to chain-of-thought
+                                                                                            Similar trends are evident in the MBPP and QuixBugs datasets,
+prompting strategies, though all exhibit some degree of perfor-
+                                                                                            highlighting the profound influence of prompt strategies on model
+mance degradation. Prior studies similarly report that even minor
+                                                                                            performance. We attribute the superior effectiveness of these two
+prompt modifications, such as slight variations in problem descrip-
+                                                                                            prompting methods to their explicit redirection of the model’s atten-
+tions, can significantly affect LLM performance on code tasks [12].
+                                                                                            tion toward “essential functional differences between requirements
+                                                                                            and code”, thus avoiding the overly critical stance commonly trig-
+4.3      RQ3: Analysis and Mitigation                                                       gered by step-by-step explanation and correction prompts. This
+Our error analysis identifies a pronounced “over-correction” ten-                           overly critical stance contradicts the original intent of classical
+dency as the primary factor driving performance decline, when                               Prompt Engineering and Chain-of-Thought methods [12, 26], which
+LLMs are prompted to explain and fix code, the model is required to                         aim to improve reasoning by introducing intermediate reasoning.
+justify its answer and then patch the code, it develops a bias toward
+assuming defects exist even when the implementation is already                              5      Conclusion
+correct and the code already satisfies requirements, resulting in
+unnecessary and incorrect modifications. To address this issue, we                          In this paper, we have identified systematic misjudgments by LLMs
+developed two alternative prompting strategies, the Two-Phase                               when verifying code conformance to natural language task speci-
+Reflective Prompt and the Behavioral Comparison Prompt, which                               fications. Our results revealed that increasing prompt complexity
+eliminate the mandatory “fix” step and clearly separate requirement                         substantially reduces the models’ Requirement Conformance Recog-
+comprehension from code auditing, thus reducing the tendency                                nition Rate (RCRR), frequently leading to correct implementations
+toward premature fault finding.                                                             being misclassified as non-conforming. This finding challenges pre-
+                                                                                            vailing prompt engineering assumptions, highlighting a critical
+                                                                                            limitation due to an “over-correction” bias. To address this issue,
+  Two-Phase Reflective Prompt
+  “Phase 1 – Extract Contract Obligations.” Read the requirement and extract its            we have further proposed two prompt strategies for mitigation:
+  intended functional obligations. List the main things the code is expected to do,         the Two-Phase Reflective Prompt and the Behavioral Comparison
+  including input-output behavior, edge-case handling, and any conditions or con-
+  straints.
+                                                                                            Prompt. Experimental results demonstrated that both strategies
+  “Phase 2 – Audit and Verdict.” Carefully examine the code and check whether it fulfills   improved LLM performance on code requirement verification tasks.
+  each obligation you listed above. If an obligation is fully met, mark it as Satisfied;    While some misjudgments may persisted, we believe our findings
+  if it is partially or incorrectly implemented, mark it as Not satisfied. Based on the
+  audit, decide: Does the code fulfill all essential obligations from the requirement?      offer new and promising directions for developing more reliable
+                                                                                            and effective automated code review tools and systems.
+Uncovering Systematic Failures of LLMs in Verifying Code Against Natural Language Specifications                ASE’25, Sun 16 - Thu 20 November 2025, Seoul, South Korea
+
+
+REFERENCES                                                                                   Judges for Code Evaluation. arXiv preprint arXiv:2505.16222 (2025).
+ [1] Shayan Ali Akbar, Md Mosharaf Hossain, Tess Wood, Si-Chi Chin, Erica M             [17] Arjun Panickssery, Samuel Bowman, and Shi Feng. 2024. Llm evaluators recognize
+     Salinas, Victor Alvarez, and Erwin Cornejo. 2024. HalluMeasure: Fine-grained            and favor their own generations. Advances in Neural Information Processing
+     hallucination measurement using chain-of-thought reasoning. In Proceedings              Systems 37 (2024), 68772–68802.
+     of the 2024 Conference on Empirical Methods in Natural Language Processing.        [18] Zeeshan Rasheed, Malik Abdul Sami, Muhammad Waseem, Kai-Kristian Kemell,
+     15020–15037.                                                                            Xiaofeng Wang, Anh Nguyen, Kari Systä, and Pekka Abrahamsson. 2024. Ai-
+ [2] Roberto Araya. 2025. Do Chains-of-Thoughts of Large Language Models Suf-                powered code review with llms: Early results. arXiv preprint arXiv:2404.18496
+     fer from Hallucinations, Cognitive Biases, or Phobias in Bayesian Reasoning?            (2024).
+     arXiv:2503.15268 [cs.AI] https://arxiv.org/abs/2503.15268                          [19] Zeeshan Rasheed, Malik Abdul Sami, Muhammad Waseem, Kai-Kristian Kemell,
+ [3] Jacob Austin, Augustus Odena, Maxwell Nye, Maarten Bosma, Henryk                        Xiaofeng Wang, Anh Nguyen, Kari Systä, and Pekka Abrahamsson. 2024. AI-
+     Michalewski, David Dohan, Ellen Jiang, Carrie Cai, Michael Terry, Quoc Le,              powered Code Review with LLMs: Early Results. arXiv:2404.18496 [cs.SE] https:
+     et al. 2021. Program synthesis with large language models. arXiv preprint               //arxiv.org/abs/2404.18496
+     arXiv:2108.07732 (2021).                                                           [20] Lasse M Reinpold, Marvin Schieseck, Lukas P Wagner, Felix Gehlhoff, and Alexan-
+ [4] Jacob Austin, Augustus Odena, Maxwell Nye, Maarten Bosma, Henryk                        der Fay. 2024. Exploring LLMs for Verifying Technical System Specifications
+     Michalewski, David Dohan, Ellen Jiang, Carrie Cai, Michael Terry, Quoc Le,              Against Requirements. arXiv preprint arXiv:2411.11582 (2024).
+     and Charles Sutton. 2021. Program Synthesis with Large Language Models.            [21] Shreya Shankar, JD Zamfirescu-Pereira, Björn Hartmann, Aditya Parameswaran,
+     arXiv:2108.07732 [cs.PL] https://arxiv.org/abs/2108.07732                               and Ian Arawjo. 2024. Who validates the validators? aligning llm-assisted evalu-
+ [5] Yufan Cai, Zhe Hou, David Sanan, Xiaokun Luan, Yun Lin, Jun Sun, and Jin Song           ation of llm outputs with human preferences. In Proceedings of the 37th Annual
+     Dong. 2025. Automated Program Refinement: Guide and Verify Code Large Lan-              ACM Symposium on User Interface Software and Technology. 1–14.
+                                                                                        [22] Weixi Tong and Tianyi Zhang. 2024. CodeJudge: Evaluating Code Generation
+     guage Model with Refinement Calculus. Proceedings of the ACM on Programming
+                                                                                             with Large Language Models. arXiv preprint arXiv:2410.02184 (2024).
+     Languages 9, POPL (2025), 2057–2089.
+                                                                                        [23] Jianxun Wang and Yixiang Chen. 2023. A Review on Code Generation with LLMs:
+ [6] Mark Chen, Jerry Tworek, Heewoo Jun, Qiming Yuan, Henrique Ponde
+                                                                                             Application and Evaluation. In 2023 IEEE International Conference on Medical
+     De Oliveira Pinto, Jared Kaplan, Harri Edwards, Yuri Burda, Nicholas Joseph,
+                                                                                             Artificial Intelligence (MedAI). 284–289. doi:10.1109/MedAI59581.2023.00044
+     Greg Brockman, et al. 2021. Evaluating large language models trained on code.
+                                                                                        [24] Yutong Wang, Pengliang Ji, Chaoqun Yang, Kaixin Li, Ming Hu, Jiaoyang Li, and
+     arXiv preprint arXiv:2107.03374 (2021).
+                                                                                             Guillaume Sartoretti. 2025. Mcts-judge: Test-time scaling in llm-as-a-judge for
+ [7] Juan Ortiz Couder, Dawson Gomez, and Omar Ochoa. 2024. Requirements
+                                                                                             code correctness evaluation. arXiv preprint arXiv:2502.12468 (2025).
+     verification through the analysis of source code by large language models. In
+                                                                                        [25] Jason Wei, Xuezhi Wang, Dale Schuurmans, Maarten Bosma, Brian Ichter, Fei
+     SoutheastCon 2024. IEEE, 75–80.
+                                                                                             Xia, Ed Chi, Quoc Le, and Denny Zhou. 2023. Chain-of-Thought Prompting
+ [8] George Fragiadakis, Christos Diou, George Kousiouris, and Mara Nikolaidou.
+                                                                                             Elicits Reasoning in Large Language Models. arXiv:2201.11903 [cs.CL] https:
+     2025. Evaluating Human-AI Collaboration: A Review and Methodological Frame-
+                                                                                             //arxiv.org/abs/2201.11903
+     work. arXiv:2407.19098 [cs.HC] https://arxiv.org/abs/2407.19098
+                                                                                        [26] Jason Wei, Xuezhi Wang, Dale Schuurmans, Maarten Bosma, Fei Xia, Ed Chi,
+ [9] Ziwei Ji, Nayeon Lee, Rita Frieske, Tiezheng Yu, Dan Su, Yan Xu, Etsuko Ishii,
+                                                                                             Quoc V Le, Denny Zhou, et al. 2022. Chain-of-thought prompting elicits reasoning
+     Ye Jin Bang, Andrea Madotto, and Pascale Fung. 2023. Survey of hallucination in
+                                                                                             in large language models. Advances in neural information processing systems 35
+     natural language generation. Comput. Surveys 55, 12 (2023), 1–38.
+                                                                                             (2022), 24824–24837.
+[10] Bowen Jin, Chulin Xie, Jiawei Zhang, Kashob Kumar Roy, Yu Zhang, Zheng Li,
+                                                                                        [27] Martin Weyssow, Aton Kamanda, Xin Zhou, and Houari Sahraoui. 2024. CodeUl-
+     Ruirui Li, Xianfeng Tang, Suhang Wang, Yu Meng, and Jiawei Han. 2024. Graph
+                                                                                             traFeedback: An LLM-as-a-Judge Dataset for Aligning Large Language Models
+     Chain-of-Thought: Augmenting Large Language Models by Reasoning on Graphs.
+                                                                                             to Coding Preferences. arXiv:2403.09032 [cs.SE] https://arxiv.org/abs/2403.09032
+     arXiv:2404.07103 [cs.CL] https://arxiv.org/abs/2404.07103
+                                                                                        [28] Jules White, Quchen Fu, Sam Hays, Michael Sandborn, Carlos Olea, Henry Gilbert,
+[11] Sathvik Joel, Jie JW Wu, and Fatemeh H. Fard. 2024. A Survey on LLM-based Code
+                                                                                             Ashraf Elnashar, Jesse Spencer-Smith, and Douglas C Schmidt. 2023. A prompt
+     Generation for Low-Resource and Domain-Specific Programming Languages.
+                                                                                             pattern catalog to enhance prompt engineering with chatgpt. arXiv preprint
+     arXiv:2410.03981 [cs.SE] https://arxiv.org/abs/2410.03981
+                                                                                             arXiv:2302.11382 (2023).
+[12] Takeshi Kojima, Shixiang Shane Gu, Machel Reid, Yutaka Matsuo, and Yusuke
+                                                                                        [29] Frank F Xu, Uri Alon, Graham Neubig, and Vincent Josua Hellendoorn. 2022. A
+     Iwasawa. 2022. Large language models are zero-shot reasoners. Advances in
+                                                                                             systematic evaluation of large language models of code. In Proceedings of the 6th
+     neural information processing systems 35 (2022), 22199–22213.
+                                                                                             ACM SIGPLAN international symposium on machine programming. 1–10.
+[13] Jiawei Liu, Chunqiu Steven Xia, Yuyao Wang, and Lingming Zhang. 2023. Is your
+                                                                                        [30] Shunyu Yao, Jeffrey Zhao, Dian Yu, Nan Du, Izhak Shafran, Karthik Narasimhan,
+     code generated by chatgpt really correct? rigorous evaluation of large language
+                                                                                             and Yuan Cao. 2023. ReAct: Synergizing Reasoning and Acting in Language
+     models for code generation. Advances in Neural Information Processing Systems
+                                                                                             Models. arXiv:2210.03629 [cs.CL] https://arxiv.org/abs/2210.03629
+     36 (2023), 21558–21572.
+                                                                                        [31] He Ye, Matias Martinez, Thomas Durieux, and Martin Monperrus. 2021. A
+[14] Aman Madaan, Niket Tandon, Prakhar Gupta, Skyler Hallinan, Luyu Gao, Sarah
+                                                                                             comprehensive study of automatic program repair on the QuixBugs benchmark.
+     Wiegreffe, Uri Alon, Nouha Dziri, Shrimai Prabhumoye, Yiming Yang, Shashank
+                                                                                             Journal of Systems and Software 171 (2021), 110825.
+     Gupta, Bodhisattwa Prasad Majumder, Katherine Hermann, Sean Welleck, Amir
+                                                                                        [32] Xin Yin, Chao Ni, Shaohua Wang, Zhenhao Li, Limin Zeng, and Xiaohu Yang.
+     Yazdanbakhsh, and Peter Clark. 2023. Self-Refine: Iterative Refinement with
+                                                                                             2024. Thinkrepair: Self-directed automated program repair. In Proceedings of the
+     Self-Feedback. arXiv:2303.17651 [cs.CL] https://arxiv.org/abs/2303.17651
+                                                                                             33rd ACM SIGSOFT International Symposium on Software Testing and Analysis.
+[15] Bertrand Meyer. 1992. Applying’design by contract’. Computer 25, 10 (1992),
+                                                                                             1274–1286.
+     40–51.
+                                                                                        [33] Lianghui Zhu, Xinggang Wang, and Xinlong Wang. 2025. JudgeLM: Fine-tuned
+[16] Jiwon Moon, Yerin Hwang, Dongryeol Lee, Taegwan Kang, Yongil Kim, and
+                                                                                             Large Language Models are Scalable Judges. arXiv:2310.17631 [cs.CL] https:
+     Kyomin Jung. 2025. Don’t Judge Code by Its Cover: Exploring Biases in LLM
+                                                                                             //arxiv.org/abs/2310.17631
+

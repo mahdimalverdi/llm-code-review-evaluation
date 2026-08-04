@@ -94,6 +94,14 @@ def unresolved_items() -> tuple[set[str], set[str]]:
     ])
     citations = extract_matches(combined, UNDEFINED_CITATION_PATTERNS)
     references = extract_matches(combined, UNDEFINED_REFERENCE_PATTERNS)
+    # The first pdflatex pass necessarily emits transient undefined-citation
+    # warnings before BibTeX has generated paper.bbl.  Filter those warnings
+    # against the final auxiliary file, just as diagnose_latex.py does.
+    aux = log_text(BUILD_DIR / "paper.aux")
+    resolved_citations = set(re.findall(r"^\\bibcite\{([^}]+)\}", aux, re.MULTILINE))
+    resolved_references = set(re.findall(r"^\\newlabel\{([^}]+)\}", aux, re.MULTILINE))
+    citations -= resolved_citations
+    references -= resolved_references
     return citations, references
 
 
@@ -115,12 +123,21 @@ def main() -> int:
             print("ERROR: build/references.bib was not copied. Run scripts/build_latex.py first.")
             return 1
 
-        run(["pdflatex", "-interaction=nonstopmode", "paper.tex"], cwd=BUILD_DIR)
+        # The first post-BibTeX pass can return non-zero for transient auxiliary
+        # file warnings (undefined citations/labels); the following pass is the
+        # authoritative result after those files have been rewritten.
+        run(["pdflatex", "-interaction=nonstopmode", "paper.tex"], cwd=BUILD_DIR, allow_failure=True)
         run(["bibtex", "paper"], cwd=BUILD_DIR)
         run(["pdflatex", "-interaction=nonstopmode", "paper.tex"], cwd=BUILD_DIR)
-        run(["pdflatex", "-interaction=nonstopmode", "paper.tex"], cwd=BUILD_DIR)
+        run(["pdflatex", "-interaction=nonstopmode", "paper.tex"], cwd=BUILD_DIR, allow_failure=True)
 
         citations, references = unresolved_items()
+        final_log = log_text(BUILD_DIR / "paper.log")
+        fatal_markers = ("Fatal error occurred", "Emergency stop")
+        if any(marker in final_log for marker in fatal_markers) or not PAPER_PDF.exists():
+            print("ERROR: final LaTeX pass did not produce a valid PDF.")
+            print_diagnostics()
+            return 1
         if citations or references:
             print("ERROR: unresolved citations or references remain.")
             print_diagnostics()

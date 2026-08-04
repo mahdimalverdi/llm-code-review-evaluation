@@ -1,0 +1,1156 @@
+                                                                                                                                                                                       1
+
+
+
+
+                                                Does AI Code Review Lead to Code Changes?
+                                                      A Case Study of GitHub Actions
+                                          Kexin Sun, Hongyu Kuang, Sebastian Baltes, Xin Zhou, He Zhang, Xiaoxing Ma, Guoping Rong, Dong Shao,
+                                                                                   and Christoph Treude
+
+
+
+                                            Abstract—AI-based code-review tools automatically review and                  Previous research has investigated human code review prac-
+                                         comment on pull requests to improve code quality. Despite their               tices in detail [6], including (1) factors that make review
+                                         growing presence, little is known about their actual impact.                  comments useful [7]–[9], (2) the granularity of feedback [10],
+                                         We present a large-scale empirical study of 16 popular AI-
+arXiv:2508.18771v2 [cs.SE] 25 Apr 2026
+
+
+
+
+                                         based code-review actions for GitHub workflows, analyzing more                and (3) developer responsiveness [11]. In contrast, the dynam-
+                                         than 22,000 review comments in 178 repositories. We investigate               ics of automated reviews powered by GenAI remain largely
+                                         (1) how these tools are adopted and configured, (2) whether                   unexplored. Open questions include: Which AI-based tools are
+                                         their comments lead to code changes, and (3) which factors                    developers actually adopting? Do generated comments lead
+                                         influence their effectiveness. We develop a two-stage LLM-                    to meaningful code changes? Which characteristics influence
+                                         assisted framework to determine whether review comments are
+                                         addressed. We then use interpretable machine learning to identify             whether such comments are taken seriously and acted upon?
+                                         the influencing factors. We found that while adoption is growing,                This paper addresses these gaps through an empirical study
+                                         its effectiveness varies widely. Comments that are concise, contain           of AI-based code review actions based on Large Language
+                                         code snippets, and are manually triggered, particularly those                 Models (LLMs) on GitHub. Our goal is to understand both
+                                         from hunk-level review tools, are more likely to result in code               the usage and the effectiveness of these tools, as well as the
+                                         changes. These results highlight the importance of tool design and
+                                         suggest directions for improving AI-based code review systems.                factors that influence their impact. Specifically, we propose the
+                                                                                                                       following three research questions:
+                                          Index Terms—Code Review, GitHub Actions, Large Language
+                                         Models, Empirical Software Engineering                                        RQ1: How are LLM-based code review actions adopted in
+                                                                                                                              GitHub repositories?
+                                                                                                                          This question is motivated by the proliferation of AI-based
+                                                                  I. I NTRODUCTION                                     review tools on GitHub. Although many tools exist, their
+                                            Code review is a widely adopted practice in modern soft-                   real-world adoption and configuration practices are not well
+                                         ware engineering, playing a central role in identifying bugs,                 understood. Studying adoption patterns allows us to assess
+                                         improving code quality, and facilitating knowledge transfer                   the maturity and utility of these tools in practical software
+                                         within teams [1]. Traditionally, code reviews are performed                   development workflows.
+                                         manually through reviewing and commenting on code changes                     RQ2: To what extent do AI-generated review comments lead
+                                         (submitted via pull requests) by developers [2]. However,                            to code changes compared to human review comments?
+                                         recent advances in generative AI (GenAI) have created oppor-                     Our second question aims to understand whether AI-
+                                         tunities to automate at least part of this process by generating              generated review comments can truly impact the code (i.e.,
+                                         human-like code review comments [3].                                          lead to code changes) and how their effectiveness compares
+                                            On platforms such as GitHub, developers can now integrate                  to human review comments. To enable large-scale analysis,
+                                         GenAI into their workflows via GitHub Actions [4]. These AI-                  we propose an LLM-based approach to automatically assess
+                                         driven code review actions automatically analyse code changes                 the validity of review comments and whether they had been
+                                         and post suggestions as comments on pull requests. Some of                    addressed.
+                                         these actions are now available and popular on the GitHub                     RQ3: Which factors impact the likelihood that code review
+                                         Marketplace, promising to reduce developers’ efforts and to                          comments lead to code changes?
+                                         increase review coverage [5]. Despite the growing presence,
+                                                                                                                          Finally, we explore the contextual and technical factors
+                                         there is little empirical evidence of how these actions are
+                                                                                                                       that make comments more or less likely to result in code
+                                         actually used in practice and whether they can impact the
+                                                                                                                       changes. By analyzing aspects such as comment content,
+                                         development process meaningfully.
+                                                                                                                       contributor experience, and project characteristics, we aim
+                                            K. Sun, H. Kuang, X. Zhou, H. Zhang, X. Ma, G. Rong, and D. Shao           at identifying patterns that can inform the design of more
+                                         are with State Key Lab for Novel Software Technology, Nanjing University,     effective review tools.
+                                         Nanjing, China (e-mail: kexinsun@smail.nju.edu.cn; khy@nju.edu.cn;               To answer these questions, we conducted a large-scale em-
+                                         zhouxin@nju.edu.cn;            hezhang@nju.edu.cn;         xxm@nju.edu.cn;
+                                         ronggp@nju.edu.cn; dongshao@nju.edu.cn).                                      pirical study of 16 popular GenAI-based code-review actions
+                                            S. Baltes is with University of Heidelberg, Heidelberg, Germany (e-mail:   on GitHub. We analyze their adoption in 178 repositories,
+                                         sebastian.baltes@uni-heidelberg.de).                                          collect more than 22,000 review comments, and develop a two-
+                                            C. Treude is with School of Computing and Information Systems, Singapore
+                                         Management University, Singapore (e-mail: ctreude@smu.edu.sg).                stage LLM-based classification framework to assess whether
+                                            Corresponding author: Hongyu Kuang (e-mail: khy@nju.edu.cn).               these comments are addressed. Finally, we use interpretable
+                                                                                                                                                    2
+
+
+
+
+Fig. 1. Example comments from a PR-level review action (Integral-Healthcare/robin-ai-reviewer), a file-level review action (anc95/ChatGPT-CodeReview),
+and a hunk-Level review action (coderabbitai/ai-pr-reviewer).
+
+
+
+machine learning techniques to model and find out the factors
+that influence the effectiveness of comments.
+    Our contributions are as follows.
+    • We provide the first systematic study of the adoption
+      and usage of AI-based code review actions on GitHub,
+      categorizing tools by their review granularity (i.e., PR,
+      file, or hunk) and behaviour (e.g., action triggers).
+    • We introduce an LLM-assisted framework for assess-
+      ing whether code review comments are actionable and
+      whether they have been addressed, achieving high accu-
+      racy compared to human annotations.
+    • We identify and explain the factors that influence whether
+      AI-generated comments lead to code changes, offering                  Fig. 2. An example of configuring an AI-based code review action.
+      design implications for code review tools.
+    Our findings offer insights into the role of GenAI in                   behavior through optional parameters, such as which LLM
+software engineering that are relevant to researchers and prac-             to use (MODEL), which prompt to apply (PROMPT), and which
+titioners interested in automated software quality assurance.               natural language to comment in (LANGUAGE).
+                                                                            How the Action Works: Once the trigger conditions are sat-
+                         II. BACKGROUND
+                                                                            isfied (e.g., a pull request is opened), ChatGPT-CodeReview
+   GitHub Actions is a built-in automation platform on GitHub               conducts a code review. It compares the pull request’s base
+that allows developers to define custom workflows using                     commit and the latest commit (the head commit at that time)
+reusable components called “actions”. This section uses                     to obtain the cumulative code changes, then reviews these
+anc95/ChatGPT-CodeReview, the most popular action in our                    changes file by file. During this process, certain files may be
+dataset, as an example to demonstrate how AI-based code                     skipped based on predefined ignore patterns, and the large
+review can be integrated into a project’s workflow.                         change blocks may be divided according to the configured
+How to Configure an Action: Developers can define and                       token limits. After the LLM analyzes a file’s changes via the
+manage project workflows through YAML files in the project’s                designed prompt, ChatGPT-CodeReview posts an inline com-
+.github/workflows directory. As Fig. 2 shows, in our ex-                    ment to the pull request via the GitHub Action bot. This com-
+ample, we define a workflow named Code Review, containing                   ment is typically attached to the last line of the final changed
+a single job called review with one step that utilizes the                  block within the file. Fig. 1(b) provides an example of a review
+main branch of anc95/ChatGPT-CodeReview for code analy-                     comment generated by anc95/ChatGPT-CodeReview.
+sis (uses: anc95/ChatGPT-CodeReview@main). Using the
+keyword ‘on’, we set this workflow to trigger automatically                                          III. S TUDY S ETUP
+when pull requests are opened, reopened, or synchronized.                      To investigate AI-based code review on GitHub, we col-
+The trigger conditions can be further restricted using ‘if’                 lected the 16 most popular actions as our study sample and
+conditions. For example, as shown in the commented-out                      conducted a categorization based on their review behaviors.
+section of Fig. 1, we can restrict the workflow to trigger only             We provide an online appendix [12], including our dataset,
+on pull requests labeled with ‘gpt review’. In our subsequent               annotations, and scripts for LLM-assisted analysis of whether
+analysis, we refer to this conditional triggering as manual                 review comments have been addressed (for RQ2), and for the
+triggering because it requires developers to explicitly enable              interpretation of how factors impact the likelihood of comment
+it. The example action requires two mandatory parameters:                   addressing (for RQ3). We follow the guidelines proposed by
+GITHUB_TOKEN for repository access and OPENAI_API_KEY                       Wagner et al. [13], [14] for empirical studies in software
+for LLM authentication. Additionally, we can customize its                  engineering involving LLMs.
+                                                                                                                                                                             3
+
+
+
+                                                                       TABLE I
+         C OMPARISON OF DESIGN CHOICES FOR SELECTED AI- BASED CODE REVIEW ACTIONS ACROSS EACH GRANULARITY CATEGORY (ID-11:
+            I NTEGRAL -H EALTHCARE / ROBIN - AI - REVIEWER FOR PR- LEVEL , ID-1: ANC 95/C HAT GPT-C ODE R EVIEW FOR FILE - LEVEL , ID-3:
+                CODERABBITAI / AI - PR - REVIEWER FOR HUNK - LEVEL ). LLM SELECTION IS THE DEFAULT MODEL IN THE LATEST VERSION .
+
+                                                                                                  Processing   LLM
+ ID         Action Description                           Input Change Scope                                                      Prompt Context           Commenting Format
+                                                                                                  Granularity Selection
+ 11        PR-level code review        Changes between PR’s base and latest commit.                PR-level   gpt-4-turbo    (Only diff, no additional)    General comment
+                                       Optional based on PR event:
+ 1         File-level code review      If synchronize: Only Changes in the latest commit.          File-level   gpt-4o-mini (Only diff, no additional)      Inline comment
+                                       If others: Changes between PR’s base and latest commit.
+          Hunk-level code review
+      (also: generating PR descriptions, Changes between PR’s the last reviewed commit and the                               PR title; PR description;
+ 3                                                                                                 File-level      gpt-4                                    Inline comment
+         code change summaries, and      latest commit.                                                                      LLM’s change summary
+       direct interaction with the LLM)
+
+
+
+Action Selection: On January 7, 2025, we began our selection                                                        TABLE II
+process by manually examining the names and descriptions of                                  OVERVIEW OF 16 SELECTED AI- BASED C ODE R EVIEW ACTIONS .
+the top-ranked code review actions on the GitHub Marketplace                                                                                          Review Granularity
+(sorted by popularity). From a review of approximately 240                              ID                      Action                    Stars     PR-     File- Hunk-
+                                                                                                                                                    level   level   level
+actions, we identified an initial set of 20 candidates related                           1            anc95/ChatGPT-CodeReview             4.1k               ✓
+to AI-driven code review. We then carefully checked their                                2             mattzcarey/code-review-gpt          1.7k               ✓
+                                                                                         3              coderabbitai/ai-pr-reviewer        1.6k                       ✓
+project documentation and excluded four actions that focused                             4             aidar-freeed/ai-codereviewer        704                        ✓
+on tasks other than comment generation (e.g., PR description                             5                  kxxt/chatgpt-action            558        ✓
+                                                                                         6              cirolini/genai-code-review         339        ✓
+generation). This process yielded a final set of 16 relevant                             7       truongnh1992/gemini-ai-code-reviewer      101                        ✓
+actions. In this paper, we refer to each action by its repository’s                      8             feiskyer/ChatGPT-Reviewer            70        ✓
+                                                                                         9          adshao/chatgpt-code-review-action       69        ✓
+full name and report its star count in Table II.                                        10            tmokmss/bedrock-pr-reviewer           61                        ✓
+                                                                                        11        Integral-Healthcare/robin-ai-reviewer     59        ✓
+Action Categorization: Although designed for the same                                   12                 presubmit/ai-reviewer            53                        ✓
+                                                                                        13                gvasilei/AutoReviewer             42                ✓
+purpose, these actions exhibit distinct review behaviors. We                            14             unsafecoerce/chatgpt-action          39                        ✓
+group them into three categories based on the granularity                               15       magnificode-ltd/chatgpt-code-reviewer      27                ✓
+                                                                                        16                   ca-dp/code-butler              23        ✓
+of their feedback: PR-level, file-level, and hunk-level, as
+shown in Table II (“hunk” refers to a contiguous block of
+differing lines when comparing two versions of a file [15]).
+These levels reflect increasing ability to provide context-
+specific comments. Hunk-level review actions most closely                              granularity categories in Table I. A full comparison of 16
+resemble typical human code reviews. They can provide                                  actions can be found in our online appendix. We observe that
+targeted comments on specific code lines within files. For                             6 out of the 16 actions incorporate related tasks to support
+example, in Fig. 1(c), coderabbitai/ai-pr-reviewer sug-                                code review, such as coderabbitai/ai-pr-reviewer’s PR
+gests adding an assertion to check data frequency after lines                          summarization and interactive feedback. For the input scope,
+16-18 in tests/io/test_api.py. File-level review actions                               11 actions review the full base-to-latest commit diff on each
+are not explicitly associated with specific lines but can still                        run, while 3 actions (e.g., coderabbitai/ai-pr-reviewer)
+associate comments with the certain file. As exemplified                               track reviewed commits to avoid redundancy, and 2 actions,
+by the previously discussed anc95/ChatGPT-CodeReview, it                               including anc95/ChatGPT-CodeReview, dynamically adjust
+attaches its reviews of the entire file’s changes to the end                           the input scope based on PR events or pre-configured modes.
+of the overall file diff. Consequently, developers must man-                           Processing granularity does not always align with the review
+ually map suggestions to specific code blocks within files to                          granularity. For instance, coderabbitai/ai-pr-reviewer
+comprehend the recommended modifications. PR-level review                              submits the file-level diff into the LLM in one request, but
+actions represent the coarsest granularity, lacking file-specific                      can leverage prompt constraints (e.g., “Comment with exact
+comment linking. Fig. 1(a) illustrates this with a comment                             line number”) to extract multiple line-specific comments. Most
+from Integral-Healthcare/robin-ai-reviewer, which                                      actions (13/16) rely on OpenAI’s model family [16] for review,
+discusses changes spanning multiple files within a single                              with the remaining using alternatives such as Gemini [17] or
+review message.                                                                        Claude [18]. In addition, 11 actions enrich the prompts with
+   Beyond review granularity, actions also differ in how they                          contextual information, such as the PR title, description, or
+implement the review process. These differences include the                            programming language, alongside code changes. Finally, ac-
+input change scope (which commits are compared), the pro-                              tions offering file- or hunk-level review typically post feedback
+cessing granularity (how the changes are segmented), the                               as inline comments (usually for detailed code review), while
+LLM selection (which model is used), the prompt context                                PR-level actions post as PR general comments (usually for
+(what additional information is provided), and the commenting                          broad discussion). These varying design decisions will shape
+format (how the review is delivered). To illustrate the vari-                          the developer experience and responses to the generated code
+ation, we present an example action for each of the three                              review comments.
+                                                                                                                                                                                            4
+
+
+
+                                                          TABLE III
+     C ATEGORIES OF O PTIONAL C ONFIGURATION PARAMETERS IN AI- BASED C ODE R EVIEW ACTIONS WITH D ESCRIPTIONS AND E XAMPLES
+    Configuration Category                                                                         Description and Example
+    Task Triggers & Modes      Defines when and how the action executes. E.g., review_per_file in feiskyer/ChatGPT-Reviewer (enables file-level review if true).
+        Input Settings         Excludes/includes specific files or limits code diff size. E.g., IGNORE_PATTERNS in aidar-freeed/ai-codereviewer (specifies file exclusion patterns).
+     LLM Service Settings      Defines parameters for connecting to the LLM service. E.g., OPENAI_API_BASE in Integral-Healthcare/robin-ai-reviewer (URL of the OpenAI API interface).
+        LLM Selection          Specifies the LLM used for review. E.g., MODEL in anc95/ChatGPT-CodeReview (name of the LLM).
+    LLM Hyperparameters        Configures generation behavior (e.g., randomness, length). E.g., temperature in feiskyer/ChatGPT-Reviewer (controls output randomness).
+    Prompt Customization       Defines the instructions given to the LLM. E.g., PROMPT in ca-dp/code-butler (custom instructions for review).
+ Prompt Context Augmentation   Additional context for prompt construction. E.g., NLP_LANGUAGE in anc95/ChatGPT-CodeReview (specifies output language).
+        Output Settings        Controls review output formatting or logic. E.g., review_comment_lgtm in coderabbitai/ai-pr-reviewer (posts comments even if no issues are found if true).
+            Others             Miscellaneous settings unrelated to the core review process. E.g., debug in unsafecoerce/chatgpt-action (enables debug mode if true).
+
+
+
+
+                    IV. A NALYSES & R ESULTS                                                                            TABLE IV
+                                                                                               RQ1: A DOPTION STATISTICS OF 16 AI- BASED REVIEW ACTIONS ,
+   Based on the 16 collected actions, in this section, we detail                               GROUPED BY PR/F ILE /H UNK REVIEW ACTIONS . “T OTAL /M ATURE
+the methodology and results for each of our research questions.                              R EPOS ” COUNTS REPOSITORIES CONFIGURING THE ACTION (M ATURE :
+                                                                                            ≥50 PR S ). T HE OBSERVED ACTIVITY COLUMNS DETAIL THE ADOPTION
+                                                                                            DISTRIBUTION ACROSS REPOS , PR S , AND COMMENTS IN MATURE REPOS .
+                                                                                              A STERISK (*) INDICATES GENERAL INSTEAD OF INLINE COMMENTS .
+A. RQ1: How are LLM-based code review actions adopted in
+GitHub repositories?                                                                                   ID
+                                                                                                                 Total    Mature              Observed Review Activity
+                                                                                                                Repos      Repos             Repos   PRs     Comments
+Approach: To answer this question, we examined the adoption                                          PR-level review actions:
+                                                                                                        5          7          2                 0           0              0
+of these actions by measuring their usage across repositories,                                          6          4          1                 0           0              0
+pull requests, and comments. Furthermore, we analyzed their                                             8          3          1                 1          24            37*
+configuration settings to understand how developers adapt                                               9          5          1                 0           0              0
+                                                                                                       11          8          4                 1          38            38*
+them to their specific project needs.                                                                  16          13         5                 5          74            133*
+   We utilized the GitHub REST API to collect relevant data.                                         Total         40        14                 7         136            208
+First, we identified repositories containing configuration files                                     File-level review actions:
+                                                                                                        1         460       114                74        2,238         19,549
+that invoke the target actions. Specifically, we retrieved the                                          2          37        11                9          421           421*
+.yml and .yaml files in .github/workflows directories                                                  13          3          1                0           0              0
+of GitHub repositories that explicitly referenced the target                                           15          4          1                1           1              3
+                                                                                                     Total        504       127                84        2,660         19,973
+actions (i.e., containing “uses:ACTION” in uncommented                                               Hunk-level review actions:
+sections). These files were then grouped by repository. To                                              3         108        27                14         171           1,911
+ensure a unique mapping between repository, configuration                                               4          47         8                5           28            193
+                                                                                                        7          5          0                0            0              0
+file, and action, we filtered out 19 repositories that referenced                                      10          6          1                1            4             31
+multiple target actions or the same action across different                                            12          6          1                1            3             10
+                                                                                                       14          2          0                0            0              0
+files. Following prior work [19], our analysis was limited                                           Total        174        37                21         206           2,145
+to repositories with at least 50 PRs to ensure a minimum                                             All 16       718       178               112        3,002         22,326
+level of project maturity and popularity of PRs. Next, we
+quantified action-generated comments by examining PRs
+in these repositories. Using GitHub’s search feature, we
+                                                                                            manually grouped all optional parameters into nine functional
+identified relevant PRs with the queries ‘repo:{repo_name}
+                                                                                            categories, summarized in Table III. This grouping was re-
+reviewed-by:github-actions[bot] is:pr’
+                                                                                            viewed by one co-author. For each repository, we considered
+for      inline    comments        and     ‘repo:{repo_name}
+                                                                                            the workflow configuration file at its latest commit as the
+commenter:github-actions is:pr’                 for       general
+                                                                                            final configuration and used PyYAML to parse configurations
+comments. Subsequently, we retrieved specific comments
+                                                                                            according to our nine categories. To explore the evolution
+posted by github-actions[bot] (the account associated
+                                                                                            of the configuration, we calculated the number of commits
+with comments generated by a GitHub Action) via the REST
+                                                                                            and the time interval between the initial commit (introducing
+API endpoints: ‘pulls/{pull_number}/comments’ for
+                                                                                            the action) and the latest commit. If modifications occurred,
+inline comments and ‘issues/{pull_number}/comments’
+                                                                                            we further compared specific settings in the initial and final
+for general comments.
+                                                                                            configurations to identify frequently adjusted parameters.
+   Beyond adoption, we investigated how developers configure
+these actions, particularly focusing on optional parameters that                            Results: Table IV summarizes the usage of the 16 AI-based
+reflect developer intent beyond mandatory execution require-                                code review actions. Out of 718 matched repositories, 178 met
+ments, and how these configurations evolve. We extracted                                    the maturity criterion (≥ 50 PRs), and these contained a total of
+optional parameters from each action’s documentation, noting                                22,326 AI-generated review comments. We found that 37.1%
+their considerable diversity (in both number and function).                                 of the mature repositories declared an action but showed no
+For example, coderabbitai/ai-pr-reviewer exposes 20                                         generated comments, indicating a gap between declaration
+optional parameters to support its complex review workflows,                                and actual use. Among the remaining repositories, usage was
+whereas presubmit/ai-reviewer only defines three manda-                                     highly concentrated on the four most popular actions. Actions
+tory parameters. To facilitate comparison, the first author                                 ID-1 to ID-4 (including two file-level and two hunk-level
+                                                                                                                                                   5
+
+
+
+                                                           TABLE V
+RQ2: R EFINED DATASET FOR C OMMENT A DDRESSING A NALYSIS (N=5,652): P OST- REVIEW F ILE C HANGE D ISTRIBUTION BY C OMMENT S OURCES .
+
+    ID                  Action               Total Comments      Modified      Renamed-Modified    Renamed-Only       Deleted       Unchanged
+     1       anc95/ChatGPT-CodeReview              2,831      436 (15.40%)         9 (0.32%)         0 (0.00%)       2 (0.07%)    2,384 (84.21%)
+     2        mattzcarey/code-review-gpt            773         20 (2.59%)         0 (0.00%)         0 (0.00%)       0 (0.00%)     753 (97.41%)
+     -     File-level Review Actions Total         3,604      456 (13.89%)         9 (0.27%)         0 (0.00%)       2 (0.06%)    3,137 (85.78%)
+     3        coderabbitai/ai-pr-reviewer           713       303 (42.50%)        21 (2.95%)         3 (0.42%)      10 (1.40%)     376 (52.73%)
+     4       aidar-freeed/ai-codereviewer           169        84 (49.70%)         0 (0.00%)         0 (0.00%)       3 (1.78%)      82 (48.52%)
+     -    Hunk-level Review Actions Total           882       387 (43.88%)        21 (2.38%)         3 (0.34%)      13 (1.47%)     458 (51.93%)
+     -           Human Review Total                1,166      988 (84.75%)        44 (3.77%)         0 (0.00%)      38 (3.26%)      96 (8.23%)
+
+
+
+reviewers) accounted for 91.1% of the reviewed repositories,
+95.2% of the pull requests, and 98.9% of the generated
+comments. This was largely driven by the widespread use
+of ID-1 anc95/ChatGPT-CodeReview. In contrast, PR-level
+review actions saw limited adoption and impact.
+   Regarding configuration evolution, the majority of the ma-
+ture repositories (147/178, 82.6%) customized at least one
+optional parameter. The most frequently configured options
+were Prompt Context Augmentation (103/147, 70.1%), primar-
+ily for specifying the natural language of review comments,
+LLM Selection (95, 64.6%), and Input Settings (70, 47.6%). On
+average, these 178 repositories made changes to the configura-
+tion file 4 times after the initial setup. Of these, 68 repositories
+(38.2%) retained their original configurations without further
+changes. Temporal analysis revealed that 50 projects (28.1%)
+finalized modifications within one week, and 20 (11.2%)
+within one month, while 40 repositories (22.5%) continued
+adjustments beyond one month. The most frequently modified
+parameters were LLM Selection (25, 22.7% of 110 repositories
+                                                                             Fig. 3. Overview of the RQ2 comment addressing analysis pipeline.
+that made post-setup changes), Prompt Customization (21,
+19.1%), and LLM Hyperparameters (13, 11.8%). Beyond
+action-specific options, we also observe that 50 repositories                Phase I: Refining the Subset for Comment Addressing
+(45.5%) adjusted their workflow-level triggers by modifying                  Analysis. We first excluded comments from PR-level actions
+the on or if conditions. Additionally, 12 repositories (10.9%)               because of their significant differences from typical human
+updated the action reference, such as replacing @main with a                 code review practices and their low volume. For comments
+specific release tag.                                                        from file-level and hunk-level actions, we only retained those
+                                                                             in merged PRs (and prior to merging) to capture finalized
+  Answer to RQ1: We analyzed 178 mature repositories and
+                                                                             developer decisions, yielding 16,816 comments. To facilitate
+  found a total of 22,326 AI-generated review comments.
+                                                                             human analysis, we selected only English comments using
+  Among the 178 repositories, 82.6% customized at least
+                                                                             FastText, reducing the dataset to 4,229 comments (a removal
+  one optional parameter, showing that developers often go
+                                                                             of 12,587 comments). ID-1 (anc95/ChatGPT-CodeReview)
+  beyond default settings when using these actions.
+                                                                             saw a significant reduction in comments at this stage, with
+                                                                             11,744 comments (mostly in Korean) filtered out. We further
+B. RQ2: To what extent do AI-generated review comments                       discuss potential threats introduced by this language-based fil-
+lead to code changes compared to human review comments?                      tering in Section VI. Given that some actions enable user-LLM
+                                                                             dialogue within threads, we restricted our analysis to first-in-
+Approach: To assess the practical impact of these actions, we                thread comments to focus on the original review suggestions
+leverage LLMs to extensively examine whether the generated                   rather than follow-up interactions (excluding an additional 34
+review comments led to actual code changes (which we                         comments). After these filters, only Actions ID-1 to ID-4
+define as “addressed”). We use the term “comment addressing                  retained sufficient data for the addressing analysis, with 2,908,
+analysis” to refer to our analysis of whether comments have                  399, 713, and 169 comments respectively.
+been addressed. We first created the “comment addressing                        Next, we constructed the necessary context for assess-
+dataset” (filtered from RQ1 and augmented with human-written                 ing comment addressing, which included the originally re-
+review comments) to carry out this analysis. Next, we sampled                viewed changes and subsequent code changes within the
+a subset to manually annotate whether they had been addressed                reviewed file. For hunk-level reviews, which were all sub-
+and evaluated LLM performance on this subset. Finally, we                    mitted as inline comments, GitHub’s API provides suffi-
+employed the best-performing LLM approach across the entire                  cient metadata to reconstruct the reviewed code. Specif-
+dataset. Figure 3 presents an overview of this workflow.                     ically, original_commit_id identifies the commit under
+                                                                                                                                  6
+
+
+
+review, original_start_line and original_line spec-                hunk-level review actions, we reconstructed their originally
+ify the range of reviewed lines, and diff_hunk captures            reviewed changes and subsequent file modifications. Table V
+the change block where the comment was made. We ex-                summarizes the statistics for the human comments. In total, our
+tracted the reviewed code by slicing diff_hunk based on            comment addressing dataset includes 5,652 review comments:
+the recorded line range. For single-line comments (with only       3,604 from file-level review actions, 882 from hunk-level
+original_line), we additionally included the three pre-            actions, and 1,166 authored by human reviewers.
+ceding lines to align with GitHub’s display convention for
+                                                                   Phase II: Establishing Ground Truth via Human Anno-
+diffs. File-level actions required additional handling, as they
+                                                                   tation. In this phase, we sampled a subset and manually
+often cover multiple changes within a single comment. For
+                                                                   evaluated whether they had been addressed to serve as the
+Action ID-1 (anc95/ChatGPT-CodeReview), we simulated
+                                                                   ground truth. Specifically, we randomly sampled 50 comments
+its two strategies to define the reviewed changes: (1) directly
+                                                                   from each category where subsequent file modifications oc-
+extracting the file’s changes from the original_commit_id,
+                                                                   curred (i.e. 467 eligible from file-level actions, 424 eligible
+and (2) computing cumulative diffs between the PR’s base
+                                                                   from hunk-level actions, and 1,070 eligible human-authored
+commit and original_commit_id via GitHub’s “/compare”
+                                                                   comments), yielding 150 comments in total. Before the full
+endpoint. We retained only those comments whose diff_hunk
+                                                                   annotation, two authors first established an annotation guide-
+could match as a subset of either reconstructed change
+                                                                   line through consensus on 9 comments (the first 3 from each
+set, and discarded inconsistent cases potentially caused by
+                                                                   category). Through this process, we identified two challenges
+temporal shifts in the PR’s base commit. For Action ID-2
+                                                                   that prevent comment addressing from being a simple binary
+(mattzcarey/code-review-gpt), which posts general com-
+                                                                   classification. First, some comments did not contain any
+ments (without original_commit_id) reviewing multiple
+                                                                   suggestions, such as simple praise in human reviews (e.g.,
+files, we first split comments by file, then approximated
+                                                                   “Amazing!”), or mere code summaries in action-generated
+the reviewed commit as the one immediately preceding the
+                                                                   reviews. Some comments contained overly general suggestions
+comment’s creation. We reconstructed the reviewed changes
+                                                                   lacking clear guidance (e.g., “Suggest to test thoroughly”),
+by comparing this commit against the PR’s base commit.
+                                                                   making it difficult to determine whether they were addressed.
+   For subsequent changes within reviewed files, we
+                                                                   Second, a single comment may include multiple issues or
+defined these as cumulative changes between the re-
+                                                                   suggestions, requiring a more granular assessment of their
+viewed and merged versions. We retrieved file content
+                                                                   resolution. Therefore, we designed a two-stage annotation task.
+at original_commit_id and at the merge commit using
+                                                                   In Stage-1, we examined the comment text and the reviewed
+“contents/{file_path}?ref={sha}” endpoint, then cal-
+                                                                   changes to determine whether a comment contained valid (i.e.
+culated their textual differences using the difflib Python
+                                                                   specific and actionable) issues or suggestions, resulting in the
+library. We chose this approach over the “/compare” end-
+                                                                   following classifications:
+point to avoid exaggerating rebase-related changes. We also
+accounted for file renaming by resolving to their final             • None: Does not contain any issues/suggestions.
+paths. Subsequent changes were categorized as follows: (1)          • General: Only contains overly general issues/suggestions.
+Modified (content changed under original filename); (2)             • Valid: Contains at least one valid issues/suggestions.
+Renamed-Modified (filename changed and content modified);          In Stage-2, for the comments classified as “Valid” in Stage-
+(3) Renamed-Only (filename changed with no content modi-           1, we further analyzed subsequent code changes to determine
+fied); (4) Deleted (file removed); (5) Unchanged (no modifica-     the extent to which the identified issues or suggestions were
+tions or renaming occurred). Table V shows the distributions of    addressed. The possible outcomes were:
+subsequent changes by comment source. In total, we obtained
+4,486 action-generated comments from 51 repositories.               • Valid-Uncertain: Insufficient information to determine
+   For comparison, we collected human-authored review com-            (mainly caused by file deletion or large-scale refactoring).
+                                                                    • Valid-Unaddressed: None of identified items addressed.
+ments from the same 51 repositories for which we had
+                                                                    • Valid-Partially: Some but not all items addressed (at least
+obtained action-generated comments in Phase I. For each
+repository, we defined its AI review activation period as the         one of them was completely addressed).
+                                                                    • Valid-Fully: All items addressed.
+time span between the first and last action-generated comment.
+We restricted our collection of human-written comments to          Following this guideline, the remaining 141 comments (47
+this same time window to minimize potential effects on the         per category) were independently labeled by one author and
+addressing ratio (e.g., differences in the project’s development   an external graduate student in software engineering who is
+phase). Within this period, we collected human-authored inline     not a co-author of this paper. Inter-rater agreement (Cohen’s
+comments that met the same filtering criteria as the action-       κ) reached substantial levels over the full 6-class annotation
+generated comments: (1) from merged pull requests and posted       scheme (i.e., “None”, “General”, “Valid-Uncertain”, “Valid-
+prior to merging, (2) written in English, and (3) first in         Unaddressed”, “Valid-Partially”, “Valid-Fully”): 0.674 for file-
+their comment threads (this filter excluded nearly half of         level actions, 0.734 for hunk-level actions, and 0.764 for
+the candidate comments). We also excluded comments from            human reviews. A third author resolved disagreements by
+accounts whose login names contain the string “bot” [20].          selecting between two annotations or making a new judgment
+This process yielded a final set of 1,166 human-authored           when necessary. Table VI shows the final label distribution
+review comments. Following the same procedure used for             across 150 annotated comments.
+                                                                                                                                                                   7
+
+
+
+                          TABLE VI                                                                                      TABLE IX
+ RQ2: A NNOTATION L ABEL D ISTRIBUTION BY C OMMENT S OURCES .                              RQ2: LLM-A SSIGNED A DDRESSING L ABELS FOR C OMMENTS BY
+                                                                                         S OURCE (ID-1: ANC 95/C HAT GPT-C ODE R EVIEW, ID-2: MATTZCAREY
+                                Invalid Valid, Not Addressed Valid, Addressed              / CODE - REVIEW- GPT, ID-3: CODERABBITAI / AI - PR - REVIEWER , ID-4:
+     Source       Total                  Valid-       Valid-  Valid-   Valid-            AIDAR - FREEED / AI - CODEREVIEWER , H UMAN R EVIEWS ). D ISTRIBUTION
+                          None General
+                                       Uncertain Unaddressed Partially Fully                  SHIFT COMPARED WITH TABLE VI RESULTS FROM A DIFFERENT
+    File-level            2.0% 30.0%     0.0%         42.0%   22.0%     4.0%                           SAMPLING STRATEGY ( SEE RQ2’ S RESULTS ).
+                   50
+     Action                   32.0%             42.0%              26.0%
+   Hunk-level             8.0% 8.0%      6.0%         42.0%   2.0%     34.0%                                 Invalid       Valid, Not Addressed Valid, Addressed
+                   50
+     Action                   16.0%             48.0%              36.0%                    Source Total                    Valid-     Valid-    Valid-   Valid-
+                                                                                                           None General
+                          12% 0.0%       6.0%          2.0%   2.0%     78.0%                                              Uncertain Unaddressed Partially Fully
+    Human          50
+                              12.0%              8.0%              80.0%                    File-level Review Action:
+                                                                                                            15.7% 24.8%     0.2%      55.2%       3.7%    0.5%
+                                                                                             ID-1 2,831
+                                                                                                                 40.4%           55.4%                4.2%
+                                          TABLE VII
+                                                                                                             1.6% 18.1%     0.1%      79.3%       0.8%    0.1%
+RQ2: P ERFORMANCE ON 150 ANNOTATED COMMENTS USING THE BEST                                   ID-2 773
+                                                                                                                 19.7%           79.4%                0.9%
+       AUTOMATED SETUP, WITH openai-gpt-4.1 FOR S TAGE -1 AND
+openai-o3-mini FOR S TAGE -2. T HE LAST COLUMN REPORTS THE ABILITY                          Hunk-level Review Action:
+ TO DISTINGUISH “VALID , A DDRESSED ” COMMENTS FROM ALL OTHERS .                                         15.4% 7.4%         2.2%      55.7%       4.2%    15.0%
+                                                                                             ID-3 713
+             “AVG .”: AVERAGE ACROSS THREE SOURCES .                                                          22.9%              57.9%                19.2%
+                                                                                                          3.6% 2.4%         2.4%      85.2%       0.6%     5.9%
+                                                                                             ID-4 169
+                                        Stage-1           Stage-2    Valid, Addressed                         5.9%               87.6%                6.5%
+                 Full 6-class
+ Source                                (Validity)       (Addressing)  vs. All Others
+                                                                                                           15.9% 3.7%       4.2%        16.3%     4.0%    56.0%
+             OA Macro-F1             OA Macro-F1       OA Macro-F1 OA Macro-F1              Human 1,166
+ File-level
+                                                                                                               19.6%               20.5%              60.0%
+            83.6% 78.1%  94.4%              93.5%     88.5%   88.4%    92.0%   90.5%
+  Action
+Hunk-level
+            89.2% 83.4%  95.2%              90.8%     93.2%   93.1%    91.6%   91.2%
+  Action
+  Human 85.6% 62.4%      94.0%              88.0%     93.7%   83.9%   90.8%    87.6%    same LLM for both Stage 1 and Stage 2. Beyond assessing
+   Avg.     86.1% 74.6% 94.5%               90.8%     91.8%   88.5%   91.5%    89.8%
+                                                                                        performance on the final 6-class scheme, we also evaluated the
+                                                                                        models’ effectiveness in each stage independently. For Stage-1
+                          TABLE VIII
+  RQ2: P ERFORMANCE OF DISTINGUISHING “VALID , A DDRESSED ”                             (detecting valid comment), we grouped “None” and “General”
+COMMENTS FROM OTHERS ACROSS THE ENTIRE DATASET . U NCHANGED                             into a “Not Valid” category, and reported the models’ ability
+ G ROUP IS LOGICALLY CLASSIFIED AS NON - ADDRESSED (100% ACC .).                        to distinguish between “Not Valid” and “Valid” comments.
+                          No Code Change       With Code Change          Overall        For Stage-2 (addressed assessment), focusing on comments
+       Source
+                           Total    Acc.        Total    Acc.         Total   Acc.      correctly identified as “Valid”, we grouped “Valid-Uncertain”,
+   File-level Action       3,137   100%          467    92.0%         3,604 99.0%       “Valid-Unaddressed” into “Valid, Not Addressed,” and “Valid-
+  Hunk-level Action         458    100%          424    91.6%          882   96.0%
+        Human                96    100%         1,070   90.8%         1,166 91.6%       Partially” and “Valid-Fully” into “Valid, Addressed”, then re-
+          Total            3,691   100%         1,961   91.3%         5,652 97.0%       ported the models’ ability to differentiate these two outcomes.
+                                                                                        In the second round of evaluation, we cross-combined the top
+                                                                                        three models from each stage to find the optimal combination.
+Phase III: Evaluating LLM Effectiveness for Comment
+Addressing Analysis. Based on our human-annotated dataset,                              Phase IV: LLM-Based Labeling of Comment Addressing.
+we evaluated the performance of three families of LLMs for                              Finally, we apply the best-performing setup determined in
+addressing analysis: OpenAI [16] (gpt-4.1, gpt-4o, and o4-mini                          Phase III to conduct comment addressing analysis on the entire
+/ o3-mini with medium reasoning effort), Claude [18] (claude-                           dataset of 5,652 review comments.
+3-sonnet and claude-3-haiku), and DeepSeek [21] (deepseek-                              Results: We first present the evaluation results from Phase
+r1 and deepseek-v3). The specific API endpoints and model                               III. In our first round of evaluation, we observed that general-
+versions used are documented in our online appendix scripts;                            purpose models usually performed well in Stage-1, while
+the evaluations were performed in April and May 2025.                                   reasoning-enhanced models excelled in Stage-2. The top per-
+Following the human annotation process, we designed separate                            formers for Stage-1 were gpt-4.1 (94.5% average overall
+prompts for Stage-1 and Stage-2. Stage-1 aimed to classify                              accuracy), deepseek-v3 (94.0%), and claude-3-sonnet (93.2%).
+comments as “None”, “General”, or “Valid”, and extract a list                           For Stage-2, deepseek-r1 led with 95.4%, followed by openai-
+of valid issues or suggestions for “Valid” comments. When                               o3-mini (92.4%) and o4-mini (91.3%). Table VII reports the
+Stage-1 identified a comment as “Valid”, Stage-2 was triggered                          performance of our optimal cross-combined setup: gpt-4.1 for
+to determine its final addressed status. Both stages utilized                           Stage-1 and o3-mini for Stage-2, which achieved strong and
+the same contextual information (i.e. reviewed changes and                              balanced performances across three comment sources, with
+subsequent file modifications) and the classification scheme                            an average of 86.1% overall accuracy and 74.6% Macro-
+as the human annotators. The details of the LLM-assisted                                F1 score under the full 6-class scheme. The lower macro-
+framework with specific prompts are available in the online                             F1 for human-authored comments (62.4%) reflects stronger
+appendix for other researchers to use.                                                  class imbalance within that subset (see Table VI), which
+   We decoupled the stages to allow different model selection                           penalizes macro-averaged metrics. Importantly, performance
+based on stage-specific performance. With temperature set                               on the primary downstream distinction (“Valid, Addressed”
+to 0, we ran each model five times for robust evaluation.                               vs. all others) remains high, with an average of 91.5% overall
+Performance was measured using overall accuracy (OA) and                                accuracy and 89.8% macro-F1. Furthermore, when analyzing
+Macro-F1 scores. In the first round of evaluation, we used the                          the complete dataset, we found that a significant portion of
+                                                                                                                                                            8
+
+
+
+comments (87.0% of file-level, 51.9% of hunk-level, and 8.2%                                   TABLE X
+of human comments) had no subsequent modifications. We               RQ3: 36 S ELECTED F EATURES ACROSS F OUR D IMENSIONS U SED FOR
+                                                                         A NALYZING FACTORS I MPACTING C OMMENT A DDRESSING .
+can thus trivially classify them as non-“Valid, Addressed” with
+certainty. Considering the natural class imbalance in real-world     Source Features (10): Who generated the comment and how it was generated
+                                                                             Is Human        1 if written by a human; 0 if AI-generated
+review data, the overall classification accuracy across the full       Is File Level Action 1 if generated by file-level action; 0 otherwise
+dataset is 97%, ensuring the reliability of our subsequent large-          Is Action [4]     One-hot (4): Which action produced the comment
+                                                                      Trigger [auto/manual] One-hot (2): Action trigger type: Auto/Manual (all-zero if human)
+scale analysis in Phase IV (detailed breakdown in Table VIII).           LLM [GPT-3.5/4]     One-hot (2): LLM used for reviewing (all-zero if human)
+   Following the best-performing setup on the annotated              Repository Features (3): Repository-level context where the review occurred
+                                                                          Repo File Size     Total size of files in the repository (in bytes)
+dataset, we used gpt-4.1 to assess the validity of all 5,652             Repo Issue Count    Total number of issues in the repository
+comments, identifying 3,955 as valid, and then used openai-          Repo Contributor Count Number of non-bot contributors in the repository
+                                                                     Modification Features (12): Characteristics of the code changes under reviewed
+o3-mini to assess whether these valid comments had been
+                                                                           Author Is Bot     1 if the author of reviewed commit is a bot; 0 otherwise
+addressed. Table IX details the results across the entire dataset.        Author Is Anon     1 if the author is anonymous; 0 otherwise
+Comparing Table VI (manual labels) and Table IX (automated            Author Prior Commits Number of previous commits by the author to this repository
+                                                                            Commit Del       Total lines deleted in changed files
+labels), we observe a discrepancy between their annotation             Commit Base Lines Total lines in all changed files at base commit
+distributions. This stems from our sampling strategy. For                  File Is Code      1 if a certain reviewed file is a programming file (via Linguist)
+                                                                             File Depth      Directory nesting level of the file
+the manual annotation, we purposefully sampled only those                  File Add/Del      Lines added/deleted in the reviewed file
+comments where the reviewed file was subsequently mod-                    File Base Lines    Line count of the file at base commit
+                                                                        Comment Add/Del Lines added/deleted the comment scope
+ified. This was a necessary precondition for assessing if a          Comment Features (11): Structure and content of the review comment itself
+comment was addressed, but it naturally biased the sample              Prior Comment Len Total character length of all prior comments in the PR
+                                                                            Inline Code      1 if contains inline code snippets (`code`)
+toward “Valid” and “Addressed” classifications. In contrast,              Multiline Code     1 if contains multiline code blocks (```code```)
+the automated annotation was applied to the entire comment                  Text Length      Total Length of the current comment (in characters)
+                                                                         Code Text Ratio     Ratio of code length to total comment length
+dataset, which included a large volume of comments (65.3%)                                   Six LDA topic probabilities with GPT-4.1 labeled themes:
+with no subsequent file changes. Following our procedure,                                    0: Dependency Version Update and Compatibility;
+                                                                                             1: UI Usability and Accessibility Enhancements;
+if these comments were identified as “Valid” in Stage-1,                  LDA Topic [6]      2: Concurrency Control and Locking Robustness;
+they were automatically classified as “Not Addressed” in                                     3: Module Import Optimization;
+                                                                                             4: Variable Naming and Code Readability;
+Stage-2. Consequently, the proportion of “Valid, Addressed”                                  5: Error Handling and Code Documentation;
+comments is lower in the automated setting. Beyond this
+discrepancy, both tables indicate that the addressing rate of
+AI-generated review comments (0.9%–19.2% in Table IX) still          Phase I: Structured Feature Engineering. Inspired by pre-
+lags behind human review comments (60%). Overall, hunk-              vious works [9], [23], We initially built a 45-feature set
+level review actions exhibit a higher addressing rate (6.5%–         across four dimensions to comprehensively capture the pos-
+19.2%) compared to file-level actions (0.9%–4.2%).                   sible impacting factors. After checking for multicollinearity,
+                                                                     we removed 9 redundant features, yielding a final set of 36
+  Answer to RQ2: We found that hunk-level review                     features presented in Table X. The complete list of candidate
+  actions (6.5%–19.2%) exhibit a higher addressing rate              features can be found in our online appendix. Specifically,
+  compared to file-level actions (0.9%–4.2%), yet the                Source Features capture who generated the comment (a
+  addressing rate of AI-generated review comments still lags         human developer or one of four actions) and two key aspects of
+  behind human review comments (60%).                                action configuration: the trigger mode (automatic vs. manual)
+                                                                     and the LLM used (GPT-3.5 vs. GPT-4). These configurations
+                                                                     were extracted by parsing the workflow file at the comment’s
+C. RQ3: Which factors impact the likelihood that code review         associated commit. If the workflow included an ‘if’ condi-
+comments lead to code changes?                                       tional trigger, we labeled the comment as manually triggered;
+                                                                     otherwise, it was considered automatic. To determine the
+Approach: To answer RQ3, we conducted an interpretable               LLM used for comment generation, we first checked for
+analysis to identify the factors influencing whether review          explicitly specified models in the workflow configuration. If
+comments lead to code changes. We focus specifically on              unspecified (n=1,043), we manually inferred the default model
+the 3,879 valid comments from RQ2 that have a definitive             by examining 9 associated action versions. Specifically, 7
+addressing label (excluding 76 uncertain cases), examining the       were fixed versions (e.g., @v1) with constant defaults, while
+factors that determine whether they are addressed. For invalid       2 were rolling main branch; for the latter, we identified the
+comments, we discuss their potential causes and mitigation           default switch commit (e.g., GPT-3.5→GPT-4) and labeled
+strategies in Section V. To quantify the impact of different         comments pre-/post-switch accordingly. All four actions in our
+factors, we engineered a structured feature set covering various     final analysis employed OpenAI models, which we mapped
+dimensions that potentially affect response behavior. Since          to either the GPT-3.5 or GPT-4 family. Repository Features
+direct interpretation of LLM decision-making is challenging,         reflect the project context, including overall size and activity
+we trained a Random Forest classifier to fit the addressing          level (e.g., number of issues). Modification Features charac-
+results derived in RQ2 and employed SHAP (SHapley Addi-              terize the code changes under review, including the author-
+tive exPlanations) [22] analysis to interpret the influence and      ship and change properties. We used Author Prior Commits
+directionality of each feature on the model’s predictions.           to estimate the author’s familiarity with the project. Edge
+                                                                                                                                                  9
+
+
+
+                           TABLE XI                                                                 TABLE XII
+RQ3: TOP 10 FEATURES INFLUENCING TOTAL COMMENT ADDRESSING .              RQ3: T OP 10 F EATURES I NFLUENCING AI C OMMENT A DDRESSING .
+G RAY- SHADED ROWS DENOTE FEATURES THAT ALSO RANK AMONG THE              G RAY- SHADED ROWS DENOTE FEATURES THAT ALSO RANK AMONG THE
+         TOP 10 FOR AI COMMENT ADDRESSING (TABLE XII).                           TOP 10 FOR TOTAL COMMENT ADDRESSING (TABLE XI).
+
+              Feature         Rank Importance (|ϕ|) Directionality (ρ)                 Feature         Rank Importance (|ϕ|) Directionality (ρ)
+                            P                                                                        P
+      Source Feature (10):    |ϕ|=0.1589; µ|ϕ|=0.0159                          Source Features (7):     |ϕ|=0.0418; µ|ϕ|=0.0060
+             Is Human           1          0.0449            0.99                   Is Action 3           2         0.0177             0.92
+           Trigger auto         2          0.0410            -0.96              Is File Level Action      7         0.0096             -0.88
+                                                                                                         P
+       Is File Level Action     3          0.0346            -0.95             Repository Features (3):     |ϕ|=0.0203; µ|ϕ|=0.0068
+                              P
+      Repository Feature (3):     |ϕ|=0.0342; µ|ϕ|=0.0114                          Repo File Size         6         0.0101             0.42
+                                                                                                            P
+          Repo File Size        5          0.0184            0.70              Modification Features (12):     |ϕ|=0.0767; µ|ϕ|=0.0064
+                                  P
+      Modification Feature (12):     |ϕ|=0.0801; µ|ϕ|=0.0067                   Author Prior Commits       1         0.0212             -0.67
+      Author Prior Commits      4          0.0235            -0.69              Commit Base Lines         4         0.0111             0.11
+           Commit Del           9          0.0105            -0.15                  Commit Del            5         0.0107             -0.17
+                              P
+      Comment Feature (11):       |ϕ|=0.0959; µ|ϕ|=0.0010                          Comment Add            8         0.0095             0.81
+                                                                                                         P
+         Code Text Ratio        6          0.0155            0.89              Comment Features (11):       |ϕ|=0.0709; µ|ϕ|=0.0064
+           Text Length          7          0.0133            -0.24                Code Text Ratio         3         0.0124             0.78
+          LDA Topic 2           8          0.0116            0.50                  LDA Topic 5            9         0.0085             0.61
+          LDA Topic 1          10          0.0102            0.41               Prior Comment Len        10         0.0075             0.65
+
+
+
+
+cases, such as when the author was identified as a bot or                entire dataset. SHAP is a widely-used technique to interpret
+an anonymous user (1.8% of valid comments), were flagged                 learning-based models. It explains individual predictions by
+using Author Is Bot/Anon, with Author Prior Commits set                  assigning each feature a Shapley value, which represents its
+to 0 accordingly. We further described change scope at the               average marginal contribution to the prediction across all
+commit, file, and comment levels, along with the volume of the           possible feature combinations. Based on the aggregated SHAP
+involved files before changes were made. Comment Features                values, we calculated two interpretability metrics for each
+reflect the characteristics of the comment itself, including             feature: 1) SHAP Importance: the mean absolute SHAP
+structural features (e.g., its position in the PR discussion             value, reflecting global predictive importance; and 2) SHAP
+thread) and textual features (e.g., code ratio). To capture com-         Directionality: the Pearson correlation between feature values
+ment intent, we applied Latent Dirichlet Allocation (LDA) [24]           and their SHAP values, indicating the association direction
+to the 3,879 comments. Following hyperparameter tuning                   (positive or negative) with “Addressed” predictions.
+strategies in prior work [25], we selected six as the optimal            Phase III: AI-Specific Modeling and Interpretation. In
+number of topics. We then used gpt-4.1 to summarize the top              addition to modeling the entire dataset, we also conducted
+ten comments for each topic to generate interpretable labels (as         an AI-specific modeling and interpretation to ensure that the
+shown in Table X). Finally, we applied AutoSpearman correla-             specific factors influencing the effectiveness of AI-generated
+tion analysis [26] (ρ > 0.7 threshold) to address potential multi-       comments were not overshadowed by the human-authored
+collinearity among features, and removed 9 redundant features            ones. To achieve this, we re-trained the Random Forest classi-
+(e.g., Repo File Count, Commit Changed File Count).                      fier using only the 2,990 AI-generated comments, removed the
+Phase II: Model Fitting and Interpretation. Since our feature            Is Human feature, and mapped two sets of one-hot features
+set spans four dimensions, we chose a Random Forest classifier           (Trigger [auto/manual] and LLM [GPT-3.5/4]) into two bi-
+with SHAP explanations to better model and interpret the                 nary features (Is Trigger Manual and Is Model GPT4). The
+complex, non-linear interactions between features and com-               resulting AI-Specific Model achieved an overall accuracy
+ment addressing. We further discuss this choice in Section VI.           of 91.7% and a Macro-F1 score of 0.647 in 5-fold cross-
+To enable focused analysis, we mapped the 3,879 comments                 validation. Given the highly imbalanced nature of the dataset
+into a binary classification task: comments labeled as “Valid-           (only 9.2% addressed comments), we consider this perfor-
+Partially” or “Valid-Fully” were grouped as the “Addressed”              mance reasonable for supporting the subsequent interpretation
+class (25.1%), with “Valid-Unaddressed” comments forming                 analysis. Finally, we applied the same SHAP-based analysis to
+the “Not Addressed” class (74.9%). Upon our refined 36                   the remaining 33 features to interpret the model’s predictions.
+features, we trained a Random Forest classifier using stratified         Results: Table XI presents the interpretability results based
+5-fold cross-validation. This approach ensures that our perfor-          on the complete dataset (including both human and AI com-
+mance metrics and interpretability results are robust and not bi-        ments). We list the top 10 most important features, organized
+ased by a single random data split. The model achieved an av-            by their feature groups. For
+                                                                                                    P each group, we also report the
+erage of 88.6% overall accuracy (Macro-F1=0.846) across the              total SHAP Importance ( |ϕ|) and average SHAP Impor-
+five test folds, indicating that our engineered features are effec-      tance (µ|ϕ|). In our subsequent analysis, we mainly focus on
+tive predictors of comment addressing. Since Random Forest’s             features that show a meaningful correlation (i.e. |ρ| > 0.3).
+native feature importance metrics lack directional insights, we          Notably, “Source Features” and “CommentP        Features” rank
+applied SHAP to quantify each feature’s contribution towards             first and second in total importance ( |ϕ|), suggesting that
+“Addressed” predictions. Specifically, we computed SHAP                  both who provides the feedback (source credibility) and what
+values for every instance in the test set of each fold and               the feedback contains (content quality) are strongly associated
+aggregated them to form a comprehensive explanation for the              with whether comments are addressed.
+                                                                                                                                             10
+
+
+
+   Source Features represent the most significant group,                                     TABLE XIII
+showing a clear difference in developers’ responses based on          RQ3: A DDRESSING RATES BY T RIGGER M ODE ACROSS REVIEW
+                                                                           ACTIONS (p- VALUES FROM F ISHER ’ S E XACT T EST ).
+the comment origins (human vs. actions; file-level vs. hunk-
+level). The negative correlation for Is File Level Action (ρ =           Action
+                                                                                     Auto Trigger         Manual Trigger
+                                                                                                                                 p-value
+                                                                                  Total   Addr. (%)     Total   Addr. (%)
+−0.95) aligns with the trend in Table IX, where hunk-level                Total   2,886      9.0%        104      14.4%          >0.05
+review actions generally outperform file-level counterparts.              ID-1    1,595      6.8%        86       12.8%          ≤ 0.05
+                                                                          ID-2     602       0.5%        18       22.2%          ≤ 0.05
+Specifically, coderabbitai/ai-pr-reviewer achieved the                    ID-3     534      25.7%        —          —              —
+highest valid and addressed rate (19.2%). Automatic trig-                 ID-4     155       7.1%        —          —              —
+gers also show a negative correlation with addressing (Trig-                                 TABLE XIV
+ger auto, ρ = −0.96). To detail this effect, we analyzed            RQ3: A DDRESSING RATES BY LLM S ERIES ACROSS REVIEW ACTIONS
+data distribution by trigger modes across the four actions                     (p- VALUES FROM F ISHER ’ S E XACT T EST ).
+(Table XIII). We found that in the two actions with manu-                            GPT-3.5 Series        GPT-4 Series
+                                                                         Action                                                  p-value
+ally triggered comments (Action ID-1 and ID-2), manually                          Total    Addr. (%)    Total   Addr. (%)
+                                                                          Total   1,435       5.4%      1,555     12.6%          ≤ 0.05
+triggered comments consistently showed higher addressing                  ID-1    1,431       5.5%       250      16.4%          ≤ 0.05
+rates. This suggests that the massive feedback resulting from             ID-2      —          —         620       1.1%            —
+                                                                          ID-3      4         0.0%       530      25.8%          > 0.05
+unconditional triggering might reduce developers’ willingness             ID-4      —          —         155       7.1%            —
+to respond. Interestingly, the LLM choice did not show
+                                                                                              TABLE XV
+high predictive importance (LLM GPT-3.5 ranked 19/36 and           RQ3: C OMMENT A DDRESSING RATES BY BINNED C ODE T EXT R ATIO
+LLM GPT-4 ranked 21/36 in the feature list of the overall                         (A LL F OUR ACTIONS VS . H UMAN ).
+model; Is Model GPT4 ranked 23/33 in the feature list of the
+                                                                               Bins of           Four Actions               Human
+AI-specific model), indicating that simply employing a more               Code Text Ratio     Total   Addr. (%)     Total     Addr. (%)
+advanced model does not decisively guarantee comment ad-                    (–0.00, 0.00]      642      4.2%         320       71.2%
+                                                                             (0.00, 0.11]      669      7.2%         61        65.6%
+dressing. However, when comparing addressing rates between                   (0.11, 0.26]      635      5.7%         95        75.8%
+two model families (Table XIV), GPT-4 generated comments                     (0.26, 0.52]      621      10.5%        107       78.5%
+did show better addressing rates.                                            (0.52, 1.00]      423      23.2%        306       89.9%
+   For Comment Features, we find the comments were more                                   TABLE XVI
+likely to be addressed if they were concise (Text Length,                  RQ3: C OMMENT A DDRESSING RATES BY BINNED
+                                                                      AUTHOR P RIOR C OMMITS (A LL F OUR ACTIONS VS . H UMAN ).
+ρ = −0.24) or contained a higher proportion of code
+(Code Text Ratio, ρ = 0.89), especially when they included                     Bins of             Four Actions                Human
+                                                                       Author Prior Commits     Total   Addr. (%)      Total     Addr. (%)
+multi-line code blocks(Has Multiline Code, ρ = 0.67 not
+                                                                             (–0.00, 30]         218      16.1%         558       80.1%
+shown in the table). As shown in Table XV, the addressing                     (30, 124]          639      16.1%         140       82.1%
+rate for both human and AI-generated comments increased                      (124, 319]          642      12.1%         131       71.8%
+noticeably when Code Text Ratio exceeded 0.5. This may be                   (319, 1,013]         763       4.5%          32       81.2%
+                                                                           (1013, 4,316]         728       3.3%          28       60.7%
+because multi-line code is often used to illustrate concrete so-
+lutions, allowing developers to follow comments with minimal       generated comments. As indicated by the gray-shaded rows,
+effort through copy-pasting. Regarding topics, comments were       features that rank highly in both the total and AI-specific
+addressed more often when they pertained to “Concurrency           models demonstrate the same influence direction (ρ). These
+Control and Locking Robustness” (e.g., “using a ‘set-if-not-       consistent influence directions indicate that our main findings
+exists’ pattern”) (LDA Topic 2, ρ = 0.50), as well as “UI Us-      remain stable when restricting the analysis to AI-generated
+ability and Accessibility Enhancements” (e.g., “adding aria-       comments only. Although trigger-mode features become less
+label for screen reader support”) (LDA Topic 1, ρ = 0.41).         prominent here, our earlier comparison across trigger modes
+   Within Modification Features, review comments targeting         (Table XIII) still supports higher addressing rates for manually
+commits by experienced contributors were less likely to be         triggered comments. Interestingly, when focusing solely on
+addressed (Author Prior Commits, ρ = −0.69), suggesting            AI-generated comments, suggestions related to “Error Han-
+that AI-generated reviews may be more helpful for newcomers.       dling and Code Documentation” (e.g., “Instead of printing
+As shown in Table XVI, valid comments directed at project          stack, use proper logging for exceptions”)(LDA Topic 5, ρ =
+newcomers (Author Prior Commits ≤ 124) achieved 16% ad-            0.58) become more influential and are positively associated
+dressing rate, compared to just 3.3% for the most experienced      with addressing. Finally, the rise of Author Prior Commits to
+contributors. Notably, human reviews mainly focused on these       the top rank with a negative correlation (ρ = −0.67) highlights
+newcomers, with 79% of comments directed at them, aligning         that there is still significant room for AI reviewers to evolve
+with typical community practices. In contrast, automated ac-       to become valuable for experienced developers.
+tions reviewed code changes regardless of author experience,
+which may help mitigate potential experience blindspots in the       Answer to RQ3: Comment addressing is strongly associ-
+review process. Finally, positive correlations for Repository        ated with Source Features (human vs. AI and specific
+Features demonstrated that comments were more likely to              action type) and Comment Features (conciseness and
+be addressed in large and active projects (Repo File Size,           code-richness are better), highlighting the importance of
+ρ = 0.70; Repo Issue Count, ρ = 0.64, ranked 13/36).                 thoughtful automated review design.
+   Table XII presents the interpretability results for AI-
+                                                                                                                                               11
+
+
+
+                        V. D ISCUSSION
+   Does AI-based code review lead to code changes? In
+general, human-authored review comments are much more
+likely to be addressed than AI-generated ones: 60% of valid
+human review comments led to code changes, compared to
+only 0.9%–19.2% for valid AI-generated comments depending
+on the tool (Table IX). However, the answer is not simply
+“no”. Our results show that there is a clear potential for AI-
+generated code review to influence development if these tools
+are designed well.
+
+A. Design Matters
+    Our study reveals that not all AI-based review tools are
+equal. Among the four actions we analyzed in depth, one stood
+out: coderabbitai/ai-pr-reviewer achieved a 19.2% rate
+of valid comments addressed, outperforming other tools by a
+large margin. In contrast, some tools had near zero impact.
+For example, mattzcarey/code-review-gpt had only 0.9%
+of valid comments addressed. This suggests that tool design
+choices directly affect the developer’s response.
+    Through our interpretability analysis (Table XI), we iden-
+tified several characteristics that consistently increased the
+likelihood of AI-generated comments being addressed.
+    • Hunk-level        granularity:      Comments        attached    Fig. 4. Illustrative case (link): Effective tool design (hunk-level review,
+      to specific code locations perform better than                  concrete code suggestions, and interactive dialogue) successfully persuading
+                                                                      a senior developer to adopt a change.
+      general or file-level comments. Tools such as
+      coderabbitai/ai-pr-reviewer that offer hunk-
+      level feedback are more effective.                              anc95/ChatGPT-CodeReview uses a short, generic prompt
+    • Manual triggering: Tools explicitly triggered by de-            such as “Below is a code patch, please help me do a brief code
+      velopers produce higher addressing rates. For example,          review on it. Any bug risks and/or improvement suggestions
+      anc95/ChatGPT-CodeReview showed a 12.8% address-                are welcome:”, which often results in vague comments. In
+      ing rate for manually triggered comments versus 6.8%            contrast, coderabbitai/ai-pr-reviewer provides a long
+      for automatically triggered ones (Table XIII).                  and detailed prompt (over 400 words), explicitly instructing
+    • Code-rich, concise comments: Comments with a high               the model to avoid generalities and provide focused feedback.
+      code-to-text ratio, especially multiline suggestions, are       It also includes logic to suppress comments such as “LGTM!”
+      more likely to be acted upon. We observed a clear               unless no issues are found, further reducing noise.
+      increase in the addressing rate when more than half of             These differences are reflected in the types of output gener-
+      the comment content was code (Table XV).                        ated. We observed many vague or unhelpful comments from
+    • Focus on newcomers: Comments were more likely to                tools with limited prompt context. For example, a frequent
+      be addressed when targeting contributors with little prior      output was: “Without more context, it is difficult to provide
+      commit history. For the least experienced developers, the       further suggestions” – a clear signal that the model lacked
+      addressing rate was five times higher than for the most         sufficient information to provide value. Other typical outputs
+      experienced (Table XVI).                                        included overly generic summaries of code functionality or
+    To further investigate the effectiveness of review granularity,   hallucinated style warnings unrelated to the actual changes.
+we randomly investigated 14.4%, i.e., 30 comments, of the                To help reduce noise, some tools also implemented
+208 PR-level review comments as follows: 5 from Action                logic to avoid redundant reviews. For example,
+ID-8, 5 from ID-11, and 20 from ID-16. Only 1 comment                 coderabbitai/ai-pr-reviewer logs reviewed commits
+was partially addressed, which provided a specific perfor-            to avoid a full base-to-head review every time. This helps
+mance improvement: “For better performance, preallocate the           prevent developer frustration caused by redundant feedback,
+‘architectures’ slice by using ‘make([]types.Architecture, 0,         a concern also noted by Cihan et al. [27] in their study on
+len(fm.Spec.Architectures))’ ”. This aligns with our finding          AI-assisted code review tools in industrial settings.
+that concrete code suggestions are more likely to be adopted.            We present an illustrative case in Figure 4 to show
+However, the majority of PR-level comments were ignored,              why these design choices matter. This case drawn from
+supporting our conclusion that fine-grained (i.e., hunk-level)        coderabbitai/ai-pr-reviewer, demonstrates how con-
+reviews are more effective for AI-generated code review.              crete modifications and interactive feedback can persuade even
+    We also highlight that prompt design plays an impor-              an experienced developer (Author Prior Commits=186) to
+tant role in generating high-quality comments. For example,           accept a suggestion they initially rejected. After the developer
+                                                                                                                                   12
+
+
+
+identified potential issues with rounding errors, the AI adapted     •  Assessing Tool Capabilities (12%): Beyond replying
+its proposal from a strict equality check to a robust fuzzy             to a specific suggestion, developers evaluated the over-
+comparison, successfully transforming the initial rejection into        all performance of the AI or action. For instance, one
+an actionable improvement.                                              developer noted it was “interesting to learn where AI
+   Beyond post-comment refinement, we also argue that AI                stands” (link) despite the specific suggestion being of
+tools could be more cautious before posting. We found                   limited value.
+that most current tools rely on a simplistic one-in-one-out           • Willingness to Follow (10%): Developers expressed an
+paradigm, where each code change automatically leads to a               intention to apply the suggestion in future iterations, e.g.,
+review comment, regardless of whether a comment is war-                 “Templates could be enhanced later on to use markdown
+ranted. This leads to low-precision output and reviewer fatigue.        instead of raw text” (link).
+Instead, we advocate for a multi-stage approach, similar to        Specifically, Willingness to Follow (10%) and Prompting
+practices in traditional machine learning pipelines. The tool      Reflection (14%) imply that even if not addressed immedi-
+should first determine whether a change needs review, then         ately, a comment may still trigger code changes in the future.
+decide whether to generate a comment, and finally, where           These findings motivate future work on impact beyond code
+appropriate, offer a code suggestion. This would bring struc-      changes (e.g., guiding developer reasoning or shaping long-
+ture and discipline to AI-based review and help ensure that        term code quality) to better understand the contribution of AI
+comments are meaningful and justified.                             code reviewers to software engineering practice.
+
+B. Beyond Code Changes: Impact on Closed PRs and Feed-
+                                                                   C. Recommended Features for Effective AI Code Review
+back on Unaddressed Comments
+                                                                      Based on our findings, we recommend that designers of AI-
+   While we mainly focused on merged PRs to observe
+                                                                   based code review tools prioritize the following.
+definitive code improvements, we recognize that AI-generated
+                                                                      • Use hunk-level review granularity: Inline comments
+review comments can provide value even when they do not
+lead to a merge or any direct code changes. Therefore,                  tied to specific code changes are more actionable than
+we conducted two supplementary analyses on the comments                 general or file-level comments.
+                                                                      • Enable and encourage manual triggering: Give devel-
+outside our main dataset.
+   1) Analysis of AI Comment Impact in Closed PRs: We                   opers control over when the tool runs to avoid flooding
+extended our analysis to closed (non-merged) pull requests for          pull requests with unhelpful comments.
+the four primary actions to investigate if developers engage          • Include specific code suggestions: Multi-line code
+
+with AI feedback before a PR is abandoned. Following the                blocks are especially effective as they can often be copy-
+methodology proposed in RQ2, we applied the LLM-assisted                pasted with minimal effort.
+framework to assess whether comments were valid and ad-               • Filter out vague comments: Use a pre-check (like our
+
+dressed in the latest commits of these closed PRs. We observed          Stage-1 classification model) to suppress non-actionable
+a significantly lower addressing rate for AI comments in closed         suggestions before they reach developers.
+PRs compared to merged ones: only 3.0% (17/570) for Action            • Support adaptive reviewing:
+
+ID-1, and 0% for Action ID-2 (n = 14), ID-3 (n = 18), and               – Target less experienced contributors who may benefit
+ID-4 (n = 0). Our qualitative analysis suggests that even when              more from feedback.
+a comment is valid, the PR may still be abandoned because               – Adjust the level of detail according to the change in
+the overall approach “doesn’t solve the root cause”.                        size or file criticality.
+Therefore, we focused on merged PRs in our main results to            • Provide richer context to the LLM: Supplying the PR
+ensure we capture actual code improvements that successfully            title, description, summaries of changes, or even user’s
+transitioned into the project’s codebase.                               feedback helps generate more useful review comments.
+   2) Analysis of Feedback on Unaddressed AI Comments: To             By adopting these strategies, AI-based review tools can be-
+capture impact beyond immediate code changes, we analyzed          come more than noise – they can become useful collaborators
+developer replies to AI comments that were not labeled as          in the development process, both in open-source communities
+“Valid, Addressed” in Table IX. We identified a total of 50        and in industrial practice.
+replies and manually categorized them into four types:
+   • Defending the Change (64%): Developers defended
+                                                                   D. Implications for AI Code Review Adopters
+     their current implementation as correct or preferred and
+     explained why the AI suggestion was not adopted, e.g.,          We also derive the following implications for developers
+     “I don’t want to bring back ‘GetParameter’ as using type      considering or currently adopting AI-based code review tools.
+     parameters is a lot nicer” (link).                            Choose and tune the tool appropriately: Given the large
+   • Prompting Reflection (14%): AI comments triggered             performance differences among AI-based review tools, we
+     technical debates, which may lead to code changes de-         recommend prioritizing well-designed and highly customiz-
+     pending on the outcome. For instance, a developer ques-       able actions such as coderabbitai/ai-pr-reviewer as
+     tioned the suggested optimization: “Is ‘iterrows’ really      a starting point. Second, do not rely solely on the default
+     more efficient than vectorized operations? The golden         settings. In our study, 82.6% of the repositories analyzed
+     rule is benchmarks” (link).                                   customized their action configurations, and 22.5% continued to
+                                                                                                                                    13
+
+
+
+adjust the configurations beyond one month. This suggests that     commit hash of the last reviewed version. Additionally, a
+integrating AI code review tools requires careful tuning and       true “compare file content” endpoint (that ignores noise from
+ongoing optimization. Based on our observations in RQ1, this       rebases) could also ease implementing code review tools.
+includes practices such as keeping the action and its underlying
+LLMs up to date, and addressing project-specific needs by                           VI. T HREATS TO VALIDITY
+customizing prompts, refining file inclusion/exclusion patterns,   Construct Validity: We identify AI generated comments
+and adjusting trigger modes.                                       through the github-action[bot] account, which may in-
+Clarify the role of AI code review: Even the best-performing       clude comments from unrelated actions. Although our manual
+AI tool achieved only a 19.2% addressing rate, far below           checks during annotation revealed no such cases, misclassifica-
+the human reviewers’ 60%. Therefore, for now, AI code              tion remains possible. Additionally, we determined comment
+review is better framed as a complement to human review,           addressing based on file-level code changes, which may be
+not a replacement. This requires understanding AI code             insufficient for certain edge cases. However, “uncertain” cases
+review’s capability boundaries and deploying it in appropriate     constituted only 1.3% of our addressing dataset, and we
+scenarios. Based on our LDA topic analysis (RQ3), AI               excluded these from our impact factor analysis.
+reviewers are good at providing defensive programming              Internal Validity: In RQ2, we extracted 150 comments from
+suggestions, and developers are relatively more responsive         over 22,000 AI-generated and 1,166 human-authored com-
+to their comments on error handling. Accordingly, we               ments and obtained gold-standard labels via multi-rater anno-
+recommend positioning AI reviewers as defenders: tightly           tation. To assess representativeness, the first author examined
+scope them to this mandate (with targeted prompts and              an additional 250 samples and observed similar addressing
+other recommended features), thereby suppressing category-         patterns as reported in our main findings. Therefore, we
+sprawling yet low-quality comments. This allows human              believe the gold standard reflects the broader dataset. For
+reviewers to focus on higher-level issues, such as overall         RQ3, our addressing analysis focuses on four popular actions,
+architecture (e.g. “Try sorting at the DB level, it will be 100x   which may limit the generalizability of our findings. However,
+faster”), development context (e.g., “Remove this as project       within the scope of our dataset, usage was highly concentrated
+requires Python ≥ 3.11”), and business logic (e.g., “This will     on these four actions, making them representative of real-
+cause issues on ARM64”). Mapping the boundaries of AI code         world deployments observed in our study. Moreover, the final
+review’s effectiveness is also an ongoing task for researchers.    analysis uses a binary classification of whether comments were
+Monitor effectiveness over time: We recommend using the            addressed, which does not capture the degree or impact of
+LLM-assisted framework proposed in this study to monitor           the resulting code changes. Nevertheless, our evaluation shows
+comment validity and addressing rates over time. These met-        substantial inter-rater agreement and strong LLM performance
+rics provide a crucial feedback loop to continually tune and       on this task, ensuring the reliability of our findings. Our feature
+customize the AI reviewer.                                         engineering for impact factor analysis may also be incomplete
+                                                                   or miss latent feature interactions. However, our features was
+E. Implications for GitHub                                         comprehensively designed across four dimensions and inspired
+                                                                   by prior works [9], [23]. Another threat is that different
+   For GitHub, we recommend the following to better support        interpretation methods may yield different analysis results.
+the development and analysis of automated code review tools.       Since our feature set spans four dimensions, we chose Random
+Enhance the traceability of Actions’ behaviors: Currently,         Forest to better model the complex and non-linear interactions
+GitHub retains action execution logs for up to 400 days,           between features, rather than the simpler model like logistic
+and all actions operate under a shared github-action[bot]          regression, which assumes a linear relationship between fea-
+account. This makes it difficult to attribute specific comments    tures. We also tried logistic regression in our experiments and
+or behaviors to individual actions—a threat also noted in Sec-     it achieved a lower performance (86.1% accuracy and 0.826
+tion VI. Therefore, we suggest refining action identification to   Macro-F1 in 5-fold cross-validation) than our Random Forest
+the particular action within a repository, which enables precise   model (88.6% and 0.846 respectively). This model choice
+source attribution for users and researchers. Additionally, we     also aligns with work [9], [23]. And the use of SHAP is
+suggest that GitHub establish a “usage list” (maybe labeled by     a standard approach for interpreting such models as well.
+a successful run) for Marketplace actions, similar to repository   Therefore, our interpretation pipeline is well-justified. We also
+forks. This would also enable action developers, potential         acknowledge that these interpretations describe associations
+users, and researchers to assess their true popularity.            between features and the predicted probability of ”Addressed”,
+Improve support for identifying actual code changes:               not causal effects. If causal identification is desired, further
+Currently, most tools re-review the full base-to-head diff every   studies (e.g., controlled experiments or developer interviews)
+time, since there’s no easy way to trace the reviewed com-         would be needed.
+mits to calculate incremental changes. Therefore, we suggest       External Validity: Our study includes 16 AI-based code
+GitHub provide a platform-level solution for this, rather than     review actions identified through a systematic Marketplace
+leaving it to individual action developers. This may be imple-     search and manual verification. Rather than sampling a subset,
+mented through extending the existing “viewerViewedState”          we included all actions that met our relevance criteria and
+flag (a boolean indicating file view status) to the specific       collected the complete set of observable review comments
+                                                                                                                                 14
+
+
+
+generated by these tools in mature repositories. Although four      developer response to automated feedback.
+tools account for the majority of comments (most notably                  a) AI for Code Review Automation: The automation of
+anc95/ChatGPT-CodeReview), this concentration reflects ac-          code review has attracted growing attention with the rise
+tual ecosystem usage patterns at the time of data collection.       of GenAI. Modern large language models, such as GPT-
+We acknowledge that less popular or newly released tools are        4 and LLaMA, have shown strong performance on code-
+underrepresented in absolute volume. However, their limited         related tasks, including vulnerability detection [29], program
+usage inherently results in fewer observable review behaviors.      repair [30]–[32], and bug fixing [33]–[35], enabled by the
+Thus, our dataset captures the near-complete population of          naturalness of source code [36]–[38].
+AI-based review activity occurring on GitHub Actions at the            Review automation builds on the observation that many
+time of the study, particularly among tools with meaningful         review comments are repetitive and can be learned. Prior work
+adoption. To further verify dataset coverage, we conducted a        has proposed systems for three core tasks [39]: (1) determining
+follow-up Marketplace search on July 23, 2025. We observed          whether a code change needs review [40], [41], (2) generating
+no substantial changes among the top-ranked actions. The only       natural language comments [40], [42]–[44], and (3) generating
+notable newcomer, hustcer/deepseek-review (ranked #7,               revised code based on comments [42], [45], [46].
+324 stars), had its first commit on January 29, 2025, i.e., after      Comment generation is particularly complex, requiring the
+our action selection date (January 7, 2025). This confirms          synthesis of context-sensitive suggestions. Early approaches
+that our dataset accurately reflects the state of the ecosystem     used encoder-decoder models such as T5 [42], and subsequent
+during the study period. Consequently, our findings, such           work explored specialized pretraining [40], [43], cross-task
+as the benefits of hunk-level granularity and concrete code         learning [47], and benchmark datasets [44], [48]. Other work
+suggestions, are derived from analysis across multiple widely       has demonstrated that general-purpose models like LLaMA
+used tools and human reviews, rather than from a single-            can be adapted to this task through fine-tuning [3].
+tool artifact. We will continue to monitor the evolution of the        Recent work explored how LLMs can be more effectively
+AI-based code review ecosystem in future work. Second, to           applied to code review, e.g. by incorporating pull request
+mitigate the impact of inactive repositories which may not yet      context [49] or through mixture-of-prompts architectures [50].
+have established stable review workflows, we followed prior         Meanwhile, benchmark-oriented studies also developed more
+research [19] and collected data only from repositories with at     realistic evaluation settings for AI-based code review [51],
+least 50 PRs. However, this threshold does not fully capture        [52]. Additionally, Cihan et al. studied the impact of AI-
+the diversity of project scales. Since our dataset primarily        assisted code review in industrial settings [27].
+consists of small- to medium-sized projects (typically with            Although some studies include automatic and human eval-
+≤ 50 non-bot contributors), our findings may not generalize         uations of generated comments [42], most of this research has
+to very large-scale industrial systems. Moreover, our main          focused on comment quality rather than downstream impact.
+analysis focuses on review comments generated by file-level         Our study complements these efforts by analyzing how AI-
+and hunk-level review actions and examines whether they             generated comments are used in open-source development
+are addressed in merged PRs. We did not consider PR-                workflows, whether they lead to code changes, and which
+level actions. This design choice simplifies the analysis by        factors influence their effectiveness.
+ensuring that we can reliably observe whether comments have               b) Developer Response to Automated Feedback: Several
+been addressed, but it may also narrow the generalizability         studies have explored how developers respond to code review
+of our findings. To broaden our understanding beyond this           comments, with a focus on human-authored feedback. Prior
+core scope, we additionally examined a sample of PR-level           work has investigated factors that make comments useful [7]–
+review comments and conducted the supplementary analyses            [9], developer responsiveness [11], and differences in comment
+on closed PRs and feedback on unaddressed AI comments,              granularity and presentation [6], [10].
+presented in Section V-B. Additionally, our analysis focused           Building on this foundation, more recent work has turned to
+on English-language comments. As described in RQ2 Phase             developers’ reactions to AI-generated artifacts. For example,
+I, we began with 16,762 comments from 100 repositories.             Vaithilingam et al. [53] examined developers’ expectations and
+A language filter reduced this to 4,229 comments from 53            experiences with GitHub Copilot, and Huang et al. [54] studied
+repositories, excluding about 75% of comments and 47 repos-         perceptions of AI-generated inline versus block comments.
+itories. Among them, 32 repositories were excluded because             However, little is known about whether developers actu-
+they only contained Korean comments (e.g., 1,828 comments           ally act on AI-generated code review comments. Our study
+from KEA-DoKebi/dalkom-backend). Despite this reduction,            addresses this gap by analyzing over 22,000 such com-
+we retained over half of the original projects. And given that      ments across 178 repositories, assessing whether they were
+English serves as the main communication language in global         addressed, and identifying the factors that influence their
+development activities [28], with even non-native speakers          effectiveness.
+commonly adopting it, we believe our findings remain relevant
+to the broader open-source community.
+                                                                             VIII. C ONCLUSION AND F UTURE W ORK
+                   VII. R ELATED W ORK                                This paper presents a large-scale empirical analysis of AI-
+   We organize related work into two areas relevant to our          based code review actions on GitHub. We examine how
+study: (a) the automation of code review using AI, and (b)          these tools are adopted, whether their comments lead to
+                                                                                                                               15
+
+
+
+code changes, and what factors influence their effectiveness.     adopters, and GitHub.
+Our findings reveal that adoption is highly concentrated on          We recommend treating AI code reviewers as collaborators
+four popular actions. Many AI-generated comments are not          with human reviewers. Future work should further enhance
+addressed, especially when they are vague or lack context.        review quality by exploring richer context, better prompts, and
+However, comments that are concise, specific are more likely      multi-stage strategies to generate more specific and actionable
+to be addressed—particularly by less experienced contributors.    feedback. It is also essential to clarify AI’s capabilities to
+Moreover, even when AI comments do not lead to immediate          identify optimal ways for human-AI collaboration. We hope
+code changes, we find that they can still prompt developer        our findings contribute to the development of more practical
+reflection and inform future improvements. Based on our           and developer-friendly AI-based code review tools.
+findings, we offer implications for code review tool designers,
+                                                                                                                                                            16
+
+
+
+                   ACKNOWLEDGMENTS                                              [20] M. Golzadeh, D. Legay, A. Decan, and T. Mens, “Bot or not? detecting
+                                                                                     bots in github pull request activity based on comment similarity,”
+   This work is supported by the Fundamental and Inter-                              in Proceedings of the IEEE/ACM 42nd international conference on
+disciplinary Disciplines Breakthrough Plan of the Ministry                           software engineering workshops, 2020, pp. 31–35.
+of Education of China (No. JYB2025XDXM118), the Na-                             [21] “Deepseek,” https://deepseek.com, 2026.
+                                                                                [22] S. M. Lundberg and S. Lee, “A unified approach to interpreting model
+tional Natural Science Foundation of China (No. 62572237,                            predictions,” in Advances in Neural Information Processing Systems 30:
+No. 62302210, No. 72371125), the 2024 Development and                                Annual Conference on Neural Information Processing Systems 2017,
+Testing Tools Project (CEIEC-2024-ZM02-0066), the Frontier                           December 4-9, 2017, Long Beach, CA, USA, 2017, pp. 4765–4774.
+                                                                                [23] T. Dey and A. Mockus, “Effect of technical and social factors on
+Technologies R&D Program of Jiangsu (No. BF2024059),                                 pull request quality for the NPM ecosystem,” in ESEM ’20: ACM /
+and the Natural Science Foundation of Jiangsu Province                               IEEE International Symposium on Empirical Software Engineering and
+(No. BK20241195).                                                                    Measurement, Bari, Italy, October 5-7, 2020. ACM, 2020, pp. 11:1–
+                                                                                     11:11. [Online]. Available: https://doi.org/10.1145/3382494.3410685
+                             R EFERENCES                                        [24] D. M. Blei, A. Y. Ng, and M. I. Jordan, “Latent dirichlet allocation,”
+                                                                                     Journal of machine Learning research, vol. 3, no. Jan, pp. 993–1022,
+ [1] C. Sadowski, E. Söderberg, L. Church, M. Sipko, and A. Bacchelli,              2003.
+     “Modern code review: a case study at google,” in Proceedings of the 40th   [25] C. Treude and M. Wagner, “Predicting good configurations for github
+     international conference on software engineering: Software engineering          and stack overflow topic models,” in Proceedings of the 16th Interna-
+     in practice, 2018, pp. 181–190.                                                 tional Conference on Mining Software Repositories, MSR 2019, 26-27
+ [2] G. Gousios, M.-A. Storey, and A. Bacchelli, “Work practices and                 May 2019, Montreal, Canada. IEEE / ACM, 2019, pp. 84–95.
+     challenges in pull-based development: The contributor’s perspective,”      [26] J. Jiarpakdee, C. Tantithamthavorn, and C. Treude, “Autospearman:
+     in Proceedings of the 38th international conference on software engi-           Automatically mitigating correlated software metrics for interpreting
+     neering, 2016, pp. 285–296.                                                     defect models,” in 2018 IEEE International Conference on Software
+ [3] J. Lu, L. Yu, X. Li, L. Yang, and C. Zuo, “Llama-reviewer: Advancing            Maintenance and Evolution, ICSME 2018, Madrid, Spain, September
+     code review automation with large language models through parameter-            23-29, 2018. IEEE Computer Society, 2018, pp. 92–103.
+     efficient fine-tuning,” in 2023 IEEE 34th International Symposium on       [27] U. Cihan, V. Haratian, A. İçöz, M. K. Gül, Ö. Devran, E. F. Bayendur,
+     Software Reliability Engineering (ISSRE). IEEE, 2023, pp. 647–658.              B. M. Uçar, and E. Tüzün, “Automated code review in practice,” in 2025
+ [4] M. Wessel, J. Vargovich, M. A. Gerosa, and C. Treude, “Github actions:          IEEE/ACM 47th International Conference on Software Engineering:
+     the impact on the pull request process,” Empirical Software Engineering,        Software Engineering in Practice (ICSE-SEIP). IEEE, 2025, pp. 425–
+     vol. 28, no. 6, p. 131, 2023.                                                   436.
+ [5] A. Decan, T. Mens, P. R. Mazrae, and M. Golzadeh, “On the use of           [28] Y. Wang, “Language matters,” in 2015 ACM/IEEE International Sym-
+     github actions in software development repositories,” in 2022 IEEE              posium on Empirical Software Engineering and Measurement (ESEM),
+     International Conference on Software Maintenance and Evolution (IC-             2015, pp. 1–10.
+     SME). IEEE, 2022, pp. 235–245.                                             [29] M. Fu and C. Tantithamthavorn, “Linevul: A transformer-based line-
+ [6] A. Bacchelli and C. Bird, “Expectations, outcomes, and challenges of            level vulnerability prediction,” in Proceedings of the 19th International
+     modern code review,” in 2013 35th International Conference on Software          Conference on Mining Software Repositories, 2022, pp. 608–620.
+     Engineering (ICSE). IEEE, 2013, pp. 712–721.                               [30] M. Fu, C. Tantithamthavorn, T. Le, V. Nguyen, and D. Phung, “Vulre-
+ [7] A. Bosu, M. Greiler, and C. Bird, “Characteristics of useful code               pair: a t5-based automated software vulnerability repair,” in Proceedings
+     reviews: An empirical study at microsoft,” in 2015 IEEE/ACM 12th                of the 30th ACM joint european software engineering conference and
+     Working Conference on Mining Software Repositories. IEEE, 2015,                 symposium on the foundations of software engineering, 2022, pp. 935–
+     pp. 146–156.                                                                    947.
+ [8] A. K. Turzo and A. Bosu, “What makes a code review useful to               [31] X. Zhou, K. Kim, B. Xu, D. Han, and D. Lo, “Out of sight, out
+     opendev developers? an empirical investigation,” Empirical Software             of mind: Better automatic vulnerability repair by broadening input
+     Engineering, vol. 29, no. 1, p. 6, 2024.                                        ranges and sources,” in Proceedings of the IEEE/ACM 46th International
+ [9] M. M. Rahman, C. K. Roy, and R. G. Kula, “Predicting usefulness of              Conference on Software Engineering, 2024, pp. 1–13.
+     code review comments using textual features and developer experience,”     [32] M. Fu, V. Nguyen, C. Tantithamthavorn, D. Phung, and T. Le, “Vision
+     in 2017 IEEE/ACM 14th International Conference on Mining Software               transformer inspired automated vulnerability repair,” ACM Transactions
+     Repositories (MSR). IEEE, 2017, pp. 215–226.                                    on Software Engineering and Methodology, vol. 33, no. 3, pp. 1–29,
+[10] H. Y. Lin, P. Thongtanunam, C. Treude, M. W. Godfrey, C. Liu,                   2024.
+     and W. Charoenwet, “Leveraging reviewer experience in code review          [33] M. Tufano, C. Watson, G. Bavota, M. D. Penta, M. White, and
+     comment generation,” arXiv preprint arXiv:2409.10959, 2024.                     D. Poshyvanyk, “An empirical study on learning bug-fixing patches in
+[11] L. MacLeod, M. Greiler, M.-A. Storey, C. Bird, and J. Czerwonka,                the wild via neural machine translation,” ACM Transactions on Software
+     “Code reviewing in the trenches: Challenges and best practices,” IEEE           Engineering and Methodology (TOSEM), vol. 28, no. 4, pp. 1–29, 2019.
+     Software, vol. 35, no. 4, pp. 34–42, 2017.                                 [34] N. Jiang, T. Lutellier, and L. Tan, “Cure: Code-aware neural machine
+[12] “Does AI code review lead to code changes? A case study of GitHub               translation for automatic program repair,” in 2021 IEEE/ACM 43rd
+     actions (Online Appendix),” https://zenodo.org/records/19562450, 2026,          International Conference on Software Engineering (ICSE). IEEE, 2021,
+     zenodo, accessed 14-04-2026.                                                    pp. 1161–1173.
+[13] S. Wagner, M. M. Barón, D. Falessi, and S. Baltes, “Towards evaluation    [35] M. Jin, S. Shahriar, M. Tufano, X. Shi, S. Lu, N. Sundaresan, and
+     guidelines for empirical studies involving llms,” in 2nd International          A. Svyatkovskiy, “Inferfix: End-to-end program repair with llms,” in
+     Workshop on Methodological Issues with Empirical Studies in Software            Proceedings of the 31st ACM Joint European Software Engineering
+     Engineering (WSESE 2025), 2025.                                                 Conference and Symposium on the Foundations of Software Engineering,
+[14] S. Baltes, F. Angermeir, C. Arora, M. M. Barón, C. Chen,                       2023, pp. 1646–1656.
+     L. Böhme, F. Calefato, N. Ernst, D. Falessi, B. Fitzgerald, D. Fucci,     [36] B. Ray, V. Hellendoorn, S. Godhane, Z. Tu, A. Bacchelli, and P. De-
+     M. Kalinowski, S. Lambiase, D. Russo, M. Lungu, L. Prechelt, P. Ralph,          vanbu, “On the” naturalness” of buggy code,” in Proceedings of the 38th
+     C. Treude, and S. Wagner, “Evaluation guidelines for empirical studies          International Conference on Software Engineering, 2016, pp. 428–439.
+     in software engineering involving llms,” 2025. [Online]. Available:        [37] A. Hindle, E. T. Barr, M. Gabel, Z. Su, and P. Devanbu, “On the
+     https://arxiv.org/abs/2508.15503                                                naturalness of software,” Communications of the ACM, vol. 59, no. 5,
+[15] “Definition of “hunk” in the gnu diffutils manual,” https://www.gnu.org/        pp. 122–131, 2016.
+     software/diffutils/manual/html node/Hunks.html, 2025.                      [38] M. Allamanis, E. T. Barr, P. Devanbu, and C. Sutton, “A survey
+[16] “Openai,” https://chat.openai.com, 2026.                                        of machine learning for big code and naturalness,” ACM Computing
+[17] “Gemini,” https://gemini.google.com/, 2026.                                     Surveys (CSUR), vol. 51, no. 4, pp. 1–37, 2018.
+[18] “Claude,” https://claude.ai, 2026.                                         [39] H. Y. Lin, C. Liu, H. Gao, P. Thongtanunam, and C. Treude, “The
+[19] P. Reich and W. Maalej, “Testability refactoring in pull requests:              code review comprehension assessment for large language models,” in
+     Patterns and trends,” in 45th IEEE/ACM International Conference on              Findings of the Association for Computational Linguistics: ACL 2025,
+     Software Engineering, ICSE 2023, Melbourne, Australia, May 14-20,               2025.
+     2023. IEEE, 2023, pp. 1508–1519.
+                                                                                                                                                           17
+
+
+
+[40] Z. Li, S. Lu, D. Guo, N. Duan, S. Jannu, G. Jenks, D. Majumder,                  successive tasks with cross-task knowledge distillation,” Proceedings of
+     J. Green, A. Svyatkovskiy, S. Fu et al., “Automating code review                 the ACM on Software Engineering, vol. 1, no. FSE, pp. 1086–1106,
+     activities by large-scale pre-training,” in Proceedings of the 30th ACM          2024.
+     Joint European Software Engineering Conference and Symposium on             [48] B. Lin, S. Wang, Z. Liu, Y. Liu, X. Xia, and X. Mao, “Cct5: A code-
+     the Foundations of Software Engineering, 2022, pp. 1035–1047.                    change-oriented pre-trained model,” in Proceedings of the 31st ACM
+[41] V. J. Hellendoorn, J. Tsay, M. Mukherjee, and M. Hirzel, “Towards                Joint European Software Engineering Conference and Symposium on
+     automating code review at scale,” in Proceedings of the 29th ACM Joint           the Foundations of Software Engineering, 2023, pp. 1509–1521.
+     Meeting on European Software Engineering Conference and Symposium           [49] Y. Zhang, Y. Zhang, Z. Sun, Y. Jiang, and H. Liu, “Laura: Enhanc-
+     on the Foundations of Software Engineering, 2021, pp. 1479–1482.                 ing code review generation with context-enriched retrieval-augmented
+[42] R. Tufano, S. Masiero, A. Mastropaolo, L. Pascarella, D. Poshyvanyk,             llm,” in 2025 40th IEEE/ACM International Conference on Automated
+     and G. Bavota, “Using pre-trained models to boost code review automa-            Software Engineering (ASE). IEEE, 2025, pp. 2983–2995.
+     tion,” in Proceedings of the 44th international conference on software      [50] Y. Peng, K. Kim, L. Meng, and K. Liu, “icodereviewer: Improving
+     engineering, 2022, pp. 2291–2302.                                                secure code review with mixture of prompts,” in 2025 40th IEEE/ACM
+[43] L. Li, L. Yang, H. Jiang, J. Yan, T. Luo, Z. Hua, G. Liang, and C. Zuo,          International Conference on Automated Software Engineering (ASE).
+     “Auger: automatically generating review comments with pre-training               IEEE, 2025, pp. 3204–3215.
+     models,” in Proceedings of the 30th ACM Joint European Software             [51] Y. Zhang, Z. Pan, I. N. B. Yusuf, H. Ruan, R. Shariffdeen, and
+     Engineering Conference and Symposium on the Foundations of Software              A. Roychoudhury, “Code review agent benchmark,” arXiv preprint
+     Engineering, 2022, pp. 1009–1021.                                                arXiv:2603.23448, 2026. [Online]. Available: https://arxiv.org/pdf/2603.
+[44] H. Y. Lin, P. Thongtanunam, C. Treude, and W. Charoenwet, “Improving             23448
+     automated code reviews: Learning from experience,” in Proceedings           [52] K. Pereira, N. Sinha, R. Ghosh, and D. Dutta, “Cr-bench: Evaluating
+     of the 21st International Conference on Mining Software Repositories,            the real-world utility of ai code review agents,” arXiv preprint
+     2024, pp. 278–283.                                                               arXiv:2603.11078, 2026. [Online]. Available: https://arxiv.org/pdf/2603.
+[45] H. Y. Lin and P. Thongtanunam, “Towards automated code reviews:                  11078
+     Does learning code structure help?” in 2023 IEEE International Con-         [53] P. Vaithilingam, T. Zhang, and E. L. Glassman, “Expectation vs. experi-
+     ference on Software Analysis, Evolution and Reengineering (SANER).               ence: Evaluating the usability of code generation tools powered by large
+     IEEE, 2023, pp. 703–707.                                                         language models,” in Chi conference on human factors in computing
+[46] P. Thongtanunam, C. Pornprasit, and C. Tantithamthavorn, “Autotrans-             systems extended abstracts, 2022, pp. 1–7.
+     form: Automated code transformation to support modern code review           [54] Y. Huang, H. Guo, X. Ding, J. Shu, X. Chen, X. Luo, Z. Zheng,
+     process,” in Proceedings of the 44th international conference on software        and X. Zhou, “A comparative study on method comment and inline
+     engineering, 2022, pp. 237–248.                                                  comment,” ACM Trans. Softw. Eng. Methodol., vol. 32, no. 5, pp. 126:1–
+[47] O. Ben Sghaier and H. Sahraoui, “Improving the learning of code review           126:26, 2023. [Online]. Available: https://doi.org/10.1145/3582570
+

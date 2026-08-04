@@ -1,0 +1,287 @@
+                                               AIL INK P REVIEWER: Enhancing Code Reviews
+                                                     with LLM-Powered Link Previews
+                                                          Panya Trakoolgerntong∗ , Tao Xiao† , Masanari Kondo† , Chaiyong Ragkhitwetsagul∗ ,
+                                                                Morakot Choetkiertikul∗ , Pattaraporn Sangaroonsilp∗ , Yasutaka Kamei†
+                                                    ∗ Faculty of Information and Communication Technology, Mahidol University, Nakhon Pathom, Thailand
+                                                                                        † Kyushu University, Fukuoka, Japan
+
+                                                     Email: panya.tra@student.mahidol.ac.th, {chaiyong.rag, morakot.cho, pattaraporn.san}@mahidol.ac.th,
+                                                                                 {xiao, kondo, kamei}@ait.kyushu-u.ac.jp
+
+
+                                            Abstract—Code review is a key practice in software engineer-
+arXiv:2511.09223v1 [cs.SE] 12 Nov 2025
+
+
+
+
+                                         ing, where developers evaluate code changes to ensure quality
+                                         and maintainability. Links to issues and external resources are
+                                         often included in Pull Requests (PRs) to provide additional
+                                         context, yet they are typically discarded in automated tasks
+                                         such as PR summarization and code review comment generation.
+                                         This limits the richness of information available to review-
+                                         ers and increases cognitive load by forcing context-switching.
+                                         To address this gap, we present AIL INK P REVIEWER, a tool
+                                         that leverages Large Language Models (LLMs) to generate
+                                         previews of links in PRs using PR metadata, including titles,
+                                         descriptions, comments, and link body content. We analyzed 50
+                                         engineered GitHub repositories and compared three approaches:              Fig. 1. A PR containing numerous links to external resources
+                                         Contextual LLM summaries, Non-Contextual LLM summaries,
+                                         and Metadata-based previews. The results in metrics such as
+                                         BLEU, BERTScore, and compression ratio show that contextual          reviewers are forced to open and interpret these links manually,
+                                         summaries consistently outperform other methods. However, in a       which can fragment attention and prolong review time.
+                                         user study with seven participants, most preferred non-contextual       Figure 1 shows an example that motivates our study. The PR
+                                         summaries, suggesting a trade-off between metric performance
+                                         and perceived usability. These findings demonstrate the potential
+                                                                                                              #39291 of the bootstrap project,1 , which updates Bootstrap’s
+                                         of LLM-powered link previews to enhance code review efficiency       documentation to clarify the handling of deprecated .dark
+                                         and to provide richer context for developers and automation in       variant classes in components like dropdowns and navbars,
+                                         software engineering.                                                ensuring consistent guidance and pointing users toward the
+                                            The video demo is available at https://www.youtube.com/           newer color-mode approach. It contains 59 links, 4 of which
+                                         watch?v=h2qH4RtrB3E, and the tool and its source code can
+                                         be found at https://github.com/c4rtune/AILinkPreviewer.
+                                                                                                              point to an internal link, while the remaining 55 links point
+                                            Index Terms—Pull Request, Summarization, LLM4SE                   to external resources. Thus, reviewers need to go through all
+                                                                                                              the links and understand them to get the complete context for
+                                                               I. I NTRODUCTION                               this PR. This is a tedious and cumbersome task.
+                                                                                                                 Moreover, despite their importance, links are routinely
+                                            Code review is one of the key collaborative activities in soft-
+                                                                                                              discarded in automated software engineering tasks such as
+                                         ware development [1]. It enables developers to evaluate code
+                                                                                                              PR summarization and code review comment generation [9],
+                                         changes for correctness and maintainability before integration.
+                                                                                                              [10]. Removing these links strips away valuable contextual
+                                         However, the process is often challenging due to time pressure,
+                                                                                                              information that could enrich both automated tools and human
+                                         communication barriers, and the inherent complexity of code
+                                                                                                              review. Incorporating knowledge from links has the potential
+                                         comprehension [2], [3]. Prior work emphasized that reviewing
+                                                                                                              to mitigate cognitive load, improve review efficiency, and
+                                         code is not only a technical task but also a complex cognitive
+                                                                                                              support more informed decision-making.
+                                         process, requiring developers to juggle multiple information
+                                                                                                                 In this work, we propose AIL INK P REVIEWER, an LLM-
+                                         sources while maintaining focus [1], [4]–[6].
+                                                                                                              powered approach to generate link previews that integrate
+                                            One key source of cognitive load arises when reviewers
+                                                                                                              contextual information from PR metadata. By bridging the
+                                         must navigate away from the code review environment to
+                                                                                                              gap between hyperlinks and their surrounding context, our
+                                         consult external resources through hyperlinks. This context
+                                                                                                              tool reduces the need for developers to leave the review
+                                         switching introduces an extraneous cognitive load, as devel-
+                                                                                                              environment, thereby lowering extraneous cognitive load and
+                                         opers expend mental resources to manage task-switching me-
+                                                                                                              improving reviewer efficiency. This direct access to contex-
+                                         chanics rather than to understand the code itself [7]. Although
+                                                                                                              tualized link information can lead to faster and more focused
+                                         links often provide crucial information needed during review,
+                                         such as documentation or external resources [8]. However,              1 https://github.com/twbs/bootstrap/pull/39291
+reviews during collaborative development. Beyond practitioner
+                                                                                Right-          AILinkPreviewer Chrome Extension
+benefits, AIL INK P REVIEWER also enriches automated soft-                       click                        Extract MetaData
+                                                                                 link
+ware engineering research by retaining links that are typically        User
+                                                                      (Code
+discarded in summarization and comment generation tasks.            reviewer)                                        Context Extractor
+Incorporating knowledge from links enables more accurate and                                                    (PR metadata + Link position)
+                                                                                                                                                   Deep
+context-aware automation in software engineering.                           View in                             Build Prompt                       Seek
+                                                                            GitHub                                                        Send
+                                                                                                                                                    API
+                                                                              PR             Popup Modal                                 context
+                  II. C OMPARED M ETHODS                                                  (Summary Display)
+                                                                                                                      Prompt builder
+
+
+    To investigate the impact of LLM on link preview genera-                                                    Generate Summary
+tion in code reviews, we designed three comparative methods.
+Each method produces summaries of hyperlinks appearing in
+                                                                                  Fig. 2. Architecture for AIL INK P REVIEWER extension
+PRs but differs in how contextual signals are incorporated.
+    Contextual LLM Summaries. This method prompts an
+LLM to generate a summary of a hyperlink while leverag-
+ing contextual information surrounding the PR. The context
+includes the PR title, description, repository name, repository
+description, and the body content of the link itself. By ground-
+ing the summary in these additional metadata, the generated
+preview is expected to better reflect the information needs
+of reviewers. The specific context provided depends on the                        Fig. 3. Example of AIL INK P REVIEWER popup modal
+location of the link. If the link appears in the description,
+the description body is included; if it is embedded in a
+comment, the corresponding comment body is included; and if         the option “AILinkPreviewer: Summarize Link.” When this
+it occurs within a review comment, the review comment body          option is chosen, the extension extracts relevant contextual
+is incorporated. This adaptive contextualization ensures that       information, including the PR title, PR description, repository
+the generated summaries remain sensitive to the conversational      title, repository description, and the metadata of the linked
+or structural role of the hyperlink within the review process.      page. Importantly, the context provided to the summarization
+    Non-Contextual LLM Summaries. The second method                 model is also influenced by the position of the hyperlink, as
+also uses the LLM, but without providing any contextual             explained in Section II. This combined information is then
+signals from the PR. The model receives only the body content       passed to a DeepSeek-powered prompt, which generates a
+of the link, and the generated summary reflects the information     summary tailored to the code review context. Finally, the
+present in the link in isolation. This method provides a baseline   extension presents the generated summary in a pop-up modal
+for assessing the contribution of contextual information.           as shown in Figure 3 overlaying the GitHub interface. This
+    Metadata-Based Snippet Summaries. The third method              allows reviewers to access contextualized previews of linked
+does not rely on an LLM. Instead, it combines the hyperlink’s       resources without leaving the PR page, thereby reducing
+title and description metadata to create a summary, similar to      context switching and cognitive load.
+the snippets commonly shown in search engines, e.g., Google             We provide an open-source tool for easy deployment. Users
+[11]–[13]. This lightweight baseline shows the utility of meta-     only need to extract and load it into Google Chrome as an
+data in providing reviewers with at-a-glance information.           unpacked extension via Developer Mode.
+    These three approaches allow us to systematically compare
+                                                                                     IV. DATASET AND E VALUATION S ETUP
+the role of contextual information in link preview generation.
+The Contextual LLM Summaries capture the richest set of             A. Dataset
+signals, the Non-Contextual LLM Summaries isolate the con-              The initial dataset is derived from the curated list of GitHub
+tribution of the link itself, and the metadata-based snippets       projects provided by Dabic et al. [14]. To select active and
+represent a simple heuristic baseline.                              filter out toy projects, we applied the following filters: (i) at
+                                                                    least 100 commits, (ii) at least one issue, (iii) at least three
+                 III. T OOL A RCHITECTURE                           contributors, (iv) at least 100 PRs, (v) at least one release, and
+   The system architecture of AIL INK P REVIEWER is depicted        (vi) a last commit no earlier than May 27, 2024. In addition,
+in Figure 2. The tool is designed to integrate seamlessly into      we excluded forks and sorted the remaining candidates in
+the GitHub PR interface. The process begins with the user con-      descending order by their stars.
+figuring the extension by providing their DeepSeek API key              We manually reviewed the projects to ensure compliance
+through the extension widget. Once the API key has been set,        with the definition of an engineered software project, namely
+the extension becomes active within the browser environment.        a project that leverages sound software engineering practices
+During a code review session, the user navigates to a GitHub        in each of its dimensions, such as documentation, testing, and
+PR and selects a hyperlink appearing in the PR content. By          project management [15]. This process resulted in the top 50
+right-clicking on the link, a context menu is displayed, offering   highly active and mature repositories, which form the basis for
+                              TABLE I                                Readability was measured using the Flesch Reading Ease
+                        E VALUATION R ESULTS .                       formula provided by the textstat library. The compression
+                                                                     ratio was computed as the length of the summary divided
+       Metric                         CLS     NCLS          MBS
+                                                                     by the length of the body content. For semantic embedding-
+       BLEU                           4.52      3.02         1.20
+       METEOR                        19.06     15.85        12.50
+                                                                     based evaluation, we employed BERTScore, implemented with
+       ROUGE 1                       19.36     16.69        12.50    Hugging Face’s transformers library. We used the pretrained
+       ROUGE 2                        6.96      4.78         2.69    bert-base-uncased model to obtain token embeddings
+       Sentence Similarity           14.63     11.81        10.97
+       Flesch Reading Ease           32.28     30.34        39.57
+                                                                     and computed precision, recall, and F1 scores based on cosine
+       BERT precision                48.73     47.49        39.83    similarity between summary and reference embeddings. The
+       BERT Recall                   55.47     53.54        49.85    pretrained model is also used to calculate the cosine similarity
+       BERT F1 score                 51.67     50.10        43.97
+       Compression ratio              1.61      1.67         2.04
+                                                                     of texts between the summary and the body content of links.
+       Text relevance                83.81     82.03        83.34       Results in Model Accuracy. The final metrics reported
+       Preference from user study        9        21            5
+                                                                     in Table I demonstrate the comparative effectiveness of con-
+       Note: CLS = Contextual LLM summaries, NCLS = Non-Contextual
+                                                                     textual information in improving summary quality. The table
+       LLM summaries, MBS = Metadata-based Snippets                  presents the average accuracy across 50 projects. The re-
+                                                                     sults indicate that the Contextual LLM Summary approach
+                                                                     outperforms both the Non-Contextual LLM Summary and
+our evaluation. To ensure the quality and relevance of the eval-     the Metadata-based snippet on nearly all measures. In terms
+uation dataset, we targeted only hyperlinks explicitly written       of lexical overlap, Contextual LLM Summary achieves 4.52
+in Markdown format (e.g., [label](url)). Furthermore,                BLEU and 19.36 ROUGE-1, exceeding the Non-Contextual
+we applied a length filter, retaining only links whose labels        LLM Summary by 1.50 (BLEU) and 2.67 (ROUGE-1) points,
+contained eight or more words. This criterion helped exclude         respectively, and substantially surpassing the Metadata-based
+trivial or overly terse labels (e.g., “click here”) and ensured      snippets. For semantic similarity, Contextual LLM Summary
+that the retained links carried sufficient descriptive content for   reaches 14.63 in sentence similarity and a BERT F1-score of
+meaningful summarization and comparison. We conducted a              51.67, outperforming the Non-Contextual LLM Summary by
+manual inspection of 365 samples (with a confidence level of         2.82 and 1.57 points, respectively. It also achieves the highest
+95% and a confidence interval of 5), focusing on the choice of       relevance score (83.81), demonstrating its ability to capture
+eight words. The findings indicate that employing eight words        the contextual information most useful to reviewers. While
+results in only 15.07% false positives (labels that are trivial).    the Metadata-based snippets show slightly higher readability
+                                                                     (39.57 Flesch Reading Ease), this comes at the cost of lower
+B. Evaluation Setup and Results                                      accuracy and informativeness. These results confirm that in-
+   Model Accuracy. To assess the quality of generated pre-           corporating contextual Metadata enables the Contextual LLM
+views, we used a combination of automatic and human-                 Summary to generate more accurate, relevant, and semanti-
+centered evaluation metrics. We used the label of the link as        cally rich previews than competing methods.
+reference text for the summarization of the link by developers.         Tool Usability. We invited 7 participants from our research
+For textual similarity and overlap, we used BLEU, ROUGE,             group to test our tools. All participants have submitted their
+and METEOR, which have been widely adopted in software               results from using the tools, but only 5 of them have submitted
+engineering tasks such as commit message generation and              the survey afterward. Most of the participants have more than
+PR summarization [16], [17]. To capture semantic alignment,          four years of programming experience and GitHub.
+we applied BERTScore and sentence similarity measures,                  We provided an example of how to operate the tools in a
+both of which have shown effectiveness in evaluating natural         README.md file, as well as a short video to demonstrate
+language artifacts in code-related tasks [18], [19]. Relevance       each step to use the tool. However, we did not provide a list
+to the body content of the link was measured to evaluate             of existing PRs for them. To mimic the review process, they
+how well summaries reflected the information needs of code           are free to test our tools in any PR. We rationalize based on
+reviewers, following prior work on PR summarization and              how a real user would use the tool by selecting repositories
+review support [20], [21]. In addition, we assessed readability      that would be useful to them. Then, they can choose their
+using the Flesch Reading Ease score [22] and conciseness             preferred preview from the three approaches for each PR.
+using the compression ratio. Together, these metrics provide a          Finally, we asked them to provide a score rating on two
+multi-dimensional view of summary quality, balancing lexical         aspects: (1) Ease-of-use: the tool is easy to use; (2) Usefulness:
+overlap, semantic content, readability, and efficiency.              The tool is useful and can help you with your task. Each score
+   Our evaluation uses several libraries and metrics from            is based on the Likert scale ranging from 1–5.
+natural language processing research. NLTK was used for                 Results in Tool Usability. The results from using the
+tokenization, BLEU, and METEOR calculations. ROUGE                   tools show that most participants preferred the Non-Contextual
+scores (ROUGE-1 and ROUGE-2 F1) were computed using                  Summary, followed by the Contextual Summary, with the
+the rouge_score package, while semantic similarity was               Metadata-based Snippet being the least preferred option (see
+estimated by vectorization of TF-IDF and cosine similarity.          Table I). The average score for ease of use is 4.4, while
+the average score for usefulness is 3.4. This indicates that                         [4] T. Baum, K. Schneider, and A. Bacchelli, “On the optimal order of
+evaluators found our tools easy to use but remained neutral                              reading source code changes for review,” in 2017 IEEE International
+                                                                                         Conference on Software Maintenance and Evolution (ICSME), 2017.
+regarding their overall usefulness.                                                  [5] D. Wang, R. G. Kula, T. Ishio, and K. Matsumoto, “Automatic patch
+                                                                                         linkage detection in code review using textual content and file location
+                          V. R ELATED W ORK                                              features,” Information and Software Technology, vol. 139, p. 106637,
+                                                                                         2021.
+   Automatic summarization in software engineering (SE) has                          [6] D. Wang, P. Thongtanunam, R. G. Kula, and K. Matsumoto, “An
+attracted significant attention in recent years. Early approaches                        exploration of cross-patch collaborations via patch linkage in openstack,”
+                                                                                         IEICE TRANSACTIONS on Information and Systems, vol. 106, no. 2,
+focused on generating human-readable commit messages or                                  pp. 148–156, 2023.
+comments for code using sequence-to-sequence models and                              [7] S. Cohen, “The true cost of context switching in developer
+extractive methods like CodeSum, AST-based summarization,                                workflows,” 12 2024, [Accessed 2025-09-21]. [Online]. Available:
+                                                                                         https://axolo.co/blog/p/cost-context-switching-developer-workflow
+and attention-augmented transformers [13], [23], [24]. These                         [8] D. Wang, T. Xiao, P. Thongtanunam, R. Kula, and K. Matsumoto,
+techniques laid the groundwork for summarizing code and                                  “Understanding shared links and their intentions to meet information
+supporting developer comprehension tasks. Researchers also                               needs in modern code review: A case study of the OpenStack and Qt
+                                                                                         projects,” Empirical Software Engineering, vol. 26, 09 2021.
+tackled the problem of PR summarization, framing PR descrip-                         [9] M. N. Sakib, M. A. Islam, and M. M. Arifin, “Automatic pull request
+tion generation as a text summarization task. Notable work                               description generation using llms: A t5 model approach,” in 2024
+includes a T5-based model trained on over 33,000 PRs, which                              2nd International Conference on Artificial Intelligence, Blockchain, and
+                                                                                         Internet of Things (AIBThings). IEEE, 2024, pp. 1–5.
+was shown to significantly outperform baseline systems using                        [10] L. Shi, F. Mu, X. Chen, S. Wang, J. Wang, Y. Yang, G. Li, X. Xia,
+metrics such as ROUGE and BLEU [9], [23]. These studies                                  and Q. Wang, “Are we building on the rock? on the importance of data
+underscore the potential of LLMs for enhancing collaborative                             preprocessing for code summarization,” in Proceedings of the 30th ACM
+                                                                                         Joint European Software Engineering Conference and Symposium on the
+development via automated PR summarization. However, little                              Foundations of Software Engineering (ESEC/FSE ’22). ACM, 2022.
+work has explored the summarization of links embedded in                            [11] Google Developers, “About featured snippets and featured snippet
+PRs, particularly with respect to preserving link-level context                          formats,”          https://developers.google.com/search/docs/appearance/
+                                                                                         featured-snippets, accessed: 2025-09-03.
+in automated tools. Our approach diverges from prior studies                        [12] Google Search Help, “Featured snippets in search,” https://support.
+by explicitly integrating link previews into the summarization                           google.com/websearch/answer/9351707, accessed: 2025-09-03.
+pipeline-providing context-sensitive summaries that directly                        [13] W.-F. Chen, S. Syed, B. Stein, M. Hagen, and M. Potthast, “Abstractive
+                                                                                         snippet generation,” arXiv preprint arXiv:2002.10782, 2020, explores
+address external resources referenced in PRs.                                            generation of query-biased snippets using metadata and anchor contexts.
+                                                                                    [14] O. Dabic, E. Aghajani, and G. Bavota, “Sampling projects in github for
+         VI. CONCLUSION AND FUTURE WORK                                                  MSR studies,” in 18th IEEE/ACM International Conference on Mining
+                                                                                         Software Repositories, MSR 2021. IEEE, 2021, pp. 560–564.
+   We present AIL INK P REVIEWER, an automatic link preview                         [15] N. Munaiah, S. Kroh, C. Cabrey, and M. Nagappan, “Curating GitHub
+tool that leverages pull request context. In our evaluation, it                          for engineered software projects,” Empirical Softw. Engg., vol. 22, no. 6,
+outperforms LLMs without context or metadata-based sum-                                  p. 3219–3253, Dec. 2017.
+                                                                                    [16] C. Liu, X. Xia, D. Lo, and Z. Jin, “Neural machine translation based
+maries. While evaluators found it easy to use and relatively                             commit message generation: How far are we?” in Proceedings of
+useful, they preferred the context-free LLM overall. In the                              the 33rd IEEE/ACM International Conference on Automated Software
+future, we will improve the prompt for our summary as well                               Engineering (ASE). IEEE, 2018, pp. 373–384.
+                                                                                    [17] W. U. Ahmad, S. Chakraborty, B. Ray, and K.-W. Chang, “A
+as enable navigation of the relevant section of the webpage                              transformer-based approach for source code summarization,” in Proceed-
+based on the context.                                                                    ings of the 58th Annual Meeting of the Association for Computational
+                                                                                         Linguistics (ACL). ACL, 2020, pp. 4998–5007.
+                          ACKNOWLEDGMENT                                            [18] T. Zhang, V. Kishore, F. Wu, K. Q. Weinberger, and Y. Artzi, “Bertscore:
+                                                                                         Evaluating text generation with BERT,” in Proceedings of the 8th
+   We gratefully acknowledge the financial support of: (1)                               International Conference on Learning Representations (ICLR), 2020.
+                                                                                    [19] Z. Wang, X. Xia, D. Lo, and J. Grundy, “Document summarization
+JSPS for the KAKENHI grants (JP25K22845); (2) Japan                                      for software engineering artifacts: A neural attention approach,” in Pro-
+Science and Technology Agency (JST) as part of Adopting                                  ceedings of the 43rd International Conference on Software Engineering
+Sustainable Partnerships for Innovative Research Ecosystem                               (ICSE). IEEE, 2021, pp. 1599–1611.
+                                                                                    [20] Z. Shi, J. Shi, X. Xia, B. Xu, and D. Lo, “Automatic summarization
+(ASPIRE), Grant Number JPMJAP2415, and (3) the Inamori                                   of pull request descriptions,” in Proceedings of the 43rd International
+Research Institute for Science for supporting Yasutaka Kamei                             Conference on Software Engineering (ICSE). IEEE, 2021, pp. 53–64.
+via the InaRIS Fellowship.                                                          [21] C. Liu, X. Xia, and A. E. Hassan, “Automatic generation of pull request
+                                                                                         titles,” in Proceedings of the 28th ACM Joint Meeting on European
+                                                                                         Software Engineering Conference and Symposium on the Foundations
+                               R EFERENCES                                               of Software Engineering (ESEC/FSE). ACM, 2020, pp. 399–410.
+ [1] L. Pascarella, D. Spadini, F. Palomba, M. Bruntink, and A. Bacchelli,          [22] J. Mallinson, R. Sennrich, and M. Lapata, “Sentence simplification
+     “Information needs in contemporary code review,” Proc. ACM Hum.-                    with multiple retrofitted word embeddings,” in Proceedings of the 55th
+     Comput. Interact., vol. 2, no. CSCW, Nov. 2018.                                     Annual Meeting of the Association for Computational Linguistics (ACL).
+ [2] E. Söderberg, L. Church, J. Börstler, D. C. Niehorster, and C. Rydenfält,        ACL, 2017, pp. 1123–1134.
+     “What’s bothering developers in code review?” in 2022 IEEE/ACM 44th            [23] A. Strzelecki and P. Rutecka, “Featured snippets results in google web
+     International Conference on Software Engineering: Software Engineer-                search: an exploratory study,” in Marketing and Smart Technologies:
+     ing in Practice (ICSE-SEIP), 2022, pp. 341–342.                                     Proceedings of ICMarkTech 2019. Springer, 2019, pp. 9–18.
+ [3] D. Spadini, M. Aniche, M.-A. Storey, M. Bruntink, and A. Bacchelli,            [24] M. Geng, S. Wang, D. Dong, H. Wang, S. Cao, K. Zhang, and Z. Jin,
+     “When testing meets code review: Why and how developers review                      “Interpretation-based code summarization,” in 2023 IEEE/ACM 31st
+     tests,” in 2018 IEEE/ACM 40th International Conference on Software                  International Conference on Program Comprehension (ICPC). IEEE,
+     Engineering (ICSE), 2018, pp. 677–687.                                              2023, pp. 113–124.
+

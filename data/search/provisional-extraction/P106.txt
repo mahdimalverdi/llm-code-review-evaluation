@@ -1,0 +1,310 @@
+                                             Automated Code Review Using Large Language
+                                                   Models with Symbolic Reasoning
+                                                                        1st Büşra İçöz                               2nd Göksel Biricik
+                                                                    Computer Engineering                                 Computer Engineering
+                                                                 Yıldız Technical University                          Yıldız Technical University
+                                                                      Istanbul, Turkiye                                    Istanbul, Turkiye
+                                                                 busra.icoz@std.yildiz.edu.tr                            gbiricik@yildiz.edu.tr
+
+
+
+                                            Abstract—Code review is one of the key processes in the            Recent progress in Large Language Models (LLMs) [3],
+arXiv:2507.18476v1 [cs.SE] 24 Jul 2025
+
+
+
+
+                                         software development lifecycle and is essential to maintain code   [8] has opened new possibilities for automating software engi-
+                                         quality. However, manual code review is subjective and time        neering tasks, including code generation and review. However,
+                                         consuming. Given its rule-based nature, code review is well
+                                         suited for automation. In recent years, significant efforts have   while LLMs excel at generic tasks like pattern recognition and
+                                         been made to automate this process with the help of artificial     code generation [9], they often struggle with logical reasoning
+                                         intelligence. Recent developments in Large Language Models         and understanding the deeper semantics of code, which are
+                                         (LLMs) have also emerged as a promising tool in this area,         critical for effective code review.
+                                         but these models often lack the logical reasoning capabilities        To overcome these issues and make more semantic predic-
+                                         needed to fully understand and evaluate code. To overcome
+                                         this limitation, this study proposes a hybrid approach that        tions, in this study, our aim is to overcome the limitations of
+                                         integrates symbolic reasoning techniques with LLMs to automate     existing LLMs in code review tasks by proposing a hybrid
+                                         the code review process. We tested our approach using the          approach that combines symbolic reasoning with fine-tuned
+                                         CodexGlue dataset, comparing several models, including CodeT5,     LLMs for code review. Symbolic reasoning provides a mech-
+                                         CodeBERT, and GraphCodeBERT, to assess the effectiveness           anism for the model to understand the logical structure and
+                                         of combining symbolic reasoning and prompting techniques
+                                         with LLMs. Our results show that this approach improves the        best practices for implementation, something that LLMs alone
+                                         accuracy and efficiency of automated code review.                  cannot overcome. In this study, we overcome this problem by
+                                            Index Terms—code review, large language models, symbolic        integrating a knowledge map of established best practices and
+                                         reasoning, prompt techniques, automated code review                defect patterns for coding into the fine-tuned large language
+                                                                                                            models for code review to improve its ability to detect defects
+                                                               I. I NTRODUCTION                             more accurately and provide comments more efficiently.
+                                                                                                               The structure of this paper is as follows: In Section II, we
+                                            Code review was first formally introduced by Fagan in the       examine the evolution of code review automation with related
+                                         1970s [1]. It has evolved significantly since then. Fagan’s        works, covering everything from Fagan’s manual reviews to
+                                         manual review process, originally designed to detect defects in    modern AI-based methods. In Section III, we describe our
+                                         software development, laid the foundations for modern code         hybrid approach that combines symbolic reasoning and large
+                                         review [2]. Over time, as software projects became more            language models (LLMs) for code review. In Section IV, we
+                                         complex, the manual approach became increasingly time-             evaluate the performance of our hybrid approach in Code-
+                                         consuming and prone to human error. A survey of 287 software       BERT [14], GraphCodeBERT [15], and CodeT5 [13] with the
+                                         developers on code review found that developers spend an           CodeXGlue dataset [24] and compare it with the base models.
+                                         average of 6.4 hours per week on code review [5]. This can         In Section V, we conclude by discussing the results of our
+                                         change depending on the complexity of the code and the             findings and outlining possible directions for further work.
+                                         seniority level of the software developer. In many software
+                                         development teams, especially in critical projects, code review                       II. RELATED WORKS
+                                         is performed by at least two developers. Considering that            Automated code review systems began with Fagan’s sys-
+                                         each developer on a software development team spends this          tematic manual code review methodology [1] and have evolved
+                                         much time on average, 6.4 hours per week is quite costly           towards AI-based methods. Johnson has developed static anal-
+                                         for software development teams. Furthermore, manual code           ysis tools that can detect syntactic errors [16], but these early
+                                         reviews are subjective and prone to human error [6]. Each          systems cannot detect defects at the semantic level.
+                                         reviewer makes comments based on their own knowledge                 Machine learning approaches [4], [6] have provided new
+                                         and experience, which leads to inconsistencies. Therefore,         capabilities for pattern recognition in code, but still need to
+                                         automating this process with AI based methods can greatly          be improved in terms of interpretability. Symbolic methods,
+                                         contribute to reducing time and cost, increasing consistency,      particularly formal verification techniques [18], have provided
+                                         and producing more comprehensive comments.                         mathematically detailed analysis, but have proven difficult to
+
+
+
+
+                                              979-8-3315-1482-2/25/$31.00 © 2025 IEEE
+scale to complex codebases in the real world. Although recent        such as code review and generation. Furthermore, these models
+studies have shown the limitations of automated code review          are open source and pre-trained on large amounts of code data,
+tools using machine learning methods in producing reliable           making them ideal for fine-tuning the CodeXGLUE dataset.
+code correction and logical findings [20], significant progress      So, these LLMs are highly suitable for use in error detection
+has been made in this area with the emergence of large lan-          and code review.
+guage models such as Codex [9] and ChatGPT [19]. However,               Using these open source models specialized in software
+code review results are still semantically limited and there         engineering tasks, we propose a hybrid approach that inte-
+are many hallucinations. To overcome this, hybrid systems            grates symbolic reasoning with LLM to improve code review
+such as SYNCHROMESH [21] have been proposed, which                   capabilities. We apply the fine-tuning we describe in the next
+uses symbolic reasoning in combination with large language           section, on the CodexGLUE dataset, to adapt the pre-trained
+models. In SYNCHROMESH [21], supporting LLMs with                    models to defect detection and code review tasks.
+symbolic verification was shown to improve code generation
+accuracy by 12%, in line with the findings in code review            C. Fine-Tuning on Models
+automation.                                                             We fine-tuned the pre-trained large language models using
+   In this work, we propose a hybrid approach to overcome            a structured training process on the CodeXGLUE dataset to
+limitations in this area by integrating symbolic reasoning with      customize them for error detection and code review tasks. Each
+LLMs in the code review process, thus enabling human-                code sample was tokenized using the model-specific tokenizer,
+machine collaboration and aiming to produce more logical             and the inputs were padded to a maximum length of 256
+findings.                                                            tokens to ensure consistent model input sizes. In the training
+                                                                     configuration, we used a weight reduction coefficient of 0.01
+                   III. METHODOLOGY
+                                                                     to regularize learning and prevent overfitting and trained
+  In this section, we share the details of the dataset, large lan-   our optimized models using the AdamW algorithm [7] with
+guage models, fine-tuning strategies, and evaluation strategies      an initial learning rate of 0.00001. Mixed-precision (FP16)
+used in this work.                                                   training [10] was used to increase computational efficiency
+A. Dataset                                                           and reduce memory footprint while maintaining numerical
+                                                                     stability. Random oversampling techniques [29] were applied
+   In this work, we used the CodexGlue [24] dataset, stands
+                                                                     to address the class imbalance between buggy and clean
+for General Language Understanding Evaluation benchmark
+                                                                     code samples, ensuring that minority (faulty) samples were
+for code. It includes 14 datasets for 10 diversified code
+                                                                     adequately represented. These fine-tuning strategies enabled
+intelligence. In this study, we used the Python dataset, which
+                                                                     the large language models to better capture defects in the code.
+is specialized in code defect detection. The data set contains
+                                                                        By creating the hybrid model, which we will describe in the
+various Python code snippets that are labeled as clean or faulty.
+                                                                     next section, we aimed to improve the code review capabilities
+Each code snippet is associated with a function definition, and
+                                                                     of the models by combining the fine-tuning we made on the
+the target code is classified as correct (clean) or containing
+                                                                     models with symbolic reasoning.
+errors (buggy). We chose this data set because it provides
+a comprehensive set of examples covering a wide range of             D. Hybrid Approach: Knowledge Map Integration
+coding issues and is also suitable for evaluating automatic code
+                                                                        The main innovation of this work is the inclusion of
+inspection models. With this dataset, we fine-tuned and tested
+                                                                     symbolic reasoning in the evaluation process together with the
+the large language models shared in the next section.
+                                                                     fine-tuned model via a knowledge map. The knowledge map
+B. Models                                                            is designed to provide structured prior knowledge to guide the
+   In this study, we use the following three LLMs:                   model during error detection, including common error patterns
+   CodeBERT: CodeBERT is a model trained in both program-            and best practices specific to Python programming.
+ming and natural languages. It is helpful for tasks such as             The knowledge map includes 20 common bug patterns and
+summarizing code, completing code, and translating it into           best practices in Python code for identifying defects and code
+different languages [14].                                            quality issues.
+   GraphCodeBERT: This improved version of CodeBERT                     A few sample items in the knowledge map are shared below:
+[14] includes structural information such as data flow graphs.          1) Naming anti-patterns: Detecting ambiguous or mis-
+The advance helps the model understand how different parts                  leading names (e.g., single-letter variables, data/temp
+of the code depend on each other, improving it for tasks like               overuse) that may hide logical errors [26].
+code optimization and translation [15].                                 2) Unreachable code: Flagging blocks after premature re-
+   CodeT5: CodeT5 is a model designed by Microsoft Re-                      turns (return/raise) or infinite loops [26].
+search to understand and generate programming code. Built as            3) Error handling risks: Identifying bare try-except blocks,
+an encoder-decoder converter, this model specializes in tasks               swallowed exceptions, or incorrect exception types (e.g.,
+such as code summarization, translation, and completion [13].               catching Exception instead of ValueError) [27].
+   In this work, we chose CodeBERT, GraphCodeBERT and                   4) Resource leaks: Detecting unclosed file handles (open()
+CodeT5 because they specialize in software engineering tasks                without close()), database connections, or sockets [27].
+  5) Mutable default arguments: Spotting def f(x=[]) patterns        A. Experimental Setup
+     that cause unintended side effects [27].                           Our experiments were performed on Google Colab [28]
+   By adding the knowledge map to the prompts, we aim to             platform using an NVIDIA A100 GPU, which provided the
+provide additional context to guide the model when evalu-            computational resources necessary to efficiently run large
+ating code. A prompt is a text-based instruction or prompt           transformer models. The high processing power of the A100
+used to obtain a specific output from a model [24]. Besides          GPU allowed us to fine-tune the models on the CodexGlue
+the knowledge map, we applied a few shots learning and               [23] dataset, making the training and evaluation processes fast.
+added several labeled examples directly into the prompts. This
+approach provided the models with practical references to            B. Experiment Results and Analysis
+identify clean and buggy code patterns. With this additional            To comprehensively evaluate our hybrid approach, we per-
+context we aimed to improve error detection capabilities in          formed experiments comparing three LLMs (CodeT5, Code-
+code review by helping the model reason about whether the            BERT, and GraphCodeBERT) in four scenarios. We used the
+code has best practices and contains error patterns.                 CodeXGlue defect detection dataset to measure the evaluation
+   In the next section, we shared the evaluation metrics used        metrics. The three main topics of our analysis are: (1) the
+to assess model performance and success under the different          performance impact of integrating symbolic reasoning using
+fine-tuning and symbolic reasoning strategies.                       our proposed knowledge map, (2) the performance impact
+                                                                     of the prompting methods (few-shot learning vs. single-shot
+E. Evaluation Metrics                                                learning), and (3) the performance impact of the fine-tune
+                                                                     on models. Detailed quantitative results are shared in the
+   We used four key evaluation metrics to measure the perfor-        following tables.
+mance and success of our models: precision, recall, F1-score,
+and accuracy.                                                          TABLE I: Performance Comparison of Different Models
+   Precision reflects the proportion of code examples identified
+                                                                        Model             Precision   Recall   F1-Score   Accuracy
+as buggy that are really buggy and is used as an indicator of
+the model’s ability to minimize false positives [25]. In contrast,      CodeT5              0.285     0.534     0.372      0.587
+                                                                        CodeBERT            0.217     0.466     0.296      0.531
+recall measures the proportion of correctly detected examples           GraphCodeBERT       0.217     0.466     0.296      0.539
+of true errors and indicates the model’s sensitivity to defects
+[25].
+                                                                        Table I shows the results of the evaluation of the basic per-
+   F1-score is calculated with precision and recall into a single
+                                                                     formance of the three models without any prompt engineering
+metric that balances accuracy and completeness [25]. This is
+                                                                     or fine tuning. The results show that all models have relatively
+especially important in defect detection, where missing errors
+                                                                     low Precision, Recall, F1-Score and Accuracy. According to
+can be as critical as incorrectly flagging clean code.
+                                                                     the results in Table I, GraphCodeBERT and CodeBERT have
+   Finally, accuracy shows the overall percentage of correct         the same Precision (0.217) and Recall (0.466), but Graph-
+classifications on both buggy and clean code.                        CodeBERT has a slightly higher Accuracy (0.539) compared
+   These metrics allow us to evaluate the effectiveness of           to CodeBERT (0.531). CodeT5 has higher Precision (0.285)
+the models in fault detection, considering both the ability to       and Recall (0.534) but has a similar F1-Score (0.372) and its
+correctly identify an error in code and the sensitivity to avoid     Accuracy (0.587) is only slightly lower.
+false positives.
+                                                                      TABLE II: Results for Few-Shot Learning on Base Model
+                    IV. EXPERIMENTS
+                                                                        Model             Precision   Recall   F1-Score   Accuracy
+   We performed extensive evaluations using Google Colab                CodeT5              0.285     0.534     0.372      0.593
+[28] platform with NVIDIA A100. The experiments compared                CodeBERT            0.285     0.534     0.372      0.601
+                                                                        GraphCodeBERT       0.454     0.451     0.389      0.642
+three software engineering specialized large language models
+(CodeT5, CodeBERT and GraphCodeBERT) under four dif-
+ferent scenarios. These scenarios are as follows:                       Table II shows the performance of the models when few-
+                                                                     shot learning is used on base models. According to the
+  1) Base model (One-shot learning without knowledge map             results in Table II, GraphCodeBERT has the highest F1-Score
+     integration)                                                    (0.389) and Accuracy (0.642). Few-shot learning improved the
+  2) Few-shot learning on base model                                 accuracy of the base model by 19.11% for GraphCodeBERT.
+  3) Fine-tuned base model                                           CodeT5 and CodeBERT have the same Precision (0.285) and
+  4) Hybrid Approach (Fine-tuned model+ few-shot learning            Recall (0.534), but CodeBERT shows slightly higher Accuracy
+     + knowledge map integration)                                    (0.601) with multi-shot learning compared to CodeT5 (0.593).
+   We performed all experiments on CodeXGlue defect detec-           Compared to the baseline model, few-shot learning did not
+tion dataset [23] using the same evaluation criteria for fair        make a big difference for CodeT5, improving the baseline
+comparison.                                                          accuracy by 1.02%, but for CodeBERT by 13.18%.
+      TABLE III: Results for Fine-Tuned Base Model                 increase predictions in code review processes and provide
+   Model             Precision   Recall   F1-Score   Accuracy
+                                                                   more accurate findings. By combining the latest code under-
+                                                                   standing models with structured knowledge maps that include
+   CodeT5              0.285     0.534     0.372      0.602
+   CodeBERT            0.217     0.466     0.296      0.554        programming best practices, our method demonstrates signif-
+   GraphCodeBERT       0.485     0.532     0.381      0.687        icant improvements over traditional LLM-based approaches.
+                                                                      Our experimental evaluation can be summarized under
+                                                                   three main topics: Firstly, our hybrid approach improves the
+   Table III shows the performance of the models after fine-       accuracy performance of basic large language models by 16%
+tuning on the CodeXGlue fault detection dataset. Fine-tuning       on average. This shows that our hybrid approach outperforms
+the models in the CodeXGlue fault detection dataset improved       the SYNCHROMESH study for code review, which combines
+the performance of all large language models. GraphCode-           LLM and symbolic reasoning for code generation and has a
+BERT shows the most improvement with an accuracy increase          success rate of 12%. Second, few shots learning improves the
+of 27.46%, shown that fine tuning is very effective for this       performance of the base models by an average of 11.10%, in-
+model. CodeT5 and CodeBERT also showed improvements                dicating that the inclusion of examples significantly improves
+of 2.56% and 4.33% respectively, although not as much as           model performance. Third, our analysis finds significant trade-
+GraphCodeBERT.                                                     offs between precision (false positive rates) and recall (error
+                                                                   detection capability) that inform real-world applications.
+           TABLE IV: Results for Hybrid Approach                      The proven success of our hybrid approach demonstrates
+   Model             Precision   Recall   F1-Score   Accuracy
+                                                                   that carefully combining symbolic reasoning methods offers a
+                                                                   viable path towards more reliable, efficient, and scalable code
+   CodeT5              0.285     0.534     0.372      0.621
+   CodeBERT            0.285     0.534     0.372      0.598        review systems. As LLMs in this field continue to evolve,
+   GraphCodeBERT       0.485     0.532     0.381      0.687        such integrative frameworks are likely to play an important
+                                                                   role in achieving their full potential for software engineering
+   Table IV shows the performance of the models when               practices. Our study indicates that these hybrid approaches
+using the hybrid approach that integrates symbolic reasoning       have a lot of potential for automated software engineering tools
+with the proposed knowledge map on fine-tuned models.              in the future.
+GraphCodeBERT again outperforms the other models with                 To improve defect detection even more, we plan to ex-
+the highest Precision (0.485), F1-Score (0.381) and Accuracy       pand this framework to accommodate additional programming
+(0.687). CodeT5 and CodeBERT have the same Precision               languages in the future and investigate the application of
+(0.285) and Recall (0.534), while CodeT5 shows slightly            additional structured reasoning techniques, like graph-based
+higher Accuracy (0.621) compared to CodeBERT (0.598). The          models or multi-model learning strategies.
+hybrid approach significantly improved the performance of
+all models compared to the baseline model. GraphCodeBERT                                          R EFERENCES
+shows the most improvement with an accuracy increase of             [1] M. E. Fagan, “Design and code inspections to reduce errors in program
+27.46%, indicating that the hybrid approach is particularly             development,” IBM Syst. J., vol. 15, no. 3, pp. 182–211, 1976, doi:
+                                                                        10.1147/sj.153.0182.
+effective for this model. CodeBERT and CodeT5 also show             [2] A. Bacchelli and C. Bird, “Expectations, outcomes, and challenges of
+significant improvements of 12.62% and 5.79% respectively.              modern code review,” in Proc. 35th Int. Conf. Softw. Eng., 2013, pp.
+   Our experiments show that the proposed hybrid approach               712–721.
+                                                                    [3] C. Pornprasit and C. Tantithamthavorn, “Fine-tuning and prompt engi-
+significantly improves the performance of the GraphCode-                neering for large language models-based code review automation,” Inf.
+BERT model, which consistently outperforms the others in                Softw. Technol., vol. 175, p. 107523, 2024.
+all scenarios, especially in terms of Precision, F1-Score and       [4] M. Allamanis et al., “A survey of machine learning for big code and
+                                                                        naturalness,” ACM Comput. Surv., vol. 51, no. 4, 2018.
+Accuracy. Fine-tuning and few-shot learning also contribute         [5] R. Tufano et al., “Learning to generate code reviews,” in Proc. 41st Int.
+to performance improvements, but their effects differ between           Conf. Softw. Eng., 2019, pp. 1051–1062.
+models. CodeBERT benefits less from these enhancements,             [6] M. I. Azeem, F. Palomba, L. Shi, and Q. Wang, “Machine learning
+                                                                        techniques for code smell detection: A systematic literature review and
+suggesting that its architecture may require different optimiza-        meta-analysis,” Inf. Softw. Technol., vol. 108, pp. 115–138, 2019, doi:
+tion strategies.                                                        10.1016/j.infsof.2018.12.009.
+   These findings highlight the importance of selecting appro-      [7] I. Loshchilov and F. Hutter, “Decoupled weight decay regularization,”
+                                                                        in Proc. Int. Conf. Learn. Represent., 2019.
+priate optimizations techniques based on the unique character-      [8] A. Vaswani et al., “Attention is all you need,” in Adv. Neural Inf. Process.
+istics of each large language model. In future work, we will            Syst., 2017, pp. 5998–6008.
+therefore investigate additional symbolic reasoning methods         [9] M. Chen et al., “Evaluating large language models trained on code,”
+                                                                        arXiv:2107.03374, 2021.
+and further optimization of routing techniques to improve          [10] NVIDIA, “Mixed precision training,” 2023. [Online]. Available:
+model performance.                                                      https://docs.nvidia.com/deeplearning/performance/mixed-precision-
+                                                                        training/index.html
+                     V. CONCLUSION                                 [11] C. Cadar and D. Engler, “Execution-generated test cases,” in Proc. 8th
+                                                                        USENIX Symp. Oper. Syst. Design Implement., 2008, pp. 209–224.
+  In this work, we introduce a new hybrid approach that            [12] S. Lu et al., “CodeXGLUE: A benchmark dataset and open challenge
+combines large language models with symbolic reasoning to               for code intelligence,” arXiv:2002.08155, 2020.
+[13] Y. Wang et al., “CodeT5: Identifier-aware unified pre-trained encoder-
+     decoder models for code understanding and generation,” in Proc. Conf.
+     Empir. Methods Nat. Lang. Process., 2021, pp. 8696–8708.
+[14] Z. Feng et al., “CodeBERT: A pre-trained model for programming and
+     natural languages,” in Proc. Conf. Empir. Methods Nat. Lang. Process.,
+     2020, pp. 1536–1547.
+[15] D. Guo et al., “GraphCodeBERT: Pre-training code representations with
+     data flow,” in Proc. Int. Conf. Learn. Represent., 2021.
+[16] S. C. Johnson, “Lint, a C program checker,” Comput. Sci. Tech. Rep.,
+     no. 65, Bell Laboratories, Murray Hill, NJ, USA, 1977.
+[17] V. Raychev, M. Vechev, and E. Yahav, “Code completion with statistical
+     language models,” in Proc. 35th ACM SIGPLAN Conf. Program. Lang.
+     Des. Implement., 2014, pp. 419–428, doi: 10.1145/2594291.2594321.
+[18] C. Flanagan et al., “Extended static checking for Java,” in Proc. ACM
+     SIGPLAN 2002 Conf. Program. Lang. Des. Implement., 2002, pp. 234–
+     245, doi: 10.1145/512529.512558.
+[19] OpenAI, “ChatGPT: Optimizing language models for dialogue,” Nov.
+     2022. [Online]. Available: https://openai.com/blog/chatgpt
+[20] Y. Liu, C. Tantithamthavorn, Y. Liu, and L. Li, “On the reliability and
+     explainability of language models for program generation,” ACM Trans.
+     Softw. Eng. Methodol., vol. 33, no. 5, Art. no. 126, Jun. 2024, doi:
+     10.1145/3641540.
+[21] G. Poesia et al., “Synchromesh: Reliable code generation from pre-
+     trained language models,” arXiv:2201.11227, 2022. [Online]. Available:
+     https://arxiv.org/abs/2201.11227
+[22] A. Mesbah et al., “DeepDelta: learning to repair compilation errors,”
+     in Proc. 27th ACM Joint Meeting Eur. Softw. Eng. Conf. Symp. Found.
+     Softw. Eng., 2019, pp. 925–936, doi: 10.1145/3338906.3340455.
+[23] S. Lu et al., “Codexglue: A machine learning benchmark dataset for
+     code understanding and generation,” CoRR, vol. abs/2102.04664, 2021.
+[24] T. B. Brown et al., “Language models are few-shot learners,” in Proc.
+     34th Int. Conf. Neural Inf. Process. Syst., 2020, pp. 1877–1901.
+[25] F. Ebert, F. Castor, N. Novielli, and A. Serebrenik, “Confusion in code
+     reviews: Reasons, impacts, and coping strategies,” in Proc. IEEE 26th
+     Int. Conf. Softw. Anal., Evol. Reengineering, 2019, pp. 49–60.
+[26] “Pylint: Static code analysis for Python,” PyCQA, 2023. [Online].
+     Available: https://pylint.pycqa.org/
+[27] “Python        documentation:        Context      managers,”     Python
+     Software         Foundation,       2023.        [Online].     Available:
+     https://docs.python.org/3/library/contextlib.html
+[28] “Google Colaboratory,” Google Research, 2023. [Online]. Available:
+     https://colab.research.google.com/
+[29] N. V. Chawla, K. W. Bowyer, L. O. Hall, and W. P. Kegelmeyer,
+     “SMOTE: Synthetic minority over-sampling technique,” J. Artif. Int.
+     Res., vol. 16, no. 1, pp. 321–357, Jan. 2002.
+

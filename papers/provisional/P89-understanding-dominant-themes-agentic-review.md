@@ -2,113 +2,117 @@
 
 ## 1. Identification
 
-- Project ID: `P89`
-- Citation key: `p89_haider2026_understanding_dominant_themes_`
-- Full reference: Haider, M. A., and Zimmermann, T. “Understanding Dominant Themes in Reviewing Agentic AI-authored Code.” 2026, arXiv:2601.19287.
-- DOI/URL: `10.1145/3793302.3793566`; `https://arxiv.org/abs/2601.19287v1`
+- Project ID: `P89` (provisional)
+- Citation key: `p89_haider2026_understanding_dominant_themes_in_reviewing`
+- Full reference: Md. Asif Haider; Thomas Zimmermann. “Understanding Dominant Themes in Reviewing Agentic AI-authored Code.” MSR 2026; arXiv:2601.19287v1.
+- DOI/URL: `https://doi.org/10.1145/3793302.3793566`; `https://arxiv.org/abs/2601.19287v1`
 - Review date: 2026-08-04
-- Source/database: arXiv amendment, full-text candidate ARXIV-0103
-- Selection stage: included
-- Duplicate or companion publication: Publisher DOI match recorded; final version equivalence requires verification.
+- Source/database: arXiv/full-text screening
+- Selection stage: included for reconciliation; canonical corpus integration pending
+- Duplicate or companion publication: Publisher metadata available; reconcile final record.
 
 ## 2. Screening
 
 - Decision: `Include`
 - Relevance: `High`
-- Decision rationale: Directly analyzes review comments on agent-authored pull requests and evaluates comment-theme annotation against human labels.
-- Protocol deviation or amendment: None.
+- Decision rationale: Large-scale empirical taxonomy of developer review themes on agent-authored PRs, with human-validated LLM annotation and accepted/rejected PR analysis.
+- Protocol deviation or amendment: None reported.
 - Inclusion group: `Core`
-- Proposal deliverable supported: taxonomy / annotation protocol / trade-off framework
-- Exact criterion: Direct study of LLM/agent-authored code review feedback and its evaluation.
+- Proposal deliverable supported: taxonomy / annotation protocol / mitigation design / trade-off framework
+- Exact inclusion criterion: Core inclusion: real-world agentic PR review themes and outcome-linked failure patterns.
 
 ## 3. Study overview
 
-- Purpose: Identify dominant themes in reviews of agent-authored pull requests.
-- Research questions: Not reported as a separate RQ list; the study analyzes review-comment themes and annotation quality.
-- Method: Empirical analysis of review comments with LLM-assisted thematic annotation and human comparison. Reported; details from Sections 1–6 and Tables 1–8.
-- Evaluated artifact: Human review comments on agent-authored pull requests.
-- Dataset/benchmark: 19,450 comments from 3,177 agent-authored pull requests.
-- Input context: Pull-request review discussions and associated agent-authored changes; exact context fields require verification.
-- Main findings: Twelve dominant themes are reported; LLM-assisted annotation is compared with human labels. Reported.
+- Purpose: Understand what reviewers focus on when reviewing AI-authored PRs and how themes differ by PR outcome.
+- Research questions: RQ1 LLM theme annotation accuracy; RQ2 prevalent themes; RQ3 dominant themes in successful vs. rejected PRs.
+- Method: Topic modeling plus LLM-assisted semantic clustering produced 12 categories; Gemma 3:12B zero-shot annotation was compared with human labels.
+- Evaluated system/artifact: Review comments on agent-authored PRs from OpenAI Codex, Devin, GitHub Copilot, Cursor, and Claude Code.
+- Dataset/benchmark: AIDev curated subset of 33,596 PRs; study analyzes 19,450 inline comments across 3,177 PRs, with outcome subset 12,191 comments across 2,035 PRs and 483 rejected/2,035 accepted PRs.
+- Input context: Inline review comment text, PR/repository metadata, diffs, review events, and merge/close timestamps.
+- Main findings: LLM annotation achieves exact match 78.63%, macro F1 0.7756, κ=0.7348; PR-level dominant-theme Top-1 accuracy 78% and Jaccard 0.76. Functional correctness dominates; documentation, styling, refactoring, testing, and security are recurring themes.
 
 ## 4. Evidence mapped to review questions
 
 | RQ | Evidence and interpretation | Evidence type | Location |
 |---|---|---|---|
-| RQ1 | The twelve themes provide an empirical taxonomy of review concerns for agent-authored changes. | Reported | Sections 1–6; Tables 1–8 |
-| RQ2 | Theme annotation and human comparison support evaluation of comment categories and annotation validity. | Reported | Sections 3–6 |
-| RQ3 | LLM-assisted annotation is a post-generation analysis/intervention layer, not a comment-generation mitigation. | Inferred | Sections 3–6 |
-| RQ4 | Annotation automation may reduce coding effort, but preservation of useful feedback and workflow cost are not established. | Our perspective | Sections 4–6 |
-| RQ5 | The large PR-level corpus supports ecological validity; annotation agreement and label ambiguity remain central risks. | Reported/Our perspective | Sections 2–6 |
-| RQ6 | Directly supports taxonomy construction and annotation-protocol design. | Reported | Sections 1–6 |
+| RQ1 | Gemma annotation aligns substantially with human themes at comment and PR levels. | Reported | Section 3 |
+| RQ2 | Functional/logic concerns dominate; documentation, style/formatting, refactoring, testing, and security follow. | Reported | Section 4 |
+| RQ3 | Security and build themes are more prevalent in rejected PRs; documentation is more prevalent in accepted PRs; undo/revert comments trend toward rejection. | Reported | Section 5 |
+| RQ4 | Theme distribution identifies likely review bottlenecks and targeted training opportunities, but causal effects are not established. | Inferred | Sections 4–6 |
+| RQ5 | Human annotation validation and AIDev metadata provide ecological evidence, with one-primary-annotator and timestamp limits. | Reported limitation | Sections 3, 6 |
+| RQ6 | Supports outcome-aware taxonomy and targeted mitigation for agent-generated code. | Inferred | Sections 5–6 |
 
 ## 5. Failure and problematic-comment categories
 
 | Category | Definition/example | Evidence type | Location |
 |---|---|---|---|
-| Theme-level review concern | One of the twelve empirically derived themes in reviews of agent-authored changes. | Reported | Tables 1–8 |
-| Annotation disagreement | Human and LLM-assisted theme labels do not always coincide. | Reported | Sections 4–6 |
+| Functional/logic defect | Review targets correctness, behavior, or logic changes. | Dominant theme | Section 4 |
+| Documentation gap | Missing/inadequate documentation or comments. | Theme/outcome signal | Sections 4–5 |
+| Style/formatting | Readability, consistency, or formatting issue. | Theme | Section 4 |
+| Testing/security/build concern | Missing tests, vulnerability/safety, configuration/CI/build problem. | Outcome-linked theme | Section 5 |
+| Unnecessary undo/revert | Agent changes are reverted or rejected as unnecessary. | Rejection signal | Section 5 |
 
 ## 6. Evaluation dimensions and metrics
 
 | Dimension | Operationalization/metric | Result or limitation | Location |
 |---|---|---|---|
-| Theme classification | Human/LLM label comparison | Supports annotation validity analysis; exact agreement metrics require verification. | Sections 4–6 |
-| Comment distribution | Counts across 19,450 comments and 12 themes | Provides corpus-level prevalence, not comment correctness or usefulness. | Tables 1–8 |
-| Annotation validity | Comparison with human labels | Reliability protocol and adjudication details require verification. | Sections 4–6 |
+| Theme annotation | Exact match, macro precision/recall/F1, Cohen’s kappa. | Exact 78.63%, macro F1 0.7756, κ=0.7348. | Section 3 |
+| PR dominant theme | Top-1 accuracy and Jaccard over top-3 tags. | 78% Top-1, Jaccard 0.76/0.8819 reported at PR-level analyses. | Section 3 |
+| Theme prevalence | Share of comments/PRs by 12 categories. | Functional dominates; style/documentation/refactor follow. | Section 4 |
+| Outcome association | Theme frequencies in accepted vs. rejected PRs; chi-square tests. | Security 5.59% rejected vs. 3.05% accepted; build/undo patterns differ. | Section 5 |
 
 ## 7. Mitigation and trade-offs
 
-- Mitigation family: LLM-assisted annotation / post-generation analysis.
-- Intervention point: after generation.
-- What it reduces: Manual coding effort, potentially; reported evidence is bounded to annotation.
-- Useful feedback potentially lost: Not reported.
-- Coverage effect: Theme coverage is reported; useful-comment preservation is not.
-- Human escalation effect: Human labels remain a reference/check, but operational escalation is not evaluated.
-- Computational/operational cost: Not reported sufficiently for deployment comparison.
-- New failure modes: Annotation bias, theme omission, and disagreement between human and LLM labels.
+- Mitigation family: Theme-aware review oversight, targeted fine-tuning, and reduction of unnecessary agent changes.
+- Intervention point: Model training/review prioritization and human oversight after agent PR generation.
+- What it reduces: Review fatigue from unnecessary changes and blind spots around security, testing, and build concerns.
+- Useful feedback potentially lost: Theme-based prioritization may deprioritize constructive documentation/style feedback; no intervention experiment measures this.
+- Coverage effect: Taxonomy exposes 12 categories; coverage of latent/unstated defects is not measured.
+- Human escalation effect: Findings recommend targeted oversight; escalation behavior is not measured.
+- Computational/operational cost: LLM annotation at scale is used; cost/latency is not reported.
+- New failure modes: Topic-label ambiguity, LLM annotation confusion, outcome timestamp artifacts, and multiple-testing risks.
 
 ## 8. Annotation and evaluator validity
 
-- Judge/annotator: Human annotators and LLM-assisted annotation.
-- Rubric: Twelve-theme coding scheme; full rubric details require verification.
-- Agreement/reliability: Comparison is reported; exact agreement statistic is not recorded here.
-- Validity checks: Human comparison is reported.
-- Possible bias: LLM label priors and theme-boundary ambiguity may bias prevalence estimates.
+- Judge/annotator: One author primarily annotates a validation set; Gemma 3:12B annotates the corpus; topic modeling and LLM clustering derive taxonomy.
+- Rubric: 12 thematic categories, up to three dominant PR tags, exact/macro metrics, kappa, and Jaccard.
+- Agreement/reliability: Comment-level κ=0.7348; validation set is small and primarily annotated by one author.
+- Validity checks: Topic modeling, LLM semantic consolidation, random 100-PR validation sample (571 comments), comment- and PR-level evaluation, and chi-square outcome analysis.
+- Possible bias: AIDev-only dataset, popular repositories, one annotator, timestamp-based accepted/rejected definition, and no multiple-comparison correction for individual themes.
 
 ## 9. Quality appraisal
 
 | Criterion | Score (0–2) | Evidence note |
 |---|---:|---|
-| Q1 | 1 | Artifact and corpus are identifiable; details require verification. |
-| Q2 | 1 | Input context is only partly reported in the current extraction. |
-| Q3 | 1 | Dataset size and PR setting are reported. |
-| Q4 | 1 | Theme and annotation dimensions are reported. |
-| Q5 | 1 | Human/LLM judging is identified. |
-| Q6 | 1 | Reliability details require verification. |
-| Q7 | 1 | Annotation procedure is described at a high level. |
-| Q8 | 1 | Human comparison provides a validity check. |
-| Q9 | 1 | LLM-assisted annotation is the evaluated intervention. |
-| Q10 | 1 | Operational cost is not fully reported. |
-| Q11 | 1 | Dataset and selection limitations require verification. |
-| Q12 | 1 | Direct support for taxonomy and annotation validity. |
+| Q1 | 2 | Dataset, themes, and RQs are explicit. |
+| Q2 | 2 | 19,450 comments/3,177 PRs and outcome subsets reported. |
+| Q3 | 2 | Taxonomy construction and Gemma annotation are described. |
+| Q4 | 2 | Annotation and prevalence/outcome metrics are explicit. |
+| Q5 | 2 | 12-category taxonomy and PR top-theme rubric specified. |
+| Q6 | 2 | Cohen’s kappa and human comparison reported. |
+| Q7 | 2 | Topic modeling, sampling, and multi-level validation included. |
+| Q8 | 1 | Small/one-annotator validation and timestamp limitations. |
+| Q9 | 1 | Targeted oversight is proposed, not experimentally tested. |
+| Q10 | 1 | Scale is reported, cost is not. |
+| Q11 | 2 | Dataset, annotation, outcome, and multiple-testing limits discussed. |
+| Q12 | 2 | Direct real-world agentic review taxonomy and outcome analysis. |
 
-- Total: `12/24` provisional
-- Quality interpretation: Direct and relevant, but the canonical score must be recalculated after checking the full methods and reliability details.
+- Total: `21/24` provisional
+- Quality interpretation: Strong large-scale taxonomy and annotation evidence, with observational and validation-sample limits.
 
 ## 10. Review-process reliability and bias
 
-- Missing data: Exact annotation sampling, adjudication, and agreement details require verification.
-- Publication-bias concern: Agent-authored PRs may not represent all code-review settings.
-- Selection uncertainty: Candidate passed full-text screening; version equivalence remains open.
-- Extraction uncertainty: Medium until tables and methods are checked line by line.
-- Second-reviewer agreement: Not available.
-- Duplicate-publication handling: DOI/preprint relationship recorded as a companion check.
+- Missing data: Developer usefulness, review time, causal rejection mechanisms, and intervention efficacy are not measured.
+- Publication-bias concern: Not assessed; AIDev and popular-repository selection may shape theme distribution.
+- Selection uncertainty: Included by full-text screening; final MSR metadata should be reconciled.
+- Extraction uncertainty: Moderate because accepted/rejected status uses timestamps and archival effects may confound outcomes.
+- Second-reviewer agreement: Kappa reported for study labels; SLR agreement not available.
+- Duplicate-publication handling: Pending final-version reconciliation.
 
 ## 11. Synthesis-ready conclusion
 
-- Contribution to the SLR: Strong evidence for taxonomy and annotation-validity design in agentic code review.
-- What the paper does not establish: It does not establish generated-comment correctness, usefulness preservation, mitigation effectiveness, or deployment cost.
-- Research gap supported: Theme classification and evaluator validity are not equivalent to trade-off-aware comment evaluation.
-- Candidate synthesis claims: Large-scale agent-authored review corpora can reveal recurring themes, but automated annotation requires human validity checks.
-- Follow-up verification needed: Confirm official publication metadata, exact agreement statistics, rubric, and annotation sampling.
+- Contribution to the SLR: Provides a validated taxonomy of themes in real agent-authored PR reviews and identifies security/build/revert patterns associated with rejection.
+- What the paper does not establish: It does not establish that a theme causes rejection, that comments are useful, or that targeted training improves review quality.
+- Research gap supported: Agentic review evaluation should connect thematic coverage to human usefulness, rejection reasons, and model-training interventions.
+- Candidate synthesis claims: Functional correctness dominates review attention, but security, testing, build, and unnecessary-change themes may be more consequential for rejected agent PRs.
+- Follow-up verification needed: Inspect released taxonomy/annotations and reproduce outcome association with multiple annotators and corrected statistical testing.

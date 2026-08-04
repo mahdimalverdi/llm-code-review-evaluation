@@ -1,0 +1,919 @@
+                                                     Deep Learning-based Code Reviews:
+                                                  A Paradigm Shift or a Double-Edged Sword?
+                                             Rosalia Tufano†* , Alberto Martin-Lopez†* , Ahmad Tayeb‡ , Ozren Dabić† , Sonia Haiduc‡ , Gabriele Bavota†
+                                                                          †
+                                                                         Software Institute – USI Università della Svizzera italiana, Switzerland
+                                                                                        ‡
+                                                                                          Florida State University, United States
+                                                        †
+                                                          {rosalia.tufano, alberto.martin, ozren.dabic, gabriele.bavota}@usi.ch, ‡ {atayeb2, shaiduc}@fsu.edu
+
+
+                                            Abstract—Several techniques have been proposed to (partially)          Over the last few years, along with the rise of Deep Learning
+                                         automate code review. Early support consisted in recommending           (DL), came a new wave of approaches aimed at reducing the
+arXiv:2411.11401v3 [cs.SE] 29 Nov 2024
+
+
+
+
+                                         the most suited reviewer for a given change or in prioritizing          costs of code review by exploiting DL techniques to automate
+                                         the review tasks. With the advent of deep learning in software
+                                         engineering, the level of automation has been pushed to new             the code review process. These approaches have been able to
+                                         heights, with approaches able to provide feedback on source             provide natural language review comments about source code
+                                         code in natural language as a human reviewer would do. Also,            similar to what a software developer would provide [15]–[17].
+                                         recent work documented open source projects adopting Large              Moreover, recent work reported open source projects adopting
+                                         Language Models (LLMs) as co-reviewers. Although the research           Large Language Models (LLMs) as co-reviewers [18].
+                                         in this field is very active, little is known about the actual impact
+                                         of including automatically generated code reviews in the code              Given the tremendous potential shown by LLMs in helping
+                                         review process. While there are many aspects worth investigating        developers with various software engineering tasks [19]–[22],
+                                         (e.g., is knowledge transfer between developers affected?), in
+                                         this work we focus on three of them: (i) review quality, i.e.,          it seems natural to involve them also in the code review pro-
+                                         the reviewer’s ability to identify issues in the code; (ii) review      cess, with the goal of reducing developer effort and software
+                                         cost, i.e., the time spent reviewing the code; and (iii) reviewer’s     cost. However, little is known about the actual impact of
+                                         confidence, i.e., how confident is the reviewer about the provided      including automatically generated code reviews in the code
+                                         feedback. We run a controlled experiment with 29 professional           review process. For example, it is hard to anticipate how
+                                         developers who reviewed different programs with/without the
+                                         support of an automatically generated code review. During the           using automated code reviews as a starting point could impact
+                                         experiment we monitored the reviewers’ activities, for over 50          the knowledge transfer between developers or the quality of
+                                         hours of recorded code reviews. We show that reviewers consider         the final code review, or if using automated reviews could
+                                         valid most of the issues automatically identified by the LLM and        lead to biases or blind spots in developers’ analysis of the
+                                         that the availability of an automated review as a starting point        code, if it leads to a lower code review cost, etc. Studying
+                                         strongly influences their behavior: Reviewers tend to focus on the
+                                         code locations indicated by the LLM rather than searching for           the impact of all these factors goes beyond the scope of a
+                                         additional issues in other parts of the code. The reviewers who         single paper. However, we aim to make the first steps in
+                                         started from an automated review identified a higher number             this direction by focusing on three specific aspects, namely:
+                                         of low-severity issues while, however, not identifying more high-       (i) code review quality, i.e., a reviewer’s ability to identify
+                                         severity issues as compared to a completely manual process.             issues in the code; (ii) code review cost, i.e., the time spent by
+                                         Finally, the automated support did not result in saved time and
+                                         did not increase the reviewers’ confidence.                             developers reviewing the code; and (iii) reviewer’s confidence,
+                                            Index Terms—Code review, Controlled Experiment                       i.e., how confident the reviewer is about the provided feedback.
+                                                                                                                    To determine the impact that using automated code reviews
+                                                                   I. I NTRODUCTION                              can have on these three aspects, we present a controlled exper-
+                                                                                                                 iment involving 29 developers. The participants performed a
+                                            Code review is an essential activity in both industrial and          total of 72 reviews across six projects written either in Python
+                                         open source projects. Its benefits have long been recognized            or Java in which we injected quality issues representative of
+                                         and studied and include improved code quality and a reduced             problems usually found during code review [23]. Participants
+                                         incidence of bugs, among others [1]–[5]. However, code                  have been assigned to one of the two languages based on
+                                         review can also be time consuming and costly [6], and over the          their expertise. Each review was performed with one of three
+                                         past decade, researchers have been studying ways to reduce the          treatments. The first, named manual code review (MCR), as-
+                                         cost of this activity while maintaining its benefits. Some early        sumes no availability of an automatically generated review as
+                                         efforts included recommending the most suitable reviewer for            starting point, thus reflecting the classic code review scenario.
+                                         a given change [7]–[10], predicting the defectiveness of a patch        The second, named automated code review (ACR), provides
+                                         before or after being reviewed [11], [12], and classifying the          reviewers with a review automatically generated by ChatGPT
+                                         usefulness of review comments [13], [14].                               Plus [24], which they can use as a starting point for their final
+                                                                                                                 reviews (e.g., they could discard generated comments, rephrase
+                                           * Equal contributor. Author order determined by coin flip.            them, or complement the set of identified issues).
+   This scenario is representative of the current state of the          However, these tools could also be seen as a possible
+art in automated code review [18]. The third, named compre-          support for the contributor, i.e., a first feedback loop before
+hensive code review (CCR), aims at simulating a hypothetical         submitting the code for the actual (human) review (see e.g.,
+scenario in which tools for the automated generation of code         [26]). While this work focuses on the perspective of reviewers
+reviews reached a whole new level where they can correctly           and the bias they may be subject to when using automated
+identify all the important issues in the code. To simulate this      code reviews, future work could certainly investigate the
+scenario, we provide participants with a code review correctly       contributors’ perspective (i.e., do automated reviews affect the
+pointing to all issues we injected, presenting it as automatically   quality of the code reviewed by humans?).
+generated. The latter scenario, while not realistic nowadays            The study addresses the following research questions (RQ):
+given the current technology, allows us to observe the extent           RQ0 : Is there a statistically significant difference in the
+to which reviewers would trust an automated tool by adopting         characteristics of the code reviews written by developers
+its suggestions and the impact it would have on reviewing            with/without automated support? This preliminary RQ aims
+time. Our main findings can be summarized as follows:                at quantitatively comparing the code reviews submitted by
+  1) Reviewers considered valid most of the issues identified        developers with/without access to automatically generated
+      by ChatGPT Plus. On average, 89% of the issues auto-           reviews. We analyze various aspects including the number
+      matically identified by the LLM have been kept by the          of issues reported, the length of the code review (number of
+      reviewers in their final review.                               sentences), and the problematic code locations identified (e.g.,
+  2) The availability of an automated review as a starting           number of different lines in which issues have been found).
+      point strongly influences the reviewer’s behavior. Review-        RQ1 : To what extent does having access to automated code
+      ers mostly focused on the code locations pointed out in        reviews increase the likelihood of identifying code quality
+      the automatically generated review they were provided          issues? We inject quality issues in the code of our software
+      with (this holds for both ACR and CCR treatments).             projects and assess the extent to which participants were able
+      While we observed substantial variability in the code          to identify them with/without the support of automated code
+      locations commented on by reviewers who inspected a            review. Since we manually inspect all 72 code reviews written
+      program manually, the ones who started from an au-             by developers, we also analyze, discuss, and compare among
+      tomated review tended to focus on the code locations           the different treatments the additional quality issues that were
+      already provided in it.                                        not injected by us, but were found by participants.
+  3) The automated code review generated by the LLM does                RQ2 : To what extent does the availability of automated code
+      not help in identifying more high-severity issues as com-      reviews save time during the review process? We compare the
+      pared to a completely manual process. We only observed         amount of time spent by reviewers with/without the support
+      a significant difference in the number of low-severity         of automated code review. In particular, we analyze the time
+      issues in the code (in favor of the treatment adopting         spent: (i) to complete the review task, i.e., overall time;
+      the ChatGPT-based review).                                     (ii) inspecting the code; and (iii) writing the actual review.
+  4) Even assuming an excellent support in terms of auto-               RQ3 : Does the availability of automated code reviews in-
+      mated review (CCR treatment), reviewers do not save time       crease the reviewers’ confidence? At the end of each reviewing
+      with respect to a fully manual process. This is due to the     task, we ask reviewers to rate their confidence in the submitted
+      fact that they need to interpret the automatically generated   review, and we investigate if the availability of automated code
+      comments and check for their correctness in the code.          reviews has an impact on the reviewers’ confidence.
+  5) Providing reviewers with automatically generated reviews
+      (both in the ACR and CCR treatment) does not impact            A. Context Selection
+      their confidence, which is comparable to that observed
+      in the MCR treatment. This might be due to the fact that          1) Participants: We used convenience sampling [27], [28]
+      the provided review does not help in better understanding      to recruit 29 participants who (i) are currently professional
+      the program, but only highlights potential issues.             developers (28 of them) or (ii) have worked in the past as
+   Study material and data are publicly available [25].              professional developers and are now enrolled in a CS graduate
+                                                                     program (one of them). We did not include any CS student
+                      II. S TUDY D ESIGN                             without at least one year of industrial experience. Although
+   The goal of the study is to assess the impact that having         this limited the number of participants we could involve,
+access to automatically generated code reviews has on the code       we consider industrial experience essential in any study on
+review process. More specifically, we aim to understand how          code review, given its common use in industrial practice. For
+the availability of an automated code review affects the quality     simplicity, in the following we use the term “developers”
+of the final review written by the reviewer, the time they spend     when referring to participants, even though one of them is not
+reviewing the code, and their confidence about the submitted         currently working as a developer. We invited 82 developers
+review. Note that our study focuses on a scenario in which the       to participate in our study, asking each of them to contribute
+output of the DL-based approach is provided to the reviewer          three code reviews, each using a different treatment (details in
+as a support for the review writing.                                 Section II-B).
+                           TABLE I                                      One program (todo-list) was created from scratch, for
+               S UMMARY OF THE OBJECT PROGRAMS .                     both Java and Python. To ensure that the implementation
+ Project ID                Language   Source         LoC   Issues    of the selected programs was of high quality, each of them
+ maze-generator            Java       Rosetta [29]   164       1     was reviewed by two authors of the paper. Additionally, all
+ maze-generator            Python     Rosetta [29]    75       2     programs were reviewed by a professional developer with
+ number-conversion         Java       Rosetta [29]   116       4
+ number-conversion         Python     Rosetta [29]    81       2     seven years of experience and high familiarity with both
+ stopwatch                 Java       Apache [30]    528       7     Python and Java. The selection of the programs was guided by
+ stopwatch                 Python     Translated     258       4
+                                                                     two main goals: (i) to ensure code reviews are manageable in
+ tic-tac-toe               Java       Rosetta [29]   326       2
+ tic-tac-toe               Python     Rosetta [29]   121       7     terms of both time and complexity for our study participants;
+ todo-list                 Java       Artificial     206       3     we therefore chose programs that are relatively small in terms
+ todo-list                 Python     Artificial     198       3
+ word-utils                Java       Apache [30]    509       6     of lines of code (refer to the “LoC” column in Table I); and
+ word-utils                Python     Translated     426       7     (ii) to avoid requiring specific domain knowledge from the
+                                                                     participants; for this reason we selected programs that any
+   The invitation email, available in our replication package        seasoned developer could easily understand and review.
+[25], asked them to accept the invitation if they (i) are familiar
+                                                                        The chosen programs include: maze-generator, which
+with code review; and (ii) have experience with at least one
+                                                                     creates a random maze in the console based on user-specified
+of the two subject programming languages (i.e., Java and
+                                                                     dimensions; number-conversion, enabling the conversion
+Python). Their availability was collected using a Google form.
+                                                                     of decimal numbers into binary, octal, hexadecimal, and
+Only if they accepted our invitation, we asked them four
+                                                                     Roman numeral formats; stopwatch, a basic program that
+questions. The first was: “Please select the programming
+                                                                     performs stopwatch functions like start, stop, reset, and split
+languages in which you have expertise (check both of them
+                                                                     time; tic-tac-toe, an implementation of the corresponding
+if you are familiar with both)”, with possible answers being
+                                                                     game played via command line interface (CLI) against an
+Python and Java. The information collected was used to assign
+                                                                     agent programmed not to lose; todo-list, a CLI-based
+participants to the code review tasks described in Section II-A2
+                                                                     to-do list manager supporting adding, removing, prioritizing
+(i.e., to ensure that they were only allocated code review tasks
+                                                                     and listing tasks; and word-utils, a set of utility functions
+involving a programming language they were familiar with).
+                                                                     offering string manipulation utilities such as capitalization,
+   Then, the developers answered three questions related to
+                                                                     case swapping, and abbreviation.
+their expertise: their years of experience in programming,
+their current role/position, and whether they took part in              We then manually injected a number of quality issues in
+the past in the code review process as a reviewer, as a              the selected programs given that, among other things, we aim
+developer whose code was reviewed, in both roles, or in none         at assessing the extent to which an automated code review
+of them. We received an answer from 40 developers, all of            increases the chances of identifying code quality issues. The
+whom accepted to participate in the study. However, in the           column “Issues” in Table I shows the number of issues injected
+end, only 32 completed at least one of the tasks assigned            into every program. Overall, we injected 48 issues across the
+(i.e., at least one code review). From these, we selected 29         12 programs. The complete list of issues injected and their
+participants for our analyses, in such a way as to have the same     description is available in our replication package [25] and
+number of participants per system and treatment (details in          includes code duplication, structural defects (e.g., overly long
+Section II-D). On average, the 29 participants have 11.4 years       methods), documentation issues (e.g., mismatches with respect
+of programming experience (median=10, min=3, max=35);                to the implementation) and logic bugs, among others. We
+three of them selected Java as programming language, six             paid attention not to inject issues which can be very easily
+Python, and 20 checked both languages. Finally, three of them        detected by participants (e.g., bugs that make the program
+have not been involved in code review in the past (while still       crash), since they might not represent realistic simulations of
+being familiar with it), one only as a reviewer, one only as a       code submitted by a developer for review. This also meant
+contributor, while 24 have covered both roles.                       that we did not inject a fixed number of issues per project
+   2) Programs: Table I shows the programs that we asked             because we found a different number of issues to be suitable
+participants to review. We considered six different projects,        for different programs. The injected issues are inspired by
+each available in both programming languages, i.e., Java             the taxonomy of issues found in code reviews documented
+and Python. Our object programs are taken from differ-               by Mäntylä and Lassenius [23]. In particular, Mäntylä and
+ent sources (see column “Source” in Table I). We selected            Lassenius found 77% of the issues identified by reviewers
+three programs (maze-generator, number-conversion                    to be related to evolvability defects (e.g., documentation is-
+and tic-tac-toe) from Rosetta Code [29], a repository                sues, sub-optimal implementation choices), with the remaining
+of programming tasks written in multiple languages, includ-          23% pertaining functional issues (e.g., wrong implementation
+ing Java and Python. Two Java programs (stopwatch and                logic). By classifying the type of issues we injected according
+word-utils) were taken from utility classes of the Apache            to the definitions given by Fregnan et al. [31], we injected:
+Commons Lang library [30] and then translated by the authors         78% (64%) evolvability issues and 22% (36%) defects in the
+into Python.                                                         object Java (Python) programs.
+                                     Java                                              While this scenario is not yet fully attainable with today’s
+  public String toString() {                                                        technology, studying it can provide valuable insights into how
+      StringBuilder builder = new StringBuilder();
+      for (int row = 0; row < height; row++)                                        reviewers’ behaviors might change if they had access to a
+          builder.append(toString(row));                                            (future) tool capable of identifying every quality issue in the
+      builder.append(H_WALL_CLOSED.repeat(width))
+              .append(CORNER)                                                       code (e.g., would they trust the tool enough to significantly
+              .append('\n');
+      return builder.toString();
+                                                                                    save time?). To simulate this scenario, participants in the
+  }                                                                                 CCR treatment were told that the reviews were automatically
+  public String toString() {                                                        generated, even though this was not the case. More specifically,
+      String result = "";
+      for (int row = 0; row < height; row++)                                        we first manually performed the code review and made sure to
+          result += toString(row);
+      result += H_WALL_CLOSED.repeat(width) + CORNER + '\n';                        capture all the issues we injected in the review. Then, we used
+      return result;                                                                ChatGPT Plus to rephrase the code reviews we wrote using the
+  }
+                                    Python
+                                                                                    prompt: “Rephrase the following code review comment as if
+  if part and (part in delimiters or re.match(regex_pattern, part)):
+                                                                                    you are generating it: <comment>. The comment refers to the
+      result.append(part)                                                           following <Java/Python> code: <code>”. Note that, while
+  if part and part in delimiters:                                                   the CCR reviews include exactly n comments identifying the
+      result.append(part)
+  elif part and re.match(regex_pattern, part):                                      n issues injected in each program, the ACR treatment may
+      result.append(part)
+                                                                                    identify comments that only address some (or none) of the
+Fig. 1. Examples of injected issues in Java and Python. The top part of each        injected issues. Additionally, ACR could include comments
+example represents the original code; the lower part is the code after injection.   on other quality issues we did not introduce.
+                                                                                       The 24 code reviews generated or rephrased by ChatGPT
+   As an additional note, the injected issues cover 73% of the                      Plus for ACR and CCR (6 projects × 2 languages × 2
+issue types in the taxonomy by Mäntylä and Lassenius [23].                        treatments) are publicly available [25].
+For example, we did not inject visual representation issues,                           In summary, the three treatments compare the classic, man-
+since code formatting usually depends on each project’s prac-                       ual code review process (MCR) with the automation available
+tices. Fig. 1 shows two examples of injected issues (one                            in practice nowadays (ACR) and a Utopian scenario we hope
+per language). The top part of each example shows the                               to reach one day in the field (CCR).
+original code, while the bottom part reflects the code after
+the issue injection. The Java example represents the injection                      C. Experimental Setup and Procedure
+of an issue related to performance: we replaced the use                                Our study is comprised of 36 different code review tasks
+of StringBuilder with string concatenation, creating a                              (6 projects × 2 languages × 3 treatments). As previously
+degradation of performance. The Python code, on the other                           mentioned, we asked participants to review three programs,
+hand, exemplifies the injection of a structural defect: we                          each with a different code review treatment. The three tasks
+introduced an unnecessary nested condition, also creating                           were all in the same programming language but related to
+duplicated code. Each object program also featured: (i) a main                      different projects. We provided each participant with instruc-
+file allowing to run it; and (ii) test cases exercising its basic                   tions to connect, via the Remote Development plugin [32] of
+functionalities.                                                                    Visual Studio Code (VS Code), to a server we set up with the
+                                                                                    environment needed to run the study. We took care of installing
+B. Code Review Treatments                                                           the versions of Java (17) and Python (3.10) needed to run any
+                                                                                    of the object programs. Also, we installed in VS Code the
+   To understand the impact of supporting developers with                           Java Extension Pack [33] and Python [34]. Once connected,
+code review automation, we defined three treatments. The                            the participants could see the review tasks assigned to them
+first, named manual code review (MCR), resembles the clas-                          directly in the IDE without the need of installing/configuring
+sic code review process performed by developers without                             anything. In particular, the participants were presented with
+any automated support. The second, named automated code                             three projects already imported in the IDE, two of which
+review (ACR) provides the participant with a code review                            included a code review (for the treatments automated code
+automatically generated by ChatGPT Plus (i.e., GPT-4) [24].                         review and comprehensive code review). The code review was
+The prompt used to create code reviews was “Provide a de-                           presented through the Code Review plugin in VS Code [35],
+tailed code review of the following <Java/Python> program:                          which also allows to mark source files with review comments,
+<code>”. The third treatment, called comprehensive code                             and to modify/delete the already provided comments part of
+review (CCR), is designed to simulate the scenario where the                        the provided code review. All projects featured a README
+reviewer is provided with an “automated” code review which                          file with instructions on where to find a description of the
+correctly identifies all issues we injected. Unlike the first two                   program to review, how to use the Code Review plugin, how
+treatments, which represent realistic scenarios in industry, this                   to run the program and associated tests, and a reminder to rate
+CCR treatment simulates an ideal, hypothetical scenario where                       the confidence of their review at the end of each code review
+the automated code review is able to identify all quality issues                    task, by simply writing a score from 1 (very low confidence)
+in a given code.                                                                    to 5 (very high confidence) at the end of the README file.
+   This was the only action required from the participants at the                                        TABLE II
+end of each task. The Code Review plugin of VS Code [35]                                        VARIABLES USED IN OUR STUDY.
+took care of storing the final version of their code review             Variable                                Description
+
+on our server, i.e., the code review including all comments                                             Dependent Variables (RQ0 )
+the participants manually wrote plus, for the ACR and CCR               Number of reported quality issues
+                                                                                                                The total number of quality issues reported in a
+                                                                                                                submitted review
+treatments, the comments they decided to keep (as is or by              Length of the code review               The number of sentences in a submitted review
+rephrasing/modifying them) from the provided reviews. Each              Covered code locations
+                                                                                                                Number of lines subject of at least one review
+                                                                                                                comment
+comment is linked to a file and a range of selected text (in
+                                                                                                        Dependent Variables (RQ1 )
+terms of line/column numbers).
+                                                                        Is injected issue identified            The participant found the injected issue
+   Lastly, besides the final code review and the self-assessed
+                                                                                                        Dependent Variables (RQ2 )
+confidence, we also monitored the participants’ behavior in
+                                                                                                                The total time spent on the whole code review
+the IDE using Tako [36], [37], a VS Code plugin collecting              Total time
+                                                                                                                session
+the actions performed in the IDE. Tako records events such                                                      The time spent on the actual code to review (i.e.,
+                                                                        Time reviewing                          excluding the time spent writing the review, or
+as opening and closing files and tabs, switching between them                                                   running the program)
+and editing files, among others. This allows us to perform the          Time writing
+                                                                                                                The time spent writing review comments or reading
+                                                                                                                the ones already provided in the automated review
+time-based analyses needed to answer RQ2 .
+                                                                                                        Dependent Variables (RQ3 )
+D. Data Analysis                                                        Confidence
+                                                                                                                The confidence score provided by the participant
+                                                                                                                for the submitted review
+   Out of the 120 reviews we assigned (40 participants × 3                                                 Independent Variables
+treatments), 96 of them were completed by 32 participants.                                                      The treatment used to perform the code review (one
+As a result, we ended up with a different number of reviews             Treatment
+                                                                                                                among MCR, ACR, CCR)
+for different programs for each treatment. In order to compare                                         Control Variables (Experience)
+the treatments fairly, we systematically selected the highest           Years of experience
+                                                                                                                The years of experience in programming of the
+                                                                                                                participant
+possible number of reviews per treatment such that all treat-                                                   Whether the participant has been involved in the
+ments featured exactly the same number of reviews on exactly            Involved in code review
+                                                                                                                code review process as a reviewer, as a developer
+                                                                                                                whose code was reviewed, in both roles, or in none
+the same programs (thus being comparable). We prioritized                                                       of them.
+reviews from participants who completed two (7 participants)                                           Control Variables (Review task)
+or three (18) tasks. This led to the selection of 72 reviews (i.e.,                                             The language in which the code to be reviewed is
+                                                                        Programming language
+24 per treatment) from 29 participants.                                                                         written (Java or Python)
+                                                                                                                The program on which the review task must be
+   Two authors independently inspected each review to extract           Program
+                                                                                                                performed
+data needed to answer our RQs which cannot be automatically             Issue type
+                                                                                                                The type of the issue to spot, classified according
+                                                                                                                to the work by Fregnan et al. [31]
+collected. At the end, they had a meeting to discuss about
+differences in the extracted data and agree on the correct data          For RQ0 , we compare: (i) the total number of reported
+to report. The manually collected data include:                       quality issues; (ii) the length of the code review in terms
+  1) The total number of reported quality issues in each re-          of number of sentences; and (iii) the covered code locations,
+     view. This information cannot be automatically extracted         in terms of number of lines subject of at least one review
+     by counting the number of comments in the code review,           comment (we also differentiate between code statements and
+     since each comment may point to several quality issues,          code documentation). For answering RQ1 , we compare the
+     even in the same code location.                                  ability of participants to identify injected issues during code
+  2) The number (and percentage) of injected issues identified        review. In this case, a boolean dependent variable (“Is injected
+     in the code review.                                              issue identified”) has been used to indicate whether each of the
+  3) The number (and percentage) of quality issues identified         bugs injected in the programs under study has been identified.
+     in the initial reviews provided to participants which have          Concerning RQ2 , we exploit the data collected by Tako [36]
+     been kept in the finally submitted code review. This metric      to compare: (i) the total time spent on the whole code review
+     has only been collected for code reviews resulting from          session, (ii) the time spent on the actual code to review (i.e.,
+     the ACR and CCR treatments.                                      excluding the time spent writing the review, or running the
+  4) The additional quality issues (i.e., unrelated to the in-        program), and (iii) the time spent writing review comments or
+     jected ones) present in the final code review.                   reading the ones already provided in the automated review. Fi-
+   Out of the 72 reviews manually inspected by two authors,           nally, for RQ3 we compare the confidence scores provided by
+they disagreed only on three reviews about the total number           participants to check whether the availability of the automated
+of reported quality issues, and about the number of injected          code review had an impact on the perceived confidence.
+issues identified. Conflicts were solved via open discussion.            For all comparisons we use boxplots to visualize the dis-
+   We answer our RQs by comparing the code reviews output             tributions. In addition to that, we run the following statis-
+of the three treatments. Table II reports: the dependent vari-        tical analyses. When needed, we opted for non-parametric
+ables considered in each RQ, the independent variable, being          tests since all our distributions are not normally distributed
+the same for all RQs (i.e., treatment), and the control variables.    (Shapiro-Wilk test).
+   For RQ1 , we build a multivariate logistic regression model          Indeed, the ACR and CCR reviews we provided to partic-
+having Is injected issue identified as the dependent variable        ipants featured on average 8.8 (median=9) and 4 (median=4)
+and treatment as independent variable with MCR set as the            issues reported, respectively, and reviewers kept on average 7.1
+reference level to more easily look at the impact of introducing     (median=7.5) and 4.0 (median=4) of these issues, respectively.
+automation (i.e., ACR and CCR treatments) in the code review         This leads to a first outcome of our study:           Reviewers
+process. We include all control variables listed in Table II.        considered as valid most of the issues identified by ChatGPT
+   Concerning the other RQs (i.e., RQ0 , RQ2 , and RQ3 ), we         Plus (by keeping them in their final review).
+use multivariate linear regression to build seven models, one          The fact that ACR and CCR reviews contained issues that
+for each dependent variable in Table II. For example, to answer      reviewers kept in most cases had an impact on the final length
+RQ0 , three regression models have been built, each using one        of the submitted reviews, with ACR and CCR reviews being
+of the three dependent variables relevant for this RQ.               longer than those in the MCR treatment (see Fig. 2).
+   The independent variable is always treatment, while in terms
+                                                                        The regression model in Table III (Multiple R2 : 0.44)
+of control variables we use all the ones in Table II but the Issue
+                                                                     reports a significant impact of the ACR treatment (p < 0.001),
+type. Indeed, the dependent variables used in RQ0 , RQ2 , and
+                                                                     with the Dunn’s test [39] confirming the statistically significant
+RQ3 , differently from the one used in RQ1 , are meaningful
+                                                                     difference in length when comparing reviews output of the
+only when applied to a whole code review (e.g., the time spent
+                                                                     ACR and CCR treatments (p-value = 0.0046) and those output
+to complete the code review, the confidence of the participant
+                                                                     of ACR and MCR (p-value = 0.0001) — p-values adjusted
+when submitting the review). Since a single review concerns
+                                                                     with Benjamini-Hochberg correction [40].
+several issues usually having a different type, for these RQs
+we do not consider the Issue type as control variable.                  To get a better understanding of the magnitude of such
+                                                                     differences, the final reviews in the MCR treatment include,
+               III. R ESULTS AND D ISCUSSION                         on average, 16.3 sentences (median=11.5) compared to the
+A. RQ0 : Differences in Reviews Output of Different Treatments       27.79 (median=27) in the final reviews of the ACR treatment.
+   Fig. 2 shows boxplots comparing the final version of              Interestingly, as our results show, a more verbose review does
+the code reviews submitted by developers under the three             not necessarily mean a review that covers more code locations.
+treatments considered in our study, i.e., manual code review         The three rightmost boxplots in Fig. 2 illustrate this phe-
+(MCR), automated code review (ACR), and comprehensive                nomenon: there is no clear difference in the coverage (overall,
+code review (CCR). From left to right we report boxplots             on code, and on comments) between the final reviews of the
+comparing the number of quality issues reported in the review,       three treatments (as also confirmed by the regression model
+the length of the review in terms of number of sentences, the        in Table III). Moreover, the reviews written by participants
+overall line coverage of the review over the entire program          without automated support had a higher variability in terms of
+(code and comments), as well as its coverage when considering        the lines commented on by the different reviewers, while those
+only the source code, and only the documentation (comments).         starting from automated reviews tended to stay focused on
+   The two leftmost boxplots show clear differences among            the lines of code highlighted in the provided reviews. This is
+treatments in terms of the number of issues reported in the final    illustrated in the Venn diagram in Fig. 3, which shows the total
+reviews and in their length. Reviews resulting from treatments       number of different lines covered by all reviews belonging to
+including an automated support (ACR and CCR) generally               each treatment. As observed, MCR reviews covered a total of
+report more issues as compared to MCR. The multivariate              484 distinct lines and 263 of these lines were unique to MCR,
+regression model (Multiple R2 [38]: 0.32) — Table III —              i.e., not covered by the ACR nor CCR final reviews. This was
+confirms the significant role played by the ACR treatment (p         followed by CCR reviews, which covered 407 lines, 186 of
+< 0.01) in the number of reported issues, with the Dunn’s            which were unique to final reviews within this treatment, and
+test [39] showing a statistically significant difference when        lastly ACR reviews, covering 371 distinct lines, 181 of which
+comparing ACR vs MCR (p-value = 0.0106 after Benjamini-              being found only in ACR reviews.
+Hochberg correction [40]). Worth mentioning is also that                Fig. 4 shows an example of the code lines cov-
+participants tended to report more quality issues for some           ered by three participant reviews (clear gray, gray, black)
+of the subject programs. This is expected considering that           from the ACR (left) and MCR (right) treatments for the
+(i) we injected a different number of quality issues in each         number-conversion program in Java. Each rectangle de-
+program, and (ii) ChatGPT identified a different number of           notes a single issue identified in the reviews, possibly span-
+quality issues in the programs, influencing the number of            ning multiple lines (thicker rectangles). Red rectangles denote
+quality issues reported in the ACR treatment.                        issues covering unique code locations (among the three re-
+   The final reviews of the ACR treatment identified, on             views of that treatment). While for the ACR treatment there
+average, 11.8 issues (median=10.5), against the 9.6 of CCR           were only three issues from two reviewers covering unique
+(median=9) and the 7.7 of MCR (median=7.5). Such a result            locations, for the MCR treatment, all three reviewers found a
+could be explained in part by the fact that reviewers kept most      total of eight issues covering unique code lines, not covered
+of the issues already present in the automated (ACR) and in          in the other reviews. These findings result in two additional
+the comprehensive (CCR) code review.                                 takeaways of our study.
+                                                                                                             Length of the code review (sentences)
+                                                     Number of reported quality issues
+
+
+
+
+                                                                                                                                                                                                                                                  Documentation coverage (%)
+                                                                                                                                                                     Overall line coverage (%)
+
+
+
+
+                                                                                                                                                                                                               Code coverage (%)
+                                                                                          MCR ACR CCR                                                MCR ACR CCR                                 MCR ACR CCR                        MCR ACR CCR                                MCR ACR CCR
+
+                                                           Fig. 2. RQ0 : Characteristics of the final code reviews under the three treatments.
+
+                                                                               TABLE III
+                                          RQ0 : M ULTIVARIATE LINEAR REGRESSION MODELS (E STIMATE , S TD . E RROR , S IGNIFICANCE ).
+                                                                                                                                                      N. of reported quality iss.                                                  Length of the code review                                      Covered code locations
+                                                                                                                                                      Estim.      S.E.      Sig.                                                   Estim.      S.E.      Sig.                                     Estim.     S.E.     Sig.
+                       Intercept                                                                                                                        2.460       3.962                                                           4.122    8.439                                               -17.611           35.131
+                       ACR                                                                                                                              4.269       1.331                             **                           11.862    2.836                               ***               5.297           11.806
+                       CCR                                                                                                                              1.770       1.338                                                           2.549    2.850                                                -0.798           11.867
+                       Years of experience                                                                                                             -0.032       0.071                                                          -0.098    0.151                                                 0.582            0.632
+                       Involved in code review: Contributor & Reviewer                                                                                  5.357       3.532                                                          11.386    7.522                                                17.010           31.316
+                       Involved in code review: None                                                                                                    1.486       3.794                                                           5.473    8.081                                                51.388           33.642
+                       Involved in code review: Reviewer                                                                                                3.252       4.273                                                          -1.952    9.101                                                28.911           37.886
+                       Programming language: Python                                                                                                    -1.734       1.134                                                          -2.514    2.416                                                 3.215           10.058
+                       Program: number-conversion                                                                                                       0.437       1.649                                                          -0.344    3.513                                                18.580           14.626
+                       Program: stopwatch                                                                                                               3.648       1.811                              *                           13.404    3.859                               ***              30.209           16.064
+                       Program: tic-tac-toe                                                                                                             5.426       2.106                              *                           13.041    4.486                                **              11.427           18.676
+                       Program: todo-list                                                                                                               3.448       2.230                                                           5.860    4.750                                                13.780           19.773
+                       Program: word-utils                                                                                                              0.554       1.809                                                           2.591    3.854                                                21.437           16.046
+                                                                                                        Sig. codes: ‘***’ p < 0.001, ‘**’ p < 0.01, ‘*’ p < 0.05
+
+                                                     MCR
+
+                                                                                                                                                                                                                                               MCR
+
+                                                                                                                                                                                                                                               ACR
+                                                     263
+                                                     29%                                                                                                                                                                                       CCR
+
+
+                                                  56      87
+                                                                                                                                                                                                                                                                               Number of injected issue identified
+                                                 6.2% 78 9.6%
+                                                     8.6%
+
+                                          181         56                                      186                                                                                                                                              MCR
+                                         19.9%       6.2%                                    20.5%
+                                                                                                                                                                                                                                               ACR
+                                   ACR                                                                 CCR
+                                                                                                                                                                                                                                               CCR
+
+Fig. 3. RQ0 : Number of distinct lines covered (i.e., commented on by
+                                                                                                                                                                                                                                                                                  % of injected issue identified
+participants) in the final reviews of the three treatments and their overlap.
+                                                                                                                                                                                                           Fig. 5. RQ1 : Number and percentage of identified injected issues.
+
+                  1                                                                                                                                                                                      This might indicate an additional cost on the contributor’s
+                                                                                                                                                     Legend:
+                 10
+                                                                                                                                                         Review 1                                     side, which complements the analysis we will present in RQ2
+                 20                                                                                                                                      Review 2
+                                                                                                                                                         Review 3
+                                                                                                                                                                                                      when assessing the time spent by reviewers under the three
+                 30
+                                                                                                                                                         Issue in unique
+                 40                                                                                                                                      code location                                treatments. Second, the availability of an automated review
+                                                                                                                                                                                                      influences the reviewer’s behavior, who will mostly focus on
+    Code lines
+
+
+
+
+                 50
+
+                 60                                                                                                                                                                                   the code locations commented on in the provided review.
+                 70
+                                                                                                                                                                                                      This also results in a lower variability in the types of issues
+                 80
+
+                 90
+                                                                                                                                                                                                      identified by reviewers for the same program.
+                 100
+
+                 110
+                                                                                                                                                                                                      B. RQ1 : Impact on Quality Issues Found
+                 116
+                           ACR reviews                                                   MCR
+                                                                                         NCR reviews
+                                                                                                                                                                                                         Fig. 5 shows boxplots with the number (top) and percentage
+                                                                                                                                                                                                      (bottom) of injected issues identified in the final reviews
+    Fig. 4. Example of distinct code lines covered by different reviews.                                                                                                                              of the three treatments. Table IV reports the results of the
+                                                                                                                                                                                                      logistic regression model using the Is injected bug identified
+                                                                                                                                                                                                      as dependent variable. As expected, the final reviews submitted
+   First,    reviews obtained with the support of automated                                                                                                                                           under the CCR treatment usually report 100% of injected
+tools might be more expensive to process for the contributor                                                                                                                                          issues, as these were already present in the review initially
+(i.e., the developer submitting the code for review), since they                                                                                                                                      provided to them and kept in the final review (with the logistic
+are significantly more verbose as opposed to those manually                                                                                                                                           regression confirming the significant influence of CCR on the
+written, while commenting on a similar amount of code lines.                                                                                                                                          odds of identifying the injected bug).
+                               TABLE IV                                           While we acknowledge the subjectivity of this assessment,
+                  RQ1 : L OGISTIC REGRESSION MODEL .                          the two developers who performed it had a strong disagree-
+                                                     Estim.     S.E.   Sig.   ment (i.e., 1 vs 3) in only 5% of the inspected issues.
+  Intercept                                           1.371    1.581              The weighted k agreement [41] was 0.315. The findings of
+  ACR                                                -0.004    0.351
+  CCR                                                 4.710    0.792   ***    this analysis indicated that the issues we injected were the ones
+  Years of experience                                -0.017    0.022          assessed with the highest severity (Q1=2.0, Q2=2.0, Q3=3.0,
+  Involved in code review: Contributor & Reviewer     0.308    0.906
+  Involved in code review: None                       0.143    0.850          mean=2.2), followed by the additional ones manually iden-
+  Involved in code review: Reviewer                   0.437    0.977          tified by developers (Q1=1.0, Q2=2.0, Q3=2.0, mean=1.8),
+  Programming language: Python                       -0.589    0.403
+  Program: number-conversion                          0.788    0.768          and the additional ones recommended by ChatGPT (Q1=1.0,
+  Program: stopwatch                                 -1.380    0.727          Q2=2.0, Q3=2.0, mean=1.6). We also factored in the issue
+  Program: tic-tac-toe                               -0.084    0.865
+  Program: todo-list                                  1.298    1.049          severity as a further cofactor in the logistic model without,
+  Program: word-utils                                -2.029    0.706    **    however, observing any impact of it nor changes in the
+  Issue Type: Evolv. → Docum. → Textual              -1.032    1.088
+  Issue Type: Evolv. → Structure → Org.              -0.814    1.198          significant variables (output of the model available in [25]).
+  Issue Type: Evolv. → Structure → Solution App.      0.014    1.112              The difference between the severity of the injected issues
+  Issue Type: Funct. → Check                         -0.649    1.144
+  Issue Type: Funct. → Interface                     -1.546    1.263          and the additional ones identified either manually or auto-
+  Issue Type: Funct. → Logic                         -1.838    1.583          matically is statistically significant (p-value < 0.01) with a
+           Sig. codes: ‘***’ p < 0.001, ‘**’ p < 0.01, ‘*’ p < 0.05
+                                                                              medium effect size (Mann-Whitney test [42] and the Cliff’s
+                                                                              delta [43]). An example of an automatically identified issue
+    More interestingly, the final ACR reviews submitted by                    classified as low severity by both developers is: “This method
+participants uncovered a median of 50% of the injected issues,                provides an interesting feature by [. . . ]. The logic is sound,
+i.e., the same amount uncovered in the MCR reviews, which                     though it involves several conditionals and might benefit from
+were written from scratch by participants, despite the fact                   comments explaining the rationale for each case.”. In this case,
+that the automated reviews initially provided in the ACR                      while comments are indeed missing, the code is quite self-
+treatment already reported, on average, 42% of the injected                   explanatory. On the other hand, some high-severity injected
+issues. This unveils a few important findings of our study:                   issues were missed by ChatGPT, such as the following one,
+   the current state of the art in terms of automated code review             provided in the initial review of the CCR treatment: “There is
+does not lead to a higher number of injected issues being                     a critical bug. For HEXADECIMAL, it erroneously uses base
+identified compared to fully manual code reviews. This is due                 8 instead of 16. It should be decimalToAnyBase(num, 16).”.
+to two factors. First, ChatGPT produced reviews in which
+                                                                                  RQ1 ’s findings lead to the conclusion that the reviews output
+more than half of the injected issues, on average, were not
+                                                                              of the ACR treatment identify a higher number of low-severity
+identified. Second, the exposure that developers had to these
+                                                                              issues while, however, not making a difference when it comes
+automated reviews before writing their final review seems to
+                                                                              to spotting high-severity issues (i.e., the ones we injected)
+have biased their behavior, leading to them barely identifying
+                                                                              as compared to a full manual process. This supports our
+any additional injected issues compared to the ones already
+                                                                              former suggestion that, given the current state of automation,
+included in the automated review. These findings should act
+                                                                              automatically generated reviews may be considered as a useful
+as a clear warning sign for companies interested in adopting
+                                                                              complement at the end of a manual review process.
+automated support in code review. A possibility to consider
+is to provide the automated review only once the reviewer
+already submits their comments, thus not being biased by the                  C. RQ2 : Impact on Review Time
+ones already provided.                                                           Fig. 6 shows from left to right: the time (in seconds) that re-
+    Since the final reviews of ACR report the highest number                  viewers spent on the whole code review process, the time spent
+of issues without, however, identifying a higher number of                    on the code to review (i.e., not including running the program
+injected issues, a question arises about the relevance of the                 or the tests), and the time writing the review comments. For
+additional issues identified in the ACR reviews. Indeed, it is                the ACR and CCR treatments, the latter also includes the time
+possible that additional issues reported are just as relevant as              spent reading the originally provided reviews. While we also
+the injected ones. To assess this, we asked two developers not                created multivariate linear regression models, we found that
+involved in the study to assess the severity of the: (i) injected             none of the involved independent variables (treatments and
+issues as documented in the reviews provided as starting point                cofactors) plays a statistically significant role on any of the
+in the CCR treatment; (ii) non injected issues automatically                  time-based dependent variables. Thus, for the sake of space,
+identified in ACR reviews; and (iii) non injected issues man-                 we only report these models in our replication package [25].
+ually identified in MCR reviews. The two developers have 16                     This finding debunks one of the motivations for automated
+and 7 years of programming experience, respectively, and were                 code review [16], i.e., saving time for reviewers. In fact, Fig. 6
+instructed to provide a severity assessment on a scale from                   shows that reviews performed completely manually (MCR)
+1=low severity to 3=high severity, with the former indicating                 took less time (mean=42, median=37 minutes) than those
+issues which they do not consider mandatory to address for                    supported by automation in the ACR (mean=56, median=42
+approving the code and the latter indicating showstoppers.                    minutes) and CCR (mean=57, median=50 minutes) treatments.
+                                                                                                                 Indeed, as shown in the linear regression model in Table V
+                                                                                                                 (Multiple R2 : 0.3445), there is no significant impact of the
+                                                                                                                 treatment on the confidence score reported by reviewers. We
+
+
+
+
+                                        Time reviewing (s)
+                                                                                                                 thus conclude that       providing an automated code review
+
+
+
+
+                                                                           Time writing (s)
+      Total time (s)
+
+
+
+                                                                                                                 as a starting point, even one being able to identify several
+                                                                                                                 high-severity issues (i.e., CCR treatment), does not have a
+                                                                                                                 significant effect on the confidence of the reviewer. This might
+                                                                                                                 be due to the fact that, while the automated code review
+                                                                                                                 may point the reviewer to relevant code locations, it does not
+                         MCR ACR CCR                         MCR ACR CCR                      MCR ACR CCR        help in understanding the code which, in the end, is what we
+                                                                                                                 expect to mostly influence a reviewer’s confidence. Combining
+     Fig. 6. RQ2 : Time spent in reviews across different treatments.                                            automated code review with LLM-based code summarization
+                                                                                                                 [44] may help in that direction.
+   This might be due to the fact that the introduction of an
+automated review, even if correct (CCR), comes with a price,                                                     E. Actionable Recommendations
+namely the reading, understanding, and double-checking of                                                           Based on our findings, we distill the following actionable
+the provided comments. This seems to be the case especially                                                      recommendations for reviewers, designers of tools aimed at
+for CCR reviews, where reviewers spent an average of 17                                                          automatically generating code reviews, and researchers.
+minutes (median=16) reading and writing reviews, compared                                                           Reviewers: We observed that the availability of an au-
+to an average of 12 minutes (median=11) for reviews written                                                      tomated review strongly influences the reviewer’s behavior,
+from scratch (see rightmost boxplot in Fig. 6).                                                                  who will mostly focus on the code locations commented on
+   It is also interesting to note that the variability in the time                                               in the provided review. Also, automated reviews result in a
+spent on the code to review and on the overall review process                                                    lower variability in the types of issues identified by different
+is higher for the ACR and the CCR treatments as compared                                                         reviewers for the same program. Based on these findings, we
+to MCR. We presume that this is due to two factors, namely:                                                      recommend to adopt automated reviews as a further check
+(i) the length of the automatically generated reviews, where the                                                 only after the manual inspection. This will not save time but
+shortest pointed to no issues (ACR review of stopwatch in                                                        it could help in identifying additional quality issues.
+Python) while the longest pointed to 14 issues (ACR review of                                                       Tools’ designers: While most of the issues reported by
+maze-generator in Java); and (ii) the trust that reviewers put                                                   ChatGPT have been considered valid by reviewers (i.e., kept
+in the automated support, which may vary from one reviewer                                                       in the final review), we found that these issues tend to have
+to another. Longer case studies in which developers have                                                         a quite low severity. Tools tailored for the identification of
+time to build their opinion about the review automation tool                                                     specific high-severity quality issues would be a valuable asset.
+are needed to corroborate or contradict our findings, especially                                                 Also, automatically generated reviews are much more verbose
+when it comes to what we observed in terms of time spent.                                                        than those manually written. This is a non-negligible cost that
+                                           TABLE V                                                               should be considered in the design of tools, e.g., by making a
+                               RQ3 : L INEAR REGRESSION MODEL .                                                  best effort to keep the generated reviews concise.
+                                                                                     Estim.       S.E.   Sig.       Researchers: We did not observe any time saved thanks to
+   Intercept                                                                             2.148   0.628      **   the availability of automated reviews. Thus, the motivation
+   ACR                                                                                   0.099   0.211           for introducing these tools in a code review process may
+   CCR                                                                                   0.180   0.212
+   Years of experience                                                                   0.025   0.011       *   be more related to a more comprehensive code inspection
+   Involved in code review: Contributor & Reviewer                                       1.001   0.560           rather than to save time [16]. Also, given the strong bias
+   Involved in code review: None                                                         1.147   0.602
+   Involved in code review: Reviewer                                                     1.591   0.678       *   in reviewers’ behavior we identified, studies investigating the
+   Programming language: Python                                                          0.270   0.180           impact on practitioners’ behavior when exploiting AI-based
+   Program: number-conversion                                                            0.361   0.261
+   Program: stopwatch                                                                   -0.296   0.287           tools to (semi-)automate SE tasks are very much needed.
+   Program: tic-tac-toe                                                                  0.233   0.334
+   Program: todo-list                                                                   -0.040   0.353                            IV. T HREATS TO VALIDITY
+   Program: word-utils                                                                  -0.592   0.287      *
+                       Sig. codes: ‘***’ p < 0.001, ‘**’ p < 0.01, ‘*’ p < 0.05                                     Construct validity. A major challenge was the time mea-
+                                                                                                                 surement in RQ2 , since interruptions were possible while the
+D. RQ3 : Impact on Reviewer’s Confidence                                                                         participants were performing the code reviews. We instructed
+   After each code review task, reviewers scored their confi-                                                    participants to not interrupt a code review task and to take
+dence in the review they submitted on a scale from 1 (very                                                       breaks only when changing treatment. Still, in the time-based
+low confidence) to 5 (very high confidence). Reviews from                                                        analysis we excluded 13 data points (out of 72) since it was
+the MCR treatment were scored with an average confidence                                                         clear that they represented errors in the measurement when
+of 3.5 (median=4), those from the ACR treatment with an                                                          compared to the other timings. The removed data points were
+average confidence of 3.7 (median=4), and those from the                                                         balanced across the treatments (4 for NCR, 5 for ACR, and 4
+CCR treatment with an average confidence of 3.8 (median=4).                                                      for CCR) and did not change the final outcome of our study.
+   Analyses reported in RQ0 and RQ1 are based on data                   More relevant to our work are the generative code review
+manually extracted from the submitted reviews (e.g., number          tasks recently automated via DL. The two most commonly
+of issues reported in the reviews), thus involving subjectivity      addressed tasks in the literature are review comment generation
+risks. To partially address them, we made sure that each review      [15]–[17], [55] and code refinement [15], [16], [56], [57]. The
+was independently inspected by two evaluators.                       former consists in automatically generating review comments
+   Internal validity. Participants who only contributed one or       in natural language for a given piece of code, similar to those
+two of the assigned reviews (18 out of 29 contributed three          that a human reviewer would write. The input of the DL model
+reviews) made the study diverge from our initially planned           is represented by the code to review, while its output consists
+within-subject design. Still, we addressed the issue by only         of a set of natural language comments pointing to issues in
+considering 72 of the reviews we collected in our analysis,          the code. In the code refinement task, the DL model takes as
+with the goal of balancing within each treatment the number          input the code submitted for review and the natural language
+of reviews performed on each project.                                comments written by a human reviewer. The goal of the model
+   While we collected some demographic data about partici-           is to refine the code to address the reviewer’s comments.
+pants, there are several other factors that could have influenced    The evaluations of these tasks showed promising results (e.g.,
+our findings. These include: (i) educational background; (ii)        ∼30% correct predictions in the code refinement task [15]),
+work experience; (iii) the lack of knowledge some participants       while still pointing to the need for major improvements before
+may have about the inspected programs; (iv) no past expe-            these tools can be considered for industrial adoption [58].
+rience of participants in using code review automation tools,           Given the documented evidence of ChatGPT’s adoption in
+thus not being able to properly calibrate their confidence in ac-    open source projects as a co-reviewer [18], in our experiment
+cepting/rejecting the recommendations; and (v) possible time         we adopted ChatGPT as the representative for code review
+constraints that participants had while performing the review        automation tools supporting the comment generation task.
+task. Our replication package [25] features a causal diagram
+showing all measured and unmeasured variables which may              B. Controlled Experiments on Code Review
+have played a role on the measured dependent variables.                 There are several prior controlled experiments on code
+   External validity. As a design choice, we decided to only         review reported in the literature. Table VI offers a brief
+involve in our study professional developers. This resulted in       overview of these works and reports (i) the related reference,
+a limited number of participants who took part to our study          (ii) the number and type of participants involved in the study
+(29) for a total of 24 data points (i.e., submitted review) per      (where type can be P = practitioners, S = students, or both),
+treatment. We acknowledge that our study could be statistically      (iii) the subject programming languages, (iv) the number
+underpowered, thus leading to biased conclusions. For this           of total review tasks collected (in some studies participants
+reason, replications are needed in order to corroborate or           performed more than one task, while in others only one),
+contradict our preliminary observations.                             and (v) a short description of the manipulated independent
+   Another threat to the generalizability of our findings con-       variables and measured dependent variables. The last row
+cerns the representativeness of the issues we injected as            of Table VI reports the same information for our study. As
+representative of those actually found in industrial code review.    illustrated, all works focus on independent variables different
+For example, concerns may arise about the triviality of the          from the one tackled in our study (i.e., the presence/absence
+injected issues, also considering the subject programs which,        of an automated code review). Several works [61], [63], [64]
+for the sake of limiting the study time, were limited in terms       also differ in terms of measured dependent variables, focusing
+of size. Nonetheless, we took inspiration from the taxonomy          on the reviewer’s comprehension level. We discuss in the
+of issues found in code reviews documented by Mäntylä and          following only the most related controlled experiments, being
+Lassenius [23], trying to inject a proportion of evolvability        the ones sharing with us the measured dependent variables.
+and functional issues close to the one they document (i.e.,             Khandelwal et al. [62] study how the usage of gamified code
+∼3 out of 4 issues found in code review do not pertain the           review tools can improve the usefulness of the code review
+visible functionality of the program). Also, our results show        comments and the identified quality issues. The study involved
+that, when not running the task in the context of the CCR            183 undergraduate students who had to write (i) a program
+treatment (i.e., a review identifying the injected issues was        which, on average, was composed by ∼500 lines of code, and
+available), participants were able to identify all injected issues   (ii) reviews for 5 peer-written programs using one of five code
+in only 12 out of the 48 code review tasks. This addresses           review tools (three being gamified and two not). This led to a
+concerns about the triviality of at least identifying the issues.    total of 183 × 5 code review tasks, which showed no impact
+                                                                     of gamification on the code review quality.
+                     V. R ELATED W ORK
+                                                                        Hanam et al. [65] present an experiment involving 11
+A. Code Review Automation                                            practitioners and students to investigate the impact of change
+  Most of the prior work focused on classification tasks,            impact analysis on the ability of identifying bugs during code
+such as recommending the best suited reviewer(s) for a given         review. Each participant performed two code review tasks, one
+change [7]–[10], [45]–[51], classifying the sentiment of review      using a change impact analysis tool named SemCIA and one
+comments [52], [53], and their usefulness [13], [14], [54], etc.     not using it, leading to 22 code reviews collected.
+                                                                TABLE VI
+                C ONTROLLED EXPERIMENTS ON CODE REVIEW: F OR PARTICIPANTS ’ TYPE , “S” INDICATES STUDENTS , “P”, PRACTITIONERS .
+ Reference                Participants   Programming    #Review   Independent Variable                                   Main Dependent
+                            #     Type   Languages        Tasks   Manipulated                                            Variables Measured
+Runeson and Wohlin [59]     8    P, S    C                   24   Three approaches for estimating the number of          How close the approaches were in terms of
+                                                                  bugs in the code being reviewed                        estimates after the review was performed
+Tao and Kim [60]           18     S      Java                36   Using/not using an approach to automatically par-      Code review correctness, Review time
+                                                                  tition composite changes submitted for review
+Zhang et al. [61]          12     S      Java                24   Using/not using an interactive approach to inspect     Comprehension level of reviewed change as-
+                                                                  code changes                                           sessed via a questionnaire
+Khandelwal et al. [62]    183     S      Python             915   Using a gamified/non-gamified code review tool         Usefulness of code review comments, Identified
+                                                                                                                         bugs/code smells
+Huang et al. [63]          10     S      Java                10   Using/not using a code differencing tool to simplify   Comprehension level of reviewed change as-
+                                                                  the understanding of code changes                      sessed via a questionnaire
+Huang et al. [64]          14    P, S    Java                28   Providing/Not-providing reviewers with informa-        Comprehension level of reviewed change as-
+                                                                  tion about the silent class in a commit (i.e., the     sessed via a questionnaire
+                                                                  one triggering changes to other modified classes)
+Hanam et al. [65]          11    P, S    Javascript          22   Using/not using a tool performing change impact        Identified bugs, Review time
+                                                                  analysis
+Spadini et al. [66]        85    P, S    Java                85   Showing/not showing already existing review com-       Identified bugs
+                                                                  ments to a reviewer starting their code inspection
+Fregnan et al. [67]       106    P, S    Java               106   Manipulating the inspection order of files impacted    Identified bugs in files appearing in different
+                                                                  by a change                                            positions
+Our study                  29     P      Java, Python        72   Three treatments providing/not providing re-           Identified bugs, Review time, Reviewer’s con-
+                                                                  viewers an automatically generated review              fidence
+
+
+   Using SemCIA participants were able to perform the code                         Reviewers generally accepted the validity of issues identi-
+review quickly while also identifying more bugs.                                fied by the LLM, adopting 89% of them on average in their
+   Spadini et al. [66] study how showing already existing                       final reviews. However, the presence of an automated review
+review comments to a reviewer starting their code inspection                    influenced reviewers to concentrate on the highlighted code
+influences the number of identified bugs. This experiment                       locations, potentially overlooking other areas. Our findings
+involved 85 participants, including practitioners (57) and stu-                 also indicate that using automated ChatGPT Plus reviews as
+dents. The authors asked each participant to perform one code                   a starting point leads to less severe issues being identified
+review, for a total of 85 collected reviews. The authors show                   compared to manual reviews, but unveils more trivial issues.
+that existing review comments can help in identifying specific                  Additionally, while automated reviews are expected to save
+types of bugs that otherwise would have been overlooked.                        time, our findings show that, in practice, reviewers still had to
+   Finally, Fregnan et al. [67] investigate whether the order in                spend time verifying the accuracy of the automated comments,
+which files submitted for review are presented to the reviewer                  negating any potential time savings. At the same time, having
+impacts the number of bugs identified in them. Surprisingly,                    access to automated reviews as a starting point did not lead
+they found that by just changing the file position the odds                     to changes in the confidence of reviewers.
+of identifying bugs in the inspected files can substantially                       These findings suggest that while current LLMs can play a
+change, with those inspected first having higher odds. The                      valuable role in identifying part of the code issues, their use
+study has been conducted with 106 among practitioners (72)                      as automated co-reviewers does not necessarily improve the
+and students. Also in this case, each participant contributed to                efficiency or effectiveness of the code review process from
+only one treatment, with a total of 106 reviews collected.                      a holistic perspective. The tendency of automated reviews to
+   As highlighted in Table VI and previously mentioned, the                     focus reviewer attention on specific areas of the code, coupled
+novelty of our work as compared to the existing literature lies                 with their limited impact on identifying high-severity issues
+in the investigated independent variable focusing on the novel                  and inefficiency in reducing review time represent important
+generation of DL-based code review automation tools.                            challenges that should be addressed in future work to allow
+                                                                                LLMs to become integral parts of the code review process.
+              VI. C ONCLUSION AND F UTURE W ORK
+  In this study, we explored the effects of incorporating auto-                                               ACKNOWLEDGMENT
+matically generated code reviews, particularly those produced
+by ChatGPT Plus (GPT-4), into the code review process.                            This project has received funding from the European Re-
+  Our controlled experiment involved 29 professional devel-                     search Council (ERC) under the European Union’s Horizon
+opers who reviewed code in three settings: manually, having                     2020 research and innovation programme (grant agreement
+an automated review provided by ChatGPT Plus as a starting                      No. 851720) and from the Swiss National Science Foundation
+point, or starting from a review that was manually crafted                      (SNSF) under the project “PARSED” (grant agreement No.
+by the authors to capture all major issues in the code, but                     219294). We are deeply grateful to the participants who took
+rephrased by ChatGPT Plus to seem generated by it.                              part in the study for their time and effort.
+                              R EFERENCES                                             national Conference on Mining Software Repositories (MSR). IEEE,
+                                                                                      2024, p. To Appear.
+ [1] C. Sadowski, E. Söderberg, L. Church, M. Sipko, and A. Bacchelli,          [19] Z. Liu, C. Chen, J. Wang, M. Chen, B. Wu, X. Che, D. Wang, and
+     “Modern code review: A case study at google,” in 40th International              Q. Wang, “Make llm a testing expert: Bringing human-like interac-
+     Conference on Software Engineering: Software Engineering in Practice,            tion to mobile gui testing via functionality-aware decisions,” in 2024
+     ICSE-SEIP, 2018, pp. 181–190.                                                    IEEE/ACM 46th International Conference on Software Engineering
+ [2] A. Bacchelli and C. Bird, “Expectations, outcomes, and challenges of             (ICSE), 2024, pp. 884–884.
+     modern code review,” in 35th IEEE/ACM International Conference on           [20] Z. Ma, A. R. Chen, D. J. Kim, T.-H. P. Chen, and S. Wang, “Llmparser:
+     Software Engineering, ICSE, 2013, pp. 712–721.                                   An exploratory study on using large language models for log parsing,”
+ [3] R. Morales, S. McIntosh, and F. Khomh, “Do code review practices                 in 2024 IEEE/ACM 46th International Conference on Software Engi-
+     impact design quality? a case study of the qt, vtk, and itk projects,” in        neering (ICSE), 2024, p. To appear.
+     22nd IEEE International Conference on Software Analysis, Evolution          [21] J. Xu, Z. Cui, Y. Zhao, X. Zhang, S. He, P. He, L. Li, Y. Kang, Q. Lin,
+     and Reengineering, SANER, 2015, pp. 171–180.                                     Y. Dang, S. Rajmohan, and D. Zhang, “Unilog: Automatic logging via
+ [4] G. Bavota and B. Russo, “Four eyes are better than two: On the impact            llm and in-context learning,” in Proceedings of the 46th IEEE/ACM
+     of code reviews on software quality,” in IEEE International Conference           International Conference on Software Engineering, ser. ICSE ’24, 2024.
+     on Software Maintenance and Evolution, ICSME, 2015, pp. 81–90.              [22] D. Nam, A. Macvean, V. J. Hellendoorn, B. Vasilescu, and B. A. Myers,
+ [5] S. McIntosh, Y. Kamei, B. Adams, and A. E. Hassan, “The impact of                “Using an llm to help with code understanding,” in Proceedings of the
+     code review coverage and code review participation on software quality:          46th IEEE/ACM International Conference on Software Engineering, ser.
+     A case study of the qt, vtk, and itk projects,” in 11th IEEE/ACM Working         ICSE ’24, 2024.
+     Conference on Mining Software Repositories, MSR, 2014, pp. 192–201.         [23] M. V. Mäntylä and C. Lassenius, “What types of defects are really dis-
+ [6] A. Bosu and J. C. Carver, “Impact of peer code review on peer impres-            covered in code reviews?” IEEE Transactions on Software Engineering,
+     sion formation: A survey,” in 7th IEEE/ACM International Symposium               vol. 35, no. 3, pp. 430–448, 2008.
+     on Empirical Software Engineering and Measurement, ESEM, 2013, pp.          [24] “ChatGPT,” https://chat.openai.com/, accessed: 2024-02-27.
+     133–142.                                                                    [25] “Replication package,” https://github.com/CodeReviewExperiment/
+ [7] V. Balachandran, “Reducing human effort and improving quality in peer            code review controlled experiment, [n.d.].
+     code reviews using automatic static analysis and reviewer recommenda-       [26] M. V. et al., “Ai-assisted assessment of coding practices in modern
+     tion,” in 2013 35th International Conference on Software Engineering             code review,” CoRR, vol. abs/2405.13565, 2024. [Online]. Available:
+     (ICSE). IEEE, 2013, pp. 931–940.                                                 https://doi.org/10.48550/arXiv.2405.13565
+ [8] P. Thongtanunam, C. Tantithamthavorn, R. G. Kula, N. Yoshida, H. Iida,      [27] P. Sedgwick, “Convenience sampling,” BMJ, 2013.
+     and K.-i. Matsumoto, “Who should review my code? a file location-           [28] S. J. Stratton, “Population research: convenience sampling strategies,”
+     based code-reviewer recommendation approach for modern code re-                  Prehospital and disaster Medicine, vol. 36, no. 4, pp. 373–374, 2021.
+     view,” in 2015 IEEE 22nd International Conference on Software Analy-        [29] “Rosetta Code,” https://rosettacode.org/, accessed: 2024-02-22.
+     sis, Evolution, and Reengineering (SANER). IEEE, 2015, pp. 141–150.         [30] “Apache Commons Lang,” https://github.com/apache/commons-lang,
+ [9] X. Xia, D. Lo, X. Wang, and X. Yang, “Who should review this                     accessed: 2024-02-22.
+     change?: Putting text and file location analyses together for more          [31] E. Fregnan, F. Petrulio, L. Di Geronimo, and A. Bacchelli, “What hap-
+     accurate recommendations,” in 2015 IEEE International Conference on              pens in my code reviews? an investigation on automatically classifying
+     Software Maintenance and Evolution (ICSME), 2015, pp. 261–270.                   review changes,” Empirical Software Engineering, vol. 27, no. 4, p. 89,
+[10] A. Ouni, R. G. Kula, and K. Inoue, “Search-based peer reviewers                  2022.
+     recommendation in modern code review,” in 2016 IEEE International           [32] “Remote Development - Visual Studio Marketplace,” https:
+     Conference on Software Maintenance and Evolution (ICSME). IEEE,                  //marketplace.visualstudio.com/items?itemName=ms-vscode-remote.
+     2016, pp. 367–377.                                                               vscode-remote-extensionpack, accessed: 2024-02-28.
+[11] B. Soltanifar, A. Erdem, and A. Bener, “Predicting defectiveness of         [33] “Extension Pack for Java - Visual Studio Marketplace,”
+     software patches,” in Proceedings of the 10th ACM/IEEE International             https://marketplace.visualstudio.com/items?itemName=vscjava.
+     Symposium on Empirical Software Engineering and Measurement, 2016,               vscode-java-pack, accessed: 2024-02-28.
+     pp. 1–10.                                                                   [34] “Python - Visual Studio Marketplace,” https://marketplace.visualstudio.
+[12] S. Sharma and B. Sodhi, “Using stack overflow content to assist in code          com/items?itemName=ms-python.python, accessed: 2024-02-28.
+     review,” Software: Practice and Experience, vol. 49, no. 8, pp. 1255–       [35] “Code       Review      -    Visual    Studio     Marketplace,”    https:
+     1277, 2019.                                                                      //marketplace.visualstudio.com/items?itemName=d-koppenhagen.
+[13] T. Pangsakulyanont, P. Thongtanunam, D. Port, and H. Iida, “Assess-              vscode-code-review, accessed: 2024-02-28.
+     ing mcr discussion usefulness using semantic similarity,” in 2014 6th       [36] “Tako - Visual Studio Marketplace,” https://marketplace.visualstudio.
+     International Workshop on Empirical Software Engineering in Practice.            com/items?itemName=codelounge.tako, accessed: 2024-02-28.
+     IEEE, 2014, pp. 49–54.                                                      [37] R. Minelli, A. Mocci, and M. Lanza, “I know what you did last summer:
+[14] M. M. Rahman, C. K. Roy, and R. G. Kula, “Predicting usefulness of               an investigation of how developers spend their time,” in 23rd IEEE
+     code review comments using textual features and developer experience,”           International Conference on Program Comprehension, ICPC, 2015, pp.
+     in 2017 IEEE/ACM 14th International Conference on Mining Software                25–35.
+     Repositories (MSR). IEEE, 2017, pp. 215–226.                                [38] A. Hughes and D. Grawoig, Statistics, a Foundation for Analysis, ser.
+[15] L. Zhiyu, L. Shuai, G. Daya, D. Nan, J. Shailesh, J. Grant, M. Deep,             Business and Economics Series. Addison-Wesley Publishing Company,
+     G. Jared, S. Alexey, F. Shengyu, and N. Sundaresan, “Automating                  1971.
+     code review activities by large-scale pre-training,” in 30th ACM Joint      [39] O. J. Dunn, “Multiple comparisons among means,” Journal of the
+     European Software Engineering Conference and the ACM/SIGSOFT                     American Statistical Association, vol. 56, no. 293, pp. 52–64, 1961.
+     International Symposium on the Foundations of Software Engineering          [40] B. Yoav and H. Yosef, “Controlling the false discovery rate: A practical
+     ESEC-FSE, 2022, pp. 1035–1047.                                                   and powerful approach to multiple testing,” Journal of the Royal
+[16] R. Tufano, S. Masiero, A. Mastropaolo, L. Pascarella, D. Poshyvanyk,             Statistical Society. Series B (Methodological), vol. 57, no. 1, pp. 289–
+     and G. Bavota, “Using pre-trained models to boost code review au-                300, 1995.
+     tomation,” in 44th IEEE/ACM International Conference on Software            [41] J. Cohen, Statistical power analysis for the behavioral sciences.
+     Engineering, ICSE, 2022, pp. 2291–2302.                                          Lawrence Earlbaum Associates, 1988.
+[17] L. Li, L. Yang, H. Jiang, J. Yan, T. Luo, Z. Hua, G. Liang, and C. Zuo,     [42] F. Wilcoxon, “Individual comparisons by ranking methods,” Biometrics
+     “Auger: automatically generating review comments with pre-training               Bulletin, vol. 1, no. 6, pp. 80–83, 1945.
+     models,” in Proceedings of the 30th ACM Joint European Software             [43] R. J. Grissom and J. J. Kim, Effect sizes for research: A broad practical
+     Engineering Conference and Symposium on the Foundations of Software              approach, 2nd ed. Lawrence Earlbaum Associates, 2005.
+     Engineering, 2022, pp. 1009–1021.                                           [44] T. Ahmed and P. Devanbu, “Few-shot training llms for project-specific
+[18] R. Tufano, A. Mastropaolo, F. Pepe, O. Dabic, M. Di Penta, and                   code-summarization,” in Proceedings of the 37th IEEE/ACM Interna-
+     G. Bavota, “Unveiling chatgpt’s usage in open source projects: A                 tional Conference on Automated Software Engineering, ser. ASE ’22,
+     mining-based study,” in Proceedings of 2024 IEEE/ACM 21th Inter-                 2023.
+[45] M. M. Rahman, C. K. Roy, and J. A. Collins, “Correct: Code reviewer               10th Innovations in Software Engineering Conference, ser. ISEC ’17,
+     recommendation in github based on cross-project and technology expe-              2017, p. 122–126.
+     rience,” in 2016 IEEE/ACM 38th International Conference on Software          [63] K. Huang, B. Chen, X. Peng, D. Zhou, Y. Wang, Y. Liu, and W. Zhao,
+     Engineering Companion (ICSE-C), 2016, pp. 222–231.                                “Cldiff: generating concise linked code differences,” in Proceedings of
+[46] M. B. Zanjani, H. Kagdi, and C. Bird, “Automatically recommending                 the 33rd ACM/IEEE International Conference on Automated Software
+     peer reviewers in modern code review,” IEEE Transactions on Software              Engineering, ser. ASE ’18, 2018, p. 679–690.
+     Engineering, vol. 42, no. 6, pp. 530–543, 2016.                              [64] Y. Huang, N. Jia, X. Chen, K. Hong, and Z. Zheng, “Salient-class
+[47] S. Asthana, R. Kumar, R. Bhagwan, C. Bird, C. Bansal, C. Maddila,                 location: help developers understand code change in code review,” in
+     S. Mehta, and B. Ashok, “Whodo: Automating reviewer suggestions                   Proceedings of the 2018 26th ACM Joint Meeting on European Software
+     at scale,” in Proceedings of the 2019 27th ACM Joint Meeting on                   Engineering Conference and Symposium on the Foundations of Software
+     European Software Engineering Conference and Symposium on the                     Engineering, ser. ESEC/FSE 2018, 2018, p. 770–774.
+     Foundations of Software Engineering, ser. ESEC/FSE 2019. New                 [65] Q. Hanam, A. Mesbah, and R. Holmes, “Aiding code change understand-
+     York, NY, USA: Association for Computing Machinery, 2019, p.                      ing with semantic change impact analysis,” in 2019 IEEE International
+     937–945. [Online]. Available: https://doi.org/10.1145/3338906.3340449             Conference on Software Maintenance and Evolution (ICSME), 2019, pp.
+[48] J. Jiang, D. Lo, J. Zheng, X. Xia, Y. Yang, and L. Zhang, “Who                    202–212.
+     should make decision on this pull request? analyzing time-decaying           [66] D. Spadini, G. Çalikli, and A. Bacchelli, “Primers or reminders? the
+     relationships and file similarities for integrator prediction,” Journal of        effects of existing review comments on code review,” in Proceedings of
+     Systems and Software, vol. 154, pp. 196–210, 2019.                                the ACM/IEEE 42nd International Conference on Software Engineering,
+[49] E. Mirsaeedi and P. C. Rigby, “Mitigating turnover with code                      ser. ICSE ’20, 2020, p. 1171–1182.
+     review recommendation: Balancing expertise, workload, and knowledge          [67] E. Fregnan, L. Braz, M. D’Ambros, G. Çalıklı, and A. Bacchelli,
+     distribution,” in Proceedings of the ACM/IEEE 42nd International                  “First come first served: the impact of file position on code review,”
+     Conference on Software Engineering, ser. ICSE ’20. New York, NY,                  in Proceedings of the 30th ACM Joint European Software Engineering
+     USA: Association for Computing Machinery, 2020, p. 1183–1195.                     Conference and Symposium on the Foundations of Software Engineering,
+     [Online]. Available: https://doi.org/10.1145/3377811.3380335                      ser. ESEC/FSE 2022, 2022, p. 483–494.
+[50] A. Strand, M. Gunnarson, R. Britto, and M. Usman, “Using a context-
+     aware approach to recommend code reviewers: findings from an indus-
+     trial case study,” in Proceedings of the ACM/IEEE 42nd International
+     Conference on Software Engineering: Software Engineering in Practice,
+     2020, pp. 1–10.
+[51] P. Pandya and S. Tiwari, “Corms: A github and gerrit based
+     hybrid code reviewer recommendation approach for modern code
+     review,” in Proceedings of the 30th ACM Joint European Software
+     Engineering Conference and Symposium on the Foundations of Software
+     Engineering, ser. ESEC/FSE 2022. New York, NY, USA: Association
+     for Computing Machinery, 2022, p. 546–557. [Online]. Available:
+     https://doi.org/10.1145/3540250.3549115
+[52] T. Ahmed, A. Bosu, A. Iqbal, and S. Rahimi, “Senticr: a customized
+     sentiment analysis tool for code review interactions,” in 2017 32nd
+     IEEE/ACM International Conference on Automated Software Engineer-
+     ing (ASE). IEEE, 2017, pp. 106–111.
+[53] C. D. Egelman, E. Murphy-Hill, E. Kammer, M. M. Hodges, C. Green,
+     C. Jaspan, and J. Lin, “Predicting developers’ negative feelings about
+     code review,” in Proceedings of the ACM/IEEE 42nd International
+     Conference on Software Engineering, 2020, pp. 174–185.
+[54] M. Hasan, A. Iqbal, M. R. U. Islam, A. I. Rahman, and A. Bosu, “Using
+     a balanced scorecard to identify opportunities to improve code review
+     effectiveness: An industrial experience report,” Empirical Software En-
+     gineering, vol. 26, pp. 1–34, 2021.
+[55] Y. Hong, C. Tantithamthavorn, P. Thongtanunam, and A. Aleti, “Com-
+     mentfinder: a simpler, faster, more accurate code review comments
+     recommendation,” in Proceedings of the 30th ACM Joint European
+     Software Engineering Conference and Symposium on the Foundations
+     of Software Engineering, 2022, pp. 507–519.
+[56] F. Huq, M. Hasan, M. M. A. Haque, S. Mahbub, A. Iqbal, and T. Ahmed,
+     “Review4repair: Code review aided automatic program repairing,” In-
+     formation and Software Technology, vol. 143, p. 106765, 2022.
+[57] R. Tufano, L. Pascarella, M. Tufano, D. Poshyvanyk, and G. Bavota,
+     “Towards automating code review activities,” in 43rd IEEE/ACM Inter-
+     national Conference on Software Engineering, ICSE, 2021, pp. 163–174.
+[58] R. Tufano, O. Dabic, A. Mastropaolo, M. Ciniselli, and G. Bavota,
+     “Code review automation: Strengths and weaknesses of the state of the
+     art,” IEEE Trans. Software Eng., vol. 50, no. 2, pp. 338–353, 2024.
+[59] P. Runeson and C. Wohlin, “An experimental evaluation of an
+     experience-based capture-recapturemethod in software code inspec-
+     tions,” Empirical Softw. Engg., 1998.
+[60] Y. Tao and S. Kim, “Partitioning composite code changes to facilitate
+     code review,” in 2015 IEEE/ACM 12th Working Conference on Mining
+     Software Repositories. IEEE, 2015, pp. 180–190.
+[61] T. Zhang, M. Song, J. Pinedo, and M. Kim, “Interactive code review
+     for systematic changes,” in 2015 IEEE/ACM 37th IEEE International
+     Conference on Software Engineering, vol. 1, 2015, pp. 111–122.
+[62] S. Khandelwal, S. K. Sripada, and Y. R. Reddy, “Impact of gamification
+     on code review process: An experimental study,” in Proceedings of the
+

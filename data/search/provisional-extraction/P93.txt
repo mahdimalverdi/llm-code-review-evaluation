@@ -1,0 +1,541 @@
+                                           When More Retrieval Hurts: Retrieval-Augmented
+                                                     Code Review Generation
+                                                 1st Qianru Meng                 2nd Xiao Zhang                 3rd Zhaochun Ren                    4th Joost Visser
+                                                    LIACS                            CLCG                              LIACS                            LIACS
+                                               Leiden University             University of Groningen              Leiden University                Leiden University
+                                              Leiden, Netherlands            Groningen, Netherlands             Leiden, Netherlands              Leiden, Netherlands
+                                            mengqr@vuw.leidenuniv.nl           xiao.zhang@rug.nl              z.ren@liacs.leidenuniv.nl     j.m.w.visser@liacs.leidenuniv.nl
+
+
+
+                                            Abstract—Code review generation can reduce developer effort            This paper takes a task-specific retrieval-augmented gen-
+arXiv:2511.05302v2 [cs.SE] 24 Mar 2026
+
+
+
+
+                                         by producing concise, reviewer-style feedback for a given code         eration perspective for code review. We view retrieval aug-
+                                         snippet or code change. However, generation-only models often          mentation as retrieval-augmented in-context learning, where
+                                         produce generic or off-point reviews, while retrieval-only methods
+                                         struggle to adapt well to new contexts. In this paper, we view         retrieved historical reviews are placed in the input context as
+                                         retrieval augmentation for code review as retrieval-augmented          in-context examples. These examples provide signals about (i)
+                                         in-context learning: retrieved historical reviews are placed in        review style (short, actionable, reviewer-like) and (ii) review fo-
+                                         the input context as examples that guide the model’s output.           cus (what to critique in the code). Crucially, historical reviews
+                                         Based on this view, we propose RARe (Retrieval-Augmented               encode both intent and tone; naively adding multiple retrieved
+                                         code Reviewer), a framework that retrieves relevant historical
+                                         reviews from a corpus and conditions a large language model            items may introduce redundant or conflicting cues. Therefore,
+                                         on the retrieved in-context examples. Experiments on two public        deciding how many retrieved examples to include becomes
+                                         benchmarks show that RARe outperforms strong baselines and             central.
+                                         reaches BLEU-4 scores of 12.32 and 12.96. A key finding is that
+                                                                                                                   We propose RARe, a retrieval-augmented framework for
+                                         more retrieval can hurt: using only the top-1 retrieved example
+                                         works best, while adding more retrieved items can degrade              code review generation that combines a learned retriever with
+                                         performance due to redundancy and conflicting cues under               a large language model. RARe consists of (1) a retriever
+                                         limited context budgets. Human evaluation and interpretability         that finds relevant historical reviews from a corpus and (2)
+                                         analysis further support that retrieval-augmented generation           a generator that produces the final review conditioned on the
+                                         reduces generic outputs and improves review focus.
+                                                                                                                target code and the retrieved in-context example(s).
+                                            Index Terms—code review, retrieval-augmented generation, in-
+                                         context learning, large language models, software engineering             Experiments on two benchmarks show that RARe improves
+                                                                                                                over strong baselines, reaching BLEU-4 scores of 12.32 and
+                                                               I. I NTRODUCTION                                 12.96. Beyond automatic metrics, we conduct human evalua-
+                                                                                                                tion and interpretability-based analysis to explain why retrieval
+                                            Code review is a core practice for improving software
+                                                                                                                helps: retrieved examples reduce generic summaries and steer
+                                         quality, but it is time-consuming and knowledge-intensive.
+                                                                                                                generation toward targeted, reviewer-like critiques.
+                                         Automatically generating code reviews is therefore attractive
+                                         for (i) assisting reviewers with candidate feedback and (ii)              Contributions. We make the following contributions:
+                                         reducing developer turnaround time by providing immedi-                  • We present RARe, a retrieval-augmented framework for
+                                         ate critique. Prior work spans rule-based static analysis and              code review generation that uses retrieved historical re-
+                                         repository mining [1], [2], [4], [17], [26], neural generation             views as in-context examples.
+                                         approaches [9], [19], [21], [23], [29], [30], and retrieval-based        • We provide a component-wise study of retrievers
+                                         methods that reuse historical reviews for similar code [12].               (NDR/GDR/DPR) and generators (Llama 3.1, Mistral-7B,
+                                         Retrieval is efficient and can recover project- or domain-                 CodeGemma-7B) under direct inference and LoRA fine-
+                                         specific tokens, but retrieval-only systems cannot flexibly                tuning.
+                                         adapt reviews to new contexts.                                           • Our ablation studies show that top-1 retrieval is best:
+                                            Although both retrieval and generation can work, each                   adding more retrieved examples can hurt, highlighting
+                                         has a characteristic failure mode in code review. Retrieval-               an important non-monotonic behavior for code review
+                                         only approaches are bounded by the corpus and may return                   generation.
+                                         lexically similar yet intent-misaligned reviews. Generation-             • We complement automatic metrics with human evalua-
+                                         only approaches can produce novel feedback, but LLM outputs                tion and interpretability-based evidence to explain how
+                                         often become overly generic, summary-like, or off-point in                 retrieval influences style and review focus.
+                                         review settings [19]. Fine-tuning can improve task alignment,            • All code is available in an anonymous repository: https:
+                                         yet may overfit to limited data and still miss the intended                //anonymous.4open.science/r/GAR-9EE2.
+                                         review focus.
+                                                                                Instruction
+                                                                              ❖ Target Code
+                                                                              ❖ Top k Review
+                                                                                Instruction
+
+                                     Top k
+                                             ...
+                                                                                  Query
+
+      Target Code                                  Top 1
+                                    # Code Snippet
+                                                                               Prompt                 Generator
+                                     def max(a, b):
+                                         if a > b:
+                                              Return a
+
+                                    # Review
+                                     return is not complete
+
+                                                                                                        Review
+       Retriever
+                                  Top k Reviews
+
+Fig. 1: The overall architecture of RARe. Different colors distinguish the retrieval, generation, and RAG processes. Within the
+review of the target code, the text related to generation is marked in blue, while those related to retrieval are marked in green.
+
+
+                    II. R ELATED W ORK                            for question answering and dialogue [3], [5], [6], [10], [16],
+A. Automation of Code Review Comment Generation                   [18], [20], [34]. LLMs renewed broad interest in RAG because
+                                                                  they can incorporate retrieved context through prompting [7].
+   Early studies used static analysis and hand-crafted rules      In many LLM-based RAG pipelines, retrieved items are in-
+to automate parts of review processes [1], [4], [17], [26].       serted into the prompt as in-context examples that influence
+For instance, Balachandran et al. [1] developed a review bot      generation.
+integrating multiple analyzers to suggest code modifications.
+Palvannan et al. [26] built a suggestion bot for GitHub using        RAG has also been used for code-related tasks, includ-
+a Python analyzer. Repository mining has also been used to        ing code generation and summarization [27], code comple-
+derive validation rules from historical commits [2]. While        tion [24], assertion generation and program repair [25], com-
+efficient, rule-based approaches lack portability and struggle    ment generation [8], and commit message generation [33].
+with open-ended, context-dependent review comments.               For code review generation, retrieval augmentation is partic-
+   Neural approaches improved semantic understanding of           ularly motivated because review intent and style are strongly
+code and reviews. Gupta et al. [9] introduced DeepCodeRe-         reflected in historical reviews. Recent work has explicitly ex-
+viewer to model relevance and recommend historical reviews.       plored retrieval augmentation for code review generation, e.g.,
+Siow et al. [29] proposed CORE with attention-based LSTM to       retrieval-augmented code review comment generation [11] and
+generate comments. With transformer pre-training [31], later      LAURA [36]. These studies show the promise of augmenting
+work adopted seq2seq frameworks and task-specific objectives      review generation with retrieved historical context, but they
+for review tasks [19], [21], [30]. More recently, LLMs have       leave open how retrieval design choices affect generation
+been fine-tuned for code review comment generation; Lu            quality across different evaluation settings. In parallel, recent
+et al. [23] studied tuning strategies and proposed LLaMA-         RAG research has emphasized selective retrieval and context
+Reviewer.                                                         compression to mitigate redundancy when prompts are tight,
+   Retrieval-based review generation is a complementary           including EXIT [13], PISCO [22], and SARA [14].
+paradigm: given a code snippet/change, retrieve similar his-
+torical items and reuse their reviews. CommentFinder [12]            Prior work has already explored retrieval augmentation for
+represents code with bag-of-words [35] and combines cosine        code review generation, but existing studies have mainly eval-
+similarity with Gestalt Pattern Matching (GPM) [28] for           uated it on single-language corpora. In contrast, we provide
+reranking. Retrieval excels at efficiency and at copying low-     a more comprehensive evaluation by considering both single-
+frequency but important tokens, yet cannot reliably adapt to      language and cross-language benchmarks. We further study
+novel contexts.                                                   code review generation from the perspective of retrieval-
+                                                                  augmented in-context learning, where retrieved reviews mainly
+B. Retrieval-Augmented Generation                                 serve as examples that shape review focus and wording.
+  Retrieval-augmented generation (RAG) was proposed in            This perspective highlights an underexplored question in prior
+early neural settings [15], [18] and has been widely adopted      work: how many retrieved examples are actually useful.
+    TABLE I: Prompt templates used in our experiments.                       2) GPM Dense Retrieval (GDR): GDR is a two-stage
+                                                                          method. It first applies NDR to obtain a candidate pool, then
+Direct inference.
+Your task is to write a concise code review for the given code snippet.   reranks candidates using an order-sensitive token matching
+Your output should only be a brief code review, no extra information.     score based on Gestalt Pattern Matching (GPM) [28]. This is
+                                                                          useful when token order is informative, especially in single-
+RARe.
+Here is an example code review: {retrieved review(s)}.                    language corpora.
+Your task is to write a concise code review for the given code snippet.      3) Dense Passage Retrieval (DPR): DPR uses two en-
+Your output should only be a brief code review, no extra information.     coders: a code encoder c(·) for input code and a review
+                                                                          encoder r(·) for historical reviews. It scores code–review
+                                                                          relevance directly:
+                      III. M ETHODOLOGY
+                                                                                                                       
+                                                                                           sDPR (x, o) = sim c(x), r(o) .            (3)
+   RARe is a retrieval-augmented framework for code review                DPR is trained contrastively [15] to align matched code–
+generation. Given a target code snippet or code change x,                 review pairs and separate mismatched ones. Compared with
+RARe retrieves relevant historical review(s) from a corpus                NDR, it is less dependent on code-to-code similarity and can
+and conditions an LLM on the target code together with the                be more robust in multi-language settings.
+retrieved review example(s) to generate the final review o.                 We vary the number of retrieved reviews as k ∈ {1, 3, 5}.
+Figure 1 illustrates the pipeline.
+                                                                          C. Generator
+A. Problem Formulation                                                      We use decoder-only LLMs as generators. Let s denote
+                                                                          the full input context, consisting of the instruction, retrieved
+  Let D = {(xi , oi )}Ni=1 denote paired code x and human-                review example(s), and target code x. The generator models
+written review o. Given a new input x, the goal is to generate                                       n
+a concise review o that matches reviewer-style writing and
+                                                                                                    Y
+                                                                                         p(o | s) =     pθ (oi | s, o1:i−1 ) ,          (4)
+focuses on relevant issues.                                                                         i=1
+  RARe has three steps:
+                                                                          where o = (o1 , . . . , on ) and θ denotes model parameters.
+  1) Retrieve: obtain top-k historical items {(x′j , o′j )}kj=1
+     relevant to x.                                                       D. Retrieval-Augmented Generation in RARe
+  2) Construct context: combine the instruction, retrieved                   Given input x, the retriever returns top-k historical ex-
+     review(s) {o′j }, and target code x.                                 amples, which are prepended to the prompt as in-context
+  3) Generate: use an LLM to produce the review o from                    examples. These examples guide the model toward reviewer-
+     the augmented context.                                               like writing and relevant critique targets.
+                                                                             Let Rk (x) = {o′1 , . . . , o′k } denote the retrieved review
+                                                                          examples for x. RARe generates
+B. Retriever
+                                                                                   pRARe (o | x) = pθ (o | Prompt(x, Rk (x))) ,          (5)
+   The retriever ranks historical items by relevance to the
+target code x. To avoid information leakage, the retrieval index          where Prompt(·) formats the instruction, retrieved exam-
+is built only from the training split, and all validation/test            ple(s), and target code into a single input sequence.
+instances retrieve exclusively from Dtrain = {(xi , oi )}.
+                                                                                        IV. E XPERIMENTAL S ETUP
+   For dense retrieval, given vectors u and v, we use cosine
+similarity:                                                               A. Research Questions
+                                   u⊤ v                                     • RQ1: How do retriever and generator choices affect
+                    sim(u, v) =            .                  (1)             RARe?
+                                 ∥u∥ · ∥v∥
+                                                                            • RQ2: Does RARe outperform strong prior baselines?
+Candidates are ranked by similarity and the top-k are returned.             • RQ3: How does the number of retrieved examples
+   We compare three retrieval methods: Normal Dense Re-                       affect performance when prompts are limited?
+trieval (NDR), GPM Dense Retrieval (GDR), and Dense
+                                                                          B. Datasets
+Passage Retrieval (DPR).
+   1) Normal Dense Retrieval (NDR): NDR encodes code                         We evaluate on CodeReviewer (CRer.) [21] and Tufano
+snippets into a shared embedding space with a single encoder              (Tuf.) [30]. CRer. contains GitHub code review instances
+c(·). For target x and candidate code z, relevance is                     spanning nine programming languages and represents code
+                                                                          changes in a diff format; it has approximately 118K/10K/10K
+                                                                          train/validation/test instances. Tuf. is collected from GitHub
+                                             
+                 sNDR (x, z) = sim c(x), c(z) ,             (2)
+                                                                          and Gerrit, consists of Java instances, and provides code
+where c(·) is implemented with a code encoder such as                     in a snippet format rather than diffs; it has approximately
+CodeBERT. The paired review of the retrieved code is used                 134K/17K/17K instances. We use the official splits released
+as the example review.                                                    with each dataset and apply no additional preprocessing.
+TABLE II: Comparison of three retrievers: NDR (Normal Dense Retrieval), GDR (GPM Dense Retrieval), DPR (Dense Passage
+Retrieval).
+
+                              Method                           CRer.                                         Tuf.
+                                          BLEU-4        ROUGE-L           METEOR            BLEU-4    ROUGE-L          METEOR
+                              NDR            9.53          5.65                 5.54         12.06       8.45                8.17
+                              GDR            9.55          5.66                 5.55         12.33       8.67                8.43
+                              DPR            9.71          5.70                 5.60         11.80       7.98                7.74
+
+  TABLE III: Performance of models on CRer. dataset and Tuf. dataset with and without Retrieval Augmentation (+RA).
+
+                                                                         CRer.                                        Tuf.
+                   Model
+                                                     BLEU-4            ROUGE-L          METEOR       BLEU-4         ROUGE-L         METEOR
+                                          DI            5.84             3.18             3.18         5.12           2.55           2.67
+                                          +RA          12.32             6.43             8.33        12.96           8.67           8.76
+                   Llama-3.1-8B
+                                          FT            8.82             6.75             5.29         8.06           5.87           4.57
+                                          +RA           9.05             6.90             5.42         9.19           7.00           5.66
+                                          DI            5.07             2.69             2.72        5.21            2.75           3.09
+                                          +RA          11.15             5.75             6.87        9.74            7.69           7.58
+                   Mistral-7B
+                                          FT            9.07             6.56             5.32        8.42            6.21           4.91
+                                          +RA           9.59             7.40             6.59        9.58            7.40           6.05
+                                          DI           3.34              1.53             1.40        5.27            3.02           2.95
+                                          +RA          4.76              2.56             2.49        5.51            3.02           3.53
+                   CodeGemma-7B
+                                          FT           9.26              6.48             5.22        8.39            5.70           4.53
+                                          +RA          9.33              6.51             5.25        9.44            6.88           5.60
+
+
+
+C. Evaluation Metrics                                                                  on 4 NVIDIA A100 GPUs, and report averages over three
+  Following prior work [12], [19], [21], [23], [30], we report                         runs.
+BLEU-4, ROUGE-L, and METEOR.                                                                             V. R ESULTS AND A NALYSIS
+                                                                                          We report results under retrieval-augmented in-context
+D. Baselines
+                                                                                       learning, where retrieved historical reviews are included in
+  We compare against representative retrieval-only and                                 the input context as examples that guide generation. This
+generation-based baselines: CommentFinder [12], Tufano                                 section examines (i) how retriever and generator choices affect
+et al. [30], CodeReviewer [21], AUGER [19], LLaMA-                                     performance, (ii) how RARe compares with prior methods,
+Reviewer [23], and CodeT5 [32].                                                        and (iii) when adding more retrieved examples becomes detri-
+                                                                                       mental. We then present a case study, human evaluation, and
+E. Model Configurations and Training
+                                                                                       interpretability evidence to complement the aggregate metrics.
+   Retrievers. We compare the performance of three retrievers
+                                                                                       A. Comparison of retrieves
+(NDR, GDR and DPR). Only DPR requires training and we
+train two encoders on the training data from the two datasets,                            As shown in Table II. We focus on top-1 performance
+following the well-adjusted hyperparameters provided by the                            of three retrievers. On CRer., DPR achieves the best results
+original work [27]. Generators. We evaluate three open-                                (BLEU-4 9.71, ROUGE-L 5.70, METEOR 5.60), while on
+source LLMs: Llama-3.1-8B1 , Mistral-7B2 , and CodeGemma-                              Tuf., GDR performs best (BLEU-4 12.33, ROUGE-L 8.67,
+7B-7B3 We use the same instruction prompt for all models;                              METEOR 8.43).
+RARe additionally prepends retrieved review example(s). Full                              Overall, GDR improves over NDR due to its GPM-based
+prompt templates are provided in Table I.                                              reranking, which better prioritizes relevant items. For the
+   We consider direct inference (DI) and LoRA fine-tuning                              single-language Tuf. dataset, code-only similarity is often
+(FT), and their retrieval-augmented variants where retrieved                           sufficient, making NDR/GDR competitive. In contrast, CRer.
+review example(s) are prepended to the prompt. DI requires                             spans multiple languages, where code-only similarity is less
+no parameter updates, whereas FT trains LoRA adapters on                               reliable; DPR is more robust because it directly models code–
+the training split (base model weights remain frozen). We train                        review alignment. Therefore, we use DPR for CRer. and GDR
+LoRA for 5 epochs with learning rate 10−4 and batch size 16                            for Tuf. in subsequent experiments.
+
+ 1 https://huggingface.co/meta-llama/Meta-Llama-3.1-8B-Instruct
+                                                                                       B. Comparison of generators
+ 2 https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.3                             As introduced in Section IV, we compare three LLMs
+ 3 https://huggingface.co/google/codegemma-7b-it                                       (Llama-3.1-8B, Mistral-7B and CodeGemma-7B) with em-
+TABLE IV: Overall comparison between baseline methods and RARe. − indicates that the previous study did not provide the
+predictions. For RARe, the number of retrieved reviews are in brackets.
+
+                  Method                                CRer.                                Tuf.
+                                          BLEU-4     ROUGE-L      METEOR      BLEU-4     ROUGE-L      METEOR
+                  Tufano et al. [30]          -          -            -        12.32        8.72         7.83
+                  CodeT5 [32]               7.34       7.41         5.86        7.10        6.61         5.13
+                  CodeReviewer [21]         6.02       5.39         3.68          -           -            -
+                  CommentFinder [12]        9.47       5.69         5.44       12.71        8.81         8.61
+                  AUGER [19]                8.09       6.50         4.74        7.76        5.77         4.36
+                  LLaMA-Reviewer [23]       8.23       6.12         5.34        7.85        5.82         4.38
+                  RARe (random)            11.29       6.41         7.97       10.88        6.66         7.82
+                  RARe (top1)              12.32       6.43         8.33       12.96        8.67         8.76
+                  RARe (top3)              11.76       6.14         8.14       11.74        6.89         8.00
+                  RARe (top5)              10.81       5.89         7.76       10.80        6.47         8.23
+
+
+
+ploying four generation approaches: direct inference (DI),        trend appears across both datasets: top-1 performs best, while
+fine-tuning (FT), retrieval-augmented direct inference, and       top-3 and top-5 degrade performance. This suggests that
+retrieval-augmented fine-tuning. The results are shown in         retrieved reviews are not interchangeable evidence snippets:
+Table III.                                                        they encode critique direction and writing preferences. When
+   Without retrieval augmentation, fine-tuning consistently im-   multiple retrieved reviews contain redundant or mismatched
+proves direct inference across all three models and both          cues, the generator may mix incompatible signals within a
+datasets, indicating that task-specific training helps models     limited context budget, leading to worse outputs.
+better match the target review distribution. Llama 3.1 performs
+strongest under direct inference, while after fine-tuning the
+performance gap among the three models becomes smaller,           E. Case study
+suggesting that additional supervision reduces differences
+                                                                     Automatic metrics provide aggregate comparisons, but they
+stemming from pre-training and architecture.
+                                                                  do not reveal how retrieval changes the generated review in
+   Retrieval augmentation provides the largest gains in direct
+                                                                  individual instances. We therefore provide (i) a qualitative
+inference. In particular, Llama 3.1 achieves the best overall
+                                                                  case study, (ii) a human evaluation of usefulness, and (iii)
+results with retrieval augmentation on both datasets (CRer.:
+                                                                  interpretability evidence that the model relies on retrieved
+BLEU-4 12.32; Tuf.: BLEU-4 12.96). Retrieval also improves
+                                                                  cues.
+fine-tuned models, but the gains are smaller; among the
+three models, Mistral-7B shows the most consistent improve-          1) Qualitative case study: Table V shows a randomly
+ment after fine-tuning, while CodeGemma-7B benefits only          selected example from Tuf. and compares multiple systems.
+marginally from retrieval in our setting. It may attribute to     Two behaviors are particularly relevant to interpreting retrieval
+model’s relatively weaker ability to understand prompts.          augmentation.
+                                                                     First, direct inference often produces descriptive text that
+C. Comparison with prior methods
+                                                                  explains what the code does. Such outputs can be reasonable
+   Based on the previous comparison of retrievers and gener-      summaries but are frequently misaligned with the review
+ators, we selected the best-performing retriever and generator    convention in these datasets, where reviewers write short
+for RARe to compare against the baseline methods. Specifi-        critiques and suggestions. With retrieval augmentation, the
+cally, for the CRer. dataset, we use the DPR retriever, while     output is more likely to adopt a reviewer-like form, because
+for the Tuf. dataset, we use the GDR retriever. And Llama-        the retrieved historical review provides an explicit reference
+3.1-8B serves as the generator for both datasets. We conducted    of how similar issues were previously critiqued.
+performance comparisons among RARe and baseline methods
+                                                                     Second, retrieval can affect what the model chooses to
+on both datasets, as shown in Table IV.
+                                                                  comment on. In this example, the reference flags unnecessary
+   Compared to baselines, RARe achieves the best perfor-
+                                                                  synchronization. When retrieval returns a historical critique
+mance across both datasets in three metrics. Especially on the
+                                                                  that points to synchronization redundancy, the generated out-
+CRer. dataset, RARe significantly outperforms Commentfinder
+                                                                  put becomes more likely to discuss that specific issue rather
+by 30% in BLEU-4 and 53% in METEOR, respectively. On the
+                                                                  than producing a generic rewrite or a broad explanation.
+Tufano dataset, RARe shows a modest improvement, surpass-
+ing CommentFinder by 2% in both BLEU-4 and METEOR.                   This example also highlights a known limitation of n-gram
+                                                                  based metrics: they can reward short outputs with incidental
+D. How many retrieved examples should be used                     overlap and undervalue semantically appropriate but differ-
+   Table IV also varies the number of retrieved examples          ently phrased critiques. We therefore include human evaluation
+included in the input context. A consistent non-monotonic         next.
+TABLE V: An example from Tuf. comparing RARe (CodeGemma-7B) with baselines. We omit some particularly long reviews.
+
+ System               Code/Review                                                                                              BLEU-4
+ Code snippet         public void onClose(Client client) {
+                      synchronized(clients) {
+                      clients.remove(client);
+                      }
+                      }
+ Ground Truth         This synchronization seems unnecessary?
+ CodeT5               Should this be a WARN instead?                                                                             0.0839
+ CommentFinder        Off topic: I’ve been writing this as “client == null”...                                                   0.0442
+ Tufano               I think you should have done something like: if (clients != null) { clients.remove(client); }              0.0255
+ AUGER                Remove client from the interface but keep it on the i imp                                                  0.0530
+ Retrieved Example    I don’t see any other method that this synchronization would avoid overlapping with.                       0.2741
+ DI                   The code snippet synchronizes on the clients object before removing a client...                            0.1154
+ DI+RA                The synchronized block is not necessary...                                                                 0.1228
+ FT                   synchronized (clients) { clients.remove(client); }                                                         0.2328
+ FT+RA                this can be simplified to clients.remove(client)                                                           0.0895
+
+
+TABLE VI: Human evaluation of RARe’s generated reviews                F. Interpretative Analysis of RARe
+on 100 samples from the CRer. and Tuf. datasets.
+                                                                         We use Inseq, an interpretability toolkit for sequence gener-
+                              CRer.                   Tuf.            ation models, to visualize token-level attribution between the
+Metrics                DI +RA FT +RA DI +RA FT +RA                    input and the generated output (code and retrieved review). It
+                                                                      produces attention-based saliency scores that indicate which
+Perfect prediction       0   0    0     0     0    0     0      3     input tokens the model relies on when generating each output
+Semantically equivalent 0    1    1     4     1    3     7     11
+                                                                      token.
+Alternative solution    12   44   55    64    14   52    52    50
+Incorrect               88   55   44    32    85   45    41    36        As depicted in Figure 2, the performance of RARe is
+                                                                      notably superior, as partly evidenced by its higher BLEU-4
+                                                                      score (0.342 v.s. 0.042). Specifically, the text retrieved (marked
+                                                                      in green) receives considerable focus in RARe’s predictions,
+   2) Human evaluation: Following prior work [12], [30], the          as indicated by its high attention score. This demonstrates
+quality of the code reviews can be evaluated manually by four         that the model effectively leverages external information from
+metrics:                                                              retrieval, which is a suggestion to ”incorporate a null check
+   Perfect prediction: the generated review is effectively            function” in this example. Moreover, RARe doesn’t simply
+equivalent to the reference. Semantically equivalent: the gen-        copy the retrieved results, it also concentrates on the code.
+erated review expresses the same critique as the reference but        This is evident from the attention scores assigned to the code
+with different wording. Alternative solution: the generated           (highlighted in blue) from the output in Table (b), showing
+review differs from the reference but is still a useful and           RARe conducts a balanced integration of external knowledge
+reasonable critique for the code. Incorrect: the review is not        with original code analysis.
+useful for the code (irrelevant, generic, or misleading).                Going back to a broader perspective, it becomes apparent
+   We randomly sample 100 instances from the test split               that retrieval results can significantly enhance the model’s
+of each dataset and evaluate outputs from Llama 3.1 (our              attention, preventing it from concentrating on less relevant
+strongest generator). Two expert annotators (6+ years of soft-        code. For instance, without RAG, the model focus on the
+ware engineering experience) label each output independently          getStartTime() function, diverging from our expected review.
+and resolve disagreements through discussion. We treat Perfect        However, with RAG, this deviation is corrected, redirecting the
+prediction, Semantically equivalent, and Alternative solution         model’s attention to the null check in volume.getAsyncTask()
+as valuable reviews.                                                  function. It is important to clarify that the output in Table (a) is
+   Table VI confirms that retrieval augmentation substantially        not necessarily incorrect; rather, it deviates from the reviewer’s
+increases the fraction of valuable reviews, especially under          intended focus. This deviation suggests that the output lacks
+direct inference. On Tuf., valuable reviews rise from 15 (DI) to      specific domain knowledge necessary for concentrating on the
+55 (DI+RA), and on CRer. from 12 (DI) to 45 (DI+RA). After            aspects of the code that truly require review.
+fine-tuning, retrieval remains helpful: on CRer. the number
+of valuable reviews increases further, and on Tuf. retrieval                                  VI. D ISCUSSION
+increases the number of high-agreement cases (Perfect pre-              Our findings suggest that retrieval augmentation for code
+diction and Semantically equivalent), consistent with better          review is best understood as a task-adaptive RAG setting,
+alignment to the intended critique.                                   where retrieved historical reviews mainly serve as in-context
+  [Instruction]                                                             _I     _think _this      _is      _not   _need _The _start _time               _is     _alrea   _set    _in       _the _const
+                                                                                                                      ed.                                            dy                            rcucto
+  Your task is to write a concise code                                                                                                                                                               r
+  review for the given code snippet. Your
+  output should only be a brief code review
+                                                     [instruction]                                            …                                                      …
+  with no other information.
+                                                        _private            0.02    0.01    0.01    0.01      0.01       0.01    0.01   0.00     0.00   0.00        0.00    0.01    0.01      0.01     0.01
+  [code]
+                                                       [code…]                                                …                                                      …
+  private GlusterVolumeTaskStatusEntity
+                                                  _volume.getAsync          0.01    0.02    0.01    0.02      0.00       0.01    0.01   0.02     0.04   0.01        0.01    0.02    0.01      0.00     0.00
+  fetchTaskStatusDetails() {                            Task
+     ...                                               !stepslist.          0.00    0.01    0.00    0.01      0.00       0.01    0.00   0.00     0.02   0.04        0.00    0.05    0.01      0.00     0.01
+     GlusterAsyncTask asyncTask =                     isEmpty())
+  volume.getAsyncTask();                          _entity.setStartTim 0.08          0.07    0.10    0.11      0.21       0.08    0.06   0.19     0.21   0.11        0.23    0.15    0.10      0.09     0.22
+     if (asyncTask != null) {                     e(stepslist.get(0).ge
+                                                      tStartTime
+         List<Step> stepsList = ...;
+         if (stepsList != null                         […code]                                                …                                                      …
+  && !stepsList.isEmpty()) {
+                                                                                                   (a) Prediction without RARe (BLUE-4: 0.042)
+            entity.setStartTime(stepsList.get(0
+  ).getStartTime());                                                          _can         _you     _please       _add          _the    _check      _for         _volume.    _in      _this     _method
+                                                                                                                                                                 getAsync
+         }                                                                                                                                                        Task()
+     }                                                 [instruction]                                               …                                                …
+     return entity;                                       _private               0.01      0.00      0.00         0.01          0.01     0.00       0.01           0.00      0.00     0.00           0.00
+  }                                                      [code…]                                                   …                                                …
+                                                  _volume.getAsyncTa             0.01      0.12      0.19         0.16          0.01     0.33       0.18           0.47      0.48     0.11           0.21
+                                                            sk()
+  [retrieved review]                              !stepslist. isEmpty( ))        0.00      0.00      0.00         0.00          0.00     0.00       0.00           0.00      0.00     0.00           0.00
+  it could be more readable if (asyncTask !=
+                                                  _entity.setStartTime(          0.01      0.03      0.01         0.00          0.00     0.00       0.00           0.00      0.00     0.00           0.00
+  null && asyncTask.getTaskId() != null )         stepslist.get(0).getSta
+  { ... }                                                rtTime( ))
+                                                          […code]                                                    …                                             …
+                                                   [retrieved review…]                                               …                                             …
+  [expected review]
+  null check should done for                          _(asyncTask                0.01      0.04      0.04         0.22          0.23     0.44       0.10           0.33      0.31     0.12           0.22
+                                                          _!=                    0.04      0.04      0.07         0.12          0.12     0.56       0.19           0.12      0.11     0.23           0.28
+  asyncTask.getTaskId() as well
+                                                         _null)                  0.01      0.08      0.17         0.19          0.23     0.29       0.22           0.19      0.11     0.01           0.01
+                                                                                                   (b) Prediction with RARe (BLUE-4: 0.342)
+
+Fig. 2: An example from Tuf. dataset and the saliency heatmap comparison for fine-tuned Llama-3.1-8B with and without
+retrieval augmentation. The horizontal rows of tables display the models’ output. Different input components are differentiated
+using colors, and higher attention scores are highlighted in red within the table.
+
+
+examples that shape how the model writes and what it chooses                                                                           VII. C ONCLUSION
+to comment on. This view yields two implications.                                               We presented RARe, a retrieval-augmented framework for
+                                                                                             code review generation that prepends retrieved historical re-
+   First, more retrieval is not always better. Across both                                   views to the prompt as in-context examples. Across two
+datasets, top-1 retrieval consistently performs best, while                                  benchmarks, RARe outperforms strong baselines and yields
+adding more retrieved items (top-3/top-5) degrades perfor-                                   especially large gains for direct inference. A central finding is
+mance. This indicates that historical reviews encode not only                                that adding more retrieved examples can hurt: using only the
+lexical cues but also critique direction and tone; combining                                 top-1 retrieved example is most effective, while top-3/top-5
+multiple reviews can introduce redundancy or conflicting cues                                often degrade performance due to redundancy and conflicting
+that distract the generator when prompt length is limited. In                                cues in historical reviews. Human evaluation further supports
+practice, retrieval for code review should emphasize careful                                 that retrieval-augmented prompting reduces generic outputs
+selection and redundancy control rather than simply increas-                                 and improves review focus. This study is limited to two
+ing the number of retrieved items. This observation is also                                  public benchmarks and a fixed set of retrievers and prompting
+consistent with recent work on selective retrieval and context                               choices. Future work will explore hybrid retrieval, learned
+compression [13], [14], [22].                                                                reranking for intent-aligned selection, and redundancy-aware
+                                                                                             context construction when multiple retrieved candidates are
+   Second, retriever choice should match corpus characteris-                                 available.
+tics. We observe that code–review alignment retrieval (DPR-
+style) is more robust on multi-language corpora, whereas code-                                                                     ACKNOWLEDGMENT
+only similarity with reranking remains competitive on single-                                  This work was funded by the China Scholarship Council
+language corpora. This suggests that the most suitable retrieval                             (CSC) and supported by the Leiden Institute of Advanced
+signal depends on how reliable code similarity is as a proxy                                 Computer Science (LIACS) and SURF.
+for review relevance in the target setting.
+                              R EFERENCES                                             augmented generation for knowledge-intensive nlp tasks. In Advances
+                                                                                      in Neural Information Processing Systems (NeurIPS), 2020.
+ [1] Vipin Balachandran. Reducing human effort and improving quality             [19] Lingwei Li, Li Yang, Huaxi Jiang, Jun Yan, Tiejian Luo, Zihan Hua,
+     in peer code reviews using automatic static analysis and reviewer                Geng Liang, and Chun Zuo. Auger: automatically generating review
+     recommendation. In 2013 35th International Conference on Software                comments with pre-training models. In Proceedings of the 30th ACM
+     Engineering (ICSE), pages 931–940, 2013.                                         Joint European Software Engineering Conference and Symposium on the
+ [2] Robert Chatley and Lawrence Jones. Diggit: Automated code review via             Foundations of Software Engineering (ESEC/FSE), pages 1009–1021,
+     software repository mining. In 2018 IEEE 25th International Conference           2022.
+     on Software Analysis, Evolution and Reengineering (SANER), pages            [20] Xiaonan Li, Kai Lv, Hang Yan, Tianyang Lin, Wei Zhu, Yuan Ni,
+     567–571, 2018.                                                                   Guotong Xie, Xiaoling Wang, and Xipeng Qiu. Unified demonstration
+ [3] Xin Cheng, Di Luo, Xiuying Chen, Lemao Liu, Dongyan Zhao, and                    retriever for in-context learning. In Proceedings of the 61st Annual
+     Rui Yan. Lift yourself up: Retrieval-augmented text generation with              Meeting of the Association for Computational Linguistics (ACL), pages
+     self-memory. Advances in Neural Information Processing Systems                   4644–4668, July 2023.
+     (NeurIPS), 36, 2024.                                                        [21] Zhiyu Li, Shuai Lu, Daya Guo, Nan Duan, Shailesh Jannu, Grant
+ [4] Ewen Denney and Bernd Fischer. Generating code review documenta-                 Jenks, Deep Majumder, Jared Green, Alexey Svyatkovskiy, Shengyu
+     tion for auto-generated mission-critical software. In 2009 Third IEEE            Fu, et al. Automating code review activities by large-scale pre-training.
+     International Conference on Space Mission Challenges for Information             In Proceedings of the 30th ACM Joint European Software Engineering
+     Technology, pages 394–401, 2009.                                                 Conference and Symposium on the Foundations of Software Engineering
+ [5] Alexander Fabbri, Patrick Ng, Zhiguo Wang, Ramesh Nallapati, and                 (ESEC/FSE), pages 1035–1047, 2022.
+     Bing Xiang. Template-based question generation from retrieved sen-          [22] Maxime Louis, Hervé Déjean, and Stéphane Clinchant. Pisco: Pretty
+     tences for improved unsupervised question answering. In Proceedings              simple compression for retrieval-augmented generation. In Findings of
+     of the 58th Annual Meeting of the Association for Computational                  the Association for Computational Linguistics (ACL), 2025.
+     Linguistics (ACL), pages 4508–4513, July 2020.                              [23] Junyi Lu, Lei Yu, Xiaojia Li, Li Yang, and Chun Zuo. Llama-reviewer:
+ [6] Angela Fan, Claire Gardent, Chloé Braud, and Antoine Bordes. Aug-               Advancing code review automation with large language models through
+     menting transformers with knn-based composite memory for dialog.                 parameter-efficient fine-tuning. In 2023 IEEE 34th International Sym-
+     Transactions of the Association for Computational Linguistics (TACL),            posium on Software Reliability Engineering (ISSRE), pages 647–658,
+     9:82–99, 2021.                                                                   2023.
+ [7] Yunfan Gao, Yun Xiong, Xinyu Gao, Kangxiang Jia, Jinliu Pan, Yuxi Bi,       [24] Shuai Lu, Nan Duan, Hojae Han, Daya Guo, Seung-won Hwang, and
+     Yi Dai, Jiawei Sun, and Haofen Wang. Retrieval-augmented generation              Alexey Svyatkovskiy. Reacc: A retrieval-augmented code completion
+     for large language models: A survey. arXiv preprint arXiv:2312.10997,            framework. pages 6227–6240, 01 2022.
+     2023.                                                                       [25] Noor Nashid, Mifta Sintaha, and Ali Mesbah. Retrieval-based prompt
+ [8] Mingyang Geng, Shangwen Wang, Dezun Dong, Haotian Wang, Ge Li,                   selection for code-related few-shot learning. In 2023 IEEE/ACM 45th
+     Zhi Jin, Xiaoguang Mao, and Xiangke Liao. Large language models                  International Conference on Software Engineering (ICSE), pages 2450–
+     are few-shot summarizers: Multi-intent comment generation via in-                2462, 2023.
+     context learning. In Proceedings of the 46th IEEE/ACM International         [26] Nivishree Palvannan and Chris Brown. Suggestion bot: analyzing the
+     Conference on Software Engineering (ICSE), pages 1–13, 2024.                     impact of automated suggested changes on code reviews. In 2023
+ [9] Anshul Gupta and Neel Sundaresan. Intelligent code reviews using                 IEEE/ACM 5th International Workshop on Bots in Software Engineering
+     deep learning. In Proceedings of the 24th ACM SIGKDD International               (BotSE), pages 33–37, 2023.
+     Conference on Knowledge Discovery and Data Mining (KDD) Deep                [27] Md Rizwan Parvez, Wasi Ahmad, Saikat Chakraborty, Baishakhi Ray,
+     Learning Day, 2018.                                                              and Kai-Wei Chang. Retrieval augmented code generation and summa-
+[10] Kelvin Guu, Kenton Lee, Zora Tung, Panupong Pasupat, and Mingwei                 rization. In Findings of the Association for Computational Linguistics
+     Chang. Retrieval augmented language model pre-training. In Inter-                (EMNLP), pages 2719–2734, 2021.
+     national Conference on Machine Learning (ICML), pages 3929–3938,            [28] John W Ratcliff, David E Metzener, et al. Pattern matching: The gestalt
+     2020.                                                                            approach. Dr. Dobb’s Journal, 13(7):46, 1988.
+[11] Hyunsun Hong and Jongmoon Baik. Retrieval-augmented code review             [29] Jing Kai Siow, Cuiyun Gao, Lingling Fan, Sen Chen, and Yang Liu.
+     comment generation. arXiv preprint arXiv:2506.11591, 2025.                       Core: Automating review recommendation for code changes. In 2020
+[12] Yang Hong, Chakkrit Tantithamthavorn, Patanamon Thongtanunam, and                IEEE 27th International Conference on Software Analysis, Evolution
+     Aldeida Aleti. Commentfinder: a simpler, faster, more accurate code              and Reengineering (SANER), pages 284–295, 2020.
+     review comments recommendation. In Proceedings of the 30th ACM              [30] Rosalia Tufano, Simone Masiero, Antonio Mastropaolo, Luca Pascarella,
+     Joint European Software Engineering Conference and Symposium on                  Denys Poshyvanyk, and Gabriele Bavota. Using pre-trained models to
+     the Foundations of Software Engineering (ESEC/FSE), pages 507–519,               boost code review automation. In Proceedings of the 44th International
+     2022.                                                                            Conference on Software Engineering (ICSE), pages 2291–2302, 2022.
+[13] Taeho Hwang, Sukmin Cho, Soyeong Jeong, Hoyun Song, SeungYoon               [31] Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion
+     Han, and Jong C. Park. Exit: Context-aware extractive compression                Jones, Aidan N Gomez, Ł ukasz Kaiser, and Illia Polosukhin. Attention
+     for enhancing retrieval-augmented generation. In Findings of the                 is all you need. In Advances in Neural Information Processing Systems
+     Association for Computational Linguistics (ACL), 2025.                           (NeurIPS), volume 30, 2017.
+[14] Yiqiao Jin, Kartik Sharma, Vineeth Rakesh, Yingtong Dou, Menghai            [32] Yue Wang, Weishi Wang, Shafiq Joty, and Steven CH Hoi. Codet5:
+     Pan, Mahashweta Das, and Srijan Kumar. Sara: Selective and adaptive              Identifier-aware unified pre-trained encoder-decoder models for code
+     retrieval-augmented generation with context compression. arXiv preprint          understanding and generation. arXiv preprint arXiv:2109.00859, 2021.
+     arXiv:2507.05633, 2025.                                                     [33] Linghao Zhang, Hongyi Zhang, Chong Wang, and Peng Liang. Rag-
+[15] Vladimir Karpukhin, Barlas Oguz, Sewon Min, Patrick Lewis, Ledell                enhanced commit message generation. arXiv preprint arXiv:2406.05514,
+     Wu, Sergey Edunov, Danqi Chen, and Wen-tau Yih. Dense passage                    2024.
+     retrieval for open-domain question answering. In Proceedings of the         [34] Xiao Zhang, Qianru Meng, and Johan Bos. Retrieval-augmented
+     2020 Conference on Empirical Methods in Natural Language Processing              semantic parsing: Improving generalization with lexical knowledge. In
+     (EMNLP), pages 6769–6781, 2020.                                                  Proceedings of the 16th International Conference on Computational
+[16] Brendan King and Jeffrey Flanigan. Diverse retrieval-augmented in-               Semantics, pages 49–62, Düsseldorf, Germany, September 2025. As-
+     context learning for dialogue state tracking. In Findings of the Associa-        sociation for Computational Linguistics.
+     tion for Computational Linguistics (ACL), pages 5570–5585, July 2023.       [35] Yin Zhang, Rong Jin, and Zhi-Hua Zhou. Understanding bag-of-
+[17] Markus Klinik, Pieter Koopman, and Rick van der Wal. Personal prof:              words model: a statistical framework. International journal of machine
+     Automatic code review for java assignments. In Proceedings of the 10th           learning and cybernetics, 1:43–52, 2010.
+     Computer Science Education Research Conference, pages 31–38, 2021.          [36] Yuxin Zhang, Yuxia Zhang, Zeyu Sun, Yanjie Jiang, and Hui Liu. Laura:
+[18] Patrick Lewis, Ethan Perez, Aleksandra Piktus, Fabio Petroni, Vladimir           Enhancing code review generation with context-enriched retrieval-
+     Karpukhin, Naman Goyal, Heinrich Küttler, Mike Lewis, Wen-tau Yih,              augmented llm. arXiv preprint arXiv:2512.01356, 2025.
+     Tim Rocktäschel, Sebastian Riedel, and Douwe Kiela. Retrieval-
+

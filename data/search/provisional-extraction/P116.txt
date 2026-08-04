@@ -1,0 +1,1489 @@
+                                         CRScore: Grounding Automated Evaluation of Code Review Comments in
+                                                              Code Claims and Smells
+
+                                                              Atharva Naik    Marcus Alenius Daniel Fried Carolyn Rosé
+                                                                              Language Technologies Institute
+                                                                                Carnegie Mellon University
+                                                                     {arnaik, malenius, dfried, cprose}@cs.cmu.edu
+
+
+                                                                   Abstract                          iter, 2018; Evtikhiev et al., 2023), especially when
+                                                                                                     paired with limited and low-quality references.
+                                                 The task of automated code review has recently         Code review is fundamentally a one-to-
+                                                 gained a lot of attention from the machine learn-
+                                                                                                     many problem, where a given diff can have
+arXiv:2409.19801v2 [cs.SE] 16 Mar 2025
+
+
+
+
+                                                 ing community. However, current review com-
+                                                 ment evaluation metrics rely on comparisons         multiple possible issues that a review can
+                                                 with a human-written reference for a given code     tackle. Having a limited number of reference
+                                                 change (also called a diff ). Furthermore, code     reviews (e.g., one per diff in CodeReviewer
+                                                 review is a one-to-many problem, like genera-       (Li et al., 2022)) leads to unfairly low scores
+                                                 tion and summarization, with many “valid re-        with reference-based metrics. For example, for
+                                                 views” for a diff. Thus, we develop CRScore —       the diff shown in Figure 1, the ground truth
+                                                 a reference-free metric to measure dimensions       review focuses on whether the ToHexString()
+                                                 of review quality like conciseness, comprehen-
+                                                                                                     function could cause a performance issue. How-
+                                                 siveness, and relevance. We design CRScore to
+                                                 evaluate reviews in a way that is grounded in       ever, the model-generated review focuses on
+                                                 claims and potential issues detected in the code    ToHexString().Equals("0000000000000000")
+                                                 by LLMs and static analyzers. We demonstrate        being an odd condition with a scenario where
+                                                 that CRScore can produce valid, fine-grained        its being triggered is unlikely, which is also a
+                                                 scores of review quality that have the greatest     valid review for the diff. However, the BLEU
+                                                 alignment with human judgment among open            score value for the model-generated review is very
+                                                 source metrics (0.54 Spearman correlation) and
+                                                                                                     low, specifically at 0.0458, due to poor n-gram
+                                                 are more sensitive than reference-based met-
+                                                 rics. We also release a corpus of 2.9k human-       overlap. Additionally, the references can also be
+                                                 annotated review quality scores for machine-        low-quality due to missing context, as shown in
+                                                 generated and GitHub review comments to sup-        Table 5, or can focus on trivial and tangential issues
+                                                 port the development of automated metrics1 .        (Pangsakulyanont et al., 2014). Such low-quality
+                                                                                                     references, paired with reference-based metrics,
+                                         1       Introduction                                        can harshly and unfairly penalize models.
+                                                                                                        Motivated by these drawbacks, we propose
+                                         Code Review is an essential quality control tool
+                                                                                                     CRScore, an automated but reference-free evalu-
+                                         for software engineers to ensure that source code
+                                                                                                     ation metric that uses dimensions of review quality
+                                         is free of bugs and upholds standards (McIntosh
+                                                                                                     from prior work (Piorkowski et al., 2020; Turzo
+                                         et al., 2014; Bavota and Russo, 2015). Software en-
+                                                                                                     and Bosu, 2024). In particular, Comprehensiveness
+                                         gineers prefer lightweight, asynchronous review
+                                                                                                     – does the review convey all the necessary informa-
+                                         processes, as enabled through GitHub’s review
+                                                                                                     tion? Conciseness – does the review only convey
+                                         comment feature, over formal, in-person reviews
+                                                                                                     the necessary information in an efficient way and
+                                         (Beller et al., 2014; Badampudi et al., 2023). This
+                                                                                                     Relevance – is all the information on topic? We op-
+                                         has led to the creation of benchmarks for automated
+                                                                                                     erationalize our metric through a two-step process:
+                                         generation of natural language (NL) review com-
+                                                                                                       1 generate a list of pseudo-references spanning
+                                         ments (Li et al., 2022; Tufano et al., 2022). How-
+                                                                                                     information like possible claims, issues, and im-
+                                         ever, these benchmarks use reference-based eval-
+                                         uation metrics like BLEU (Papineni et al., 2002),           plications of a code change, and 2 use semantic
+                                         which have been shown to have low validity (Re-             textual similarity (STS) to align parts of the review
+                                                                                                     to the pseudo-references. To generate the pseudo-
+                                             1
+                                                 https://github.com/atharva-naik/CRScore             references, we use a neuro-symbolic approach that
+combines Large Language Models (LLMs) and                 2     Related Work
+Code Analysis Tools (CATs) that can detect for-
+matting errors, faulty design patterns (code smells       In this section, we summarize the limitations of
+Rasheed et al. 2024), etc. We combine these meth-         reference-based evaluation, the need for better
+ods for more exhaustive pseudo-references and to          code review evaluation metrics, inspiration from
+overcome drawbacks of each method (section A.1).          reference-free evaluation for other tasks, and how
+                                                          code smells can be leveraged to evaluate reviews.
+   Finally, we demonstrate the validity of CRScore
+by human evaluation of the quality of pseudo-             2.1    Reference Based Evaluation Metrics:
+references and by measuring the alignment of our
+metrics with human judgment. We show that a               Reference-based metrics like BLEU (Papineni
+large number (82.6%) of pseudo-references gen-            et al., 2002), ROUGE (Ganesan, 2018), and
+erated by CRScore are correct, and that it has            BERTScore (Zhang et al., 2020) have seen
+the greatest alignment with (Spearman correlation         widespread adoption for text generation tasks like
+0.5431) and sensitivity to (Figure 8) the human           translation and summarization due to their con-
+judgment of review quality, as compared to that of        venience. While metrics like BLEU, ROUGE,
+the reference-based metrics.                              and character F-score (Popović, 2015, 2017) use
+   Contributions. (1) We propose an automated             n-gram overlap between the reference and candi-
+reference-free metric that combines the advantages        date text, metrics like BERTScore (Zhang et al.,
+of LLMs and CATs to measure review quality along          2020) try to capture the semantic similarity. How-
+fine-grained dimensions. (2) We collect human an-         ever prior studies have shown metrics like BLEU
+notations of pseudo-reference quality and review          to have low validity (overlap with human judg-
+conciseness, comprehensiveness, and relevance to          ment) and reliability (Reiter, 2018; Evtikhiev et al.,
+validate our approach. We plan to make these              2023). Meanwhile, BERTScore can fail for candi-
+scores publicly available as a resource for contin-       dates with errors that are lexically and stylistically
+ued development of automated metrics. (3) We              similar to references (Hanna and Bojar, 2021).
+benchmark several LLMs of code for code review
+                                                          2.2    Code Review Evaluation
+on the CodeReviewer dataset using CRScore and
+compare it with reference based metrics.                  Due to the high time and resource demands of code
+                                                          review, automated approaches have gained pop-
+                                                          ularity (Yang et al., 2024). Tufano et al. (2021,
+                                                          2022); Li et al. (2022) proposed large datasets for
+                                                          code review tasks like code changes quality detec-
+                                                          tion, review comment generation, and code refac-
+                                                          toring. However, these datasets used reference-
+                                                          based metrics and thus suffer from the issues high-
+                                                          lighted in sec 2.1. While many studies have fo-
+                                                          cused on modeling methods for code review tasks
+                                                          (Pornprasit and Tantithamthavorn, 2024; Lu et al.,
+                                                          2023; Dong-Kyu, 2024; Fan et al., 2024; Yu et al.,
+                                                          2024; Lin et al., 2024), they either retain the same
+                                                          reference-based automated metrics like BLEU (Pa-
+                                                          pineni et al., 2002), or use human evaluation. Some
+                                                          studies have focused on evaluating style and pre-
+                                                          sentation of review comments for usefulness (Rah-
+                                                          man et al., 2017; Ochodek et al., 2022; Yang et al.,
+                                                          2023) (see Appendix B.3 for detailed comparison)
+Figure 1: Example diff with multiple valid reviews.       or negativity and toxicity (Ahmed et al., 2017;
+The ground truth and model-generated reviews focus        Sarker et al., 2023). This work focuses on content-
+on different topics, like the performance of the added    focused and reference-free automated evaluation.
+check, and how likely it is to be triggered. However, a   We show that reference-based metrics combined
+reference-based metric like the BLEU score assigns this   with noisy references fail to capture human pref-
+review a low score of 0.0458.                             erences. We propose CRScore, the first automated
+content-focused reference-free metric to overcome        self-selection bias of LLMs (sec A.1) we use code
+these limitations.                                       analysis tools.
+
+2.3   Reference Free Evaluation                          3     Operationalizing CRScore
+Reference-free evaluation metrics have been pro-
+posed for various text-generation tasks to capture       Motivated by the one-to-many nature of code
+multiple valid outputs. Instead of using references,     reviews, noisy references, and the pitfalls of
+these metrics try to measure general “quality di-        reference-based automated metrics, we develop
+mensions” like relevance, informativeness, etc. VI-      CRScore — a reference-free, quality dimension-
+FIDEL (Madhyastha et al., 2019), InfoMetIC (Hu           based automated metric. As shown in Figure 2,
+et al., 2023), and ClipScore (Hessel et al., 2021)       instead of relying on explicit references, our met-
+evaluate dimensions like faithfulness, informative-      ric generates “pseudo-references” from the code
+ness, and relevance, respectively for image cap-         change spanning claims, implications, and is-
+tioning. FED (Mehri and Eskenazi, 2020a), and            sues/smells that hurt maintainability — in other
+USR (Mehri and Eskenazi, 2020b) evaluate dimen-          words, some topics that a review should address
+sions like informativeness, relevance, and over-         (Rasheed et al., 2024). Then we use semantic tex-
+all quality for dialog. Studies on the helpfulness       tual similarity (STS) measures to quantify how
+of software documentation and code review (Pi-           much these topics are addressed by a code review
+orkowski et al., 2020; Turzo and Bosu, 2024) pro-        as shown in Figure 2 through the lens of three qual-
+pose quality dimensions like conciseness, com-           ity dimensions: conciseness, comprehensiveness,
+pleteness, understandability, relevance, and sup-        and relevance. They capture review quality, similar
+porting evidence. The common trend across these          to precision, recall, and f-score used for classifi-
+studies is some notion of conciseness, informative-      cation and retrieval. We describe the three main
+ness/comprehensiveness, and relevance being use-         components of our framework — the quality dimen-
+ful, prompting us to focus on them. However, our         sions, pseudo-reference generation, and similarity
+work is the first to operationalize these dimensions     measurement — below.
+for automated evaluation.                                3.1    Quality Dimensions
+2.4   Code Smell Detection                               We are inspired by (Piorkowski et al., 2020; Turzo
+“Code smells” (Fowler, 1997) are design flaws            and Bosu, 2024) to pick the dimensions of “concise-
+and bad practices (also called anti-patterns) that       ness”, “comprehensiveness” (similar to complete-
+can lead to maintainability issues. Detecting code       ness), and “relevance”. The former two capture
+smells automatically has traditionally been accom-       and strike a balance between comprehensive re-
+plished by static analysis-based approaches (Tsan-       views with a lot of detail and concise, minimalist
+talis et al., 2008; Paiva et al., 2017; Liu and Zhang,   reviews. Conciseness and comprehensiveness play
+2017). Recently machine learning (Sandouka and           the role of precision and recall respectively, captur-
+Aljamaan, 2023) and transfer learning (Sharma            ing how much of the review is on topic, and how
+et al., 2021) based approaches have been pro-            much information is covered. Relevance strikes a
+posed to learn more complex heuristics. Recent           balance between the two, like f-score, measuring
+approaches have leveraged LLMs via prompting             the overall quality of the review. Additionally, we
+(Liu et al., 2024) and agents (Rasheed et al., 2024)     also do a human evaluation of the validity of the
+to achieve improvement and tackle repository-level       pseudo-references focusing on aspects like support-
+code smell detection. However, these approaches          ing evidence (Piorkowski et al., 2020).
+are limited in the types of smells they target (Liu
+et al., 2024; Sandouka and Aljamaan, 2023), train-       3.2    Pseudo Reference Generation
+ing data requirements (Zhang et al., 2024), or lack      To generate pseudo references we develop an LLM-
+comprehensive evaluation (Rasheed et al., 2024).         based pipeline for generating claims about the code
+Also, code smells differ across programming lan-         changes on two levels of abstraction: 1) Low-level
+guages (Abidi et al., 2019), and transfer learning       changes and 2) High-level “implications” of the
+approaches can only be leveraged for similar lan-        change. To allow for reproducibility and ease of de-
+guages (Sharma et al., 2021). Due to these limita-       ployment we use a 6.7B parameter open source
+tions of learning-based methods and to mitigate the      LLM, Magicoder (Wei et al., 2023). We fine-
+Figure 2: Operationalization of CRScore: Our metric first generates pseudo-references for the diff — claims,
+implications and issues. Then each pseudo-reference is embedded by a sentence transformer along with each review
+sentence and the pairwise semantic textual similarity (STS) is computed. The high similarity threshold τ is used to
+compute the Con and Comp metrics whose harmonic mean yields the Rel score.
+
+
+tune Magicoder-S-DS-6.7B for this task using task-         on English STS on the MTEB benchmark (Muen-
+specific data produced by a stronger model (GPT-           nighoff et al., 2022) for models with less than 1B
+4) as shown in Figure 3. We generate claims by             parameters.
+prompting GPT-4 for a random subset of 1k code                We start by computing token embeddings for the
+changes from the CodeReviewer validation data.             pseudo-references (p-refs) and review sentences (r-
+   In addition to the claims, we also utilize pro-         sents), excluding the stopwords and pooling the rest
+gram analysis tools that can detect issues and “code       of the token embeddings to build representations
+smells” (characteristics that indicate deeper flaws        for the whole sentence. Then we compute STS
+in programs as shown in Table 14) like PySmell2            scores with these sentence embeddings via pair-
+as well as static analyzers like PMD3 and JSHint4 .        wise cosine similarity s() between the p-refs (P)
+They can detect unused variables, unnecessary ob-          and r-sents (R). The Conciseness (Con) which is
+ject creation, syntax errors, leaking variables, type      computed as:
+conversion issues, etc. These tools target Python,                         P
+                                                                                  I[maxp∈P s(c, r) > τ ]
+Java, and Javascript respectively, and can use rule-             Con = r∈R                                  (1)
+                                                                                       |R|
+based analysis to detect issues at a file or repository
+level. They complement the aspects that might be           represents the fraction of r-sents from the model-
+missed by an LLM-based analysis. We combine                generated review with greater similarity to any p-
+the code smells and claims to get the final set of         ref above a threshold τ . Here, I is an indicator
+pseudo references.                                         variable such that:
+                                                                                (
+                                                                                  1, if x is true
+3.3    Computing Similarity with Pseudo                                 I[x] =
+       References:                                                                0, otherwise
+
+We use a Sentence Transformer (Reimers, 2019)              Con resembles precision as it captures the frac-
+model (mxbai-embed-large-v15 ) to compute Se-              tion of r-sents (candidate set) that are “on topic”
+mantic Textual Similarity (STS) between pseudo-            concerning the p-refs (reference/gold set). The
+references and review sentences. The pairwise sim-         Comprehensiveness (Comp) computed as:
+ilarities are then used to compute the conciseness,
+                                                                         P
+                                                                            p∈P I[maxr∈R s(c, r) > τ ]
+comprehensiveness, and relevance, as shown by                  Comp =                                      (2)
+                                                                                      |P|
+equations 1, 2, and 3. We picked this model be-
+cause it has the best performance, as of July 2024,        represents the fraction of p-refs that have greater
+                                                           similarity to any of the r-sents than the threshold τ .
+   2
+     https://github.com/whyjay17/Pyscent                   This metric resembles recall as it captures the frac-
+   3
+     https://pmd.github.io/
+   4                                                       tion of the p-refs (gold set) covered by the model-
+     https://jshint.com/
+   5
+     https://huggingface.co/mixedbread-ai/                 generated r-sents (candidate set). There is a trade-
+mxbai-embed-large-v1                                       off between conciseness and comprehensiveness
+just like precision and recall, and to capture the           quality, we gather annotations capturing incorrect,
+trade-off between these metrics like the F1 score,           unverifiable, and missing claims. We had two
+we define the Overall Relevance Rel as the har-              trained human annotators (co-authors of this pa-
+monic mean of Con and Comp:                                  per) judge the quality of the pseudo-references
+                       2 · Con · Comp                        for 100 randomly sampled code changes from
+               Rel =                                  (3)    CodeReviewer (Li et al., 2022) each in Python,
+                        Con + Comp
+                                                             Java, and Javascript (300 total, see Appendix D.5
+Based on the definition of I[x] all of our metrics           for details). The annotators were asked to code the
+range in value from [0, 1].                                  pseudo-references as 1 (correct based on evidence),
+Selecting threshold τ for high similarity: For               0 (incorrect based on evidence), and -1 (unverifi-
+our similarity threshold τ we use the average simi-          able due to lack of evidence). They were also asked
+larity between a pseudo-reference and the review             to add any pseudo-references about issues/claims
+sentence talking about it. To compute it we use the          not covered by the pseudo-references. We report
+distribution of pseudo-reference and review sim-             the fraction of correct claims (accuracy), incorrect
+ilarity scores for the best model (GPT-3.5 in our            claims (error rate), unverifiable claims (unverifi-
+case). Starting with the CodeReviewer test set we            able rate), and missing claims (missing rate). If Nc ,
+exclude the data used for collecting human annota-           Nu , Ni , and Na represent the number of correct,
+tions. For the remaining 9869 instances, we com-             unverifiable, incorrect, and added claims then each
+pute the similarity between each review sentence             of these rates can be calculated as:
+and pseudo-reference for its corresponding code
+                                                                                            Nc
+change. Then we associate each review sentence                          Accuracy =
+                                                                                       Nc + Nu + Ni
+with the most similar pseudo-reference to capture
+correspondence. Finally, we average the similarity                                          Ni
+score value across all review sentences, giving us                      Error Rate =
+                                                                                      Nc + Nu + Ni
+a value for the threshold6 τbest = 0.7314. While
+                                                                                               Nu
+choosing the right threshold is important for our                   Unverifiable Rate =
+                                                                                         Nc + Nu + Ni
+metric, we note that it is robust to some variations
+in the value as shown in Table 18.                                                           Na
+                                                                       Missing Rate =
+                                                                                       Nc + Nu + Ni
+4       Validating CRScore                                   Based on these expressions:           Accuracy +
+To be a valid metric, CRScore needs to satisfy a few         Unverifiable Rate + Error Rate = 1. The results
+properties. Firstly, the generated pseudo-references         for each language are shown in table 1. The an-
+should have few errors and unverifiable claims               notators follow guidelines laid out in a codebook
+while being exhaustive. Additionally, we want our            (section D.1) which includes examples for each cat-
+dimension-level scores (Con, Comp, and Rel), es-             egory. We measured the coding reliability of our
+pecially Rel, to correlate with human judgment for           approach by collecting annotations from both anno-
+each dimension. The most important property, is              tators on a common set of 100 pseudo-references.
+arguably the ability of our metric (especially Rel)          These annotations yielded a Cohen Kappa of 0.804
+to rank review generation systems in the same order          which indicates great inter-annotator reliability
+as humans. In the subsequent sections, we describe           (Landis and Koch, 1977). Also, we only evalu-
+how we design the experiments to collect annota-             ate the LLM-generated claims here as we know
+tions for these properties (section 4.1, 4.2), choose        the static code analysis tools are rule-based and
+a set of systems to be rated by humans (section 4.4),        reliably correct.
+and set up reference-based metrics (section 4.5) for
+                                                             4.2   Rating Review Quality Dimensions
+comparison CRScore.
+                                                             To show that CRScore aligns with the human judg-
+4.1      Rating Quality of Pseudo-References                 ment of review quality along the proposed dimen-
+To show that LLM-generated pseudo-references                 sions: comprehensiveness, conciseness, and rele-
+used by the CRScore evaluation pipeline are high-            vance we gather annotations from the same annota-
+    6
+                                                             tors on reviews generated by 9 systems (section 4.4)
+     We also show that computing the threshold with ground
+truth reviews yields a comparably good threshold τGT =       and the ground truth references. We use the same
+0.6576 with respect to correlation with human annotations.   code changes used in section 4.1.
+   The raters again follow a codebook (section D.2)         Metric                rs        p          τ       p
+that contains guidelines and examples for annotat-
+                                                            BLEU                -0.3    0.433   -0.1667     0.612
+ing each dimension using the pseudo-references              BLEU
+on a 5-point Likert scale. The raters use the up-                              -0.15      0.7   -0.0556     0.919
+                                                            (without stop)
+dated set of pseudo-references based on the first           BERTScore           0.35    0.356    0.2222     0.477
+phase of annotations described in section 4.1. In-          Normalized
+                                                                             0.1667     0.668    0.0556     0.919
+correct and unverifiable references are removed             Edit Distance
+and missing claims are added. We also add the               ROUGE-L
+                                                                             0.0167     0.966     0.556     0.919
+pseudo-references (issues and code smells) gen-             F-measure
+erated by the code analysis tools for each code             chrF             0.4833     0.187    0.3889      0.18
+change. Raters are also asked to annotate any               chrF++               0.6    0.088    0.4444     0.119
+claims they find unnecessary for a given code               LaaJ-Magic           0.8    0.010    0.6667     0.013
+change, which are then excluded while rating the            LaaJ-GPT         0.9833    1.9e-6    0.9444    5.0e-5
+                                                            Rel (τbest )
+review on each quality dimension. Again, we mea-                                0.95   8.7e-5    0.8889    2.4e-4
+                                                            ours
+sure the reliability of the codebook by collecting
+annotations from the two raters, this time on a com-        Table 2: Spearman (rs ) and Kendall (τ ) correlations
+mon set of 100 reviews. We compute Krippen-                 between system rankings produced by each metric and
+dorff’s alpha reliability (Krippendorff, 2018) for          human annotations for relevance. Only our metric and
+each dimension, yielding values of 0.8868, 0.8505,          the LaaJ variants achieve a high, statistically signif-
+and 0.8806 for conciseness, comprehensiveness,              icant correlation. Our metric has a comparable cor-
+and relevance respectively. Alpha values > 0.8 are          relation to LaaJ-GPT which uses a much more pow-
+generally considered reliable. Despite the steps            erful closed-source model, while being much better
+                                                            than LaaJ-Magic which uses Magicoder-S-DS-6.7B, the
+taken to ensure reliability of the annotations, their
+                                                            same based model as CRScore.
+might be some concerns about potential biases,
+which we address in Appendix D.9.
+   Based on these annotations, we measure    the review addresses a claim according to a hu-
+the agreement between CRScore (Rel) and the  man, while the rest are negative examples or pairs
+                                             where the reviews don’t address a pseudo-reference.
+reference-based metrics with the human-annotated
+                                             Using this data we evaluate the STS model with
+relevance Likert scores using Kendal and Spear-
+                                             various similarity thresholds (tau) using it to covert
+man correlation (Table 3). We also compute the
+                                             the similarity score into a binary classifier and re-
+correlation between the system rankings generated
+                                             port its precision, recall and F1-score in predicting
+by the metric and human annotations (Table 2).
+                                             whether in a pseudo-reference and review pair the
+                  Error Unverifiable Missing review addresses the pseudo-reference. The results
+Language Accuracy
+                   Rate        Rate    Rate are shown in Table 4
+Python           83.65    12.02            4.33      5.77
+Java             79.09    13.22            7.69      8.89   4.4   Review Generation Systems
+Javascript       85.21     6.52            8.27      2.51   To see if CRScore can rank code review systems of
+                                                            varying capacity, we choose a diverse set of review
+Table 1: Quality of pseudo-references – the fraction
+                                                            generation models. They span various parameter
+of correct (accuracy), incorrect (error rate), unverifi-
+able (unverifiable rate), and added claims (missing rate)   sizes, pre-training, and fine-tuning strategies:
+based on human annotations.                                 Simple baselines: We create two simple baselines,
+                                                            namely, a BM-25 retriever and an LSTM as de-
+                                                            scribed in section D.3. We choose these models
+4.3   Annotating Similarity between                         with the expectation that they will likely perform
+      Pseudo-References and Reviews                         the worst, to see if our metric assigns them a low
+While annotating the review quality dimensions              score.
+using the pseudo-references the annotators are also         CodeReviewer: We pick the CodeReviewer model
+asked to mention the pseudo-references covered              from (Li et al., 2022) as it is a transformer-based
+by each system-generated review. This gives us a            model trained on code review-specific data and ob-
+dataset of 5.7k pseudo-reference and review pairs,          jectives.
+where 1948 are positive examples or cases where             Open source LLMs: We prompt several open-
+source LLMs in a few-shot manner with a fixed set       of this metric one that uses GPT-4o as the judge
+of three example code changes and review pairs          LLM (LaaJ-GPT) and one that uses Magicoder-S-
+from the validation set. We use LLMs in the 3-13B       DS-6.7B (LaaJ-Magic), the opensource model used
+parameter range: Stable-Code-3B (Pinnaparaju            by CRScore, for a fair comparison.
+et al.), DeepSeekCoder-6.7B (Guo et al., 2024),
+Magicoder-6.7B (Wei et al., 2023), CodeLLaMA-           5     Results
+7B and 13B (Roziere et al., 2023) and LLaMA-3-          5.1    Validity of Pseudo-References
+8B (AI@Meta, 2024).
+Closed source LLMs: We prompt closed-source             We show the rates of correct, incorrect, unverifi-
+LLMs like GPT-3.5 in a manner similar to the open-      able, and missing claims as explained in section
+source LLMs.                                            4.1 in Table 1. The pseudo-references produced by
+                                                        our pipeline were relatively accurate with roughly
+4.5     Reference-based Metrics                         82.6% accuracy across the languages. The best
+                                                        performance is for Javascript and the worst is for
+We pick commonly used reference-based metrics           Java. The most frequent issues in the code claims
+for code review and other text generation tasks to      were incorrect claims. Most of the errors were in
+compare with CRScore:                                   code comprehension (“misreading the code”) and
+BLEU (Papineni et al., 2002) measures the n-gram        over-generalization (incorrect assumptions made
+precision between the generated text and references     from the limited context, contradicting file level
+with an additional brevity penalty to discourage        context). Some examples are shown in Table 12.
+short outputs. It is used for evaluation in both        For Javascript, we observed unverifiable claims to
+(Tufano et al., 2021) and CodeReviewer (Li et al.,      be the biggest issue, e.g., claims about code ef-
+2022). We report the results with and without stop      ficiency or functionality made without evidence.
+word removal.                                           E.g.: “However, this change could also potentially
+Normalized Edit Distance is a normalized Leven-         enable less strict . . . behavior, . . . This could make
+shtein distance used in prior work (Tufano et al.,      the code less efficient . . . ”.
+2021; Bairi et al., 2024) to measure the number
+of edits required to match candidate and target re-           Metric                    τ           rs
+views or code.
+ROUGE-L F-measure is a popular recall-oriented                BLEU                          0.001   -0.0001
+metric originally proposed for summarization and              BLEU
+                                                                                        0.0425      0.0542
+machine translation. We use the longest common                (without stopwords)
+subsequence-based sentence level f-measure imple-             BERTScore                     0.081   0.1083
+mentation.7                                                   Normalized
+                                                                                        0.0193      0.0249
+chrF: (Popović, 2015) Is a machine translation               Edit Distance
+metric which is essentially a character level F score         ROUGE-L
+                                                                                        0.0757      0.0989
+computed using character level n-grams.                       F-measure
+chrF++: (Popović, 2017) Is a variant of chrF that            chrF                      0.1484      0.1966
+additionally incorporates word n-grams.                       chrF++                    0.1555      0.2057
+BERTScore: (Zhang et al., 2020) We use the                    LaaJ-Magic                0.2464      0.2748
+BERTScore F1 measure to capture the semantic                  LaaJ-GPT                  0.5247       0.605
+similarity between the reference review and the               Rel (τbest ) (Ours)       0.4567      0.5431
+generated review.
+                                                        Table 3: Comparing Kendal-Tau (τ ) and Spearman Rank
+LLM-as-a-judge (LaaJ): Following recent de-
+                                                        (rs ) correlation of reference-based evaluation metrics
+velopments (Zheng et al., 2023) we develop an           and our reference-free relevance score (Rel) with hu-
+LLM prompting-based approach that compares the          man annotations for the relevance dimension. Results
+model-generated reviews against CodeReviewer            that don’t achieve statistical significance are grayed out.
+references to generate relevance scores. We prompt      Our metric archives the second-best correlation behind
+them with descriptions of the same Con, Comp, and       LaaJ-GPT however it does so with a much smaller 6.7B
+Rel dimensions developed in section 3.1 with the        parameter open-source model. Additionally, CRScore
+                                                        outperforms LaaJ-Magic which uses the same base LLM
+prompt shown in D.4. We evaluate two variants
+                                                        (Magicoder) as the judge model.
+   7
+       https://pypi.org/project/rouge-score/
+5.2   Validity of Review Quality Dimension                STS Threshold (τ )            P          R        F1
+      Scores (Con, Comp and Rel)
+                                                          0.6                     0.4055     0.9512     0.5686
+Correlation with human Likert score annota-               0.65                    0.4433     0.8794     0.5895
+tions: We compute the Spearman and Kendall rank           0.6576 (τGT )           0.4475     0.8665     0.5902
+correlations between the human-annotated Likert           0.7                     0.4832        0.77    0.5938
+scores and the metric values. These values were           0.7314 (τbest )         0.5173     0.6899     0.5913
+gathered for the 300 CodeReviewer test instances          0.75                    0.5401      0.633     0.5828
+mentioned in section 4.1, (results in Table 3). We        0.8                     0.6223      0.444     0.5183
+exclude human annotations done on the ground
+truth references (“Ground Truth” row in Table 10)         Table 4: Precision (P), Recall (R), and f1-score (F1)
+because the reference-based metric value for these        achieved by the STS embedding model for various STS
+would be 1 by default unfairly lowering their cor-        thresholds (τ ) evaluated on the human annotations link-
+                                                          ing each review sentence to the pseudo-references ad-
+relations. We observe that while almost all the
+                                                          dressed by it.
+reference-based metrics have weak to no correla-
+tions with human judgment our metric Rel and
+LaaJ-GPT achieve the greatest correlations. We            evance, but they are more concise. Additionally,
+also show correlations between human Likert scale         the best system according to human annotators (as
+annotations for all dimensions and all metrics (in-       evident from Table 10), GPT-3.5 achieves average
+cluding Con and Comp) in Table 9.                         scores of 3.63, 2.65, and 2.9 for each dimension –
+Comparing system rankings: Arguably the most              much better than the reference reviews. This pro-
+important desideratum for our metric is the abil-         vides further motivation for the development of
+ity to rank systems similar to human evaluators.          reference-free evaluation metrics like CRScore for
+We compare the system rankings produced by our            code review.
+metric Rel with rankings produced by human an-
+notations for relevance, showing the correlations         5.4   Failure Cases
+in Table 2. Only the LaaJ metrics and our metric
+                                                          We analyze the cases where our metric greatly
+achieve a strong, statistically significant correlation
+                                                          overestimates or underestimates the quality of a
+with the rankings computed from human annota-
+                                                          review with respect to human annotations. We
+tions. The system rankings (shown in Table 15)
+                                                          find such cases using the procedure described in
+reveal that our metric gets the ranking mostly right,
+                                                          Appendix E.1. This is also supported by the re-
+except for LLaMA-3-8B-Instruct, which is ranked
+                                                          sults in Table 4 that show that the STS model used
+slightly lower by our metric compared to human
+                                                          while having a decent amount of recall, has rela-
+relevance annotations. We also report the quality
+                                                          tively low precision values for most of the thresh-
+dimension scores for each system according to our
+                                                          olds evaluated including τbest , the threshold used
+metrics (Con, Comp, and Rel) and human anno-
+                                                          in Table 2 and 3. For underestimation cases, we
+tations in Table 10. Our metrics also have a simi-
+                                                          observe our pseudo-reference generation pipeline
+lar spread of values to the human annotations and
+                                                          generates fewer references on average (2.44) com-
+greater sensitivity to human preferences as shown
+                                                          pared to the whole data (4.76). This suggests that
+in Figure 8 and Table 13.
+                                                          even though the STS model has a high recall, hav-
+                                                          ing fewer pseudo-references, makes it harder to
+5.3   CodeReviewer Dataset Reference Quality
+                                                          evaluate the relevance of reviews since CRScore
+We compare the quality of the CodeReviewer ref-           might underestimate comprehensiveness compared
+erence reviews with the reviews generated by the          to humans. Additionally, we observe reviews like
+9 system evaluated by the human annotators. The           “Why do we need these imports” which are brief,
+average scores for conciseness, comprehensiveness,        contain stopwords, and have fewer relevant tokens,
+and relevance attained by the CodeReviewer refer-         making it hard for STS to recognize their relevance
+ences are 3.05, 1.88, and 2.13, while the average         to pseudo-reference. For overestimation cases, we
+scores obtained by all 9 systems are 2.57, 1.84,          observe the presence of inline code snippets at a
+and 1.99. This suggests that the average reference        higher rate (45%) compared to all reviews (28%)
+review is barely better than the average evaluated        and underestimation cases (12%). Some example
+system according to the human annotators for rel-         reviews for each case are shown in Table 16, 17.
+6   Discussion                                           or overestimates it in some cases.
+
+In this work we identify issues with current code        7    Conclusion
+review evaluation benchmarks like CodeReviewer
+                                                         Our work takes the first steps towards addressing
+(Li et al., 2022), which fail to capture the one-
+                                                         the challenges involved in evaluating the quality of
+to-many nature of code review and contain noisy
+                                                         code reviews. We propose useful dimensions for
+references. To enable auditing current evaluation
+                                                         capturing review quality, and offer CRScore as an
+metrics and aid the development of a better met-
+                                                         automated, efficient, open-source and reproducible
+ric, we propose three review quality dimensions
+                                                         metric for capturing them. We collect a dataset of
+– conciseness, comprehensiveness, and relevance
+                                                         human judgment of review quality scores to show
+based on current literature on reference-free evalua-
+                                                         the validity of CRSore. We compare CRScore with
+tion (Mehri and Eskenazi, 2020b; Piorkowski et al.,
+                                                         7 reference-based metrics, for 9 review generation
+2020; Turzo and Bosu, 2024).
+                                                         systems using the collected annotations. Our met-
+   To ground these dimensions in topics that re-
+                                                         ric achieves the best alignment with human prefer-
+views should address (Rasheed et al., 2024), we
+                                                         ences among open source metrics and is the most
+propose an automated pseudo-reference generation
+                                                         sensitive. However, there is scope for improvement
+pipeline that leverages LLMs and code smell de-
+                                                         by developing better pseudo-reference generation
+tectors. We validate the quality of these pseudo-
+                                                         and STS matching methods to try and match the
+references via human evaluation. Based on these
+                                                         performance of closed-source models like GPT-4o
+dimensions, we develop reliable guidelines for cod-
+                                                         in judging review quality.
+ing review quality using pseudo-references and col-
+lect annotations for 9 review generation systems         8    Future Work
+and “ground truth” reviews for the CodeReviewer
+dataset spanning Python, Java, and Javascript.           Although our metric is a great first step towards
+   The collected annotations show that current           reference-free evaluation of code reviews, it still
+reference-based metrics except for LLM-as-a-             suffers from systematic under and over-estimation
+judge with powerful closed source models like            errors in certain cases, which causes it to fall short
+GPT-4o fail to capture human preferences, which          of powerful closed source models. We believe
+is further compounded by humans preferring some          these limitations stem from pseudo-reference cov-
+models over the references. We propose CRScore           erage issues and the limitations of STS methods
+as a metric to capture the three dimensions using        when it comes to matching data containing both
+the pseudo-references generated by open source           code and text. Future work can extend the pseudo-
+LLMs and static analysis tools like code smell de-       references by adding components for detecting
+tectors through STS models like sentence trans-          code security, efficiency issues, etc. Also, better
+formers (Reimers, 2019). Our approach has the            embedding models should be developed to measure
+second greatest alignment with human preferences,        how faithfully review sentences capture the pseudo-
+lagging only behind LaaJ-GPT and the greatest            references. Additionally, code smell detection can
+alignment among open source metrics. It achieves         be expanded beyond Python, Java, and Javascript
+the best review quality correlation scores (0.4577 τ     to languages like C/C++, Ruby, and Go, present in
+and 0.5425 rs ), system ranking correlations (0.95       the CodeReviewer dataset.
+rs and 0.8889 τ ), as well as the greatest sensitivity
+                                                         Limitations
+(Figure 8) among open source metrics. Addition-
+ally, it greatly improves over using the Magicoder           • While annotating reviews for the review qual-
+LLM directly as a judge, while also being more                 ity dimensions of conciseness, comprehen-
+efficient (since the LLM needs to be run only once             siveness, and relevance, the human annotators
+to produce the pseduo-references as compared to                are given a list of pseudo-references that over-
+the LLM-as-a-judge, where it needs to be re-run                lap with the one used by CRScore. We believe
+for every review model evaluated). However, we                 this isn’t a source of anchoring bias because
+also note that despite its reproducibility, efficiency         the human annotators are allowed to add and
+and greater alignment with human preferences,                  remove claims from the pseudo-references
+CRScore exhibits only moderate correlations with               in the first stage of annotation (while rating
+review quality, and systematically underestimates              pseudo-reference quality). The final list of
+     pseudo-references used for review quality an-        References
+     notations is different from the one used by          Apache lucene.
+     CRScore. Additionally, the pseudo-references
+     provide a common ground for the annotators           Mouna Abidi, Manel Grichi, Foutse Khomh, and Yann-
+                                                           Gaël Guéhéneuc. 2019. Code smells for multi-
+     to rate review quality and comprehensiveness.
+                                                           language systems. In Proceedings of the 24th Euro-
+     This also helped us achieve high reliability for      pean Conference on Pattern Languages of Programs,
+     coding review quality (section 4.2).                  EuroPLop ’19, New York, NY, USA. Association for
+                                                           Computing Machinery.
+   • Semantic textual similarity (STS) models
+     are imperfect at matching relevant pseudo-           Toufique Ahmed, Amiangshu Bosu, Anindya Iqbal, and
+                                                            Shahram Rahimi. 2017. Senticr: A customized sen-
+     references to the review sentences, especially
+                                                            timent analysis tool for code review interactions. In
+     when there are very few claims and the re-             2017 32nd IEEE/ACM International Conference on
+     views contain inline code snippets, where the          Automated Software Engineering (ASE), pages 106–
+     latter can inflate the STS scores.                     111. IEEE.
+
+   • Our pseudo-reference generation pipeline is          AI@Meta. 2024. Llama 3 model card.
+     not comprehensive enough in some cases               Deepika Badampudi, Michael Unterkalmsteiner, and
+     which can lead to underestimation of review            Ricardo Britto. 2023. Modern code reviews—survey
+     quality as shown by our failure case analy-            of literature and practice. ACM Transactions on Soft-
+     sis. Additionally, it could be extended by             ware Engineering and Methodology, 32(4):1–61.
+     adding more modules like code smell detec-           Dzmitry Bahdanau. 2014. Neural machine translation
+     tors for aspects like code security, code effi-        by jointly learning to align and translate. arXiv
+     ciency, etc. similar to Rasheed et al. (2024).         preprint arXiv:1409.0473.
+     Also, code smell detector tools can be added         Ramakrishna Bairi, Atharv Sonwane, Aditya Kanade,
+     for languages other than Python, Java, and             Arun Iyer, Suresh Parthasarathy, Sriram Rajamani,
+     Javascript, like Go, C/C++, and Ruby present           B Ashok, and Shashank Shet. 2024. Codeplan:
+     in the CodeReviewer dataset.                           Repository-level coding using llms and planning.
+                                                            Proceedings of the ACM on Software Engineering,
+   • Our metric only achieves a moderate correla-           1(FSE):675–698.
+     tion with human annotations of review quality,       Gabriele Bavota and Barbara Russo. 2015. Four eyes
+     and while it is much better than the reference-        are better than two: On the impact of code reviews
+     based metrics in terms of alignment with hu-           on software quality. In 2015 IEEE International
+     man judgment and sensitivity to review qual-           Conference on Software Maintenance and Evolution
+                                                            (ICSME), pages 81–90.
+     ity as judged by humans, it is only a first step
+     towards developing better metrics for code re-       Moritz Beller, Alberto Bacchelli, Andy Zaidman, and
+     view. Future work should try to address the           Elmar Juergens. 2014. Modern code reviews in open-
+     limitations of our claim generation pipeline          source projects: Which problems do they fix? In
+                                                           Proceedings of the 11th Working Conference on Min-
+     and STS methods.                                      ing Software Repositories, MSR 2014, page 202–211,
+                                                           New York, NY, USA. Association for Computing Ma-
+                                                           chinery.
+Ethics Statement
+                                                          Wikipedia Contributors. 2019a. Cohesion (computer
+Our work doesn’t violate any ethical guidelines and         science).
+is compliant with copyright rules and regulations
+                                                          Wikipedia Contributors. 2019b. Cyclomatic complex-
+as we use an existing publicly available dataset and        ity.
+augment it with annotations of review quality using
+reviews generated by 9 systems and the references         Lee Dong-Kyu. 2024. A gpt-based code review system
+in the dataset. While there is a slight risk of harmful     for programming language learning. arXiv preprint
+                                                            arXiv:2407.04722.
+or toxic text being a part of the pseudo-references
+generated by the LLM component in our pseudo-             Aryaz Eghbali and Michael Pradel. 2023. Crystalbleu:
+reference generation pipeline we don’t believe it to        Precisely and efficiently measuring the similarity of
+                                                            code. In Proceedings of the 37th IEEE/ACM Interna-
+be a major risk based on the annotations done for           tional Conference on Automated Software Engineer-
+the pseudo-reference quality.                               ing, ASE ’22, New York, NY, USA. Association for
+                                                            Computing Machinery.
+Mikhail Evtikhiev, Egor Bogomolov, Yaroslav Sokolov,        Zhen Li, Xiaohan Xu, Tao Shen, Can Xu, Jia-Chen
+  and Timofey Bryksin. 2023. Out of the bleu:: How            Gu, and Chongyang Tao. 2024. Leveraging large
+  should we assess quality of the code generation mod-        language models for nlg evaluation: A survey. arXiv
+  els?                                                        preprint arXiv:2401.07103.
+Lishui Fan, Jiakun Liu, Zhongxin Liu, David Lo, Xin         Zhiyu Li, Shuai Lu, Daya Guo, Nan Duan, Shailesh
+  Xia, and Shanping Li. 2024. Exploring the capabil-          Jannu, Grant Jenks, Deep Majumder, Jared Green,
+  ities of llms for code change related tasks. arXiv          Alexey Svyatkovskiy, Shengyu Fu, et al. 2022. Au-
+  preprint arXiv:2407.02824.                                  tomating code review activities by large-scale pre-
+                                                              training. In Proceedings of the 30th ACM Joint Eu-
+Zhangyin Feng, Daya Guo, Duyu Tang, Nan Duan, Xi-             ropean Software Engineering Conference and Sym-
+  aocheng Feng, Ming Gong, Linjun Shou, Bing Qin,             posium on the Foundations of Software Engineering,
+  Ting Liu, Daxin Jiang, and Ming Zhou. 2020. Code-           pages 1035–1047.
+  bert: A pre-trained model for programming and nat-
+  ural languages. In Findings of the Association for        Hong Yi Lin, Patanamon Thongtanunam, Christoph
+  Computational Linguistics: EMNLP 2020, Online               Treude, and Wachiraphan Charoenwet. 2024. Im-
+  Event, 16-20 November 2020, volume EMNLP 2020               proving automated code reviews: Learning from ex-
+  of Findings of ACL, pages 1536–1547. Association            perience. In Proceedings of the 21st International
+  for Computational Linguistics.                              Conference on Mining Software Repositories, pages
+Martin Fowler. 1997. Refactoring: Improving the de-           278–283.
+ sign of existing code.
+                                                            Haiyang Liu, Yang Zhang, Vidya Saikrishna, Quanquan
+Alexander Frömmgen, Jacob Austin, Peter Choy,                 Tian, and Kun Zheng. 2024. Prompt learning for
+  Nimesh Ghelani, Lera Kharatyan, Gabriela Surita,            multi-label code smell detection: A promising ap-
+  Elena Khrapko, Pascal Lamblin, Pierre-Antoine Man-          proach. arXiv preprint arXiv:2402.10398.
+  zagol, Marcus Revaj, Maxim Tabachnyk, Daniel Tar-
+  low, Kevin Villela, Dan Zheng, Satish Chandra, and        Xinghua Liu and Cheng Zhang. 2017. The detection
+  Petros Maniatis. 2024. Resolving code review com-           of code smell on software development: a mapping
+  ments with machine learning. In 2024 IEEE/ACM               study. In 2017 5th International Conference on
+  46th International Conference on Software Engineer-         Machinery, Materials and Computing Technology
+  ing: Software Engineering in Practice (ICSE-SEIP).          (ICMMCT 2017), pages 560–575. Atlantis Press.
+
+Kavita Ganesan. 2018. Rouge 2.0: Updated and im-            Junyi Lu, Lei Yu, Xiaojia Li, Li Yang, and Chun
+  proved measures for evaluation of summarization             Zuo. 2023. Llama-reviewer: Advancing code re-
+  tasks. arXiv preprint arXiv:1803.01937.                     view automation with large language models through
+                                                              parameter-efficient fine-tuning. In 2023 IEEE 34th
+Daya Guo, Qihao Zhu, Dejian Yang, Zhenda Xie, Kai             International Symposium on Software Reliability En-
+  Dong, Wentao Zhang, Guanting Chen, Xiao Bi,                 gineering (ISSRE), pages 647–658. IEEE Computer
+  Y Wu, YK Li, et al. 2024. Deepseek-coder: When              Society.
+  the large language model meets programming-the
+  rise of code intelligence. CoRR.                          Pranava Madhyastha, Josiah Wang, and Lucia Specia.
+                                                              2019. VIFIDEL: Evaluating the visual fidelity of
+Michael Hanna and Ondřej Bojar. 2021. A fine-grained         image descriptions. In Proceedings of the 57th An-
+  analysis of BERTScore. In Proceedings of the Sixth          nual Meeting of the Association for Computational
+  Conference on Machine Translation, pages 507–517,           Linguistics, pages 6539–6550, Florence, Italy. Asso-
+  Online. Association for Computational Linguistics.          ciation for Computational Linguistics.
+Jack Hessel, Ari Holtzman, Maxwell Forbes, Ronan            Shane McIntosh, Yasutaka Kamei, Bram Adams, and
+   Le Bras, and Yejin Choi. 2021. CLIPScore: A                Ahmed E. Hassan. 2014. The impact of code re-
+   reference-free evaluation metric for image captioning.     view coverage and code review participation on soft-
+   In Proceedings of the 2021 Conference on Empiri-           ware quality: A case study of the qt, vtk, and itk
+   cal Methods in Natural Language Processing, pages          projects. In Proceedings of the 11th Working Confer-
+  7514–7528, Online and Punta Cana, Dominican Re-             ence on Mining Software Repositories, MSR 2014,
+   public. Association for Computational Linguistics.         page 192–201, New York, NY, USA. Association for
+Anwen Hu, Shizhe Chen, Liang Zhang, and Qin                   Computing Machinery.
+  Jin. 2023. Infometic: An informative metric for
+  reference-free image caption evaluation. arXiv            Shikib Mehri and Maxine Eskenazi. 2020a. Unsuper-
+  preprint arXiv:2305.06002.                                  vised evaluation of interactive dialog with dialogpt.
+                                                              In Proceedings of the 21th Annual Meeting of the
+Klaus Krippendorff. 2018. Content analysis: An intro-         Special Interest Group on Discourse and Dialogue,
+  duction to its methodology. Sage publications.              pages 225–235.
+
+J R Landis and G G Koch. 1977. The measurement of           Shikib Mehri and Maxine Eskenazi. 2020b. USR: An
+   observer agreement for categorical data. Biometrics,       unsupervised and reference free evaluation metric
+   33(1):159–174.                                             for dialog generation. In Proceedings of the 58th
+  Annual Meeting of the Association for Computational    Md Tajmilur Rahman, Rahul Singh, and Mir Yousuf
+  Linguistics, pages 681–707, Online. Association for     Sultan. 2024. Automating patch set generation from
+  Computational Linguistics.                              code reviews using large language models. In Pro-
+                                                          ceedings of the IEEE/ACM 3rd International Confer-
+mschwager. 2016. Github - mschwager/cohesion: A           ence on AI Engineering-Software Engineering for AI,
+  tool for measuring python class cohesion.               pages 273–274.
+Niklas Muennighoff, Nouamane Tazi, Loïc Magne, and       Mohammad Masudur Rahman, Chanchal K. Roy, and
+  Nils Reimers. 2022. Mteb: Massive text embedding        Raula G. Kula. 2017. Predicting usefulness of code
+  benchmark. arXiv preprint arXiv:2210.07316.             review comments using textual features and devel-
+                                                          oper experience. In 2017 IEEE/ACM 14th Interna-
+Miroslaw Ochodek, Miroslaw Staron, Wilhelm Med-
+                                                          tional Conference on Mining Software Repositories
+  ing, and Ola Söder. 2022. Automated code review
+                                                          (MSR), pages 215–226.
+  comment classification to improve modern code re-
+  views. In Software Quality: The Next Big Thing
+                                                         Zeeshan Rasheed, Malik Abdul Sami, Muhammad
+  in Software Engineering and Quality, pages 23–40,
+                                                           Waseem, Kai-Kristian Kemell, Xiaofeng Wang, Anh
+  Cham. Springer International Publishing.
+                                                           Nguyen, Kari Systä, and Pekka Abrahamsson. 2024.
+Thanis Paiva, Amanda Damasceno, Eduardo Figueiredo,        Ai-powered code review with llms: Early results.
+  and Cláudio Sant’Anna. 2017. On the evaluation of        arXiv preprint arXiv:2404.18496.
+  code smells and detection tools. Journal of Software
+  Engineering Research and Development, 5(1):7.          N Reimers. 2019. Sentence-bert: Sentence embed-
+                                                           dings using siamese bert-networks. arXiv preprint
+Thai Pangsakulyanont, Patanamon Thongtanunam,              arXiv:1908.10084.
+  Daniel Port, and Hajimu Iida. 2014. Assessing mcr
+  discussion usefulness using semantic similarity. In    Ehud Reiter. 2018. A structured review of the validity of
+  2014 6th International Workshop on Empirical Soft-       BLEU. Computational Linguistics, 44(3):393–401.
+  ware Engineering in Practice, pages 49–54.
+                                                         Shuo Ren, Daya Guo, Shuai Lu, Long Zhou, Shujie
+Arjun Panickssery, Samuel R Bowman, and Shi Feng.          Liu, Duyu Tang, M. Zhou, Ambrosio Blanco, and
+  2024. Llm evaluators recognize and favor their own       Shuai Ma. 2020. Codebleu: a method for automatic
+  generations. arXiv preprint arXiv:2404.13076.            evaluation of code synthesis. ArXiv, abs/2009.10297.
+
+Kishore Papineni, Salim Roukos, Todd Ward, and Wei-      Baptiste Roziere, Jonas Gehring, Fabian Gloeckle, Sten
+  Jing Zhu. 2002. Bleu: a method for automatic evalu-      Sootla, Itai Gat, Xiaoqing Ellen Tan, Yossi Adi,
+  ation of machine translation. In Proceedings of the      Jingyu Liu, Tal Remez, Jérémy Rapin, et al. 2023.
+  40th Annual Meeting of the Association for Compu-        Code llama: Open foundation models for code. arXiv
+  tational Linguistics, pages 311–318, Philadelphia,       preprint arXiv:2308.12950.
+  Pennsylvania, USA. Association for Computational
+  Linguistics.                                           Rana Sandouka and Hamoud Aljamaan. 2023. Python
+                                                           code smells detection using conventional machine
+Nikhil Pinnaparaju, Reshinth Adithyan, Duy Phung,          learning models. PeerJ Comput Sci, 9:e1370.
+  Jonathan Tow, James Baicoianu, and Nathan Cooper.
+  Stable code 3b.                                        Jaydeb Sarker, Asif Kamal Turzo, Ming Dong, and
+                                                           Amiangshu Bosu. 2023. Automated identification of
+David Piorkowski, Daniel González, John Richards,
+                                                           toxic code reviews using toxicr. ACM Transactions
+  and Stephanie Houde. 2020. Towards evaluating and
+                                                           on Software Engineering and Methodology, 32(5):1–
+  eliciting high-quality documentation for intelligent
+                                                           32.
+  systems. arXiv preprint arXiv:2011.08774.
+
+Maja Popović. 2015. chrF: character n-gram F-score      Tushar Sharma, Vasiliki Efstathiou, Panos Louridas, and
+ for automatic MT evaluation. In Proceedings of the        Diomidis Spinellis. 2021. Code smell detection by
+ Tenth Workshop on Statistical Machine Translation,        deep direct-learning and transfer-learning. Journal
+ pages 392–395, Lisbon, Portugal. Association for          of Systems and Software, 176:110936.
+ Computational Linguistics.
+                                                         Ngoc Tran, Hieu Tran, Son Nguyen, Hoan Nguyen,
+Maja Popović. 2017. chrF++: words helping charac-         and Tien Nguyen. 2019. Does bleu score work for
+ ter n-grams. In Proceedings of the Second Confer-         code migration? In 2019 IEEE/ACM 27th Inter-
+ ence on Machine Translation, pages 612–618, Copen-        national Conference on Program Comprehension
+ hagen, Denmark. Association for Computational Lin-        (ICPC), pages 165–176. IEEE.
+ guistics.
+                                                         Nikolaos Tsantalis, Theodoros Chaikalis, and Alexander
+Chanathip Pornprasit and Chakkrit Tantithamthavorn.        Chatzigeorgiou. 2008. Jdeodorant: Identification and
+  2024. Fine-tuning and prompt engineering for large       removal of type-checking bad smells. In 2008 12th
+  language models-based code review automation. In-        European Conference on Software Maintenance and
+  formation and Software Technology, page 107523.          Reengineering, pages 329–331.
+Rosalia Tufano, Simone Masiero, Antonio Mastropaolo,      Shuyan Zhou, Uri Alon, Sumit Agarwal, and Graham
+  Luca Pascarella, Denys Poshyvanyk, and Gabriele           Neubig. 2023. Codebertscore: Evaluating code gen-
+  Bavota. 2022. Using pre-trained models to boost           eration with pretrained models of code. Deep Learn-
+  code review automation. In Proceedings of the 44th        ing for Code (DL4C) workshop, 11th International
+  international conference on software engineering,         Conference on Learning Representations, ICLR 2023,
+  pages 2291–2302.                                          abs/2302.05527.
+Rosalia Tufano, Luca Pascarella, Michele Tufano,
+  Denys Poshyvanyk, and Gabriele Bavota. 2021. To-
+  wards automating code review activities. In 2021
+                                                          A     Introduction Details
+  IEEE/ACM 43rd International Conference on Soft-         This section contains details to corroborate some
+  ware Engineering (ICSE), pages 163–174. IEEE.
+                                                          of the points made in the introduction section.
+Asif Kamal Turzo and Amiangshu Bosu. 2024. What
+  makes a code review useful to opendev developers?       A.1    Benefits of Neuro Symbolic
+  an empirical investigation. Empirical Software Engi-           Pseudo-Reference Generation
+  neering, 29(1):6.
+                                                          While LLMs have recently shown promise for
+Manushree Vijayvergiya, Małgorzata Salawa, Ivan Bud-
+                                                          evaluating natural language generation (NLG) (Li
+  iselić, Dan Zheng, Pascal Lamblin, Marko Ivanković,
+ Juanjo Carin, Mateusz Lewko, Jovan Andonov,              et al., 2024) they suffer from biases like favor-
+  Goran Petrović, et al. 2024. Ai-assisted assessment    ing their own generations (“self-selection bias”)
+  of coding practices in modern code review. arXiv        (Panickssery et al., 2024) or in other words, if we
+  preprint arXiv:2405.13565.                              were to have Magicoder or GPT-3.5 as the evalua-
+Yuxiang Wei, Zhe Wang, Jiawei Liu, Yifeng Ding, and       tor LLM it would assign higher scores to the text
+  Lingming Zhang. 2023. Magicoder: Source code is         generated by Magicoder and GPT-3.5 respectively.
+  all you need. arXiv preprint arXiv:2312.02120.          Code analysis tools (CATs) on the other hand are
+Lanxin Yang, Jinwei Xu, Yifan Zhang, He Zhang, and        limited in scope compared to LLMs in detecting
+  Alberto Bacchelli. 2023. Evacrc: Evaluating code        issues like best practice violations (Vijayvergiya
+  review comments. In Proceedings of the 31st ACM
+                                                          et al., 2024) but don’t have any self-selection bias.
+  Joint European Software Engineering Conference
+  and Symposium on the Foundations of Software Engi-      However, combining these methods can reduce the
+  neering, ESEC/FSE 2023, page 275–287, New York,         self-selection bias of LLMs, while supplementing
+  NY, USA. Association for Computing Machinery.           the narrow coverage of code analysis tools. Indeed
+Zezhou Yang, Cuiyun Gao, Zhaoqiang Guo, Zhenhao Li,       the results show that despite using Magicoder as
+  Kui Liu, Xin Xia, and Yuming Zhou. 2024. A survey       the evaluation LLM, our metric CRScore doesn’t
+  on modern code review: Progresses, challenges and       preferentially rank Magicoder above any models
+  opportunities. arXiv preprint arXiv:2405.18216.         other than LLaMA-3 when compared to the human
+Yongda Yu, Guoping Rong, Haifeng Shen, He Zhang,          ranking.
+  Dong Shao, Min Wang, Zhao Wei, Yong Xu, and
+  Juhong Wang. 2024. Fine-tuning large language           A.2    Release of Code and Data
+  models to improve accuracy and comprehensibility
+  of automated code review. ACM Trans. Softw. Eng.        We plan to make the human preferences annotation
+  Methodol. Just Accepted.                                dataset and code for the evaluation metric and eval-
+                                                          uated models public if the paper is accepted. We
+Fengji Zhang, Zexian Zhang, Jacky Wai Keung, Xiangru
+  Tang, Zhen Yang, Xiao Yu, and Wenhua Hu. 2024.          will add the GitHub link to the code base and the
+  Data preparation for deep learning based code smell     dataset to the camera-ready submission.
+  detection: A systematic literature review.
+Tianyi Zhang, Varsha Kishore, Felix Wu, Kilian Q.
+                                                          B     More Related Work
+  Weinberger, and Yoav Artzi. 2020. Bertscore: Evalu-     B.1    Code Specific Reference Based Metrics
+  ating text generation with BERT. In 8th International
+  Conference on Learning Representations, ICLR 2020,      Due to the popularity and convenience of auto-
+  Addis Ababa, Ethiopia, April 26-30, 2020. OpenRe-       mated reference-based metrics like BLEU (Pap-
+  view.net.
+                                                          ineni et al., 2002), ROUGE (Ganesan, 2018), and
+Lianmin Zheng, Wei-Lin Chiang, Ying Sheng, Siyuan         BERTScore (Zhang et al., 2020) the research com-
+  Zhuang, Zhanghao Wu, Yonghao Zhuang, Zi Lin,            munity has developed several code-specific ver-
+  Zhuohan Li, Dacheng Li, Eric Xing, et al. 2023.
+  Judging llm-as-a-judge with mt-bench and chatbot
+                                                          sions like CodeBLEU (Ren et al., 2020), RUBY
+  arena. Advances in Neural Information Processing        (Tran et al., 2019), CrystalBLEU (Eghbali and
+  Systems, 36:46595–46623.                                Pradel, 2023) and CodeBERTScore (Zhou et al.,
+Figure 3: Supervised fine-tuning pipeline for training Magicoder-6.7B for claim generation. We generate synthetic
+data by using GPT-4 to generate claims for the code changes in CodeReviewer validation set.
+
+
+                                       Missing            model. However prior studies have shown metrics
+ Review
+                                       Context            like BLEU to have low validity (overlap with hu-
+                                       Folder             man judgment) and reliability for text generation
+ Don’t redefine, just import the       structure,         (Reiter, 2018), code generation (Evtikhiev et al.,
+ existing one in cmdline.py . :)       Codebase           2023), and code migration (Tran et al., 2019). How-
+                                       organization       ever, metrics like ROUGE, BERTScore, and Code-
+                                       Folder             BERTScore all have a notion of precision, recall,
+ I think we can remove this
+                                       structure,         and f-score which is captured by conciseness, com-
+ function, right? (duplicate with
+                                       Codebase           prehensiveness, and relevance respectively.
+ ses_starter.py)
+                                       organization
+ MPRester(os.environ(
+                                       Class              B.2    Code Review Automation
+ ["MP_API_KEY"]) can be
+                                       definition,
+ left simply as MPRester() and
+                                       Environment        Due to the high time and resource demands of
+ it will pick up the API key
+                                       variables          code review automated approaches have gained
+ from the environment. What . . .
+                                                          popularity (Yang et al., 2024). Pornprasit and Tan-
+Table 5: Ground truth reviews in the automatically        tithamthavorn (2024); Lu et al. (2023); Dong-Kyu
+mined CodeReviewer data that assume contextual infor-     (2024); Fan et al. (2024); Yu et al. (2024) propose
+mation about the code base not available in the dataset   fine-tuning and prompt engineering approaches to
+                                                          leverage LLMs for code review and code-change re-
+                                                          lated tasks. Frömmgen et al. (2024); Rahman et al.
+2023). CodeBLEU extends BLEU by incorporating             (2024) propose methods for code refactoring based
+code structure through dataflow and syntax match          on review comments. Vijayvergiya et al. (2024)
+between generated code and references, while Crys-        propose the detection of “best practice violations”
+talBLEU filters out trivially shared n-grams. RUBY        . Lin et al. (2024) propose oversampling reviews
+incorporates the distance between the syntax tree         from experienced reviewers as a proxy of review
+and program dependency graph of references and            quality improving informativeness and correctness
+generated code. CodeBERTScore extends the                 of generated reviews. Rasheed et al. (2024) pro-
+embedding-based BERTScore by replacing BERT               pose an LLM agent for code review and code smell
+with a pre-trained CodeBERT (Feng et al., 2020)           detection.
+B.3   Comparing with Review                              tentially more nuanced detection of code smells.
+      Usefulness/Presentation Style Methods              Sandouka and Aljamaan (2023) create a dataset of
+                                                         1k Python code smells like “Long Method” and
+Our approach evaluates review informativeness and
+                                                         “Large Class” to train traditional ML models like
+content related to issues such as code smells com-
+                                                         random forests. Sharma et al. (2021) leverage
+pared to prior work which has focused more on
+                                                         deep learning models like autoencoders and trans-
+linguistic features, style, and presentation. (Yang
+                                                         fer learning for adapting to unseen programming
+et al., 2023) proposes EvaCRC an automated ap-
+                                                         languages. Liu et al. (2024) propose a prompting-
+proach for review quality evaluation by categoriz-
+                                                         based approach for “Long Method” and “Long Pa-
+ing reviews along quality attributes like emotion,
+                                                         rameter List” code smells in Java. Rasheed et al.
+question, suggestion, and evaluation and rating
+                                                         (2024) create an LLM agent to detect code smells
+quality along those attributes on a four-tier grad-
+                                                         in repositories. However, these approaches are lim-
+ing scale. While their conceptualization is similar
+                                                         ited in the types of smells they target, training data
+to ours, they focus on quality attributes related to
+                                                         requirements (Zhang et al., 2024), or lack compre-
+review style and understandability rather than the
+                                                         hensive evaluation. Also, code smells differ across
+actual content. Additionally, they don’t ground
+                                                         programming languages (Abidi et al., 2019), and
+their assessments for these dimensions into a list
+                                                         transfer learning approaches can only be leveraged
+of claims and issues which makes it harder to un-
+                                                         for similar languages (Sharma et al., 2021). Due to
+derstand the scores. Rahman et al. (2017) propose
+                                                         these limitations of learning-based methods we use
+RevHelper as an approach for predicting the use-
+                                                         traditional language-specific code analysis tools.
+fulness of reviews based on a mixture of three re-
+viewer expertise (e.g. Code Authorship) and five
+                                                         C     Method Details
+textual features: stop word ratio, reading ease, ques-
+tion ratio, and conceptual similarity. Most of the       This appendix contains additional details on the
+textual features identified by RevHelper deal with       implementation of our CRScore metric.
+review style and presentation, and as pointed out in
+section 5.4 some of them like code elements could        C.1 Distribution of Sentence Similarity Scores
+lead to overestimation of review quality. While          We plot the histogram of values of the sentence
+the notion of conceptual similarity comes close to       similarity scores in Figure 5 showing a roughly
+the conceptualization of our Rel score their opera-      normal distribution. We also plot the quantile-
+tionalization of it is very different from ours. They    quantile (Q-Q) plot in Figure 6 that compares the
+directly measure similarity over lines of the code       quantile of a normal distribution with the empiri-
+change and review comments. We believe this is           cally observed distribution of sentence similarity
+redundant with the notion of preferring reviews          scores. Ideally, the Q-Q plot should be a straight
+that reference code elements and can be gamed            line (shown in red) but we observe deviation to-
+by review generation models that reference code          wards really high ranges among the actual values
+snippets incorrectly. Ochodek et al. (2022) develop      (shown in blue). Due to computational constraints,
+CommentBERT an approach for automatically clas-          these plots are constructed out of a randomly sam-
+sifying review comments based on their purpose           pled subset of 100k similarity scores from the orig-
+and the type of change required using a taxonomy         inal 100M+ sentence similarity scores computed
+of comments with 12 categories with dimensions           from the CodeReviewer test set review pairs.
+like code_design, code_logic, etc. While they do
+classify the review content, they don’t look at what     C.2     Code Smell Detection Details
+makes them useful.
+                                                         In this section, we cover some of the details of the
+                                                         code smell detectors used in this study.
+B.4   Code Smell Detection
+The problem of detecting “code smells” or symp-          C.2.1    Class Cohesion
+toms of design flaws and bad practices (also called      Class cohesion captures the degree to which the
+anti-patterns) has been traditionally tackled by         elements of a class belong together (Contributors,
+analysis-based approaches (Tsantalis et al., 2008;       2019a). In other words, cohesion measures the
+Paiva et al., 2017; Liu and Zhang, 2017). Recent         strength of the relationship between pieces of func-
+work has explored learning-based methods for po-         tionality (attributes and methods) within a given
+Figure 4: This figure shows how semantic textual similarity (STS) is used to measure the coverage of pseudo-
+references by the review sentences. We compute pairwise semantic similarities between all pseudo references and
+review sentences and employ a threshold to compute comprehensiveness as the fraction of pseudo references for
+which at least one review sentence has higher similarity than the threshold. Meanwhile, conciseness is the fraction
+of review sentences which high have higher similarity than the threshold with any pseudo reference.
+
+
+
+
+Figure 5: Histogram of sentence similarity of randomly sampled 100K sentence pairs from the CodeReviewer test
+set showing the scores are roughly normally distributed, justifying the usage of the 5-sigma rule for coming up with
+the threshold of 0.85 for high similarity used in metric computation.
+
+
+class. For example, in highly cohesive classes func-        C.2.2    Cyclomatic Complexity
+tionality is strongly related and methods and at-           Cyclomatic complexity is a software metric used to
+tributes are more co-dependant and hang together            indicate the complexity of a program (Contributors,
+as a logical whole (mschwager, 2016).                       2019b). It is a quantitative measure of the number
+Figure 6: Q-Q plot comparing quantiles of empirically observed sentence similarity scores computed over 100K
+sentence pairs from the CodeReviewer test set showing the theoretical quantiles match a normal distribution except
+for really high values. The discrepancy seen here is likely due to the random sample being a smaller subset of the
+whole 100M+ sentence pairs for which we compute similarities.
+
+
+of linearly independent paths through a program’s             C.3    Hyperparameters for Training
+source code.                                                         Pseudo-Reference Generation Pipeline
+   Popular tools like Radon8 , a cyclomatic com-              We train the ise-uiuc/Magicoder-S-DS-6.7B,
+plexity computation tool for Python often resort to           with flash attention, random seed of 42, evaluation
+a rank-based system that categorizes code blocks              every 100 steps (eval_steps), max length padding,
+based on their cyclomatic complexity and asso-                train-val split of 0.1 (10% data used for validation),
+ciates them with letter grades as shown in Table 6.           batch size of 2, maximum training sequence length
+Here “A” is the best grade and “F” is the worst               of 1500 and 5 training epochs. The training is done
+grade. Code blocks are flagged for code smells if             on a single A100, 80 GB GPU using the Magicoder
+they have a complexity higher than or equal to “C”            training script9 .
+in Table 6.
+                                                              D     Experimental Details
+CC Score     Rank   Risk                                      Further experimental details like guidelines for an-
+1-5          A      low - simple block                        notation of pseudo-reference accuracy, review qual-
+6-10         B      low - well structured and stable block    ity, etc.
+11-20        C      moderate - slightly complex block
+21-30        D      more than moderate - more complex block   D.1    Codebook for Rating Pseudo-Reference
+31-40        E      high - complex block, alarming                   Quality
+41+          F      very high - error-prone, unstable block
+                                                              The raters are shown model-generated pseudo ref-
+Table 6: Code complexity ranks, associated score thresh-      erences (claims and implications) about the “diff”,
+olds, and descriptions of the potential risks.                which either describe the changes or speculate
+                                                              about potential implications. The claims are state-
+                                                              ments about the diff related to what changes took
+                                                                 9
+                                                                   https://github.com/ise-uiuc/magicoder/blob/
+   8
+       https://pypi.org/project/radon/                        main/src/magicoder/train.py
+place, while the implications cover the effects of        references to the reviews. To explain what it means
+the changes or their interpretations like whether         for a review to address a pseudo-reference, we give
+they implement a new functionality or even the            an analogy to aspect-based product reviews. The
+potential intent of the developers. Additionally,         list/set of claims is similar to a list/set of product as-
+the raters are also given source files as context, in-    pect descriptions, while the code review comment
+cluding the versions of the file before and after the     is similar to a product review. For example, for the
+code change captured by the diff. The raters are          product description and review below:
+expected to refer to them if they need more infor-        Description of a newer version of a Phone:
+mation than just the diff to judge the accuracy of       - The new phone improves battery life by 50% (bat-
+the pseudo-references.                                    tery life)
+   Given these inputs, the raters are supposed to        - The new screen has a higher resolution (screen)
+code each pseudo-reference as shown in Table 8. In        Review: The new screen quality is great but the
+further analysis, we excluded the ambiguous claims        battery runs out quickly.
+(code 2) because they were rarely encountered.               The review here is talking about both the screen
+                                                          and battery life aspects of the product so you can
+D.2   Rating Review Quality using                         say it is addressing both aspects (or claims).
+      Pseudo-References                                      Now we can consider an example from the do-
+                                                          main of code review:
+The raters are given pseudo-references correspond-
+                                                          Pseudo-references for code change:
+ing to the diff but unlike the pseudo-reference qual-
+                                                         - The code change is in the logging of errors in the
+ity annotations, they also include issues/smells de-
+                                                          response handler. (error logging)
+tected by the static analysis tools. The issues span
+                                                         - The formatting of the error message has been
+formatting issues, bad programming practices, or
+                                                          changed. (formatting change of error message)
+more abstract patterns known as “code smells”.
+                                                         - The previous formatting used ’%s %’ at the end
+Code smells are heuristics or code characteristics
+                                                          of the error message, which was removed in the
+associated with deeper problems concerning sys-
+                                                          updated code. (% at the end of the error message)
+tem design. It is important to note that they are
+                                                         - The change in the formatting of the error message
+not bugs, but rather subjective principles that vary
+                                                         will affect the way errors are logged and displayed.
+across programming languages, developers, teams,
+                                                         (effect of formatting on error logging)
+etc. Given the diff and the pseudo-references, the
+                                                          Code review: The %s in the error message is re-
+raters evaluate the quality of the review along the
+                                                          dundant, and the indent=4 in json.dumps is un-
+three dimensions — comprehensiveness, concise-
+                                                          necessary.
+ness, and relevance. The raters are again given
+                                                             The review talks about the third claim by men-
+access to the source files for context and are asked
+                                                          tioning the %s style string at the end of the error
+to rate the quality of 10 reviews per code change
+                                                          logging.
+that are generated by a diverse set of review gener-
+ation systems and one of them is also the ground         D.3       Simple Baseline Implementation Details
+truth review from the CodeReviewer dataset.
+   The rater’s task is to first go through the list      We create two simple baselines for code review
+of pseudo-references and rate their necessity with       generation a BM-25, kNN style retriever-based ap-
+respect to the code change. This stage is meant to       proach, and a seq2seq LSTM style model. The
+remove any pseudo-references that are unnecessary        implementation details of both approaches are de-
+or redundant with respect to the whole set. The          scribed below:
+second stage of the annotation is to link/associate      BM-25 retriever: The BM-25 retriever retrieves
+various pseudo-references to each of the 10 reviews      a relevant review by matching the closest code
+based on which of them are addressed in the review.      change from the CodeReviewer train set to the
+Finally, the raters assign a score on a Likert scale     code change to be reviewed from the test set. For
+of 1 to 5 to each review for each dimension. Some        an efficient implementation, we create an inverted
+rules of thumb for assigning each score for each         index from all the code changes in the train set us-
+dimension are given in Table 7.                          ing the Lucene searcher (luc) class from Pyserini
+                                                         10 .
+   Raters are also given a helpful mental frame-
+                                                            10
+work to help with the process of linking pseudo-                 https://pypi.org/project/pyserini/
+         Dimension                       Score          Rule of thumb
+                                                1       none of the review is related to the claims+issues.
+                                                2       some of the review is related to the claims+issues
+         Conciseness                            3       roughly half of the review is related to the claims+issues
+                                                4       most of the review is related to the claims+issues
+                                                5       basically the whole review is related to the claims+issues
+                                                1       whole review doesn’t cover any of the claims+issues
+                                                2       review covers at least 1 claim or issue
+         Comprehensiveness                      3       review covers roughly cover half the claims+issues
+                                                4       review covers more than half/most of the claims+issues
+                                                5       review covers practically all the claims+issues
+                                                        relevance score must be between conciseness and
+         Relevance
+                                                        comprehensiveness scores
+                                                        if one of the two dimensions is "limiting", i.e. has a very
+                                                        low score or poor quality for a given review then the
+                                                        relevance score should be biased/limited by it.
+
+                                                        E.g. a highly concise review but with very low
+                                                        comprehensiveness should have a relevance score close
+                                                        to the comprehensiveness
+
+Table 7: Some rules of thumb for scoring the quality of reviews for each dimension. These rules are meant as
+guidelines to calibrate multiple annotators and reduce the impact of learning effects in the early stages of annotation.
+
+Code   Description                                       Examples                                    Explanation
+       Correct: You can find concrete evidence           Any existing calls to the ‘push‘ function
+                                                                                                     This is true since if the parameters are
+       to validate or confirm a claim (either in         will need to be updated to include the
+                                                                                                     passed by value and there is a
+1      the diff, the context/source files, or by         new ‘hash‘ parameter. This could
+                                                                                                     parameter after the hash then its value
+       looking up domain-specific knowledge              potentially break compatibility with
+                                                                                                     will be accidentally passed as the hash
+       on the web)                                       older code.
+       Incorrect: You can find concrete evidence
+                                                         The code changes involve the
+       to contradict a claim (either in the diff, the                                                False because ScalarSpaceEncoder is
+0                                                        modification of the parameters passed
+       context/source files, or looking up                                                           a class and not a function.
+                                                         to the ScalarSpaceEncoder function.
+       domain-specific knowledge on the web)
+       Unverifiable: You can’t find evidence                                                         For this claim, the arguments were
+       to confirm or contradict a claim (even            The changes could potentially affect the    being passed by keyword so the
+-1     after looking at the diff, source files, or       performance of the code as the order of     order didn’t matter for functional
+       looking up domain-specific knowledge              the arguments does not matter any longer.   correctness but we can’t comment
+       on the web)                                                                                   on the performance
+       Ambiguous: The claim is underspecified
+                                                         The function will now only work with
+       and has multiple interpretations making                                                       It is underspecified (unclear)
+2                                                        valid elements, preventing potential
+       it hard to determine what is to be                                                            what “valid elements” means.
+                                                         issues down the line.
+       tested/validated
+
+Table 8: Guidelines for coding accuracy of pseudo-references with example pseudo-references falling within each
+category and explanations for why they fall in that category.
+
+
+LSTM reviewer: We train a single hidden layer                              D.4     LLM-as-a-judge Prompting
+encoder-decoder seq2seq LSTM model with Bah-                              The system prompt is as follows:
+danau attention (Bahdanau, 2014) from scratch on
+                                                                            You are a highly skilled software engineer who
+the CodeReviewer training data. We train it with                            has a lot of experience reviewing code changes.
+an Adam optimizer, and negative log-likelihood                              Your task is to rate the relevance of any given
+loss for about 10 epochs, saving the model with the                         code change
+least loss on the CodeReviewer validation set.
+                                                                              The task-specific, review comment evaluation
+prompt is as follows:                                     test instances. For running GPT-3.5 (unfortunately
+                                                          no longer publicly available) we utilized around
+TASK PROMPT: You will be asked to rate the                10k API calls. For the synthetic dataset creation for
+relevance of reviews for given Python, Java, or
+Javascript code changes. A relevant review is             Magicoder for pseudo-reference generation mod-
+one which is both concise and comprehensive. A            eling, we called the GPT-4 model (gpt-4-0613) for
+concise review contains very little text not
+related to the code change. A comprehensive
+                                                          1000 CodeReviewer validation instances. For the
+review contains all the information about a               Magicoder model training, we also use an A100
+code change that should be covered by a review.           GPU, for 5 epochs (or approximately 8-10 hrs).
+A relevant review is comprehensive while being
+concise.
+                                                          D.7   Annotator Information
+Now look at the {lang} code change and review             We hired a graduate student and an undergraduate
+below and score the relevance of the review on
+a scale of 1 to 5                                         student with experience in writing Java, Python,
+                                                          and Javascript code. The annotation process took
+Code Change: {code_change}                                several weeks with additional training provided
+Review: {review}                                          about code review quality, especially about code
+                                                          smells. The annotation guidelines were also iter-
+Your score:                                               atively improved till the high level of reliability
+                                                          reported here was achieved. For the compensation,
+D.5      Dataset Statistics                               the annotators took up this project for research
+We perform all our annotations on the test set of         credits and thus weren’t compensated monetarily.
+the CodeReviewer dataset, which contains 10169            They are also co-authors of this project. They were
+samples in total and is publicly available with the       extensively briefed about the research project and
+Apache 2.0 license11 . The license is permissive and      how their data would be used as preference data
+allows us to use the dataset for research purposes.       for comparing evaluation metrics and would be
+We randomly sampled 300 samples, with 100 sam-            publicly released after anonymization.
+ples across Python, Java, and Javascript – the lan-       D.8   Ethics Review for Data Collection
+guages we have code smell detectors. We found
+a few mislabeled code changes for each language           The data collection protocol used in this work was
+that belonged to a different language, which we           approved by the institutional review board (IRB)
+discarded. This led to a final dataset of 99, 98, and     of the university the authors are affiliated with.
+96 code changes for Python, Java, and Javascript re-      D.9   Does Including the Pseudo-References in
+spectively. Also, we end up with 416, 416, and 399              the Review Quality Dimension Rating
+claims that are evaluated as correct, incorrect, or un-         Lead to Biased Annotations?
+verifiable. For the review dataset, we annotate 2.9k
+reviews (9 systems + ground truth) for each code          While at the first glance it might seem that giving
+change from the previous annotation stage. For all        the annotators access to the pseudo-reference could
+the correlation experiments we exclude the ground         bias their operationalization of the review quality
+truth review annotations around (300), giving us a        dimensions in the favor of CRScore, we believe
+dataset of roughly 2.6k reviews corresponding to          this is not likely. Since this study uses a modi-
+the automated review generation systems. As men-          fied set of pseudo-references which is edited by
+tioned before we excluded the ground truth while          the human annotators to remove incorrect claims
+computing correlations and system rankings be-            and add correct or add missing claims, the set of
+cause reference-based metrics by definition would         pseudo-references used by the human annotators is
+favor (and perfectly rate) the ground truth, unfairly     actually different from the automatically generated
+disadvantaging them for computing correlations.           pseudo-references used by CRScore. In fact the re-
+                                                          sults demonstrate that the LaaJ-GPT metric which
+D.6      Computational Budget                             doesn’t rely on the pseudo-references can obtain
+                                                          a greater correlation than CRScore with the hu-
+For running all the systems mentioned in sec-
+                                                          man review quality dimension annotations despite
+tion 4.4 we utilize an 80 GB A100 for the LLM
+                                                          not having access to the pseudo-references. This
+systems, running them on the 10k CodeReviewer
+                                                          demonstrates that the annotations aren’t biased to-
+  11
+       https://huggingface.co/microsoft/codereviewer      wards CRScore. Finally the pseudo-references play
+a crucial role in helping the annotators concretely
+assess the dimension of comprehensiveness, since
+judging the coverage of a review is very hard with-
+out a list of things that it should cover. Thus we
+believe it contributes to the high reliability of the
+annotations.
+
+E     Additional Results and Analysis
+E.1    Finding Failure Cases of CRScore
+We divide the scores spanned by our metric into 5
+equally sized bins (Q1, Q2, Q3, and Q4 being the
+quantiles) and then find reviews where the metric
+underestimates the Rel value (value less than Q1
+but a human rating of 5) and overestimates the Rel
+value (value greater than Q4 but a human rating of
+1). We find 16 (0.61%) and 98 (3.74%) cases re-
+spectively for underestimation and overestimation,
+moreover, without these cases, our metric (τbest ) at-
+tains correlations of τ = 0.5462 and rs = 0.6431
+and τ = −0.5403 and rs − 0.6131 = for these
+cases, indicating their influence despite being less
+than 4% of the data.
+
+E.2    Impact of Varying STS Threshold (τ )
+                                                        Human Annotations
+        Metric
+                                Con (τ )   Comp (τ )     Rel (τ )   Con (rs )    Comp (rs )     Rel (rs )
+        BLEU                     0.0306       -0.0227     0.001      0.0358           -0.0293   -0.0001
+        BLEU
+                                 0.0632        0.0221    0.0425      0.0776           0.0293     0.0542
+        (without stopwords)
+        BERTScore                0.1035        0.0622     0.081      0.1378           0.0813      1.083
+        Normalized
+                                -0.0146        0.0443    0.0193     -0.0218           0.0584     0.0249
+        Edit Distance
+        ROUGE-L
+                                 0.0921        0.0577    0.0757      0.1173           0.0758     0.0989
+        F-measure
+        chrF                     0.1236        0.1431    0.1484      0.1628           0.1874     0.1966
+        chrF++                   0.1294        0.1496    0.1555      0.1707           0.1959     0.2057
+        Con (τGT ) ours          0.4168                               0.475
+        Comp (τGT ) ours                       0.4982                                 0.5832
+        Rel (τGT ) ours                                  0.4437                                  0.5405
+        Con (τbest ) ours        0.4491                              0.5049
+        Comp (τbest ) ours                     0.4974                                 0.5754
+        Rel (τbest ) ours                                0.4567                                  0.5431
+
+Table 9: Kendall and Spearman rank correlations between human annotation for all dimensions: conciseness (Con),
+comprehensiveness (Comp), and relevance (Rel) and all metrics including our proposed Con, Comp and Rel metrics
+for both threshold values τGT and τbest .
+
+
+
+
+                                              Human Annotations                   Our Metric
+        Model
+                                              Con     Comp          Rel         Con    Comp         Rel
+        BM-25 retriever                    0.0301    0.0112     0.0163         0            0        0
+        LSTM                               0.1048    0.0361     0.0515    0.0372       0.0123   0.0179
+        CodeReviewer                       0.5146    0.1692     0.2311    0.4639       0.2413   0.2974
+        Stable-Code-3B                     0.3222    0.1383     0.1718    0.3353       0.2091   0.2319
+        DeepSeekCoder-6.7B-Instruct        0.6108    0.3153     0.3797    0.5037       0.3989   0.4043
+        Magicoder-S-DS-6.7B                0.4915    0.3127     0.3351    0.4381       0.4746   0.4032
+        LLaMA-3-8B-Instruct                0.6091    0.3368     0.4046    0.3503       0.3967   0.3404
+        CodeLLaMA-13B                      0.1985    0.1546     0.1564    0.2493       0.2528   0.2309
+        GPT-3.5                            0.6564    0.4132     0.4759    0.5622       0.6301   0.5507
+        Ground Truth                       0.5129     0.219     0.2819     0.251       0.1598   0.1741
+
+Table 10: Comparison of our proposed metrics with human annotations for the review quality dimensions. We
+normalize the human annotated Likert scores per dimension (DimV al) from 1 to 5 to 0 to 1 (N ormDimV al)
+as: N ormDimV al = DimV4 al−1 . The results are reported on the subset of 300 annotated CodeReviewer test
+instances. We highlight the best-performing model (bold) and the worst-performing model (underlined) according
+to the human annotations and our metric.
+Figure 7: The stages of the annotation pipeline. For the first stage — Rating Pseudo-Reference Quality the annotators
+mark correct, incorrect, and unverifiable claims, while also adding any missing claims. In the second stage — Rating
+Review Quality Dimensions the annotators are given the updated set of pseudo-references from the first stage along
+with any pseudo-references generated by the code smell analysis tools to rate candidate reviews on the quality
+dimensions — conciseness, comprehensiveness, and relevance on a Likert scale using the pseudo-references.
+Figure 8: Monotonicity of metric values for reviews of various quality based on the Likert scale human annotations.
+The Rel metric exhibits the most variation across reviews of different quality while the other metrics have flat plots
+indicating that they fail to distinguish between reviews of varying quality meaningfully
+
+
+
+
+                                              Python                  Java             Javascript
+             Metric
+                                          τ            rs         τ          rs         τ         rs
+             BLEU                      -0.0017     -0.0006    -0.0101      -0.015      0.007     0.009
+             BLEU
+                                        0.0532      0.0665       0.035    0.0442     0.0313     0.0405
+             (without stopwords)
+             BERTScore                  0.0696      0.0942     0.0808     0.1081     0.0846     0.1128
+             Normalized
+                                        0.0367       0.046     0.0161     0.0217     0.0109     0.0129
+             Edit Distance
+             ROUGE-L
+                                        0.0935      0.1201     0.0553     0.0724       0.075    0.0981
+             F-measure
+             chrF                       0.1309      0.1746     0.1573     0.2077     0.1497     0.1982
+             chrF++                     0.1387      0.1848     0.1676     0.2208     0.1531     0.2021
+             Rel (τGT ) (Ours)          0.4742      0.5788     0.3889     0.4738      0.473     0.5738
+             Rel (τbest ) (Ours)        0.4746      0.5666     0.4093     0.4849     0.4904     0.5816
+
+Table 11: Comparing Kendall-Tau (τ ) and Spearman Rank (rs ) correlation of reference-based evaluation metrics
+across each language annotated (Python, Java and Javascript) and our reference-free relevance score (Rel (F)) with
+human annotations for relevance. Correlations that are not statistically significant (p-value < 0.05) are grayed out.
+                                                       Incorrect                                   Corrected
+Error Type            Description                                                                                                           Frequency (%)
+                                                       Reference                                   Reference
+                                                       The ’optparse’ module is being              The ’optparse’ module is being
+                      Pseudo-reference exhibits        imported with a comment                     imported with a comment
+Knowledge Error                                                                                                                                          6.52
+                      incorrect domain knowledge       indicating that it is being disabled        disabling a pylint
+                                                       due to its deprecation.                     deprecated-module warning
+                                                                                                   Now, the ’can_edit_record’ variable
+                                                       Now, the ’can_edit_record’ variable
+                                                                                                   is only true if the function
+                      Pseudo-reference exhibits        is only true if the function
+                                                                                                   ’check_user_can_edit_record’ returns
+Reasoning Error       wrong logic applied by the       ’check_user_can_edit_record’ returns                                                             10.87
+                                                                                                   true and the ’format’ variable does
+                      pseudo-reference generator       true and the ’format’ variable does
+                                                                                                   not start with ’t’ (in any lower or
+                                                       not start with ’t’ (in lowercase).
+                                                                                                   uppercase).
+                      The pseudo-reference generator   The assertion in the test method            The assertion in the test method
+Localization Error    misunderstands where a           "test_idxmapping_add_dimension"             "test_idxmapping_redim"                               4.35
+                      code change has taken place      has been modified.                          has been modified.
+                                                       The addition of these import
+                      The pseudo-reference             statements suggests that the code
+Over-generalization   generator makes an incorrect     in this file will now be using the
+                                                                                                                                                        19.57
+Error                 assumption/generalization from   ResLayer and SimplifiedBasicBlock
+                      the code change                  classes from the mmdet.models.utils
+                                                       package.
+                      The pseudo-reference seems       The import statement for ’filter’,
+Comprehension         to "misread" the code change     ’range’, and ’zip’ has been moved           ’filter’ is now also imported
+                                                                                                                                                         58.7
+Error                 (like thinking removed lines     from ’scapy.modules.six.moves’ to           from ’scapy.modules.six.moves’
+                      are added, etc.)                 ’scapy.modules.six’.
+
+
+Table 12: The various types of errors identified, their descriptions and examples (pseudo-references before and after
+correction of the error are shown) as well as relative frequencies as percentages are shown here. For this analysis,
+we annotated 46 erroneous pseudo-references
+
+
+
+
+                                              BLEU                           Norm.            ROUGE
+                                                                                                                              Con         Comp        Rel
+Model                               BLEU     (without      BERTScore          Edit                L      chrF     chrF++
+                                                                                                                             (τbest )     (τbest )   (τbest )
+                                               stop)                        Distance           f-score
+BM-25 kNN                           0.036          0.043           0.718         0.805           0.069   0.134      0.113     0.002        0.001       0.001
+LSTM                                0.047          0.051           0.716         0.802           0.102    0.12      0.105      0.02        0.006       0.009
+Transformer†                        0.048
+T5†                                 0.044
+CodeT5†                             0.048
+CodeReviewer                        0.054          0.071           0.718         0.811           0.102   0.116         0.1    0.412        0.208         0.26
+Stable-Code-Instruct-3B             0.042           0.04           0.733         0.784           0.091    0.16      0.133      0.34        0.199       0.228
+Magicoder-S-DS-6.7B                 0.035          0.041            0.72         0.815           0.101   0.175      0.151     0.445        0.491        0.42
+DeepSeekCoder-Instruct-6.7B         0.045          0.054           0.734         0.782           0.112   0.183      0.157     0.513        0.418       0.422
+CodeLLaMA-Instruct-7B               0.023          0.026            0.71         0.843           0.071   0.171      0.145     0.156        0.151        0.14
+Llama-3-8B-Instruct                 0.014          0.016           0.699         0.898           0.058    0.14      0.122     0.347        0.425       0.352
+LLama-Reviewer†                     0.057
+CodeLLaMA-Instruct-13B              0.025          0.029           0.715         0.839           0.079   0.179      0.152     0.274        0.272       0.253
+GPT-3.5-Turbo                       0.037          0.044           0.734         0.812             0.1     0.2      0.171     0.563        0.635       0.558
+
+Table 13: Results of all eval. metrics and models on the entire test set. All metrics have been normalized to be
+between 0 and 1. † signifies reported scores. The reference based metrics have a very narrow range of values.
+Smell Name                  Description
+Long method                 There exist methods with too many lines (more lines than a set threshold).
+Long parameter list         There exist methods with more than “n” parameters (n = 6 is used in this study).
+Long branch                 When conditional statement branches extend too long or are too nested.
+Many attributes             When a single class has too many methods or attributes.
+Many methods                When a single class has too many methods.
+Shotgun surgery             When a single functionality is fragmented across various classes.
+Class cohesion              There are some classes with low cohesion (C.2.1).
+                            The code includes blocks with cyclomatic complexity (section C.2.2) of rank-C
+Code complexity             or worse (moderate to slightly complex blocks). Please read through the
+                            cyclomatic complexity and ranks section for more details.
+                            The code includes lambda functions that exceed a threshold on length
+Long lambda
+                            (number of characters).
+                            The code includes list comprehensions that exceed a threshold on length
+Long list comprehension
+                            (number of characters).
+
+              Table 14: Python code smells detected by the PyScent code smell static analysis tool
+
+
+
+
+        Human Annotated                                                         chrF++ (best reference
+Rank                                        Rel (ours)
+        Relevance                                                               based metric)
+1       GPT-3.5                             GPT-3.5                             GPT-3.5
+2       LLaMA-3-8B-Instruct                 DeepSeekCoder-6.7B-Instruct         DeepSeekCoder-6.7B-Instruct
+3       DeepSeekCoder-6.7B-Instruct         Magicoder-S-DS-6.7B                 CodeLLaMA-13B
+4       Magicoder-S-DS-6.7B                 LLaMA-3-8B-Instruct                 Magicoder-S-DS-6.7B
+5       CodeReviewer                        CodeReviewer                        Stable-Code-3B
+6       Stable-Code-3B                      Stable-Code-3B                      LLaMA-3-8B-Instruct
+7       CodeLLaMA-13B                       CodeLLaMA-13B                       BM-25 retriever
+8       LSTM                                LSTM                                CodeReviewer
+9       BM-25 retriever                     BM-25 retriever                     LSTM
+
+Table 15: Rankings of the systems over the 300 human-annotated CodeReviewer instances according to the human-
+annotated relevance and our relevance metric. The rankings reveal that our method gets the rankings exactly right
+except for the LLaMA-3-8B-Instruct model (grayed out) which is ranked lower than Magicoder and DeepSeekCoder
+by our metric but preferred more by humans.
+Language     Code Change                                    Claims                                            Review
+                                                            A new column named ‘has_all_data‘
+                                                            has been added to the table. This
+             @@ -24,6 +24,7 @@ CREATE_TABLE = """                                                             Magicoder: This column is
+                                                            column is of boolean data type and
+Python                                                                                                        not being used anywhere
+                                                            allows NULL values by default.
+             ‘complete_time‘ datetime DEFAULT NULL,                                                           in the codebase. It’s a waste
+             ‘status‘ enum(’SUCCESS’,’RUNNING’,             The addition of the ‘has_all_data‘                of space.
+             ’FAILURE’,                                     column implies that there might be
+             ’PARTIAL_SUCCESS’,’TIMEOUT’)                   a need to track whether all the data
+             DEFAULT NULL,                                  has been processed or not in the
+             + ‘has_all_data‘ bool DEFAULT NULL,            table.This could be used for further
+             ‘schema_version‘ varchar(255)                  data processing or analysis.
+             DEFAULT NULL,                                  Existing rows in the table will not
+             ‘cycle_timestamp‘ varchar(255)                 have a value for this new column.
+             DEFAULT NULL,                                  Therefore, it might require additional
+             PRIMARY KEY (‘id‘),                            data updates or data entry processes
+                                                            to populate this column.
+                                                            Two new import statements have
+                                                            been added to the code. The first
+             @@ -14,7 +14,9 @@                              one imports the datetime module,
+                                                                                                              CodeReviewer: Why do
+Python                                                      and the second one imports the
+                                                                                                              we need these imports?
+             import abc                                     target module.
+             import logging                                 The addition of the datetime module
+             +import datetime                               suggests that the code may now
+             import parameter                               involve operations related to date
+             +import target                                 and time. This could be for logging
+             import warnings                                purposes, tracking the execution
+             import traceback                               time of the code, or handling
+             import pyparsing as pp                         dates/times in the program.
+                                                            The addition of the target module
+                                                            indicates that the code may now
+                                                            involve operations related to the
+                                                            target environment or system.
+                                                            This could be for interacting with
+                                                            the target system, or for handling
+                                                            target-specific tasks.
+
+Table 16: Cases where our metric underestimates the relevance of a review by scoring it as zero while the human
+scores it as 5 (max relevance). We observed that these cases tend to have fewer claims associated with the code
+change, briefer reviews with few relevant tokens, and fewer inline code snippets.
+
+Language   Code Change                                             Claims                                     Review
+                                                                   The code change is in the replacement
+                                                                   of a part of the byte string ’c__main__’
+           @@ -971,7 +971,7 @@ class JobTask(BaseHadoopJobTask):   with ’c’ followed by the encoded           CodeReviewer: Shouldn’t this be
+           if self.__module__ == ’__main__’:                       ASCII representation of                    ‘module_name.encode(’ascii’)‘?
+Python
+               d = pickle.dumps(self)                              ’module_name’.
+               module_name = os.path.basename(                     The original code was replacing
+               sys.argv[0]).rsplit(‘.’, 1)[0]                      ’(c__main__’ with ’(c’ followed by
+           -    d = d.replace(b‘(c__main__’, “(c” + module_name)   ’module_name’.
+           +    d = d.replace(b‘c__main__’, b’c’ + \
+               module_name.encode(‘ascii’))                        The new code change corrects this
+               open(file_name, “wb”).write(d)                      by encoding ’module_name’ to
+                                                                   ASCII before replacing ’c__main__’         StableCode: This seems
+           else:                                                   with ’c’ followed by the encoded           unnecessary, the pickle
+                                                                   ’module_name’.                             module already encodes
+                                                                   This change could potentially affect       the module name.
+                                                                   the behavior of the code if
+                                                                   ’module_name’ contains non-ASCII
+                                                                   characters.
+
+
+Table 17: Cases where our metric overestimates the relevance of a review by assigning it the maximum score
+while the human scores it at the lowest Likert score value of 1. We observed that these cases tend to have far more
+inline-code snippets than the rest of the data and underestimation cases.
+      STS Threshold (τ )      τ         rs
+      τ =0.6                  0.3975    0.4874
+      τ =0.65                 0.4572    0.5512
+      τGT =0.6576             0.4437    0.5405
+      τ =0.7                  0.4433    0.5407
+      τbest =0.7314           0.4567    0.5431
+      τ =0.75                 0.4473    0.5277
+      τ =0.8                  0.3946    0.4539
+
+Table 18: Effect of varying STS threshold (tau) on the
+Kendal-Tau and Spearman Rank correlation of CRScore
+relevance measure (Rel) with human-annotated rele-
+vance. We note that our approach is robust to slight
+variations in the threshold making it robust.
+
+                      Table 19
+

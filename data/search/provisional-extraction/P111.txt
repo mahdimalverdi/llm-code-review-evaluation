@@ -1,0 +1,246 @@
+                                             Bugdar: AI-Augmented Secure Code Review for
+                                                         GitHub Pull Requests
+                                                  John E. Naulty                      Eason Chen                       Joy Wang                       George Digkas
+                                                     Mysten Labs              Carnegie Mellon University              Mysten Labs                       Mysten Labs
+                                                Palo Alto, CA, USA              Pittsburgh, PA, USA              Palo Alto, CA, USA                Palo Alto, CA, USA
+                                              jnaulty@mystenlabs.com            EasonC13@cmu.edu                 joy@mystenlabs.com           george.digkas@mystenlabs.com
+
+                                            Kostas Chalkias
+                                               Mysten Labs
+arXiv:2503.17302v1 [cs.CR] 21 Mar 2025
+
+
+
+
+                                          Palo Alto, CA, USA
+                                         kostas@mystenlabs.com
+
+
+                                            Abstract—As software systems grow increasingly complex,           specific contexts by employing Retrieval Augmented Genera-
+                                         ensuring security during development poses significant chal-         tion (RAGs), enabling context-aware and actionable feedback
+                                         lenges. Traditional manual code audits are often expensive,          tailored to the unique characteristics of decentralized applica-
+                                         time-intensive, and ill-suited for fast-paced workflows, while
+                                         automated tools frequently suffer from high false-positive rates,    tions, smart contracts, and multi-language codebases.
+                                         limiting their reliability. To address these issues, we introduce       To be specific, Bugdar incorporates various features to en-
+                                         Bugdar, an AI-augmented code review system that integrates           hance secure coding practices and streamline the development
+                                         seamlessly into GitHub pull requests, providing near real-           workflow. These features include:
+                                         time, context-aware vulnerability analysis. Bugdar leverages fine-
+                                                                                                                 • Structured Vulnerability Reports: Generates detailed
+                                         tunable Large Language Models (LLMs) and Retrieval Aug-
+                                         mented Generation (RAGs) to deliver project-specific, actionable           reports outlining potential security vulnerabilities, includ-
+                                         feedback that aligns with each codebase’s unique requirements              ing severity, potential impact, and recommended reme-
+                                         and developer practices. Supporting multiple programming lan-              diation steps, mimicking the comprehensive output of
+                                         guages, including Solidity, Move, Rust, and Python, Bugdar                 experienced human auditors.
+                                         demonstrates exceptional efficiency, processing an average of 56.4
+                                                                                                                 • Prompt Engineering and Fine-tuning: Allows develop-
+                                         seconds per pull request or 30 lines of code per second. This
+                                         is significantly faster than manual reviews, which could take              ers to customize the prompts used by the LLMs to target
+                                         hours per pull request. By facilitating a proactive approach to            specific security concerns and fine-tune the models using
+                                         secure coding, Bugdar reduces the reliance on manual reviews,              project-specific datasets and human feedback.
+                                         accelerates development cycles, and enhances the security posture       • Multi-Programming-Language Support: Analyze code
+                                         of software systems without compromising productivity.
+                                                                                                                    written in various programming languages, including
+                                            Index Terms—Artificial Intelligence, Secure Code Review,
+                                         GitHub Integration, CI/CD, Vulnerability Analysis, Cybersecu-              Move and Solidity smart contract languages, as well as
+                                         rity, Blockchain, Web3, Security, Large Language Models                    Rust, TypeScript, Python, and Go, enabling a comprehen-
+                                                                                                                    sive security assessment across diverse technology stacks.
+                                                               I. I NTRODUCTION                                  • GitHub CI/CD Integration: Integrates as a GitHub app,
+                                                                                                                    providing security analysis and feedback directly within
+                                            Modern software systems have become increasingly com-                   the pull request interface.
+                                         plex, creating substantial challenges for security auditing             These features collectively transform the way developers
+                                         processes. For example, in the DeFi sector, manual audits            approach secure coding practices. By integrating seamlessly
+                                         often take weeks to complete, with costs exceeding tens of           into the GitHub workflow, Bugdar fosters a proactive secu-
+                                         thousands of dollars per project [1]. These manual audits,           rity mindset, enabling developers to address vulnerabilities
+                                         while thorough, are slow and expensive, delaying critical            early in the development lifecycle. This approach reduces
+                                         deployments. Automated tools offer speed but lack precision,         the reliance on extensive manual reviews, minimizes delays
+                                         often generating excessive false positives [2]. This trade-off       in deployment, and enhances collaboration between security
+                                         highlights the need for an innovative solution that combines         experts and development teams. Bugdar’s tailored and context-
+                                         human-level expertise with the efficiency of AI.                     aware analysis empowers teams to focus on building robust
+                                            To address these challenges, we present Bugdar, an AI-            and secure applications without compromising speed or agility.
+                                         augmented code review system that transforms the GitHub
+                                         pull request workflow into a secure, efficient, and developer-                 II. BACKGROUND AND R ELATED W ORK
+                                         friendly environment. Bugdar integrates fine-tunable Large              Several researchers have investigated the use of LLMs for
+                                         Language Models (LLMs) to identify potential security flaws.         code-related tasks, including code generation, code summa-
+                                         Unlike traditional tools, Bugdar adapts dynamically to project-      rization, and bug detection[3], [4], [5], [6], [7], [8]. They find
+                            Fig. 1: The diagram illustrated the architecture of the Bugdar system.
+
+
+that LLMs demonstrated impressive capabilities in understand-                    III. S YSTEM D EVELOPMENT
+ing and generating code by learning from large datasets of           Bugdar’s architecture is designed to integrate seamlessly
+publicly available source code [9].                               into the GitHub pull request workflow, providing developers
+   Recent studies have specifically examined LLMs’ effec-         with timely feedback and actionable security insights.
+tiveness in vulnerability detection. [3] evaluated GPT-4 and      A. System Architecture
+Claude models on DeFi smart contracts, finding they cor-
+rectly identify vulnerability types in 40% of cases, though         The architecture is illustrated in Figure 1, which includes:
+with notable false positive rates. Similarly, VulBench[4], a        • GitHub Integration Layer: Interfaces with GitHub’s
+
+comprehensive vulnerability benchmark, demonstrating that             API to monitor pull requests, retrieve code diffs, and post
+several LLMs outperform traditional deep learning approaches          review comments.
+in vulnerability detection.                                         • Preprocessing Module: Processes code diffs to prepare
+                                                                      input for the LLM, handling tasks such as code chunking
+   Traditional machine learning approaches for vulnerabil-            and context window management.
+ity detection often rely on handcrafted features or require         • Context Retrieval Engine: Utilizes RAGs to fetch rele-
+structured representations of code, such as abstract syntax           vant project documentation and historical code data.
+trees (ASTs) [10]. However, these methods can be limited in         • LLM-Based Analysis Engine: Leverages fine-tunable
+scalability and effectiveness when dealing with complex or            LLMs (e.g., GPT-4o) to perform security analysis on the
+obfuscated code [11].                                                 code changes.
+                                                                    • Reporting Module: Generates structured vulnerability
+   Bugdar addresses this challenge by combining the ana-
+                                                                      reports and code review comments based on the analysis.
+lytical capabilities of LLMs with techniques like Retrieval
+Augmented Generation (RAGs) to provide context-aware and          B. Analysis Workflow
+project-specific security analysis [12]. RAGs enable Bugdar
+                                                                    The workflow follows the steps in Algorithm 1. Bugdar’s
+to access and utilize relevant project documentation, including
+                                                                  AI-augmented approach aims to enhance secure code review
+code comments, design specifications, and security guidelines,
+                                                                  workflow with the following principles:
+enhancing its understanding of the codebase and improving the
+                                                                    • Shifting security analysis earlier in the development
+accuracy of its vulnerability assessments.
+                                                                      cycle: Providing security feedback during the pull request
+   Bugdar’s ”Specialization-as-a-Service” model further distin-       stage enables developers to identify and address vulner-
+guishes it from existing approaches. This concept emphasizes          abilities before they are merged into the main codebase,
+Bugdar’s ability to adapt to the unique characteristics of            reducing the cost and effort of remediation later in the
+each project, learning from project-specific data and developer       development process.
+feedback to provide tailored security analysis that aligns with     • Improving developer efficiency: Automating the analy-
+the project’s specific context and requirements.                      sis process and generating actionable feedback reduces
+Algorithm 1 Bugdar Pull Request Analysis Workflow                   Model        Task           RAG Precision Recall F1 Accuracy
+                                                                    o1-preview   Classification No    0.24     0.40 0.30  0.17
+Require: New or updated pull request P R                            o1-preview   Description     No   0.50     0.67 0.57  0.40
+ 1: Trigger Analysis upon detection of P R.                         o1-preview   Classification Yes   0.43     0.43 0.43  0.27
+ 2: Fetch Code Diffs using the GitHub API.                          o1-preview   Description    Yes   0.57     0.50 0.53  0.36
+ 3: Partition Code Diffs to fit LLM context window.                 gpt-4o       Classification No    0.35     0.60 0.44  0.29
+                                                                    gpt-4o       Description     No   0.58     0.73 0.65  0.48
+ 4: Initialize Analysis Report.
+                                                                    gpt-4o       Classification Yes   0.39     0.64 0.49  0.32
+ 5: for each code chunk do                                          gpt-4o       Description    Yes   0.43     0.59 0.50  0.33
+ 6:   Analyze Chunk with LLM(s).
+ 7:   Select Best Analysis using a judge LLM.                      TABLE I: Merged Vulnerability Performance (Classification
+ 8:   Accumulate Results into the report.                          vs. Description) With/Without RAG
+ 9: end for
+10: Aggregate Results into a comprehensive report.
+11: Update Credits based on token usage.                           a precision of 35% and recall of 60%, resulting in an F1 score
+12: Generate Reports and Notifications:                            of 0.44. This indicates that while the model could detect 60%
+                                                                   of existing vulnerabilities, it had a relatively high false positive
+      • Store the analysis report in the database.
+                                                                   rate. The o1-preview model showed lower performance with a
+      • Post summary to the pull request (if enabled).
+                                                                   precision of 24%, recall of 40%, and F1 score of 0.30. When
+      • Send notifications (e.g., Slack) if configured.
+                                                                   using RAG, both models showed improved performance: GPT-
+                                                                   4o’s metrics increased to 39% precision, 64% recall, and an
+                                                                   F1 score of 0.49, while o1-preview achieved 43% precision,
+    the manual effort required for code review, allowing           43% recall, and an F1 score of 0.43.
+    developers to focus on core development tasks.                    For vulnerability description tasks, both models showed
+  • Fostering a security-conscious development culture:
+                                                                   improved performance. Without RAG, GPT-4o demonstrated
+    By integrating security analysis seamlessly into the de-       stronger results with a precision of 58%, a recall of 73%, and
+    veloper workflow, Bugdar encourages developers to pri-         an F1 score of 0.65. The o1-preview model also performed
+    oritize security considerations from the outset, leading to    better in description tasks, achieving a precision of 50%, recall
+    more secure and robust software systems.                       of 67%, and an F1 score of 0.57. With RAG, performance
+C. Dataset                                                         varied: GPT-4o showed precision of 43%, recall of 59% and
+                                                                   an F1 score of 0.50, while o1-preview achieved precision of
+   A comprehensive dataset of real-world GitHub pull requests      57%, recall of 50% and an F1 score of 0.53. These results
+and source code with known security vulnerabilities was used       suggest that while the models are generally more adept at
+to evaluate Bugdar. The dataset encompasses a diverse range        describing potential vulnerabilities than classifying them, the
+of projects and programming languages, including Move [13],        addition of RAG improved classification performance but had
+Solidity, Rust, TypeScript, and Python, particularly focusing      mixed effects on description tasks.
+on smart contracts and blockchain-related code. The ground
+truth for vulnerability classification was established through:    B. Time Spent
+   • Manual Audits by Security Experts: Ensuring the
+                                                                      The performance of Bugdar in analyzing pull requests was
+     accuracy of vulnerability labels.                             evaluated based on its efficiency compared to human reviews.
+   • Bug Bounty Reports: Incorporation of real-world secu-
+                                                                   In total, Bugdar analyzed 14 pull requests, encompassing
+     rity issues from bug bounty programs.                         23,010 lines of code added, 634 lines removed, and 23,644
+D. Evaluation Metrics:                                             lines changed, with an average of 1,643.57 lines added, 45.29
+                                                                   lines removed, and 1,688.86 lines changed per pull request.
+   Bugdar was evaluated based on its ability to classify and       It processed these 23,644 lines of code in 790 seconds,
+describe vulnerabilities identified in the dataset source code.    achieving an average speed of approximately 30 lines of code
+Specifically, the evaluation focused on three key aspects:         per second or 56.4 seconds per pull request. In contrast,
+precision, recall, and F1 score to measure the accuracy of         manual reviews typically take several hours per pull request,
+vulnerability detection; false positive and false negative rates   depending on the complexity and size of the code changes. For
+to assess the reliability of the analysis; and time consumption    example, according to our internal data, a security audit of a
+to evaluate its efficiency compared to manual reviews and          new future consisting of 10,000 lines of Move smart contract
+static analysis tools.                                             code took two security engineers 10 days–0.11 lines of code
+                          IV. R ESULTS                             per second, and not all security vulnerabilities were identified.
+                                                                   This demonstrates that Bugdar achieves a significant reduction
+A. Quantitative Results                                            in review time, processing code at least 100x faster than
+   The evaluation of the Vulnerability Classification and De-      human reviewers. This time efficiency positions Bugdar as a
+scription is summarized in Table I. In vulnerability classifica-   valuable tool for accelerating secure code reviews, particularly
+tion without RAG, GPT-4o achieved the best performance with        for large-scale or high-frequency development workflows.
+C. Case Studies                                                     in identifying nuanced vulnerabilities. Another development
+   Case studies provided insights into Bugdar’s performance         area involves exploring active learning techniques, allowing
+by highlighting both successful detections and areas of im-         Bugdar to continuously improve by incorporating developer
+provement. Bugdar demonstrated its effectiveness in identify-       feedback and adapting to new vulnerability patterns. Lastly,
+ing vulnerabilities that were missed by traditional static analy-   integrating Bugdar more seamlessly into developer work-
+sis tools. For example, it successfully detected a reentrancy       flows is a crucial goal, including the development of plugins
+vulnerability in Solidity code, which other tools had over-         for popular Integrated Development Environments (IDEs) and
+looked. Another case showcased Bugdar’s ability to identify         the creation of interactive dashboards [14] that provide real-
+insecure deserialization in Python, providing developers with       time feedback and insights.
+clear and actionable remediation steps to address the issue.                                   VI. C ONCLUSION
+   However, there were instances where Bugdar either missed
+                                                                       Bugdar represents a significant advancement in secure code
+or misclassified vulnerabilities, revealing areas for further
+                                                                    review by leveraging AI to provide continuous, accurate, and
+enhancement. One notable example was its failure to detect
+                                                                    project-specific security analysis within the GitHub workflow.
+a logic flaw due to a limited understanding of domain-
+                                                                    The development of Bugdar is an ongoing journey, and con-
+specific context. Additionally, Bugdar incorrectly flagged the
+                                                                    tinuous evaluation, user feedback, and research efforts will
+safe use of an ”unsafe” block in Rust as a vulnerability,
+                                                                    be essential for realizing its full potential and addressing the
+demonstrating challenges in distinguishing between legit-
+                                                                    ever-evolving challenges of secure code review.
+imate and problematic code usage. These cases underscore
+the importance of improving Bugdar’s contextual understand-                                  ACKNOWLEDGMENTS
+ing and refining its analysis capabilities for complex and                                         R EFERENCES
+specialized scenarios.
+                                                                     [1] Cyberscope.        (2022,      Nov)       How       much       does      it
+D. User Studies                                                          cost      to    audit      a    smart     contract?    Medium        Coin-
+                                                                         monks.       [Online].      Available:    https://medium.com/coinmonks/
+   Preliminary user studies with developers highlighted Bug-             how-much-does-it-cost-to-audit-a-smart-contract-27ace328c0ce
+dar’s usability and influence on workflows, specifically, devel-     [2] B. Johnson, Y. Song et al., “Why don’t software developers use static
+                                                                         analysis tools to find bugs?” in 2013 35th International Conference on
+opers valued Bugdar’s concise, actionable commentary within              Software Engineering (ICSE), 2013, pp. 672–681.
+pull requests. Moreover, developers consider early identifi-         [3] I. David et al., “Do you still need a manual smart contract
+cation of issues can further reduce manual review time and               audit?” arXiv preprint arXiv:2306.12338, 2023. [Online]. Available:
+                                                                         https://arxiv.org/abs/2306.12338
+streamline the development process.                                  [4] Z. Gao, H. Wang et al., “How far have we gone in vulnerability detection
+                                                                         using large language models,” arXiv preprint arXiv:2311.12420, 2023.
+                       V. D ISCUSSION                                    [Online]. Available: https://arxiv.org/abs/2311.12420
+A. Strengths, Challenges, and Limitation                             [5] Z. Li, R. Q. Shin et al., “Drawbacks in detecting vulnerabilities: A study
+                                                                         of large language models on code,” arXiv preprint arXiv:2105.00823,
+   Bugdar demonstrates significant strengths in automating               2021. [Online]. Available: https://arxiv.org/abs/2105.00823
+secure code reviews and providing actionable insights. By            [6] E. Chen et al., “Suigpt mad: Move ai decompiler to improve trans-
+                                                                         parency and auditability on non-open-source blockchain smart contract,”
+chunking code diffs based on the LLM’s context window                    arXiv preprint arXiv:2410.15275, 2024.
+size, large code changes are efficiently processed without the       [7] M. Chen et al., “Evaluating large language models trained on code,”
+overhead of AST parsing. However, further training may be                2021. [Online]. Available: https://arxiv.org/abs/2107.03374
+                                                                     [8] E. Chen, R. Huang et al., “Gptutor: a chatgpt-powered programming
+required to detect complex, context-specific vulnerabilities.            tool for code explanation,” in International Conference on Artificial
+High false-positive rates in certain contexts can lead to alert          Intelligence in Education. Springer, 2023, pp. 321–327.
+fatigue among developers.                                            [9] J. Achiam et al., “Gpt-4 technical report,” arXiv preprint
+                                                                         arXiv:2303.08774, 2023.
+   Moreover, the study identified several limitations that high-    [10] Z. Li, C. Wang, S. Zhu et al., “Vuldeepecker: A deep learning-
+light areas for improvement and future development. One                  based system for vulnerability detection,” NDSS, vol. 18, pp.
+key limitation is the variation in Bugdar’s effectiveness                8–8, 2018. [Online]. Available: https://www.ndss-symposium.org/
+                                                                         wp-content/uploads/2018/02/ndss2018 03A-2 Li paper.pdf
+across different programming languages and vulnerability            [11] C. Ragkhitwetsagul, S. Boonphak, and C. Tantithamthavorn, “A survey
+types, underscoring the need for ongoing training to expand              on mining source code artifacts: Techniques, datasets, and tools,”
+its coverage and accuracy. Additionally, domain-specific code            Journal of Systems and Software, vol. 157, p. 110380, 2019. [Online].
+                                                                         Available: https://doi.org/10.1016/j.jss.2019.110380
+poses challenges, as specialized implementations can lead to        [12] P. Lewis et al., “Retrieval-augmented generation for knowledge-
+false positives, which may frustrate developers. Another issue           intensive nlp tasks,” arXiv preprint arXiv:2005.11401, 2020. [Online].
+is the system’s reliance on training datasets, which could               Available: https://arxiv.org/abs/2005.11401
+                                                                    [13] S. Blackshear, E. Cheng et al., “Move: A language with programmable
+introduce biases or leave gaps in its detection capabilities.            resources,” Libra Assoc, vol. 1, 2019.
+                                                                    [14] E. Chen et al., “A decision model for designing nlp applications,” in
+B. Future Directions                                                     Companion Proceedings of the Web Conference, 2022, pp. 1206–1210.
+  Future work on Bugdar focuses on several key areas for
+improvement and expansion. One priority is enhancing the
+LLM’s ability to understand domain-specific contexts and
+complex business logic, which would improve its accuracy
+

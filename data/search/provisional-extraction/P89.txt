@@ -1,0 +1,323 @@
+                                                    Understanding Dominant Themes in Reviewing Agentic
+                                                                    AI-authored Code
+                                                                         Md. Asif Haider                                                         Thomas Zimmermann
+                                                                       asifh1@uci.edu                                                                tzimmer@uci.edu
+                                                                University of California, Irvine                                               University of California, Irvine
+                                                                   Irvine, California, USA                                                        Irvine, California, USA
+                                         Abstract                                                                                1   Introduction
+                                         While prior work has examined the generation capabilities of Agen-                      Autonomous coding agents, also referred to as Agentic-AI Software
+                                         tic AI systems, little is known about how reviewers respond to                          Engineers, are now assisting humans in end-to-end development
+                                         AI-authored code in practice. In this paper, we present a large-scale                   tasks, including coding, debugging, testing, submitting pull requests
+arXiv:2601.19287v1 [cs.SE] 27 Jan 2026
+
+
+
+
+                                         empirical study of code review dynamics in agent-generated PRs.                         (PRs), acting on reviews, suggesting repairs, and generating docu-
+                                         Using a curated subset of the AIDev dataset, we analyze 19,450                          mentation. This new paradigm of human-AI interaction faces some
+                                         inline review comments spanning 3,177 agent-authored PRs from                           core challenges, such as establishing trust [18], as seen in human-
+                                         real-world GitHub repositories. We first derive a taxonomy of 12                        driven workflows. Developers still hesitate to accept and merge
+                                         review comment themes using topic modeling combined with large                          AI-generated PRs, and the huge surge in the volume of code gen-
+                                         language model (LLM)-assisted semantic clustering and consoli-                          erated by AI agents just makes the situation worse. As reported
+                                         dation. According to this taxonomy, we then investigate whether                         in Hassan et al. [6], nearly 70% of agent-authored PRs face longer
+                                         zero-shot prompts to LLM can reliably annotate review comments.                         review times, remain completely unreviewed, or get rejected soon,
+                                         Our evaluation against human annotations shows that open-source                         making the review process a major performance bottleneck. Hence,
+                                         LLM achieves reasonably high exact match (78.63%), macro F1                             understanding the dynamics of AI-authored code reviews can fill
+                                         score (0.78), and substantial agreement with human annotators                           this exposed gap on our path to enhancing human-AI collaboration.
+                                         at the review comment level. At the PR level, the LLM also cor-                         While datasets exist that capture how human-generated reviews
+                                         rectly identifies the dominant review theme with 78% Top-1 accu-                        are treated, finding large-scale empirical data on agentic-PRs has
+                                         racy and achieves an average Jaccard similarity of 0.76, indicating                     remained a challenge. Recent research in the mining software repos-
+                                         strong alignment with human judgments. Applying this annotation                         itory community presents datasets [9, 21] comprising PRs with rich
+                                         pipeline at scale, we find that apart from functional correctness                       metadata, authored by leading AI agents on the market. Using such
+                                         and logical changes, reviews of agent-authored PRs predominantly                        data, we aim to address the following timely research questions:
+                                         focus on documentation gaps, refactoring needs, styling and for-
+                                         matting issues, with testing and security-related concerns. These                           • RQ1: How accurately can LLMs annotate themes of code
+                                         findings suggest that while AI agents can accelerate code produc-                             reviews commented on Agentic PRs?
+                                         tion, there remain gaps requiring targeted human review oversight.                          • RQ2: What aspects/topics/themes are the most prevalent
+                                                                                                                                       ones that receive attention while reviewing Agentic PRs?
+                                         CCS Concepts                                                                                • RQ3: What comment themes are dominant in successful vs
+                                                                                                                                       rejected PRs?
+                                         • Software and its engineering; • Computing methodologies
+                                         → Artificial intelligence;                                                                 Insights from these findings can be further leveraged to reduce
+                                                                                                                                 failure rates, improve human-AI collaboration, and boost AI model
+                                         Keywords                                                                                training performance that prioritizes learning from mistakes in real-
+                                         AI agents, code review, large language models, topic modeling                           world projects. We provide our replication package via Zenodo [1].
+
+                                         ACM Reference Format:
+                                         Md. Asif Haider and Thomas Zimmermann. 2026. Understanding Dom-
+                                                                                                                                 2   Dataset
+                                         inant Themes in Reviewing Agentic AI-authored Code. In 23rd Interna-                    We utilize the AIDev [9] dataset in our study. This is a large-scale
+                                         tional Conference on Mining Software Repositories (MSR ’26), April 13–14,               dataset comprising Agentic-PRs from real-world GitHub projects.
+                                         2026, Rio de Janeiro, Brazil. ACM, New York, NY, USA, 5 pages. https:                   AIDev contains 932,791 Agentic-PRs authored by five most popular
+                                         //doi.org/10.1145/3793302.3793566                                                       AI coding agents: OpenAI Codex, Devin, GitHub Copilot, Cursor,
+                                                                                                                                 and Claude Code across 116,211 repositories involving 72,189 devel-
+                                                                                                                                 opers. Each PR in the dataset is linked to its corresponding reposi-
+                                                                                                                                 tory and developer, along with additional metadata. The authors
+                                                                                                                                 also released a curated subset of 33,596 Agentic-PRs from 2,807
+                                         This work is licensed under a Creative Commons Attribution 4.0 International License.   repositories with more than 100 GitHub stars. This enriched subset
+                                         MSR ’26, Rio de Janeiro, Brazil                                                         provides review comments, commit-level diffs, event timelines, and
+                                         © 2026 Copyright held by the owner/author(s).
+                                         ACM ISBN 979-8-4007-2474-9/2026/04                                                      related issues. For our analysis, we focus solely on this subset of
+                                         https://doi.org/10.1145/3793302.3793566                                                 AIDev. Specifically, we work on Zenodo version v2 of the data [8].
+MSR ’26, April 13–14, 2026, Rio de Janeiro, Brazil                                                                                                                                      Haider et al.
+
+
+           Table 1: Taxonomy of Review Comment Themes                                                                      Thematic Category with the most Significant Keywords asso-
+                                                                                                                           ciated with each topic. We also map each proposed theme to the
+Tag        Thematic Category                    Significant Keywords                                                       aligning CCS category and term it as Tag. We chose not to allocate
+secu       Security, Safety & Reliability       vulnerability, security, tokens, safety, permissions, reliability,
+                                                attack, defense
+                                                                                                                           a different category for fix, since fixing an issue can fall under secu-
+test       Testing, Assertions & Validation     test, assertion, expected, behavior, sql-checks, database, validation
+                                                                                                                           rity, styling, or even testing-related changes. Rather, we introduce a
+style      Styling & Formatting Adjustments     line-level, text, formatting, rename, variable, attributes, readability,
+                                                                                                                           new category titled undo, capturing highly abundant reviews like
+                                                indentation, lint, consistency, style                                      file restoration and simple undo/revert operations for a given code
+docs       Documentation, Logs & Developer
+           Guidance
+                                                documentation, api, guide, reference, section, markdown,
+                                                changelog, typo, notes, logs
+                                                                                                                           patch. We also separate command-line tools and developer-utility-
+chore      Dependency, Module & Import          dependencies, module, import, export, package, sdk, optional-deps,
+                                                                                                                           specific suggestions from the build/ci categories, and call it cmd.
+           Management                           resolution, cleanup                                                        Finally, although our topic analysis could not identify keywords
+build      Build, Configuration & Default
+           Behavior Management
+                                                build, permission, config, default, maven, gradle, cargo, script           unique enough to map to the perf tag, we chose to preserve this
+ci         CI/CD Workflow Management            workflow, ci, cd, versions, install, migration, github-actions,
+                                                                                                                           category based on frequent keywords found in the literature [21].
+                                                integration, deploy, travis
+
+feat       Core Implementation & Feature
+           Development
+                                                feature, new, implementation, logic, pattern, approach,
+                                                functionality, helper, utility                                             3.2     Annotation Performance: LLM vs Human
+refactor   Code Restructure, Simplification &   unused, redundant, unnecessary, false-positive, refactor, dead-code,       Based on our thematic analysis of almost 19.5k review comments,
+           Redundancy Elimination               maintainability, simplify, restructure
+                                                                                                                           we derive 12 categories, their descriptions, and the most significant
+cmd        Command-Line Tools & Developer       cli, commands, batch, python-tools, dev-utilities
+           Utilities                                                                                                       keywords. Using this taxonomy information as the input, we then
+undo       Reverts, Rollbacks & Change          revert, rollback, undo, restore, preserved, unchanged, rejection           prompt an open-source LLM to generate the most suitable tag for
+           Rejection
+                                                                                                                           each review comment. We chose Gemma 3:12B model via ollama
+perf       Performance Improvement              memory, consumption, execution, speed, performance, monitor
+                                                                                                                           [14] after a primary experiment with a pool of LLMs of varying
+                                                                                                                           size, including Llama 3.2:3B, Llama 3.1:8B, and Deepseek-R1:14B
+                                                                                                                           variants. We omitted proprietary LLMs to avoid incurring unnec-
+3       RQ1: LLM as Review Theme Annotator                                                                                 essary costs and to support reproducibility. The prompt template
+Here, we describe our approach to utilizing open-source LLMs for re-                                                       with topic clusters is available in our replication package [1]. For
+view comment topic categorization and evaluate LLM performance                                                             our preliminary annotation experiment, we randomly sampled 100
+relative to human annotations. Since each PR may contain multiple                                                          PRs from the initial subset, which covered 571 unique review com-
+review comments from reviewers, we first narrow our focus down                                                             ments. We manually annotate the same test set of PRs and compare
+to the pr_review_comments table of the AIDev dataset [8]. This                                                             LLM performance across two layers. First, we consider the review
+particular table contains inline code review comments with rich                                                            comment level tags and report the following single-tag metrics:
+file-level context, including file path, diff hunks/code patches, and                                                            • Exact Match (EM): Also known as Accuracy, in this case, EM
+timestamps. To retrieve the PR level information and link it to the                                                                refers to the percentage of correctly tagged review comments
+detailed review comments, we first run a join query combining the                                                                  by LLMs, when compared to the human-annotated ones. This
+following tables: pull_request, pr_reviews, and pr_review_comments.                                                                indicates the LLM’s overall accuracy.
+This leaves us with 19,450 review comments from 3,177 unique PRs.                                                                • Precision, Recall and F1 Score (Macro): The harmonic
+                                                                                                                                   mean of macro precision and recall, used to determine if the
+3.1        Deriving a Taxonomy of Categories                                                                                       LLM performs well across all types of comments or not.
+To derive a taxonomy for review comment categorization, we first                                                                 • Cohen’s Kappa (𝜅): Considering the LLM as an independent
+take inspiration from the conventional commit specifications (CCS)                                                                 annotator, we measure its agreement level with a human an-
+proposed by Zeng et al [22], an approach adopted in recent literature                                                              notator to account for mere chance. A high 𝜅 is an indicator
+for PR body content categorization [9, 21] as well. However, review                                                                of LLMs being a reliable proxy for human annotators.
+comments differ from commit messages and PR bodies; hence, to                                                                 We also consider the PR level evaluation to assess how well
+identify review-specific textual signals in the review comment cor-                                                        LLM can identify the dominant themes in a PR containing review
+pora, we further adopt a topic modeling-based approach to cluster                                                          comments of multiple categories. To achieve so, we keep up to 3 of
+potential themes with their corresponding keywords. In particular,                                                         the most frequent tags in each PR, and report the following metrics:
+we concatenate all review comment body field entries for each PR
+                                                                                                                                 • Jaccard Similarity: This set overlap metric essentially ig-
+into a document, and use transformer-based BERTopic modeling
+                                                                                                                                   nores the order of the tags and simply asks what the overlap
+[4] on the documents to identify unique potential themes and the
+                                                                                                                                   between the Top-3 tags annotated by humans and LLM is. It
+most significant keywords associated with each hierarchical cluster.
+                                                                                                                                   is useful to identify if the LLM can capture the general cloud
+                                                                                                                                                                           |𝐴∩𝐵 |
+                                                                                                                                   of themes. Mathematically, 𝐽 (𝐴, 𝐵) = |𝐴∪𝐵
+   Based on the keywords and 49 initial clusters, we then utilize                                                                                                               |
+ChatGPT (GPT-5) [15] to gain a deeper understanding of the proba-                                                                • Top-1 Accuracy: We also check if the LLM could correctly
+ble underlying definition of each cluster. To combine relevant clus-                                                               identify the single most frequent tag in the PR, which essen-
+ters together, we also prompt ChatGPT to form groups of related                                                                    tially attempts to confirm whether the LLM understands the
+clusters, keeping the unique keywords intact as much as possible.                                                                  primary theme that drives the review discussion.
+Thus, we identify 42 fine-grained topics and group them into 12                                                               At the review comment level, the model achieves an Exact Match
+distinct thematic categories. Table 1 outlines the proposed set of                                                         of 0.7863, indicating that a substantial majority of individual review
+Understanding Dominant Themes in Reviewing Agentic AI-authored Code                                   MSR ’26, April 13–14, 2026, Rio de Janeiro, Brazil
+
+
+
+
+                  Figure 1: Distribution of review themes across 19,007 individual review comments and 3,162 PRs
+
+
+comments were assigned the correct label. The macro-averaged pre-        readability and consistency (style, 10.3% and 8.5%) and straight-
+cision (0.8691) and recall (0.7308) suggest that the model maintains a   forward reverts, rollbacks, and abort messages (undo, 10% and
+good balance between avoiding false positives and accurately iden-       8.7%) comprise the next majority of dominant review comments.
+tifying instances across all classes. Similarly, the resulting macro     Testing concerns with assertion and validation checks (test) consis-
+F1 score of 0.7756 reflects consistent performance across all classes,   tently remain the fifth most important aspect of agentic PR review,
+even under class imbalance. Moreover, Cohen’s 𝜅 value of 0.7348          accounting for more than 5% of the comments on average. Depen-
+indicates substantial agreement beyond chance, underlining the           dency, module, and import management, version controlling with
+reliability of the model’s annotations. At the PR level, the accuracy    codebase-wide cleanup comments appear next in the list (chore,
+remains similar, with a Top-1 accuracy of 0.78, demonstrating that       3.3% and 3.5%). Security concerns (secu, 2.9% and 3.8%), such as
+the model can effectively infer the dominant review label for an         token management, SQL injection attacks, and comments related to
+entire pull request. Macro precision (0.9236), recall (0.8730), and F1   vulnerability, safety, and reliability assessment, are also important
+score (0.8819) all exhibit considerable improvement over their gran-     concerns in agentic code review. Finally, the least frequent ones
+ular counterparts. The average Jaccard Similarity of 0.8142 indicates    appear to be related to build, configuration, scripting, and default
+a high degree of overlap between the predicted and ground-truth          behavior management (build, 2.5% and 1.9%), and performance
+label sets, suggesting that the model captures the semantic intent of    (memory, runtime, latency) improvement recommendations (perf )
+review comments even when exact matches are not fully achieved.          at nearly 1%. CI/CD workflow suggestions (ci) are provided in only
+                                                                         0.6% of cases. It is interesting to note that command-line tools and
+                                                                         utilities-related issues (cmd) appear rarely in individual review
+4    RQ2: Top Themes in Agentic PR Review                                comments; however, they never become the dominant tag in any of
+                                                                         the analyzed PRs, suggesting this category is a weak one overall. In
+Continuing with the same prompting technique mentioned in sec-
+                                                                         fact, it can be paired up with build or ci depending on the context.
+tion 3.2, we identified the review theme categories at both the
+review comment and PR levels. We started with our full experiment
+set of 19,450 review comments from 3,177 distinct PRs, as outlined       5   RQ3: Accepted vs Rejected PR Review Themes
+in section 3. However, we excluded invalid LLM responses from            To answer this question, we first define unsuccessful/rejected (R)
+our further analysis that either do not comply with the desired,         PRs as PRs with valid closed_at entries but null values in the merged_at
+prompted output structure or do not generate outputs from the            column. Thus, we ended up with a subset of 2,558 review comments
+defined pool of 12 tags, or are simply too large to be processed. This   across 483 PRs. Similarly, we extracted successfully accepted (A) PRs
+ultimately leaves us with 19,007 review comments across 3,162 PRs.       with both valid closed_at and merged_at entries, yielding a total of
+                                                                         12,191 review comments across 2,035 PRs. Figure 2 shows the results
+   Figure 1 demonstrates the distribution of review themes at both       from our further analysis on these two subsets. While features and
+the review comment and PR level. Suggestions related to functional       functional correctness (feat) remain the primary concern in both
+correctness, logical changes, and feature development (feat) remain      cases, some statistically significant shift of focus emerges when PRs
+the single most frequent review themes at both granular (38.5%) and      are ultimately rejected. Chi-Square tests reveal that at the granular
+coarse-level (46.5%). Restructuring, simplification, and redundancy      level, documentation (doc) (10.05% (R) vs 12.97% (A); 𝑝 < 0.001)
+elimination (refactor, 14% and 10.4%), and documentation guides          and styling concerns (style) (8.91% (R) vs 10.61% (A); 𝑝 < 0.05) are
+with changelogs (doc, 11.4% and 10.5%) occupy the next two places        significantly more common in successful PRs; suggesting that these
+respectively. Styling and formatting adjustments to ensure better        are viewed as constructive hurdles, and the reviewers are willing
+MSR ’26, April 13–14, 2026, Rio de Janeiro, Brazil                                                                                   Haider et al.
+
+
+
+
+                                Figure 2: Percentage of review themes across 483 rejected and 2035 accepted PRs
+
+
+to invest time in refinement given the core logic is sound already.       these solutions have drawbacks in the context of agentic software
+However, testing (test) issues are significantly more prevalent in        engineering. First, automation approaches often lack a solid ground-
+rejected PRs (6.53% (R) vs 5.44% (A); 𝑝 < 0.05), underscoring their       ing in real-world development workflows and fail to account for
+potential as indicators of rejection. At the PR level, the potential      the unique dynamics of an end-to-end agentic pipeline. Practical
+drivers of failure become even more distinct. Security concerns           performance is also not particularly promising, even when keep-
+(secu) emerge as a dominant theme in rejected PRs (5.59% (R) vs           ing agentic variants aside. Cihan et al. [2] attempted to measure
+3.05% (A); 𝑝 < 0.01). Configuration and build issues (build) are          practitioners’ perceived usefulness of code review automation in
+also likely to trigger rejections (3.11% (R) vs 1.57% (A); 𝑝 < 0.05).     industry settings, and found that longer PR closure times and irrel-
+Again, doc shows a strong prevalence in accepted PRs (6.42% (R)           evant comments were common. Previous research [3, 13] has also
+vs 12.48% (A); 𝑝 < 0.001). Even though not statistically significant      attempted to establish taxonomies of code review comments. While
+enough, undo comments are notably more prevalent in rejected              serving as good starting points, they are either based on a single
+PRs at both levels, highlighting the high amount of unnecessary           repository or focus only on human-centric review workflows.
+reverts committed by agents that reviewers eventually reject.
+                                                                          8   Ethical Implications
+6    Limitations                                                          We analyze publicly available GitHub repositories under permissive
+Despite substantial agreement with humans, LLM-based labeling             licenses (MIT or Apache 2.0). We also do not identify any informa-
+may still misinterpret or confuse highly nuanced technical terms          tion about individual developers or projects. Our findings should be
+and project-specific keywords, potentially impacting the distribu-        used to enhance the agent’s ability to self-correct before burdening
+tion of themes. Our findings are based solely on the AIDev dataset        the human reviewer, rather than fully replacing human oversight.
+[9]. While it compiles rich data from popular repositories, the results
+may not generalize well to closed-source enterprise environments
+                                                                          9   Conclusion and Future Work
+under varied review standards. One author primarily annotated the         In this work, we study the review dynamics of Agentic AI-authored
+validation set; however, multiple annotators could establish better       code by first deriving a comprehensive taxonomy of 12 thematic
+inter-rater reliability. We categorized PRs as rejected based on the      categories using topic modeling and semantic clustering. Our LLM-
+absence of a valid merge timestamp. This can potentially include          powered annotation could reliably identify review themes in PRs,
+PRs that were closed due to repository maintenance and archival           and further analysis provides actionable insights for reviewers and
+issues, rather than technical shortcomings. We also acknowledge           practitioners. Our experimental results suggest that documenta-
+the small size of the validation set, which may compromise the            tion and styling aspects can be constructive obstacles in code review;
+robustness of our results. We used the Chi-Square test for individ-       however, problems in testing, security, and build configuration are
+ual significance testing; however, some individual categories (like       more likely to block a successful code merge. Future agentic architec-
+undo) were borderline (𝑝 ≈ 0.057). An increased sample size could         tures must move beyond generative capabilities and incorporate
+help clarify such marginal trends. Finally, correcting for multiple       stronger internal validation loops to overcome these merge hurdles.
+comparisons would reduce the risk of Type I statistical errors.           At the model level, reducing agentic noise- unnecessary changes
+                                                                          not contributing to the PR’s goal- can reduce reviewer fatigue and
+                                                                          improve the perceived reliability of AI teammates. Next, we plan to
+7    Related Works                                                        improve annotation performance, refine the rejection criteria, and
+Several studies over the past years have explored techniques to im-       consider non-technical failure reasons as well. Another potential
+prove the quality and automation of code review. These efforts have       future line of work can be leveraging the identified failure patterns
+gradually progressed from Information Retrieval-based methods             (e.g., security and testing) to create targeted fine-tuning datasets
+[7], to pretrained Deep Learning models [10, 11, 13, 19], and most        that support better model training for automated review and repair.
+recently to solutions leveraging LLMs [5, 12, 16, 17, 20]. However,
+Understanding Dominant Themes in Reviewing Agentic AI-authored Code                                                    MSR ’26, April 13–14, 2026, Rio de Janeiro, Brazil
+
+
+References                                                                                International Conference on Software Engineering. 2277–2289.
+ [1] Anonymous Authors. 2025. Replication package for Understanding Dominant
+     Themes in Reviewing Agentic AI-authored Code. https://doi.org/10.5281/zenodo.
+     18067241. Accessed: 2025-12-29.
+ [2] Umut Cihan, Vahid Haratian, Arda İçöz, Mert Kaan Gül, Ömercan Devran, Emir-
+     can Furkan Bayendur, Baykal Mehmet Uçar, and Eray Tüzün. 2025. Automated
+     code review in practice. In 2025 IEEE/ACM 47th International Conference on Soft-
+     ware Engineering: Software Engineering in Practice (ICSE-SEIP). IEEE, 425–436.
+ [3] Nicole Davila, Ingrid Nunes, and Igor Wiese. 2025. A fine-grained taxonomy of
+     code review feedback in TypeScript projects. Empirical Software Engineering 30,
+     2 (2025), 53.
+ [4] Maarten Grootendorst. 2022. BERTopic: Neural topic modeling with a class-based
+     TF-IDF procedure. arXiv preprint arXiv:2203.05794 (2022).
+ [5] Md Asif Haider, Ayesha Binte Mostofa, Sk Sabit Bin Mosaddek, Anindya Iqbal,
+     and Toufique Ahmed. 2024. Prompting and fine-tuning large language models
+     for automated code review comment generation. arXiv preprint arXiv:2411.10129
+     (2024).
+ [6] Ahmed E Hassan, Hao Li, Dayi Lin, Bram Adams, Tse-Hsun Chen, Yutaro Kashiwa,
+     and Dong Qiu. 2025. Agentic Software Engineering: Foundational Pillars and a
+     Research Roadmap. arXiv preprint arXiv:2509.06216 (2025).
+ [7] Yang Hong, Chakkrit Tantithamthavorn, Patanamon Thongtanunam, and Aldeida
+     Aleti. 2022. Commentfinder: a simpler, faster, more accurate code review com-
+     ments recommendation. In Proceedings of the 30th ACM joint European software
+     engineering conference and symposium on the foundations of software engineering.
+     507–519.
+ [8] Hao Li, Haoxiang Zhang, and Ahmed E. Hassan. 2025. AIDev: Studying AI
+     Coding Agents on GitHub. doi:10.5281/zenodo.16919051
+ [9] Hao Li, Haoxiang Zhang, and Ahmed E Hassan. 2025. The Rise of AI Teammates in
+     Software Engineering (SE) 3.0: How Autonomous Coding Agents Are Reshaping
+     Software Engineering. arXiv preprint arXiv:2507.15003 (2025).
+[10] Lingwei Li, Li Yang, Huaxi Jiang, Jun Yan, Tiejian Luo, Zihan Hua, Geng Liang,
+     and Chun Zuo. 2022. AUGER: automatically generating review comments with
+     pre-training models. In Proceedings of the 30th ACM Joint European Software
+     Engineering Conference and Symposium on the Foundations of Software Engineering.
+     1009–1021.
+[11] Zhiyu Li, Shuai Lu, Daya Guo, Nan Duan, Shailesh Jannu, Grant Jenks, Deep
+     Majumder, Jared Green, Alexey Svyatkovskiy, Shengyu Fu, et al. 2022. Automating
+     code review activities by large-scale pre-training. In Proceedings of the 30th
+     ACM Joint European Software Engineering Conference and Symposium on the
+     Foundations of Software Engineering. 1035–1047.
+[12] Junyi Lu, Lei Yu, Xiaojia Li, Li Yang, and Chun Zuo. 2023. Llama-reviewer: Ad-
+     vancing code review automation with large language models through parameter-
+     efficient fine-tuning. In 2023 IEEE 34th International Symposium on Software
+     Reliability Engineering (ISSRE). IEEE, 647–658.
+[13] Miroslaw Ochodek, Miroslaw Staron, Wilhelm Meding, and Ola Söder. 2022.
+     Automated Code Review Comment Classification to Improve Modern Code
+     Reviews. In Software Quality: The Next Big Thing in Software Engineering and
+     Quality, Daniel Mendez, Manuel Wimmer, Dietmar Winkler, Stefan Biffl, and
+     Johannes Bergsmann (Eds.). Springer International Publishing, Cham, 23–40.
+[14] Ollama. 2025. Gemma 3:12b. https://ollama.com/library/gemma3:12b. Accessed:
+     2025-12-29.
+[15] OpenAI. 2025. Introducing GPT-5. https://openai.com/index/introducing-gpt-5/.
+     Accessed: 2025-12-29.
+[16] Chanathip Pornprasit and Chakkrit Tantithamthavorn. 2024. Fine-tuning and
+     prompt engineering for large language models-based code review automation.
+     Information and Software Technology 175 (2024), 107523.
+[17] Zeeshan Rasheed, Malik Abdul Sami, Muhammad Waseem, Kai-Kristian Kemell,
+     Xiaofeng Wang, Anh Nguyen, Kari Systä, and Pekka Abrahamsson. 2024. Ai-
+     powered code review with llms: Early results. arXiv preprint arXiv:2404.18496
+     (2024).
+[18] Abhik Roychoudhury, Corina Pasareanu, Michael Pradel, and Baishakhi Ray.
+     2025. Agentic ai software engineer: Programming with trust. arXiv preprint
+     arXiv:2502.13767 (2025).
+[19] Rosalia Tufano, Simone Masiero, Antonio Mastropaolo, Luca Pascarella, Denys
+     Poshyvanyk, and Gabriele Bavota. 2022. Using pre-trained models to boost code
+     review automation. In Proceedings of the 44th international conference on software
+     engineering. 2291–2302.
+[20] Manushree Vijayvergiya, Małgorzata Salawa, Ivan Budiselić, Dan Zheng, Pascal
+     Lamblin, Marko Ivanković, Juanjo Carin, Mateusz Lewko, Jovan Andonov, Goran
+     Petrović, et al. 2024. Ai-assisted assessment of coding practices in modern code
+     review. In Proceedings of the 1st ACM International Conference on AI-Powered
+     Software. 85–93.
+[21] Miku Watanabe, Hao Li, Yutaro Kashiwa, Brittany Reid, Hajimu Iida, and Ahmed E
+     Hassan. 2025. On the use of agentic coding: An empirical study of pull requests
+     on github. arXiv preprint arXiv:2509.14745 (2025).
+[22] Qunhong Zeng, Yuxia Zhang, Zhiqing Qiu, and Hui Liu. 2025. A first look
+     at conventional commits classification. In Proceedings of the IEEE/ACM 47th
+

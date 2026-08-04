@@ -1,0 +1,995 @@
+                                         Fine-Tuning Multilingual Language Models for Code Review: An
+                                                    Empirical Study on Industrial C# Projects
+                                                              Igli Begolli∗                          Meltem Aksoy∗†                                         Daniel Neider
+                                                 Technical University Dortmund,                Research Center Trustworthy                      Research Center Trustworthy
+                                                         Lovion GmbH                             Data Science and Security                        Data Science and Security
+                                                   Dortmund, NRW, Germany                    University Alliance Ruhr, Technical              University Alliance Ruhr, Technical
+                                                                                                   University Dortmund                              University Dortmund
+                                                                                                Dortmund, NRW, Germany                           Dortmund, NRW, Germany
+                                                                                              meltem.aksoy@tu-dortmund.de
+arXiv:2507.19271v2 [cs.SE] 23 Oct 2025
+
+
+
+
+                                         Abstract                                                                and help maintain consistency in project-specific practices [63]. Ad-
+                                         Code review is essential for maintaining software quality but often     ditionally, they contribute to software maintainability and reduce
+                                         time-consuming and cognitively demanding, especially in indus-          the risk of costly bugs [3, 33, 43, 46].
+                                         trial environments. Recent advancements in language models (LMs)           Despite its numerous benefits, manual code review remains time-
+                                         have opened new avenues for automating code review tasks. This          consuming, cognitively demanding, and difficult to scale effectively,
+                                         study presents the empirical evaluation of monolingual fine-tuning      particularly in large industrial projects [41, 54]. Developers spend
+                                         on the performance of open-source LMs across three key auto-            approximately 3–6 hours per week on code review tasks [8]. In
+                                         mated code review tasks: Code Change Quality Estimation, Review         large projects, reviewer assignment delays can postpone approvals
+                                         Comment Generation, and Code Refinement. We fine-tuned three            by up to 12 days [55]. The scale of this challenge is evident in ma-
+                                         distinct models—CodeReviewer, CodeLlama-7B, and DeepSeek-R1-            jor companies that process thousands of reviews monthly, with
+                                         Distill—on a C#-specific dataset combining public benchmarks with       projects like Microsoft Bing handling approximately 3,000 reviews
+                                         industrial repositories. Our study investigates how different config-   per month [46]. This demonstrates the substantial manual effort
+                                         urations of programming languages and natural languages in the          required and its potential to significantly impact development pro-
+                                         training data affect LM performance, particularly in comment gen-       ductivity.
+                                         eration. Additionally, we benchmark the fine-tuned models against          Code review has undergone a significant transformation from
+                                         an automated static analysis tool (ASAT) and human reviewers to         traditional formal review approaches to today’s collaborative, tool-
+                                         evaluate their practical utility in real-world settings. Our results    supported methodologies [2, 8, 55]. Automated static analysis tools
+                                         show that monolingual fine-tuning improves model accuracy and           (ASATs) are commonly deployed to reduce manual reviewing ef-
+                                         relevance compared to multilingual baselines. While LMs can ef-         forts by automatically detecting code smells, bugs, and coding
+                                         fectively support code review workflows, especially for routine         standard violations. However, these tools frequently exhibit high
+                                         or repetitive tasks, human reviewers remain superior in handling        false-positive rates and lack the contextual understanding required
+                                         semantically complex or context-sensitive changes. Our findings         for nuanced code evaluations [50, 60]. Consequently, developers
+                                         highlight the importance of language alignment and task-specific        must manually filter through numerous irrelevant warnings, which
+                                         adaptation in optimizing LMs for automated code review.                 undermines tool effectiveness and user acceptance [24]. Current
+                                                                                                                 practices demonstrate significant effectiveness gaps, with only 15%
+                                         Keywords                                                                of review comments indicating actual defects and up to 34.50%
+                                                                                                                 considered non-useful in major projects [25].
+                                         Automated Code Review, Pretrained Language Models (PLMs),
+                                                                                                                    Recent developments in artificial intelligence (AI), particularly in
+                                         Large Language Models (LLMs), Automated Static Analysis Tools
+                                                                                                                 deep learning and natural language processing (NLP), have sparked
+                                         (ASATs), Human Evaluation, Software Engineering Automation
+                                                                                                                 increasing interest in automating the code review process, com-
+                                                                                                                 monly referred to as automated code review (ACR). These efforts
+                                         1    Introduction                                                       are often driven by the use of language models (LMs)1 , which are
+                                         Code review is a cornerstone of modern software engineering, serv-      trained to understand or generate natural language (NL) text. Var-
+                                         ing multiple purposes including improving code quality, enforcing       ious pretrained language models (PLMs) have been proposed to
+                                         standards, detecting defects early, and promoting knowledge shar-       support ACR tasks, including generating review comments, suggest-
+                                         ing across teams [11, 32, 59]. This systematic practice has evolved     ing improvements, and transforming code into reviewer-approved
+                                         into an integral part of development workflows, functioning both        versions [54, 59, 63]. However, most of these efforts have focused
+                                         as a quality assurance mechanism and as a collaborative tool for
+                                         continuous improvement.                                                 1We use the term Language Model (LM) to refer to any model trained to understand
+                                            Beyond technical benefits, code reviews also serve a social func-    or generate textual data. A Pretrained Language Model (PLM) is an LM that has
+                                         tion. By enabling developers to inspect each other’s changes, they      undergone a general-purpose pretraining phase on large-scale unlabeled data before
+                                                                                                                 being fine-tuned for specific downstream tasks. A Large Language Model (LLM) refers
+                                         facilitate informal learning, especially for junior team members,       to an LM with a high number of parameters (often in the billions), enabling it to handle
+                                                                                                                 a wide range of tasks—either zero-shot or with minimal fine-tuning. An LLM can also
+                                         ∗ These authors contributed equally to this work.
+                                                                                                                 be considered a PLM, but not all PLMs qualify as LLMs. We refer to the plural forms
+                                         † Corresponding author.                                                 as LMs, PLMs, and LLMs, respectively, throughout this paper.
+                                                                                                                                    Begolli et al.
+
+
+on monolingual models trained on a small set of dominant program-          suggested improvements are automatically applied to the codebase.
+ming languages (PLs), such as Java and Python [26, 58], leaving            Due to computational resource constraints, we limited fine-tuning
+their applicability to less represented languages like C# relatively       of CodeLlama-7B and DeepSeek-R1-Distill-Llama-8B to a single
+underexplored. This leaves a notable research gap regarding the            task. We selected Review Comment Generation, given its linguistic
+effectiveness of PLMs and LLMs for industrial-strength languages           complexity and high practical relevance in real-world code review
+like C#, which, despite being widely used in enterprise software           workflows. For each task, we compare the performance of the fine-
+development, has received limited attention in prior ACR studies.          tuned models against their original (non-fine-tuned) baselines to
+   The emergence of large language models (LLMs) has further               evaluate the added value of task-specific adaptation.
+expanded the capabilities of ACR systems by enabling more context-            To systematically explore model performance across these tasks,
+aware and semantically rich interactions with code changes [29, 31].       we pose the following research questions: RQ1. How does monolin-
+These models can significantly reduce reviewers’ manual workloads          gual fine-tuning affect the performance of LMs in detecting whether
+by automating repetitive tasks and identifying subtle issues that          a code change requires human review? RQ2. How does fine-tuning
+might otherwise go unnoticed. In some cases, organizations have            different types of LMs on different PL/NL combinations affect re-
+already reported measurable improvements in review efficiency              view comment generation? RQ3. What is the impact of fine-tuning
+and developer satisfaction after integrating such models into their        on the code refinement capability of LMs, in terms of producing
+workflows [8]. Nonetheless, training LLMs for a specific language          accurate and functionally equivalent code revisions? RQ4. How
+from scratch remains infeasible for most settings, as it requires          do fine-tuned LMs compare to an ASAT and human reviewers in
+large volumes of annotated data—which is costly and difficult to           identifying review-worthy code changes and generating feedback?
+acquire for many PLs.                                                         Our primary contributions are as follows:
+   To address these challenges, some research has turned to multilin-           • Cross-Paradigm Evaluation Framework: We system-
+gual PLMs pretrained on diverse PL corpora (codebases in multiple                 atically compare three open-source language models with
+programming languages). These models have been explored in a                      distinct pretraining objectives—a review-specialized PLM
+range of software engineering tasks, including code summarization,                (CodeReviewer), a code-pretrained LLM (CodeLlama-7B),
+search, and translation [1, 7]. However, they often demonstrate                   and a general-purpose instruction-tuned LLM (DeepSeek-
+performance inconsistencies across languages—likely due to differ-                R1-Distill)—against both an industrial-strength ASAT (Sonar-
+ences in syntax, idioms, and language-specific coding conventions,                Qube) and human reviewers across all core ACR tasks.
+as well as the uneven representation of PLs in the pretraining                  • Language-Aligned Fine-Tuning Protocol: We demon-
+datasets. This variability highlights the need for a language-aware               strate that aligning both the programming language (mono-
+adaptation, particularly for sensitive tasks like code review.                    lingual C#) and natural language (English-only vs. bilingual
+   Further complicating this landscape, most prior evaluations have               vs. multilingual) of training data significantly impacts re-
+relied on open-source datasets from platforms such as GitHub [25,                 view comment quality.
+63]. While these datasets offer scalability and ease of access, they            • Beyond Automated Metrics: We complement standard
+often capture limited contextual diversity and may not accurately                 BLEU-based evaluation with expert-validated human as-
+reflect the complexity, review workflows, and coding standards                    sessments (Information, Relevance, Issue Correctness Rate)
+found in industrial software development environments.                            on 40 production PRs, revealing that lexical similarity of-
+   Taken together, these observations highlight several underex-                  ten misaligns with practical review utility. This dual-scope
+plored areas: the limited applicability of LMs to C#, the lack of multi-          evaluation—combining large-scale automated metrics with
+task evaluations, inconsistent comparisons across model types, and                human-aligned quality measures—addresses known limita-
+the limited availability of studies based on real-world, industrial               tions of surface-level NLP metrics in code review contexts.
+code review data.                                                               • Industrial C# Benchmark: We introduce the first fine-
+   To overcome these limitations, we adopt a new approach by                      tuned LM evaluation on enterprise-grade C# repositories,
+fine-tuning existing multilingual LMs on monolingual C# data.                     addressing a critical gap in ACR research which has pre-
+Specifically, we evaluate three open-source models with distinct pre-             dominantly focused on Java and Python in open-source
+training objectives and architectural characteristics: CodeReviewer               settings.
+[26], a transformer-based encoder–decoder PLM designed specifi-
+cally for review comment generation and pretrained on multilingual         2 Background and Related Work
+code corpora; CodeLlama-7B [48], a decoder-only multilingual LLM
+pretrained on a broad range of general-purpose code tasks; and             2.1 Code Review Process
+DeepSeek-R1-Distill [15], a multilingual instruction-tuned LLM             Modern code review is a collaborative quality assurance practice
+optimized for multi-domain applications.                                   where developers evaluate proposed code changes before integra-
+   To assess the effectiveness of these fine-tuned models in realistic     tion into the main codebase [2, 43]. Reviewers assess whether the
+review settings, we structure our evaluation around three core tasks       submitted code satisfies both functional requirements (e.g., correct
+commonly encountered in ACR workflows: (1) Code Change Qual-               compilation and test coverage) and non-functional requirements
+ity Estimation [18, 26], which determines the necessity of human           such as readability, maintainability, and adherence to coding con-
+review for a given code change; (2) Review Comment Generation              ventions.
+[25, 26, 29, 30, 58], where NL feedback is generated to guide de-             The process typically involves analyzing source code written in
+velopers; and (3) Code Refinement [23, 27, 28, 41, 54, 56], where          a programming language (PL) and formulating feedback in natural
+Fine-Tuning Multilingual Language Models for Code Review: An Empirical Study on Industrial C# Projects
+
+
+language (NL). On platforms such as GitHub, Gerrit, and Phabrica-                       style inconsistency detection [37], demonstrating positive effects
+tor, the review workflow follows five main steps. First, a contributor                  on software maintainability [4, 38].
+submits a patch through a pull request (PR). Then, one or more re-                         Building on these foundations, recent work in ACR has focused
+viewers, ideally with relevant domain knowledge, examine the code                       on three core tasks that collectively reflect the broader goals of the
+diff and provide NL comments, along with approval or rejection                          code review process.
+votes. Based on this feedback, the contributor modifies the code.                          The first is Code Change Quality Estimation, which aims to pre-
+This review cycle iterates until the code meets predefined quality                      dict whether a given code change requires human review. Initial
+standards or the submission is discarded.                                               approaches relied on handcrafted features and shallow learning
+                                                                                        models [20], whereas more recent studies have employed deep
+                                                                                        learning classifiers trained on semantic representations of code
+2.2     Automated Static Analysis Tools (ASATs) for                                     diffs to improve prediction accuracy [18, 22, 26].
+        Code Review                                                                        The second is Review Comment Generation, widely considered
+Manual code review remains a fundamental yet resource-intensive                         the most linguistically and semantically demanding aspect of ACR.
+practice in software development. To reduce the manual effort re-                       Unlike tasks such as code refinement, this task requires generat-
+quired in this iterative process, a variety of automated approaches                     ing context-aware, human-like feedback based on limited code
+have been developed, with ASATs being among the earliest and                            context. Task-specific PLMs, such as T5-Review [58], built on the
+most widely adopted solutions. ASATs enable developers to identify                      T5 architecture [42] and trained on datasets like Stack Overflow
+potential code issues—such as bugs, syntax violations, and devia-                       and CodeSearchNet, often struggled to match the performance of
+tions from best practices—without executing the code [10]. Widely                       refinement-focused models in generating high-quality comments.
+used tools like SonarQube [51] and PMD [40] employ rule-based                           To improve the semantic alignment between code functionality
+mechanisms to flag such issues early in the software development                        and review comments, AUGER [25] introduced a joint modeling
+lifecycle, thereby supporting both quality assurance and coding                         strategy that links code functionality with relevant review com-
+standard enforcement.                                                                   ments, leveraging pretraining techniques such as denoising and
+    Vassallo et al. [60] emphasize that successful integration of                       comment summarization to improve feedback relevance. Retrieval-
+ASATs into developer workflows and trust in their outputs are                           based models like CommentFinder [19] further offered efficient,
+key factors affecting their practical utility. Beller et al. [4] further                non-generative alternatives by surfacing relevant comments from
+observe that tool performance can vary depending on the PL, high-                       historical data.
+lighting the role of contextual factors in tool effectiveness.                             The third is Code Refinement, which focuses on automatically
+    ASATs are particularly useful in identifying superficial defects                    generating code changes in response to reviewer feedback. Models
+such as style inconsistencies and common programming errors                             such as Trans-Review [59] applied sequence-to-sequence learning
+[34, 38, 50]. As reported by Singh et al. [50] report ASATs can                         with source code abstraction [56] to reduce vocabulary size. Auto-
+automatically detect up to 16% of issues later identified by human                      Transform [54] improved identifier representation using Byte-Pair
+reviewers, suggesting their potential to reduce reviewer workload.                      Encoding (BPE, a token compression technique) [49]. T5-Review
+However, ASATs often struggle with more complex concerns—such                           [58] enhanced performance by leveraging large-scale code-text pre-
+as architectural or domain-specific flaws—and suffer from high                          training. Later methods, including CodeEditor [23] and D-ACT [41],
+false-positive rates that may lead to reviewer fatigue and declining                    focused on learning from code edits and diff-awareness.
+trust [6].                                                                                 Moving beyond isolated task formulations, recent research has
+    While ASATs offer valuable support in code review by automat-                       explored multi-task learning and large-scale pretraining to sup-
+ing the detection of routine issues, their inability to address nuanced,                port the entire code review pipeline. For instance, CCT5 [27] was
+context-dependent problems highlights the need for complemen-                           trained on 1.5 million diff–comment pairs and designed to address
+tary solutions. To this end, our comparative evaluation includes                        both review comment generation and code refinement. Lin et al.
+SonarQube as a representative ASAT, selected for its strong perfor-                     [29] proposed experience-aware oversampling to emphasize high-
+mance baseline and widespread adoption in industry [21]. These                          quality human reviews, improving model performance across mul-
+limitations further motivate the investigation of more advanced                         tiple review stages. A large-scale benchmark by Zhao et al. [63]
+approaches capable of handling the contextual and semantic com-                         systematically compared three task-specific PLMs (Trans-Review,
+plexity inherent in real-world code review scenarios.                                   AutoTransform, and T5-Review) with general-purpose code PLMs
+                                                                                        (CodeBERT [12], CodeT5 [62]) across all ACR tasks. Their findings
+                                                                                        showed that CodeT5 achieved the highest performance in code
+2.3     Automated Code Review (ACR)                                                     refinement, whereas T5-Review outperformed others in review
+While ASATs help detect rule-based issues like style violations,                        comment generation, highlighting the advantages of task special-
+simple bugs, and security vulnerabilities, they fall short in providing                 ization for linguistically complex review tasks.
+context-aware, semantic, or design-level feedback [18, 57, 59]. To                         The emergence of LLMs has further broadened the scope of
+address these limitations and reduce developers’ cognitive load,                        ACR. Lu et al. [31] presented LLaMA-Reviewer, which leverages
+the software engineering community has increasingly explored                            LoRA (Low-Rank Adaptation), a parameter-efficient fine-tuning
+AI-driven and NLP-based solutions.                                                      method that updates only a subset of model weights, to support all
+   Early ACR research primarily focused on isolated quality aspects,                    three ACR stages without full retraining. Guo et al. [16] found that
+including bug detection [32], vulnerability identification [5, 53], and                 ChatGPT, despite lacking task-specific fine-tuning, outperformed
+                                                                                                                                     Begolli et al.
+
+
+CodeReviewer in refinement tasks but underperformed in comment           extraction from Lovion’s repositories was conducted via Gitea’s
+generation. Complementing these efforts, Cihan et al. [8] conducted      REST API, ensuring comprehensive metadata coverage, including
+one of the first in-situ evaluations of LLM-assisted code review         PR information, code diffs, and review comments.
+in industry, reporting better comment resolution rates but mixed            These five repositories correspond to distinct modules of Lovion
+developer satisfaction and increased PR closure times.                   GmbH’s enterprise asset management platform, covering user inter-
+   Despite these advances, open-source LLMs continue to lag be-          face, data access, visualization, workflow automation, and testing
+hind proprietary models trained on expert-curated industrial datasets    components. They differ in functionality and code complexity, pro-
+[27, 61]. Moreover, comprehensive evaluations covering all three         viding a representative view of industrial C# development practices.
+ACR stages remain limited—particularly in realistic, industry-grade      All repositories are actively maintained under Lovion’s internal
+C# codebases and in direct comparisons with both ASAT and hu-            quality assurance policies, including mandatory peer review and
+man reviewers. Recent works [16, 31] have started to examine the         continuous integration (CI) checks, ensuring that the extracted PRs
+potential of general-purpose, instruction-tuned LLMs (e.g., Chat-        and comments are high-quality and production-grade.
+GPT, DeepSeek-R1-Distill) for code review tasks. Instruction-tuned          To complement the industrial dataset, we integrated the publicly
+models are trained to interpret and follow NL instructions, enabling     available CodeReviewer benchmark [26]. This addition enhanced
+them to generate appropriate responses to user prompts without           data volume and supported stable model training. While the Lovion
+requiring task-specific fine-tuning. These models show promising         repositories provided rich, domain-specific review data representa-
+performance in reasoning and comment relevance, despite lacking          tive of real industrial practices, their limited scale posed challenges
+explicit code-specific pretraining. However, direct comparisons be-      for fine-tuning large transformer-based models, such as overfit-
+tween code-pretrained and general-purpose LLMs in industrial C#          ting and unstable convergence. Incorporating the C# subset of the
+settings remain scarce—highlighting a critical gap that this study       CodeReviewer benchmark mitigated these issues by supplying ad-
+aims to address. C# remains a widely used language in enterprise         ditional language-consistent samples without introducing domain
+software development, particularly in sectors such as finance, en-       overlap. To prevent data leakage, we included only C# examples
+ergy, and manufacturing [36]. Despite its industry relevance, it         and verified that both datasets originated from distinct platforms
+remains underrepresented in academic datasets and ACR studies.           (Gitea vs. GitHub) with no shared PRs. All data were re-indexed,
+                                                                         deduplicated, and filtered to remove incomplete or non-compilable
+3     Study Design and Methodology                                       code snippets before unification.
+This section provides an overview of our experimental setup, in-            Translation and Quality Validation. Since the Lovion re-
+cluding the environment, dataset construction, model fine-tuning,        view comments were originally written in German, they were au-
+and evaluation framework. Figure 1 illustrates the overall workflow      tomatically translated into English using Python’s googletrans
+of our study.                                                            library (v4.0.0rc1, free API mode). To ensure translation fidelity,
+                                                                         two bilingual annotators with professional English–German profi-
+                                                                         ciency manually reviewed a stratified random sample of 200 trans-
+3.1    Study Context
+                                                                         lated comment pairs (6̃% of the dataset). Each pair was rated on a
+This study investigates the effectiveness of fine-tuning three dif-      1–5 adequacy and fluency scale, yielding mean scores of 4.6 and
+ferent types of LMs on monolingual C# data across three code             4.8, respectively. Inter-annotator agreement was substantial (Co-
+review tasks in an industrial setting. Our research is motivated by      hen’s 𝜅 = 0.82), indicating consistent judgments. Disagreements
+the performance gap observed between public benchmark results            were resolved through discussion until consensus was reached.
+and real-world industrial deployments of LM-based ACR systems            Minor domain-specific inconsistencies (e.g., technical terms and C#-
+[14, 61].                                                                specific vocabulary) were corrected during preprocessing, ensuring
+   We collaborated with Lovion GmbH, a software company spe-             a high overall translation quality.
+cializing in end-to-end digital solutions for infrastructure asset and      Language Configurations. The resulting dataset supports three
+network management. Their development teams primarily work               NL configurations used across experiments: (i) English-only, con-
+with C#, follow an agile methodology, and actively adopt the latest      sisting of translated Lovion comments and English samples from
+advancements in software engineering technologies.                       the CodeReviewer dataset; (ii) English+German, preserving both
+   Access to Lovion’s internal repositories provided us with high-       original and translated Lovion comments; and (iii) Multilingual,
+quality, production-grade review comments written by experienced         incorporating additional non-English samples (e.g., Chinese, Span-
+engineers. This unique dataset allows us to evaluate LLM perfor-         ish, and French) from the CodeReviewer benchmark. Irrelevant
+mance under realistic conditions and explore how training data           or low-quality instances were removed during preprocessing to
+language composition (English-only vs. multilingual vs. translated)      ensure consistency across configurations. These configurations are
+affects review comment generation quality.                               later used in the Review Comment Generation task to assess the
+   By focusing on C#, a PL with high industrial relevance [44], we       effect of language composition on model performance.
+aim to provide practical insights for both researchers and practi-          Data Splitting and Formatting. For each of the three down-
+tioners on adapting LMs for industrial ACR tasks.                        stream tasks, we created dedicated datasets. All PRs were first
+                                                                         chronologically sorted by submission date. We then partitioned
+3.2    Data Preparation                                                  the data sequentially into training (85%), validation (7.5%), and test
+We built task-specific datasets by combining PRs and reviewer            (7.5%) subsets, ensuring that newer PRs were never included in the
+comments from five internal C# repositories at Lovion GmbH. Data
+Fine-Tuning Multilingual Language Models for Code Review: An Empirical Study on Industrial C# Projects
+
+
+
+
+                                                                                                              Gitea Server
+                                                                                                                                 Pull Requests
+
+                                                                          Fine-tuned for Quality Estimation
+
+                                                                                                                      Static Tool
+                Unified C# Dataset                                                                                      Analysis
+                (CodeReviewer Format)
+                                                                          Fine-tuned for Comment Generation
+
+
+                                                                                                                             Research Questions
+
+                                                      Pretrained          Fine-tuned for Code Refinement
+                                                      CodeReviewer
+
+
+
+
+                                                     Base CodeLlama 7B                                             Comparative             Results
+                                                                          Fine-tuned for Comment Generation        Study
+
+
+
+
+                                                    Base DeepSeek-R1-     Fine-tuned for Comment Generation
+                 Unified C# Dataset                 Distill-Llama-8B
+                 ( Alpaca Format )
+
+
+
+                                                  Figure 1: Overview of the experimental workflow.
+
+
+training data relative to the test set. Within each subset, samples                       3.3       Experimental Setup
+were randomly shuffled to mitigate potential ordering bias.                               We conducted all experiments on a GPU-accelerated server running
+   Finally, we applied task-specific data formatting. For the Code                        Ubuntu 20.04, equipped with Python 3.12 and an NVIDIA A100 GPU
+Change Quality Estimation task, we constructed a total of 44,962                          (80 GB VRAM). For model development and fine-tuning, we used
+samples, equally divided between positive (𝑦 = 1) and negative                            PyTorch 2.0 (CUDA 11.8) in combination with Hugging Face Trans-
+(𝑦 = 0) instances. Positive samples (𝑦 = 1) were directly sourced                         formers (v4.48). We implemented QLoRA (Quantized Low-Rank
+from the Comment Generation dataset, corresponding to diff hunks                          Adaptation) fine-tuning using the Axolotl and Unsloth frameworks.
+that received human review comments. Negative samples (𝑦 = 0)                             QLoRA enables efficient fine-tuning of large language models by
+were drawn from the final PR versions where no reviewer com-                              combining parameter-efficient low-rank updates with quantiza-
+ments were issued, representing either accepted or non-critical                           tion techniques that reduce memory usage. Additionally, we used
+changes. This balancing procedure helped mitigate bias toward the                         NumPy and scikit-learn for data preprocessing and evaluation.
+majority class and ensured comparable representation of both cate-
+gories. For Comment Generation, each instance included a code diff
+and its corresponding human-written review comment. For Code
+Refinement, each data point consisted of a before-and-after code                          3.4       Model Fine-tuning
+pair reflecting reviewer-suggested changes.                                               We fine-tuned three distinct models in this study: CodeReviewer [26],
+   Detailed dataset statistics across all tasks and sources are sum-                      CodeLlama-7B [47], and DeepSeek-R1-Distill-Llama-8B [15]. CodeRe-
+marized in Table 1.                                                                       viewer is a transformer-based encoder-decoder PLM pretrained on
+                                                                                          multilingual code and review comment pairs. It was specifically de-
+Table 1: Dataset statistics across three tasks and data sources.                          veloped for ACR tasks and thus represents a review-specialized PLM.
+                                                                                          CodeLlama-7B is a decoder-only LLM pretrained on a wide range of
+ Task                             Dataset           Train      Val       Test             code corpora in multiple PLs. It serves as a code-pretrained LLM op-
+                                                                                          timized for general code understanding and generation. DeepSeek-
+                                  Lovion            19,110 1,685 1,686                    R1-Distill-Llama-8B is an instruction-tuned general-purpose LLM,
+   Code Change
+                                  CodeReviewer      19,110 1,685 1,686                    distilled from LLaMA 3.1–8B, with no code-specific pretraining.
+ Quality Estimation
+                                  Unified           38,220 3,370 3,372                    It is designed to perform well across diverse NL tasks, including
+                                                                                          reasoning and instruction following. This diversity in pretraining
+                    Lovion                           3,420  302   302
+                                                                                          paradigms enables a comprehensive comparison of review-specific,
+ Comment Generation CodeReviewer                    15,689 1,383 1,384
+                                                                                          code-oriented, and general-purpose LMs in monolingual C# review
+                    Unified                         19,110 1,685 1,686                    settings.
+                                  Lovion             2,125  187   188                         The selection of CodeReviewer, CodeLlama-7B, and DeepSeek-R1-
+ Code Refinement                  CodeReviewer      13,848 1,222 1,222                    Distill-Llama-8B was guided by three main criteria: (i) open-source
+                                  Unified           15,973 1,409 1,410                    accessibility ensuring full reproducibility and parameter-efficient
+                                                                                          fine-tuning; (ii) architectural diversity, covering a review-specific
+                                                                                          PLM (CodeReviewer), a code-pretrained LLM (CodeLlama), and a
+                                                                                                                                    Begolli et al.
+
+
+general-purpose instruction-tuned LLM (DeepSeek); and (iii) repre-       Table 2: Instruction-based prompt format used for fine-
+sentativeness of SOTA open models widely adopted in automated            tuning.
+code review research. Proprietary models such as GPT, Claude,
+or Gemini were not included due to closed-weight architectures,           Prompt Template : Below is an instruction that describes a
+licensing restrictions, limited reproducibility in fine-tuning work-      task, paired with an input that provides further context. Write a
+flows and privacy concerns associated with uploading industrial           response that appropriately completes the request.
+code data to external APIs. Our focus is therefore on open, repro-        ###Instruction: {instruction}
+ducible, and practically deployable models suitable for industrial        ###Input: {input}
+integration.                                                              ###Response:{output}
+                                                                          Instruction
+                                                                          You are a powerful code reviewer model for the C#. Your job is
+3.4.1 Fine-Tuning CodeReviewer for Three ACR Tasks. We fine-
+                                                                          to suggest review comment in natural language. You are given
+tuned CodeReviewer for all three ACR tasks based on its original
+                                                                          a context regarding a diff hunk or code change in programming
+multi-task design and prior performance in both classification and
+                                                                          language. You must output appropriate, contextual review com-
+generation tasks [26]. We followed the original implementation as
+                                                                          ment for that code change.
+a basis and adapted task-specific hyperparameters where needed.
+                                                                          Input: Diff Hunk: {diff hunk}
+                                                                          Output: {review comment}
+    (1) Code Change Quality Estimation: We fine-tuned CodeRe-
+        viewer as a binary classifier to predict whether a code
+        change requires a review comment (𝑦 = 1) or not (𝑦 = 0).            We fine-tuned CodeLlama and DeepSeek using 4-bit QLoRA,
+        Using a learning rate of 3 × 10−4 , we trained the model for     a technique that enables efficient fine-tuning of large-scale mod-
+        5 epochs with a batch size of 12. This configuration helped      els by combining weight quantization with low-rank adaptation.
+        accelerate training while maintaining stability.                 The shared hyperparameters included 3 training epochs, a LoRA
+    (2) Review Comment Generation: We applied a two-stage fine-          rank of 32 (i.e., the dimensionality of the trainable low-rank matri-
+        tuning approach. In the first stage, we used a mixed-language    ces), a token limit of 2,048, a dropout rate of 0.05, and a learning
+        dataset that included German comments from the Lovion            rate of 0.0002, optimized using the paged AdamW algorithm. For
+        dataset and English comments from the CodeReviewer               CodeLlama-7B, we employed the Axolotl framework with a weight
+        benchmark. In the second stage, we used the translated           decay of 0.0, whereas for DeepSeek-R1-Distill-Llama-8B, we used
+        version of the Lovion comments (see Section 3.2) to retrain      the Unsloth framework with a weight decay of 0.01.
+        the model on a fully English dataset. Across both stages,
+        the model was trained for approximately 3 epochs (around         3.4.3 Training Data Scope and Language Composition. Since both
+        7,500 steps) using a learning rate of 3 × 10−4 and a batch       the programming language (PL) used in the code and the natu-
+        size of 6.                                                       ral language (NL) used in review comments vary across models
+    (3) Code Refinement: For this task, we trained the model to gen-     and datasets, we classified the training configurations along two
+        erate improved code versions based on reviewer feedback.         dimensions:
+        Fine-tuning was performed for 3–4 epochs using a batch                 • PL Scope:
+        size of 8 and a learning rate of 3 × 10−4 , striking a balance             – Mono-PL: Only C# code.
+        between efficiency and convergence.                                        – Multi-PL: Multiple PLs (e.g., Java, Python, C#) from
+                                                                                     the multilingual benchmark [17, 26].
+                                                                               • NL of Comments:
+3.4.2 Fine-Tuning CodeLlama and DeepSeek for Review Comment                        – English-only: All comments translated and unified
+Generation. In addition to the review-specialized CodeReviewer                       to English.
+model, we fine-tuned both CodeLlama-7B and DeepSeek-R1-Distill-                    – English+German: Mixed comments in both languages.
+Llama-8B specifically for the Review Comment Generation task.                      – Multilingual: Diverse NL from the original multilin-
+Their instruction-tuned architectures and strong NL generation                       gual benchmark.
+capabilities make them particularly well-suited for review com-
+ment generation. Due to computational constraints, we focused            3.5     Data and Code Availability
+their evaluation exclusively on review comment generation to as-
+                                                                         All scripts and fine-tuning configurations used in this study are
+sess their ability to generate high-quality, context-aware review
+                                                                         available in the accompanying replication package.2 The package
+comments for C#.
+                                                                         contains preprocessing scripts, evaluation code, and instructions to
+   To enable instruction-based fine-tuning, we reformatted the
+                                                                         reproduce all results reported in this paper. The industrial C# PR
+dataset using the Stanford Alpaca prompt format [52], in line with
+                                                                         dataset from Lovion GmbH, however, cannot be publicly released
+best practices for instruction-tuned LLM training [31]. Each prompt
+                                                                         due to confidentiality agreements with the company. To ensure
+included (i) an instruction field describing the task (e.g., “Gener-
+                                                                         transparency, we provide detailed metadata and aggregated sta-
+ate a review comment for the following code snippet”), (ii) an input
+                                                                         tistics describing the dataset’s structure (e.g., issue types, PR size
+field containing the code diff, and (iii) an output field with the
+                                                                         distribution, and module coverage) so that the experimental design
+corresponding human-written review comment. The full prompt
+template is provided in Table 2.                                         2 https://anonymous.4open.science/r/CodeReview-LMs/
+Fine-Tuning Multilingual Language Models for Code Review: An Empirical Study on Industrial C# Projects
+
+
+and data characteristics can be replicated without accessing the                        works [26, 35], BLEU-4 scores were computed over the first 256
+raw code. Researchers interested in collaboration or controlled data                    output tokens to standardize sequence length and reduce the bias
+access may contact the authors subject to company approval.                             introduced by lengthy generations. For DeepSeek-R1-Distill-Llama-
+                                                                                        8B, chain-of-thought (CoT) reasoning segments were excluded prior
+3.6     SonarQube Integration                                                           to scoring for consistency. Although code-sensitive metrics such
+SonarQube [51] is a widely adopted open-source ASAT that de-                            as CodeBLEU [45] or CrystalBLEU [9] could offer complementary
+tects code quality issues across three primary dimensions: reliabil-                    insights, they were not used because the original CodeReviewer
+ity, maintainability, and security. It identifies a variety of issues,                  checkpoints are not publicly available, making cross-study compar-
+including bugs, code smells, and security vulnerabilities. While                        ison infeasible.
+SonarQube’s definition of code smells partially overlaps with the                          - For Code Refinement, we used BLEU to assess n-gram similarity
+classic taxonomy introduced by Fowler [13], it also incorporates                        and Exact Match (EM) to verify byte-level equivalence between
+platform-specific classifications and rule extensions.                                  generated and reference code revisions. These metrics were selected
+   For this study, we configured SonarQube specifically for C#                          to remain consistent with the CodeReviewer baseline setup and to
+by activating approximately 450 language-specific rules from the                        enable one-to-one comparison of C#-specific results.
+official SonarC# rule set3 . This ensured adherence to recognized
+best practices for C# development, covering security, reliability, and                 3.7.2 40-PR annotated subset (human-aligned metrics). We selected
+maintainability.                                                                       40 PRs from Lovion GmbH’s industrial C# repositories using strati-
+   While SonarQube was not designed to generate NL feedback,                           fied random sampling to ensure balanced coverage across modules
+we included it as a complementary baseline to represent rule-based,                    and issue types. Each PR contained a single code hunk to maintain a
+non-linguistic analysis within our unified evaluation framework.                       clear mapping between code change and review feedback. The sub-
+This allowed us to systematically compare traditional static analy-                    set consisted of 20 PRs that required review comments—covering
+sis with language-based review approaches in identifying review-                       issues categorized as bug, performance, maintainability, or secu-
+relevant issues. To ensure comparability, we applied the same cor-                     rity—and another 20 PRs that did not require any review comments,
+rectness criterion (i.e., “good” vs. “not good”) when evaluating its                   serving as a control group. Two senior engineers independently de-
+detections against ground truth. Hence, SonarQube serves not as a                      termined whether a review comment was required and assigned the
+linguistic peer to LMs, but as a representative of established indus-                  appropriate issue category. Disagreements were resolved through
+trial practices for rule-based review support.                                         discussion (Cohen’s 𝜅 = 0.79). These expert-validated annotations
+   To integrate SonarQube into Lovion GmbH’s DevOps pipeline,                          established the ground truth foundation for all subsequent model
+we deployed the system within the company’s Jenkins-based con-                         and human performance evaluations.
+tinuous integration (CI) workflow. This setup enabled automated                           Distinct evaluation protocols were applied for each ACR task:
+analysis of all relevant PRs and ensured consistent quality assess-                       - For Code Change Quality Estimation, LM and SonarQube pre-
+ment outputs. These outputs served as a static baseline against                        dictions were compared against the expert-validated ground truth
+which we compared both LM-generated and human-written code                             labels using standard classification metrics—accuracy, precision,
+review results.                                                                        recall, and F1 score. Human reviewers—six bilingual software en-
+                                                                                       gineers from Lovion GmbH (two senior, two mid-level, and two
+3.7     Evaluation Framework                                                           junior)—independently evaluated all 40 PRs to determine whether
+                                                                                       a review comment was required, and their majority decision served
+To comprehensively address our research questions, we adopt a
+                                                                                       as the reference judgment for human performance.
+dual-scope evaluation: (i) a full test set for large-scale, fully auto-
+                                                                                          - For Review Comment Generation, we used the 20 PRs that re-
+mated metrics, and (ii) a 40-PR annotated subset for expert-validated,
+                                                                                       quired comments. Two senior engineers (the same annotators who
+human-aligned analyses. This design provides both breadth (statis-
+                                                                                       established the ground truth) evaluated whether each system’s out-
+tical comparability on all PRs) and depth (contextual quality against
+                                                                                       put—either a natural-language comment (for humans and LMs) or
+expert ground truth). We evaluate both fine-tuned and non–fine-
+                                                                                       a detected issue (for SonarQube)—correctly addressed the issue
+tuned versions of each model.
+                                                                                       category defined in the ground truth. Each output was labeled as
+3.7.1 Full test set (automated metrics). PRs from real workflows                       “correct” if it matched the issue type (e.g., bug, performance, main-
+with existing human comments were used to compute automated                            tainability, or security) and as “incorrect” otherwise. The proportion
+metrics across all PRs:                                                                of correct outputs constituted the Issue Correctness Rate, providing
+   - For Code Change Quality Estimation, we used standard classifi-                    a unified measure of issue-level correctness across rule-based and
+cation metrics—accuracy, precision, recall, and F1 score—to evaluate                   language-based systems.
+how accurately each model identified whether a PR required a re-                          The six human reviewers also provided qualitative evaluations
+view comment (problematic) or not (acceptable).                                        of AI-generated comments for the same 20 PRs. They rated each
+   - For Review Comment Generation, we used BLEU-4 [39] to mea-                        comment on two 5-point Likert scales: Information (extent to which
+sure lexical overlap between generated and reference comments.                         the comment provides meaningful and actionable feedback) and
+This choice aligns with the evaluation protocol in the CodeReviewer                    Relevance (degree to which the comment addresses the actual issue
+study [26], ensuring methodological comparability. Following prior                     in the code diff). The final score for each comment was calculated
+                                                                                       by averaging the six individual ratings. To avoid potential bias, the
+3 https://rules.sonarsource.com/csharp/                                                reviewers were independent of dataset curation and ground-truth
+                                                                                                                                                                      Begolli et al.
+
+
+annotation, and the two activities—manual code reviewing and                                               alignment with reference phrasing. However, it slightly lags behind
+evaluation of AI-generated outputs—were conducted separately                                               the base model in Information and Relevance. Its bilingual variant
+to prevent cross-contamination of judgments. The aggregated hu-                                            performs similarly in BLEU-4 but worse in human evaluations, sug-
+man ratings thus represent a consensus-based human baseline that                                           gesting that linguistic inconsistency in training data may reduce
+serves as the reference point across all evaluation dimensions.                                            fluency and coherence. The base CodeReviewer—pre-trained specif-
+                                                                                                           ically for code review on a multilingual corpus—achieves lower
+3.7.3 Efficiency. Efficiency was measured as the average time-to-
+                                                                                                           BLEU but competitive human-rated scores, highlighting a trade-off
+review per PR, capturing the complete duration from input to output
+                                                                                                           between lexical similarity and perceived quality.
+generation. Human reviewers were timed manually, whereas re-
+                                                                                                              CodeLlama-7B, fine-tuned on the same monolingual setting,
+sponse times for LMs and SonarQube were extracted from system
+                                                                                                           shows balanced performance. While its BLEU-4 score is slightly
+log files.
+                                                                                                           lower than CodeReviewer’s, it achieves the highest Information
+                                                                                                           and strong Relevance scores, demonstrating that instruction-tuned,
+4 Results                                                                                                  code-pretrained LLMs can generate informative and context-aware
+4.1 Results of Code Change Quality Estimation                                                              comments after fine-tuning. Its base model, trained on multilingual
+Figure 2 shows the performance of CodeReviewer on the code                                                 data, performs considerably worse across all metrics, underscoring
+change quality estimation task, comparing the monolingual C#                                               the importance of task adaptation.
+fine-tuned variant with the multilingual baseline by Li et al. [26].                                          DeepSeek-R1-Distill-Llama-8B presents a different trade-off. Fine-
+Despite being trained on a smaller dataset, the monolingual ver-                                           tuning on monolingual data significantly boosts BLEU-4, but slightly
+sion outperformed the multilingual model across all evaluation                                             reduces Information and Relevance compared to its base model. No-
+metrics, including precision, recall, F1 score, and accuracy. This                                         tably, the base model achieves the highest Relevance score overall,
+consistent improvement suggests that domain and language specific                                          despite its low BLEU-4, suggesting that fine-tuning may improve
+fine-tuning can effectively enhance the model’s ability to identify                                        lexical fidelity at the expense of general reasoning and feedback
+relevant code changes, even with limited training data.                                                    richness.
+
+            100
+                   92.70                 92.31                     92.30                92.31
+                                                                                                           4.3    Results of Code Refinement
+                                                                                                           Figure 3 shows the results of the code refinement task, comparing
+            80             78.60                                                                           the performance of CodeReviewer when fine-tuned on a monolin-
+                                                                                                73.89
+                                                                           71.53                           gual C# dataset versus its original multilingual version from the
+                                                 65.63
+                                                                                                           CodeReviewer benchmark [26]. Unlike the other tasks, fine-tuning
+            60                                                                                             on monolingual data led to a decline in both BLEU and EM scores.
+Score (%)
+
+
+
+
+                                                                                                           This suggests that domain and language specific fine-tuning, while
+                                                                                                           effective for tasks closely tied to phrasing or review context, may be
+            40
+                                                                                                           less suitable for tasks requiring a broader generalization or exposure
+                                                                                                           to diverse examples. One likely reason is the significantly smaller
+            20
+                                                                                                           and less varied size of the monolingual fine-tuning dataset, which
+                                                                                                           may have limited the model’s ability to learn complex correction
+                                                                                                           patterns compared to the multilingual training corpus provided by
+             0                                                                                             Li et al. [26].
+                     Precision               Recall                  F1 Score             Accuracy
+                                                         Metrics
+
+                     CodeReviewer (Fine-tuned on C#)          CodeReviewer (Base-Multilingual Benchmark)
+                                                                                                           4.4    Comparison of LMs, SonarQube, and
+                                                                                                                  Human Reviewers
+Figure 2: Code change quality estimation performance of
+CodeReviewer fine-tuned on monolingual C# dataset com-                                                     Figures 4 and 5 present the comparative performance of human
+pared to its base multilingual version.                                                                    reviewers, SonarQube, and LMs across the two main evaluation
+                                                                                                           tasks—code change quality estimation and review comment gener-
+                                                                                                           ation—based on a subset of 40 PRs from our industrial C# dataset.
+                                                                                                              Code Change Quality Estimation. For the binary classification
+4.2               Results of Review Comment Generation                                                     task of identifying whether a code change requires a review com-
+Table 3 provides a comparative evaluation of the models on the                                             ment, both SonarQube and the fine-tuned CodeReviewer performed
+review comment generation task, using both automated (BLEU-4)                                              close to human reviewers in terms of accuracy, precision, recall, and
+and human-centered (Information and Relevance) metrics. A key                                              F1 score (see Figure 4). A quantitative analysis of prediction errors
+finding is that no single model dominates across all evaluation crite-                                     across issue categories revealed notable performance differences
+ria, indicating trade-offs between lexical similarity, informativeness,                                    between the methods. SonarQube showed strong performance in
+and contextual relevance.                                                                                  detecting rule-based issues, such as security vulnerabilities and
+   CodeReviewer, when fine-tuned on monolingual C# with English-                                           maintainability concerns. However, it struggled with more context-
+only comments, achieves the highest BLEU-4 score, reflecting strong                                        dependent categories like performance optimizations and logic
+Fine-Tuning Multilingual Language Models for Code Review: An Empirical Study on Industrial C# Projects
+
+
+              Table 3: Comparison of models on the review comment generation task, categorized by PL scope and NL of comments.
+
+                Model                                                                    PL Scope    NL of Comments                                  BLEU-4              Information                            Relevance
+                CodeReviewer fine-tuned on C# (English+German)                           Mono-PL     English+German                                   8.76                             1.20                           1.41
+                CodeReviewer fine-tuned on C# (English)                                  Mono-PL       English-only                                   9.08                             3.47                           3.16
+                CodeLlama-7B fine-tuned on C#                                            Mono-PL       English-only                                   8.08                             3.80                           3.67
+                DeepSeek-R1-Distill-Llama-8B fine-tuned on C#                            Mono-PL       English-only                                   8.12                             3.48                           3.61
+                CodeReviewer base [26]                                                    Multi-PL                Multilingual                        5.32                             3.60                           3.20
+                CodeLlama-7B base [17]                                                    Multi-PL                Multilingual                        5.58                             3.13                           3.45
+                DeepSeek-R1-Distill-Llama-8B base [15]                                    Multi-PL                Multilingual                        3.45                             3.61                           3.93
+                    The best score for each metric is shown in bold.
+
+                                                                                                                  100
+              100
+                                                                                                                                                                      90.9                               90.1                           90.0
+                                                                                                                                              89.3
+
+
+                                       82.61
+                                                                                                                  80                79.0
+                                                                                                                                                                                                76.9                           77.5
+              80                                                                                                                                      75.0   75.0
+                        75.26
+                                                                                                                                                                                       69.8
+                                                                                                                                                                                                                      67.5
+                                                                                                                           65.2
+
+                                                                                                                  60
+              60
+
+
+
+
+                                                                                                      Score (%)
+  Score (%)
+
+
+
+
+                                                                                                                  40
+              40
+
+                                                                             30.32
+
+                                                               21.22                                              20
+              20
+
+
+
+                                                                                                                   0
+                                                                                                                                  Precision                  Recall                           F1 Score                       Accuracy
+               0                                                                                                                                                             Metrics
+                                BLUE                                   EM
+                                                 Metrics                                                                                              SonarQube               CodeReviewer                Human
+
+               CodeReviewer (Fine-tuned on C#)        CodeReviewer (Base-Multilingual Benchmark)
+
+
+                                                                                                     Figure 4: Comparison of SonarQube, CodeReviewer, and hu-
+Figure 3: Code refinement performance of CodeReviewer                                                man reviewers on 40 PRs in the Code Change Quality Esti-
+fine-tuned on monolingual C# dataset compared to its base                                            mation task. The CodeReviewer was fine-tuned on C# with
+multilingual version.                                                                                English comments.
+
+
+errors. In contrast, the fine-tuned CodeReviewer delivered more bal-
+anced results across all issue types, suggesting better generalization
+capabilities for identifying both rule-based and context-sensitive                                   generally completing reviews in under one minute. Among them,
+quality issues.                                                                                      the DeepSeek-R1-Distill-Llama-8B base was the slowest, likely due
+   Review Comment Generation. In the review comment generation                                       to its more elaborate reasoning-based responses.
+task, the performance gap between human reviewers and auto-
+mated methods became more pronounced (see Figure 5). Human
+reviewers consistently produced comments that correctly addressed
+the underlying code issues, resulting in the highest Issue Correctness                               Table 4: Average time-to-review per PR by method. Measure-
+Rate. Among the language models, CodeLlama-7B (fine-tuned on                                         ments reflect end-to-end processing time across the full eval-
+C#) achieved the best alignment with the ground truth, followed                                      uation dataset, not limited to the 40 PRs used for human
+closely by CodeReviewer and DeepSeek-R1-Distill-Llama-8B. No-                                        comparison.
+tably, the DeepSeek model produced almost identical comments
+before and after fine-tuning, suggesting that the fine-tuning pro-
+                                                                                                                        Method                                                            Time-to-Review (min)
+cess reduced its reasoning variety while improving lexical precision.
+Overall, fine-tuned models narrowed—but did not eliminate—the                                                           DeepSeek-R1-Distill-Llama-8B base                                                       1–3
+gap to human reviewers in terms of correctness and issue coverage.                                                      Other LMs                                                                               <1
+                                                                                                                        SonarQube                                                                               3–5
+   Efficiency Trade-offs. Table 4 presents the average review time
+                                                                                                                        Human Reviewers                                                                         5–7
+per PR for each method. Human reviewers typically required over
+five minutes per PR, depending on the complexity of the changes.
+SonarQube took between three to five minutes due to its thorough
+static analysis. In contrast, LMs significantly reduced review time,
+                                                                                                                                                             Begolli et al.
+
+
+                                                                                                  5.2    Influence of Model Type, PL/NL Scope, and
+                Codellama-7B
+               (C# fine-tuned)
+                                                  50%                                                    Fine-Tuning Design on Review Comment
+                                                                                                         Generation
+ DeepSeek-Rl-Distill-Llama-8B
+             (C# fine-tuned)                                                                      Our results highlight that while monolingual fine-tuning on C#
+                                                                                                  improves LM performance in Review Comment Generation, the re-
+ DeepSeek-Rl-Distill-Llama-8B                                                                     lationship between BLEU-4 scores and human-perceived comment
+                        (Base)
+                                                                                                  quality is not straightforward. Although the fine-tuned CodeRe-
+                       Human                                                          92.5%
+                                                                                                  viewer achieved the highest BLEU-4 score, human evaluators con-
+                                                                                                  sistently rated the fine-tuned CodeLlama-7B higher in both In-
+                                                                                                  formation and Relevance. This discrepancy underscores known
+                CodeReviewer
+               (C# fine-tuned)                                                                    limitations of BLEU-4 as a sole quality indicator for code-related
+                                                                                                  NL generation tasks [26, 63].
+                                                - ---- -- -   - - -
+                   SonarQube              35%                         l ---   -   -   - -
+                                                                                                     One likely reason for CodeReviewer’s high BLEU-4 score lies in
+                                                                                                  its learned use of token patterns such as emojis, which appeared
+                                 0   20    40         60         80                         100   frequently in the training data. Although such token patterns in-
+                                           Issue Correctness Rate (%)
+                                                                                                  creased lexical similarity and improved BLEU-4 scores, they did
+                                                                                                  not necessarily contribute to the informativeness or contextual rel-
+Figure 5: Comparison of SonarQube, CodeReviewer, and hu-                                          evance of the generated comments. Moreover, the mixed-language
+man reviewers on 40 PRs in the Review Comment Generation                                          composition (English and German) of the fine-tuning data for some
+task. The CodeReviewer was fine-tuned on C# with English                                          CodeReviewer variants likely introduced linguistic inconsistencies,
+comments. The Issue Correctness Rate represents the propor-                                       occasionally resulting in comments that were difficult to under-
+tion of generated comments judged as “correct,” i.e., accu-                                       stand or exhibited unnatural language mixing. This finding aligns
+rately addressing the corresponding code issue according to                                       with studies showing that inconsistencies in training data language
+the ground truth.                                                                                 composition can negatively affect LMs generation quality [8].
+                                                                                                     A noteworthy observation emerged with DeepSeek-R1-Distill-
+                                                                                                  Llama-8B. Before fine-tuning, this reasoning-focused LLM produced
+                                                                                                  comments that human evaluators perceived as more context-aware
+                                                                                                  and insightful. However, after fine-tuning on our instruction-light
+                                                                                                  dataset, the model’s BLEU-4 score improved, but its ability to gener-
+5 Discussion                                                                                      ate reasoning-rich, explanatory comments declined. This suggests
+                                                                                                  that for models like DeepSeek-R1, maintaining reasoning capabili-
+5.1 Effectiveness of Monolingual Fine-Tuning                                                      ties may require specialized fine-tuning approaches that preserve
+    for CodeReviewer on Code Change                                                               or enhance CoT reasoning during adaptation.
+    Estimation                                                                                       Overall, these findings demonstrate that while monolingual fine-
+Our findings provide empirical evidence that monolingual fine-                                    tuning helps align LMs with the target PL and improves surface-
+tuning on C# can enhance the performance of CodeReviewer, par-                                    level lexical similarity, it may introduce trade-offs in reasoning
+ticularly in the Code Change Quality Estimation task. Despite being                               quality and linguistic richness. These trade-offs are further shaped
+trained on a smaller dataset, the monolingual fine-tuned variant                                  by the underlying pretraining paradigms of the LMs. Their diver-
+consistently outperformed its multilingual counterpart. This sup-                                 gent behaviors after fine-tuning illustrate how pretraining objec-
+ports previous research indicating that language-specific adaptation                              tives influence adaptability to domain-specific tasks like code re-
+helps models better capture syntactic patterns and task-specific                                  view. We recommend integrating more linguistically balanced and
+signals [1, 7].                                                                                   instruction-rich datasets—possibly including human-annotated rea-
+    An important methodological factor contributing to this out-                                  soning traces—to better support both fluency and depth in gener-
+come was our negative sample selection strategy. We deliberately                                  ated review comments.
+included only the final code hunk of each PR as negative examples
+(i.e., those not requiring a review comment). These hunks typically
+contained fewer and more stable changes, making the learning
+                                                                                                  5.3    Effectiveness of Monolingual Fine-Tuning
+task less noisy. This targeted sampling likely helped the model to                                       for CodeReviewer on Code Refinement
+more effectively learn decision boundaries between review-worthy                                  However, these benefits did not extend to the Code Refinement task.
+and non-review-worthy code changes, echoing findings from prior                                   The monolingual fine-tuned model underperformed the multilin-
+work on label quality and class balance in code classification tasks                              gual baseline in both BLEU and exact match scores. One plausible
+[18].                                                                                             reason is the limited size and diversity of the monolingual training
+    Overall, these findings demonstrate that domain- and language-                                data, which may have constrained the model’s ability to generalize
+specific fine-tuning is particularly beneficial for structured classification-                    to broader or more complex edit patterns. Prior work has empha-
+oriented review tasks such as determining whether a code change                                   sized that code generation tasks, such as refinement, benefit from
+requires human intervention.                                                                      large and diverse datasets [26, 27]. Additionally, translation-related
+Fine-Tuning Multilingual Language Models for Code Review: An Empirical Study on Industrial C# Projects
+
+
+inconsistencies in the dataset may have introduced noise, a known                       6    Implications
+threat to generation quality in multilingual settings [63].                             Our findings offer practical implications for both industry practi-
+   In summary, these observations indicate that fine-tuning is not                      tioners and researchers.
+uniformly beneficial across all ACR stages. While it strengthens                           For practitioners, fine-tuned LMs can serve as fast and reason-
+discriminative capabilities, it can limit generative diversity and                      ably accurate assistants in CI pipelines. While they do not match
+robustness in more complex code transformation tasks.                                   human-level performance—particularly in nuanced or complex re-
+                                                                                        view scenarios—their speed and early-issue detection capabilities
+5.4     Comparison of Fine-Tuned LMs, SonarQube,                                        make them valuable for triage and prioritization tasks. In particular,
+                                                                                        LMs can help filter routine PRs, reducing the cognitive load on
+        and Human Reviewers
+                                                                                        human reviewers.
+Our findings reveal that while monolingual fine-tuning improves                            Integrating LM-based tools with static analyzers like SonarQube
+LLM performance across code review tasks, human reviewers still                         can lead to more balanced workflows. Whereas SonarQube is effec-
+consistently outperform both LLM-based models and ASATs like                            tive in flagging rule-based issues (e.g., security or maintainability
+SonarQube. This performance gap was especially pronounced in                            violations), LMs offer more linguistically rich and context-sensitive
+the Review Comment Generation task, where human reviewers                               feedback. This division of labor enables efficient issue coverage
+achieved substantially higher semantic accuracy than all automated                      across both syntactic and semantic dimensions.
+methods. These results align with prior studies showing that human                         Another benefit is cost-efficiency. The evaluated LMs are open-
+reviewers provide more actionable, context-aware, and nuanced                           source and license-free, providing accessible solutions for organiza-
+feedback than current automated tools [8, 18].                                          tions operating under budget constraints. Moreover, task-specific
+   In the Code Change Quality Estimation task, the fine-tuned                           monolingual fine-tuning emerged as a practical strategy to improve
+CodeReviewer showed a noticeable drop in performance when                               model effectiveness in single-language environments like C#.
+evaluated on our diverse, industrial PR sample compared to its                             For researchers, our results raise concerns about relying solely
+controlled test set results. This degradation likely reflects the do-                   on automated metrics such as BLEU to assess code review quality.
+main shift and code diversity in real-world PRs—an issue commonly                       Human-centered evaluations remain crucial for capturing relevance
+noted in prior LLM-based software engineering studies [26, 29]. Un-                     and informativeness. In addition, the performance drop observed
+like more homogeneous training and testing datasets, our industrial                     in reasoning-intensive models like DeepSeek-R1-Distill after fine-
+PRs represented varied coding styles, standards, and project-specific                   tuning suggests a need for strategies that preserve reasoning ca-
+conventions, reinforcing concerns raised by Vassallo et al. [60] re-                    pabilities—potentially via chain-of-thought data or multi-objective
+garding tool generalizability.                                                          optimization approaches.
+   SonarQube, as expected from prior ASAT studies [4, 6], per-
+formed well in identifying rule-based issues like code smells and
+security vulnerabilities. However, its lack of semantic understand-                     7    Threats to Validity
+ing limited its ability to detect deeper logic-related or architectural                 Our study has several validity threats, discussed in terms of internal,
+flaws—consistent with earlier critiques of ASATs[38].                                   external, and construct validity.
+   The LLM-based models, particularly the fine-tuned CodeLlama-                            Internal Validity. One threat is the limited size and language
+7B, demonstrated better generalization across issue categories, es-                     scope of the monolingual C# dataset. The small volume of high-
+pecially for refactoring suggestions and clarity improvements. This                     quality code-review pairs may have restricted the models’ exposure
+aligns with recent findings that LLMs can capture higher-level code                     to diverse code patterns, especially in the Code Refinement task.
+semantics more effectively than rule-based tools [31]. However,                         Additionally, translating German review comments into English
+even the best-performing LLM still lagged behind human reviewers                        may have introduced semantic noise, affecting both model learning
+in delivering comprehensive, context-sensitive feedback—a limita-                       and human evaluation. Although translation quality was manu-
+tion similarly reported in [8].                                                         ally validated with high adequacy, fluency, and inter-annotator
+   An important observation was the trade-off between review                            agreement, minor translation noise may still persist and could have
+speed and review quality. While both LMs and SonarQube com-                             subtly influenced model behavior.
+pleted reviews significantly faster than humans (often under one                           Evaluation variability presents another threat. Although six pro-
+minute), their feedback lacked the depth and accuracy required for                      fessional software engineers with varying experience levels rated
+critical code assessment. This reflects a broader trend in AI-assisted                  the outputs, subjective bias remains possible. We mitigated this by
+code review research, where efficiency gains often come at the                          averaging scores and resolving annotation disagreements through
+expense of review depth and trustworthiness [63].                                       consensus-based discussion. To further minimize potential evalu-
+   Overall, while AI and SonarQube offer substantial efficiency                         ator bias, all raters were independent of the dataset construction
+gains, they still fall short of human reviewers in producing high-                      and translation validation processes, and human evaluation tasks
+quality, context-aware feedback. These results suggest that AI tools                    (manual reviewing vs. model-output assessment) were conducted
+can serve as valuable assistants to accelerate the review process                       in separate sessions. Despite these precautions, residual subjective
+but cannot yet fully replace expert human judgment in critical code                     variability cannot be entirely eliminated and represents a remaining
+assessment tasks. A hybrid approach—combining the speed of AI                           internal validity limitation.
+with human expertise—may represent the most effective strategy                             External Validity. Our experiments focused on C# from a sin-
+for industrial code review workflows.                                                   gle industrial partner, supplemented with open-source data. This
+                                                                                                                                                  Begolli et al.
+
+
+limits generalizability to other languages or organizational contexts.   the AI-based approaches and SonarQube offer valuable benefits,
+Replications on other languages and datasets are needed to confirm       such as significantly faster review times and consistent output.
+broader applicability.                                                   For instance, the AI models performed well in quickly identifying
+   Construct Validity. Our choice to employ BLEU metrics fol-            whether a PR needed a review, even if their generated comments
+lows the same evaluation protocol as the original CodeReviewer           were not always as detailed or accurate as those provided by hu-
+study [26], ensuring direct comparability with their reported C#         man experts. These findings highlight the potential of integrating
+results. Although more specialized metrics such as CodeBLEU [45]         AI-driven code review tools into existing workflows. By combin-
+or CrystalBLEU [9] offer better code-sensitive evaluation, applying      ing the speed and efficiency of automated systems with the deep,
+them solely to our models—without equivalent outputs from Mi-            contextual understanding of human reviewers, it is possible to cre-
+crosoft’s unpublished checkpoints—would have compromised cross-          ate a more balanced and effective approach to maintaining high
+study comparability. Relying on BLEU-based metrics is a known            software quality. More detailed information on our experimental
+limitation, as these capture lexical similarity but may overlook         setups, parameter settings, and evaluation procedures can be found
+semantic or structural correctness. To mitigate this, we comple-         in our repository.
+mented BLEU-4 (used for comment generation) and BLEU (used for              Future research may expand to other object-oriented languages
+code refinement) with human-centered Information and Relevance           to assess cross-language generalizability. Incorporating structural
+ratings. Still, evaluating LLM-generated review quality remains          representations like Abstract Syntax Trees could enhance model un-
+challenging.                                                             derstanding. Additionally, applying CoT fine-tuning may improve
+   Another construct-related limitation concerns the alignment           the reasoning transparency of LLM-generated feedback. A system-
+between refinement outputs and functional correctness. While all         atic analysis of hyperparameter sensitivity could further strengthen
+generated code snippets were syntactically valid and successfully        the robustness and interpretability of future fine-tuning efforts. Fu-
+parsed by the compiler, execution-level or unit-test validation could    ture studies could extend this work by incorporating controlled
+not be performed due to the absence of complete build contexts           API-based evaluations of general-purpose SOTA LLMs like GPT-5
+in the industrial repositories. As a result, BLEU and EM scores          to examine whether their broader reasoning and linguistic capaci-
+capture lexical and structural similarity but do not fully account       ties translate into higher review fidelity. Such experiments would
+for functional or semantic correctness of the generated code.            help bridge the gap between domain-specific ACR fine-tuning and
+   The choice of baselines may influence results. The choice of base-    general-purpose LLM performance, offering a more complete pic-
+lines may influence results. We used strong open-source models,          ture of the trade-offs between specialization and generalization in
+which represent current state-of-the-art (SOTA) approaches specifi-      automated code review.
+cally developed for ACR. In contrast, general-purpose frontier LLMs         Future studies could also incorporate statistical significance test-
+such as GPT-4 or GPT-5 are not explicitly optimized for ACR and          ing across multiple fine-tuning runs and hyperparameter configu-
+cannot be fine-tuned or benchmarked under the same controlled            rations to quantify the robustness of performance differences. Such
+conditions. Therefore, our focus remained on models that are tech-       analyses would help determine whether observed variations stem
+nically comparable, reproducible, and directly aligned with the ACR      from model behavior or stochastic effects during optimization.
+task objectives. Additionally, comparisons with general-purpose
+frontier LLMs were beyond our budget constraints. For practical
+reasons, we did not perform multi-run evaluations for each con-          References
+                                                                          [1] Wasi Uddin Ahmad, Saikat Chakraborty, Baishakhi Ray, and Kai-Wei Chang.
+figuration, meaning that variance across runs remains possible for            2021. Unified Pre-training for Program Understanding and Generation. https:
+non-deterministic models like DeepSeek-R1-Distill-Llama-8B.                   //arxiv.org/abs/2103.06333. arXiv:2103.06333.
+   Also, for practical reasons, we did not perform multi-run eval-        [2] Wisam Haitham Abbood Al-Zubaidi, Patanamon Thongtanunam, Hoa Khanh
+                                                                              Dam, Chakkrit Tantithamthavorn, and Aditya Ghose. 2020. Workload-aware
+uations for each setting, meaning variance across runs remains                reviewer recommendation using a multi-objective search-based approach. In Pro-
+possible for non-deterministic models like DeepSeek-R1-Distill-               ceedings of the 16th ACM International Conference on Predictive Models and Data
+Llama-8B.                                                                     Analytics in Software Engineering (Virtual, USA) (PROMISE 2020). Association for
+                                                                              Computing Machinery, New York, NY, USA, 21–30. doi:10.1145/3416508.3417115
+                                                                          [3] Gabriele Bavota and Barbara Russo. 2015. Four eyes are better than two: On
+                                                                              the impact of code reviews on software quality. In Proceedings of the 2015 IEEE
+8   Conclusion and Future Work                                                International Conference on Software Maintenance and Evolution (ICSME) (ICSME
+                                                                              ’15). IEEE Computer Society, USA, 81–90. doi:10.1109/ICSM.2015.7332454
+This study examined whether fine-tuning different types of LMs,           [4] Moritz Beller, Radjino Bholanath, Shane McIntosh, and Andy Zaidman. 2016.
+including a PLM specialized in code review (CodeReviewer), a LLM              Analyzing the State of Static Analysis: A Large-Scale Evaluation in Open
+                                                                              Source Software. In 2016 IEEE 23rd International Conference on Software Analy-
+pretrained on code (CodeLlama-7B), and a general-purpose LLM                  sis, Evolution, and Reengineering (SANER), Vol. 1. IEEE, Osaka, Japan, 470–481.
+(DeepSeek-R1-Distill), on monolingual C# data that combines public            doi:10.1109/SANER.2016.105
+benchmarks with proprietary industrial code yields performance            [5] Amiangshu Bosu, Jeffrey C. Carver, Munawar Hafiz, Patrick Hilley, and Derek
+                                                                              Janni. 2014. Identifying the characteristics of vulnerable code changes: an empir-
+gains over their original multilingual versions. We evaluated these           ical study. In Proceedings of the 22nd ACM SIGSOFT International Symposium on
+models across three core code review tasks and compared their                 Foundations of Software Engineering (Hong Kong, China) (FSE 2014). Association
+                                                                              for Computing Machinery, New York, NY, USA, 257–268. doi:10.1145/2635868.
+performance against both an ASAT and human reviewers.                         2635880
+   The overall findings show that human reviewers still deliver the       [6] Wachiraphan Charoenwet, Patanamon Thongtanunam, Van-Thuan Pham, and
+highest quality and most context aware feedback. They are able to             Christoph Treude. 2024. An Empirical Study of Static Analysis Tools for Secure
+                                                                              Code Review. In ISSTA 2024: Proceedings of the 33rd ACM SIGSOFT International
+capture nuances and understand the deeper implications of code                Symposium on Software Testing and Analysis. Association for Computing Ma-
+changes in ways that current LMs and ASATs cannot. Nevertheless,              chinery, New York, NY, USA, 691–703. doi:10.1145/3650212.3680313
+Fine-Tuning Multilingual Language Models for Code Review: An Empirical Study on Industrial C# Projects
+
+
+ [7] Fuxiang Chen, Fatemeh H. Fard, David Lo, and Timofey Bryksin. 2022. On the                 pre-training models. In Proceedings of the 30th ACM Joint European Software
+     transferability of pre-trained language models for low-resource programming                Engineering Conference and Symposium on the Foundations of Software Engineering
+     languages. In Proceedings of the 30th IEEE/ACM International Conference on                 (Singapore, Singapore) (ESEC/FSE 2022). Association for Computing Machinery,
+     Program Comprehension (Virtual Event) (ICPC ’22). Association for Computing                New York, NY, USA, 1009–1021. doi:10.1145/3540250.3549099
+     Machinery, New York, NY, USA, 401–412. doi:10.1145/3524610.3527917                    [25] Lingwei Li, Li Yang, Huaxi Jiang, Jun Yan, Tiejian Luo, Zihan Hua, Geng Liang,
+ [8] U. Cihan, V. Haratian, A. İçöz, M. K. Gül, Ö. Devran, E. F. Bayendur, B. M. Uçar,          and Chun Zuo. 2022. AUGER: automatically generating review comments with
+     and E. Tüzün. 2024. Automated Code Review In Practice. https://arxiv.org/abs/              pre-training models. In Proceedings of the 30th ACM Joint European Software
+     2412.18531. arXiv preprint arXiv:2412.18531.                                               Engineering Conference and Symposium on the Foundations of Software Engineering
+ [9] Aryaz Eghbali and Michael Pradel. 2023. CrystalBLEU: Precisely and Efficiently             (Singapore, Singapore) (ESEC/FSE 2022). Association for Computing Machinery,
+     Measuring the Similarity of Code. In Proceedings of the 37th IEEE/ACM Inter-               New York, NY, USA, 1009–1021. doi:10.1145/3540250.3549099
+     national Conference on Automated Software Engineering (Rochester, MI, USA)            [26] Zhiyu Li, Shuai Lu, Daya Guo, Nan Duan, Shailesh Jannu, Grant Jenks, Deep
+     (ASE ’22). Association for Computing Machinery, New York, NY, USA, Article 28,             Majumder, Jared Green, Alexey Svyatkovskiy, Shengyu Fu, and Neel Sundare-
+     12 pages. doi:10.1145/3551349.3556903                                                      san. 2022. Automating code review activities by large-scale pre-training. In
+[10] Neil A. Ernst, Stephany Bellomo, Ipek Ozkaya, Robert L. Nord, and Ian Gorton.              Proceedings of the 30th ACM Joint European Software Engineering Conference and
+     2015. Measure it? Manage it? Ignore it? software practitioners and technical debt.         Symposium on the Foundations of Software Engineering (Singapore, Singapore)
+     In Proceedings of the 2015 10th Joint Meeting on Foundations of Software Engi-             (ESEC/FSE 2022). Association for Computing Machinery, New York, NY, USA,
+     neering (Bergamo, Italy) (ESEC/FSE 2015). Association for Computing Machinery,             1035–1047. doi:10.1145/3540250.3549081
+     New York, NY, USA, 50–60. doi:10.1145/2786805.2786848                                 [27] Bo Lin, Shangwen Wang, Zhongxin Liu, Yepang Liu, Xin Xia, and Xiaoguang
+[11] Michael Fagan. 2002. A History of Software Inspections. Springer Berlin Heidelberg,        Mao. 2023. CCT5: A Code-Change-Oriented Pre-trained Model. In Proceedings
+     Berlin, Heidelberg, 562–573. doi:10.1007/978-3-642-59412-0_34                              of the 31st ACM Joint European Software Engineering Conference and Symposium
+[12] Zhangyin Feng, Daya Guo, Duyu Tang, Nan Duan, Xiaocheng Feng, Ming Gong,                   on the Foundations of Software Engineering (San Francisco, CA, USA) (ESEC/FSE
+     Linjun Shou, Bing Qin, Ting Liu, Daxin Jiang, and Ming Zhou. 2020. CodeBERT:               2023). Association for Computing Machinery, New York, NY, USA, 1509–1521.
+     A Pre-Trained Model for Programming and Natural Languages. In Findings of                  doi:10.1145/3611643.3616339
+     the Association for Computational Linguistics: EMNLP 2020, Trevor Cohn, Yulan         [28] Hong Yi Lin and Patanamon Thongtanunam. 2023. Towards automated code
+     He, and Yang Liu (Eds.). Association for Computational Linguistics, Online,                reviews: Does learning code structure help?. In 2023 IEEE International Conference
+     1536–1547. doi:10.18653/v1/2020.findings-emnlp.139                                         on Software Analysis, Evolution and Reengineering (SANER). IEEE, IEEE, 703–707.
+[13] Martin Fowler. 2018. Refactoring: improving the design of existing code. Addison-     [29] Hong Yi Lin, Patanamon Thongtanunam, Christoph Treude, and Wachiraphan
+     Wesley Professional, USA.                                                                  Charoenwet. 2024. Improving Automated Code Reviews: Learning From Expe-
+[14] Alexander Frömmgen, Jacob Austin, Peter Choy, Nimesh Ghelani, Lera                         rience. In Proceedings of the 21st International Conference on Mining Software
+     Kharatyan, Gabriela Surita, Elena Khrapko, Pascal Lamblin, Pierre-Antoine Man-             Repositories (Lisbon, Portugal) (MSR ’24). Association for Computing Machinery,
+     zagol, Marcus Revaj, et al. 2024. Resolving code review comments with machine              New York, NY, USA, 278–283. doi:10.1145/3643991.3644910
+     learning. In Proceedings of the 46th International Conference on Software Engi-       [30] Hong Yi Lin, Patanamon Thongtanunam, Christoph Treude, Michael W God-
+     neering: Software Engineering in Practice. IEEE, New York, NY, USA, 204–215.               frey, Chunhua Liu, and Wachiraphan Charoenwet. 2024. Leveraging Reviewer
+[15] Daya Guo, Dejian Yang, Haowei Zhang, Junxiao Song, Ruoyu Zhang, Runxin                     Experience in Code Review Comment Generation.
+     Xu, Qihao Zhu, Shirong Ma, Peiyi Wang, Xiao Bi, et al. 2025. DeepSeek-R1:             [31] Junyi Lu, Lei Yu, Xiaojia Li, Li Yang, and Chun Zuo. 2023. LLaMA-Reviewer:
+     Incentivizing Reasoning Capability in LLMs via Reinforcement Learning. https:              Advancing Code Review Automation with Large Language Models through
+     //arxiv.org/abs/2501.12948. arXiv:2501.12948 [cs.CL].                                      Parameter-Efficient Fine-Tuning. In IEEE 34th International Symposium on Soft-
+[16] Qi Guo, Junming Cao, Xiaofei Xie, Shangqing Liu, Xiaohong Li, Bihuan Chen,                 ware Reliability Engineering (ISSRE). IEEE Computer Society, Los Alamitos, CA,
+     and Xin Peng. 2024. Exploring the Potential of ChatGPT in Automated Code                   USA, 647–658. doi:10.1109/ISSRE59848.2023.00026
+     Refinement: An Empirical Study. In Proceedings of the IEEE/ACM 46th Interna-          [32] Mika V Mäntylä and Casper Lassenius. 2008. What types of defects are really
+     tional Conference on Software Engineering (Lisbon, Portugal) (ICSE ’24). Asso-             discovered in code reviews? IEEE Transactions on Software Engineering 35, 3
+     ciation for Computing Machinery, New York, NY, USA, Article 34, 13 pages.                  (2008), 430–448.
+     doi:10.1145/3597503.3623306                                                           [33] Shane Mcintosh, Yasutaka Kamei, Bram Adams, and Ahmed E. Hassan. 2016.
+[17] Md Asif Haider, Ayesha Binte Mostofa, Sk Sabit Bin Mosaddek, Anindya Iqbal, and            An empirical study of the impact of modern code review practices on software
+     Toufique Ahmed. 2024. Prompting and Fine-tuning Large Language Models for                  quality. Empirical Softw. Engg. 21, 5 (Oct. 2016), 2146–2189. doi:10.1007/s10664-
+     Automated Code Review Comment Generation. https://arxiv.org/abs/2411.10129.                015-9381-9
+     arXiv:2411.10129.                                                                     [34] Sahar Mehrpour and Thomas D LaToza. 2023. Can static analysis tools find
+[18] Vincent J. Hellendoorn, Jason Tsay, Manisha Mukherjee, and Martin Hirzel.                  more defects? a qualitative study of design rule violations found by code review.
+     2021. Towards automating code review at scale. In Proceedings of the 29th                  Empirical Software Engineering 28, 1 (2023), 5.
+     ACM Joint Meeting on European Software Engineering Conference and Symposium           [35] Microsoft. 2020. smooth_bleu.py Implementation in CodeBERT. GitHub Reposi-
+     on the Foundations of Software Engineering (Athens, Greece) (ESEC/FSE 2021).               tory. https://github.com/microsoft/CodeBERT/blob/master/CodeReviewer/code/
+     Association for Computing Machinery, New York, NY, USA, 1479–1482. doi:10.                 evaluator/smooth_bleu.py
+     1145/3468264.3473134                                                                  [36] Stack Overflow. 2023. Stack Overflow Developer Survey 2023. https://survey.
+[19] Yang Hong, Chakkrit Tantithamthavorn, Patanamon Thongtanunam, and                          stackoverflow.co/2023/ Accessed July 15, 2025.
+     Aldeida Aleti. 2022. CommentFinder: a simpler, faster, more accurate code re-         [37] Matheus Paixão, Anderson Uchôa, Ana Carla Bibiano, Daniel Oliveira, Alessan-
+     view comments recommendation. In Proceedings of the 30th ACM Joint European                dro Garcia, Jens Krinke, and Emilio Arvonio. 2020. Behind the Intents: An
+     Software Engineering Conference and Symposium on the Foundations of Software               In-depth Empirical Study on Software Refactoring in Modern Code Review. In
+     Engineering (Singapore, Singapore) (ESEC/FSE 2022). Association for Computing              Proceedings of the 17th International Conference on Mining Software Repositories
+     Machinery, New York, NY, USA, 507–519. doi:10.1145/3540250.3549119                         (Seoul, Republic of Korea) (MSR ’20). Association for Computing Machinery, New
+[20] Nan Jiang, Thibaud Lutellier, and Lin Tan. 2021. CURE: Code-Aware Neural                   York, NY, USA, 125–136. doi:10.1145/3379597.3387475
+     Machine Translation for Automatic Program Repair. In 2021 IEEE/ACM 43rd               [38] Sebastiano Panichella, Venera Arnaoudova, Massimiliano Di Penta, and Giuliano
+     International Conference on Software Engineering (ICSE) (Madrid, Spain). IEEE,             Antoniol. 2015. Would static analysis tools help developers with code reviews?.
+     1161–1173. doi:10.1109/ICSE43902.2021.00107                                                In 2015 IEEE 22nd International Conference on Software Analysis, Evolution, and
+[21] Valentina Lenarduzzi, Fabiano Pecorelli, Nyyti Saarimaki, Savanna Lujan, and               Reengineering (SANER). IEEE, Montreal, QC, Canada, 161–170.
+     Fabio Palomba. 2023. A critical comparison on six static analysis tools: Detection,   [39] Kishore Papineni, Salim Roukos, Todd Ward, and Wei-Jing Zhu. 2002. BLEU:
+     agreement, and precision. Journal of Systems and Software 198 (2023), 111575.              a method for automatic evaluation of machine translation. In Proceedings of
+[22] Heng-Yi Li, Shu-Ting Shi, Ferdian Thung, Xuan Huo, Bowen Xu, Ming Li, and                  the 40th Annual Meeting on Association for Computational Linguistics (Philadel-
+     David Lo. 2019. DeepReview: Automatic Code Review Using Deep Multi-instance                phia, Pennsylvania) (ACL ’02). Association for Computational Linguistics, USA,
+     Learning. In Advances in Knowledge Discovery and Data Mining: 23rd Pacific-Asia            311–318. doi:10.3115/1073083.1073135
+     Conference, PAKDD 2019, Macau, China, April 14-17, 2019, Proceedings, Part II         [40] PMD Developers. [n. d.]. PMD - Source Code Analyzer. https://pmd.github.io/.
+     (Macau, China). Springer-Verlag, Berlin, Heidelberg, 318–330. doi:10.1007/978-             Accessed: July 4, 2025.
+     3-030-16145-3_25                                                                      [41] Chanathip Pornprasit, Chakkrit Tantithamthavorn, Patanamon Thongtanunam,
+[23] Jia Li, Ge Li, Zhuo Li, Zhi Jin, Xing Hu, Kechi Zhang, and Zhiyi Fu. 2023. Codeed-         and Chunyang Chen. 2023. D-act: Towards diff-aware code transformation for
+     itor: Learning to edit source code with pre-trained models. ACM Transactions on            code review under a time-wise evaluation. In 2023 IEEE International Conference
+     Software Engineering and Methodology 32, 6 (2023), 1–22.                                   on Software Analysis, Evolution and Reengineering (SANER). IEEE, Taipa, Macao,
+[24] Lingwei Li, Li Yang, Huaxi Jiang, Jun Yan, Tiejian Luo, Zihan Hua, Geng Liang,             296–307.
+     and Chun Zuo. 2022. AUGER: automatically generating review comments with              [42] Colin Raffel, Noam Shazeer, Adam Roberts, Katherine Lee, Sharan Narang,
+                                                                                                Michael Matena, Yanqi Zhou, Wei Li, and Peter J. Liu. 2020. Exploring the
+                                                                                                                                                                    Begolli et al.
+
+
+     limits of transfer learning with a unified text-to-text transformer. J. Mach. Learn.   [60] Carmine Vassallo, Sebastiano Panichella, Fabio Palomba, Sebastian Proksch,
+     Res. 21, 1, Article 140 (Jan. 2020), 67 pages.                                              Harald C Gall, and Andy Zaidman. 2020. How developers engage with static
+[43] Mohammad Masudur Rahman, Chanchal K. Roy, Jesse Redl, and Jason A. Collins.                 analysis tools in different contexts. Empirical Software Engineering 25 (2020),
+     2016. CORRECT: code reviewer recommendation at GitHub for Vendasta tech-                    1419–1457.
+     nologies. In Proceedings of the 31st IEEE/ACM International Conference on Au-          [61] Manushree Vijayvergiya, Małgorzata Salawa, Ivan Budiselić, Dan Zheng, Pas-
+     tomated Software Engineering (Singapore, Singapore) (ASE ’16). Association                  cal Lamblin, Marko Ivanković, Juanjo Carin, Mateusz Lewko, Jovan Andonov,
+     for Computing Machinery, New York, NY, USA, 792–797. doi:10.1145/2970276.                   Goran Petrović, Daniel Tarlow, Petros Maniatis, and René Just. 2024. AI-Assisted
+     2970283                                                                                     Assessment of Coding Practices in Modern Code Review. In Proceedings of the 1st
+[44] Patrick Rempel, Jürgen Muench, Martin Kowal, and Johannes Lang. 2016. A                     ACM International Conference on AI-Powered Software (Porto de Galinhas, Brazil)
+     Probabilistic Quality Model for C# – an Industrial Case Study. In Product-Focused           (AIware 2024). Association for Computing Machinery, New York, NY, USA, 85–93.
+     Software Process Improvement (PROFES 2016) (Lecture Notes in Computer Science,              doi:10.1145/3664646.3665664
+     Vol. 10027). Springer, Cham, Cham, Switzerland, 83–98. doi:10.1007/978-3-319-          [62] Yue Wang, Weishi Wang, Shafiq Joty, and Steven C.H. Hoi. 2021. CodeT5:
+     49094-6_7                                                                                   Identifier-aware Unified Pre-trained Encoder-Decoder Models for Code Un-
+[45] Shuo Ren, Daya Guo, Shuai Lu, Long Zhou, Shujie Liu, Duyu Tang, Neel Sundare-               derstanding and Generation. In Proceedings of the 2021 Conference on Empiri-
+     san, Ming Zhou, Ambrosio Blanco, and Shuai Ma. 2020. CodeBLEU: A Method                     cal Methods in Natural Language Processing, Marie-Francine Moens, Xuanjing
+     for Automatic Evaluation of Code Synthesis. https://arxiv.org/abs/2009.10297                Huang, Lucia Specia, and Scott Wen-tau Yih (Eds.). Association for Compu-
+     Accessed October 13, 2025.                                                                  tational Linguistics, Online and Punta Cana, Dominican Republic, 8696–8708.
+[46] Peter C. Rigby and Christian Bird. 2013. Convergent contemporary software                   doi:10.18653/v1/2021.emnlp-main.685
+     peer review practices. In Proceedings of the 2013 9th Joint Meeting on Foundations     [63] Wayne Xin Zhao, Kun Zhou, Junyan Li, Tianyu Tang, Xinyan Wang, Yujia Hou,
+     of Software Engineering (Saint Petersburg, Russia) (ESEC/FSE 2013). Association             Yixin Min, Boxin Zhang, Junjie Zhang, Zelin Dong, Yushuo Du, Cheng Yang,
+     for Computing Machinery, New York, NY, USA, 202–212. doi:10.1145/2491411.                   Yulong Chen, Zheng Chen, Jing Jiang, Rui Ren, Yiqun Li, Xiang Tang, Zhiyuan
+     2491444                                                                                     Liu, and Ji-Rong Wen. 2023. A Survey of Large Language Models. arXiv preprint
+[47] Baptiste Roziere, Jonas Gehring, Fabian Gloeckle, Sten Sootla, Itai Gat, Xiao-              arXiv:2303.18223. https://arxiv.org/abs/2303.18223
+     qing Ellen Tan, Yossi Adi, Jingyu Liu, Romain Sauvestre, Tal Remez, et al. 2023.
+     Code LLaMA: Open Foundation Models for Code. https://arxiv.org/abs/2308.
+     12950. arXiv:2308.12950 [cs.CL].
+[48] Baptiste Rozière, Jonas Gehring, Fabian Gloeckle, Sten Sootla, Itai Gat, Xiao-
+     qing Ellen Tan, Yossi Adi, Jingyu Liu, Romain Sauvestre, Tal Remez, Julien
+     Rapin, Alexei Kozhevnikov, Ivan Evtimov, Jonathan Bitton, Mihir Bhatt, Car-
+     los Cuevas Ferrer, Aaron Grattafiori, Wayne Xiong, Alexandre Défossez, and
+     Gabriel Synnaeve. 2023. Code Llama: Open Foundation Models for Code.
+     https://arxiv.org/abs/2308.12950. arXiv:2308.12950 [cs.CL].
+[49] Rico Sennrich, Barry Haddow, and Alexandra Birch. 2015. Neural Machine
+     Translation of Rare Words with Subword Units. https://arxiv.org/abs/1508.07909.
+     arXiv preprint arXiv:1508.07909.
+[50] Devarshi Singh, Varun Ramachandra Sekar, Kathryn T Stolee, and Brittany
+     Johnson. 2017. Evaluating how static analysis tools can reduce code review
+     effort. In 2017 IEEE symposium on visual languages and human-centric computing
+     (VL/HCC). IEEE, Raleigh, NC, USA, 101–105.
+[51] Sonar. [n. d.]. SonarQube. https://www.sonarsource.com/products/sonarqube.
+     Accessed: July 4, 2025.
+[52] Rohan Taori, Ishaan Gulrajani, Tianyi Zhang, Yann Dubois, Xuechen Li, Carlos
+     Guestrin, Percy Liang, and Tatsunori B Hashimoto. 2023. Stanford alpaca: An
+     instruction-following llama model.
+[53] Christopher Thompson and David Wagner. 2017. A Large-Scale Study of Modern
+     Code Review and Security in Open Source Projects. In Proceedings of the 13th
+     International Conference on Predictive Models and Data Analytics in Software En-
+     gineering (Toronto, Canada) (PROMISE). Association for Computing Machinery,
+     New York, NY, USA, 83–92. doi:10.1145/3127005.3127014
+[54] Patanamon Thongtanunam, Chanathip Pornprasit, and Chakkrit Tantithamtha-
+     vorn. 2022. AutoTransform: automated code transformation to support modern
+     code review process. In Proceedings of the 44th International Conference on Soft-
+     ware Engineering (Pittsburgh, Pennsylvania) (ICSE ’22). Association for Comput-
+     ing Machinery, New York, NY, USA, 237–248. doi:10.1145/3510003.3510067
+[55] Patanamon Thongtanunam, Chakkrit Tantithamthavorn, Raula Gaikovina Kula,
+     Norihiro Yoshida, Hajimu Iida, and Ken-ichi Matsumoto. 2015. Who should
+     review my code? A file location-based code-reviewer recommendation approach
+     for Modern Code Review. In 2015 IEEE 22nd International Conference on Software
+     Analysis, Evolution, and Reengineering (SANER). IEEE, Montreal, QC, Canada,
+     141–150. doi:10.1109/SANER.2015.7081824
+[56] Michele Tufano, Jevgenija Pantiuchina, Cody Watson, Gabriele Bavota, and
+     Denys Poshyvanyk. 2019. On learning meaningful code changes via neural
+     machine translation. In 2019 IEEE/ACM 41st International Conference on Software
+     Engineering (ICSE). IEEE, IEEE, Piscataway, NJ, USA, 25–36.
+[57] Rosalia Tufano, Ozren Dabić, Antonio Mastropaolo, Matteo Ciniselli, and Gabriele
+     Bavota. 2024. Code Review Automation: Strengths and Weaknesses of the State
+     of the Art. IEEE Trans. Softw. Eng. 50, 2 (Feb. 2024), 338–353. doi:10.1109/TSE.
+     2023.3348172
+[58] Rosalia Tufano, Simone Masiero, Antonio Mastropaolo, Luca Pascarella, Denys
+     Poshyvanyk, and Gabriele Bavota. 2022. Using pre-trained models to boost code
+     review automation. In Proceedings of the 44th International Conference on Software
+     Engineering (Pittsburgh, Pennsylvania) (ICSE ’22). Association for Computing
+     Machinery, New York, NY, USA, 2291–2302. doi:10.1145/3510003.3510621
+[59] Rosalia Tufano, Luca Pascarella, Michele Tufano, Denys Poshyvanyk, and
+     Gabriele Bavota. 2021. Towards Automating Code Review Activities. In Proceed-
+     ings of the 43rd International Conference on Software Engineering (ICSE ’21). IEEE
+     Press, Madrid, Spain, 163–174. doi:10.1109/ICSE43902.2021.00027
+

@@ -1,0 +1,806 @@
+                                         The Right Prompts for the Job: Repair Code-Review Defects with
+                                                             Large Language Model
+                                                          Zelin Zhao                                     Zhaogui Xu                                      Jialong Zhu
+                                                   zelin.zzl@antgroup.com                       zhengrong.xzg@antgroup.com                      zhujialong.zjl@antgroup.com
+                                                          Ant Group                                     Ant Group                                        Ant Group
+                                                  Hangzhou, Zhejiang, China                      Hangzhou, Zhejiang, China                       Hangzhou, Zhejiang, China
+                                                                                                                                                     Nanjing University
+                                                                                                                                                  Nanjing, Jiangsu, China
+
+                                                            Peng Di                                        Yuan Yao                                     Xiaoxing Ma
+arXiv:2312.17485v1 [cs.SE] 29 Dec 2023
+
+
+
+
+                                                  dipeng.dp@antgroup.com                              y.yao@nju.edu.cn                                 xxm@nju.edu.cn
+                                                         Ant Group                                    Nanjing University                              Nanjing University
+                                                  Hangzhou, Zhejiang, China                         Nanjing, Jiangsu, China                         Nanjing, Jiangsu, China
+
+                                         ABSTRACT                                                                     to automatically generate patches, which are then presented to
+                                         Automatic program repair (APR) techniques have the potential to              developers for manual validation.
+                                         reduce manual efforts in uncovering and repairing program de-                   Conventional approaches include search-based, constraint-based,
+                                         fects during the code review (CR) process. However, the limited              and template-based methods [6], which have shown practical appli-
+                                         accuracy and considerable time costs associated with existing APR            cability. However, these approaches encounter limitations when
+                                         approaches hinder their adoption in industrial practice. One key             dealing with complex cases, potentially leading to incorrect patches
+                                         factor is the under-utilization of review comments, which provide            or significant time overhead. Moreover, these approaches face chal-
+                                         valuable insights into defects and potential fixes. Recent advance-          lenges in effectively harnessing the valuable insights offered by
+                                         ments in Large Language Models (LLMs) have enhanced their ability            review comments expressed in natural language. The inherent
+                                         to comprehend natural and programming languages, enabling them               rigidity of these methodologies restricts their applicability and
+                                         to generate patches based on review comments. This paper con-                adaptability to a broader spectrum of defects. AI-based [38] APR
+                                         ducts a comprehensive investigation into the effective utilization of        approaches, specifically with the advancement of Large Language
+                                         LLMs for repairing CR defects. In this study, various prompts are            Models (LLMs), hold significant potential in comprehending both
+                                         designed and compared across mainstream LLMs using two distinct              natural and programming languages, offering a promising solution
+                                         datasets from human reviewers and automated checkers. Experi-                to effectively address the underlying problem.
+                                         mental results demonstrate a remarkable repair rate of 72.97% with              In this paper, we investigate the application of LLMs in repairing
+                                         the best prompt, highlighting a substantial improvement in the               defects identified by reviewers and automated checkers during
+                                         effectiveness and practicality of automatic repair techniques.               the CR process. Our study reveals that, for most CR defects, the
+                                                                                                                      associated review comments play a pivotal role in guiding the repair
+                                                                                                                      process. These comments not only explain the defect but often
+                                         1   INTRODUCTION                                                             offer suggestions on how to rectify it. Similar to developers, pre-
+                                         In contemporary industrial practice, Continuous Integration/Con-             trained LLMs possess the capability to comprehend both natural
+                                         tinuous Deployment (CI/CD) pipelines are crucial in controlling the          and programming languages. Consequently, they can effectively
+                                         software development process. Within this pipeline, Code Review              analyze the review comments in conjunction with the faulty code
+                                         (CR) serves as a pivotal node where reviewers identify defects and           and generate the appropriate and corrected version.
+                                         provide comments, enabling developers to rectify the identified                 The effectiveness of a large language model in downstream tasks
+                                         issues. Unfortunately, the CR process often demands significant ef-          depends on the model base, prompts used, and the utilization of
+                                         forts from reviewers and developers. Automated checkers [8, 20, 27]          finetuning datasets. In order to explore effective methods for repair-
+                                         are widely employed to identify defects. The collaboration of hu-            ing CR defects, four research questions have been identified. Firstly,
+                                         man reviewers and automated checkers showcases the capability to             the study aims to determine the extent to which various LLMs
+                                         identify a wide range of defects that exhibit varying complexities.          can repair defects using zero-shot learning or finetuning. Secondly,
+                                            The process of defect repair still heavily relies on manual efforts       the impact of different prompts containing varied information on
+                                         in practice. Automated Program Repair (APR) offers a fully auto-             LLM performance for CR defect repair is examined. Thirdly, the
+                                         mated solution that generally operates within the widely recognized          study investigates the performance of LLMs of different sizes to
+                                         GAV (Generate and Validate) paradigm [6]. Despite being fully au-            strike a balance between effectiveness and efficiency. Lastly, the
+                                         tomated, its inherent time-consuming nature makes integration                research explores the potential of combining data from reviewers
+                                         within time-sensitive CI/CD pipelines challenging. Additionally,             and automated checkers to enhance the repair capability of LLMs.
+                                         not all defects identified during code review manifest observable               To answer the research questions, we studied nine different
+                                         anomalous behaviors or result in failures. Hence, we propose a               LLMs, including ChatGPT-3.5, ChatGPT-4, LLaMA, CodeLLaMA,
+                                         semi-automated paradigm of APR that leverages review comments                and several other mainstream models. Seven different prompts were
+                                                                                                                  1
+ICSE 2024, April 2024, Lisbon, Portugal                                             Zelin Zhao, Zhaogui Xu, Jialong Zhu, Peng Di, Yuan Yao, and Xiaoxing Ma
+
+
+designed, encompassing various information related to the defects.          patch introduces a synchronized block. In fig. 3b, comparing the
+Among these prompts, two were chosen for zero-shot learning,                boolean value returned from the isZero method with the false
+while five were utilized for finetuning purposes. In order to assess        literal is unnecessary. Consequently, the patch simplifies the code
+the significance of dataset diversity, two datasets of comparable           and improves its readability as well.
+size were collected, consisting of ∼16K reviewer comments and
+∼15K automatically generated comments.
+   Our contributions are summarized as follows:                             2.2    Repairing
+      • We proposed a semi-automated paradigm for APR in the CR                In practice, the CR comments play a crucial role in assisting
+        process that harnesses the capabilities of LLMs to understand       developers in pinpointing the specific locations of defects and de-
+        review comments and generate repair patches.                        vising suitable patches. Once developers have implemented the
+      • We thoroughly studied the performance of 9 popular LLMs             necessary fixes, they proceed to commit the patch to the codebase,
+        and observed that CodeLLaMA outperformed the others                 triggering reviewers and checkers to engage in another round of
+        with a repair success rate of up to 72.97%.                         code review to verify the absence of any lingering defects.
+      • We designed 7 prompts based on the information during                  Presently, defect repair predominantly relies on manual effort.
+        the CR process and revealed that review comments and                The prevailing process of APR offers a fully automated solution,
+        fix ranges were the two most effective prompts. The cross-          which commonly operates within the well-known GAV paradigm.
+        validation of 2 distinct datasets demonstrated the importance       Given a set of tests that expose bugs, APR algorithms first iden-
+        of data diversity.                                                  tify potential bug locations, then generate a multitude of patch
+                                                                            candidates for each identified location, and finally validate each
+   The rest is organized as follows. Section 2 overviews the back-
+                                                                            generated patch through the execution of the tests mentioned above
+ground of code review. Section 3 describes the research questions
+                                                                            until either a test-passing patch is discovered or a predefined time
+and experiment settings. The experimental results are illustrated in
+                                                                            limit is reached. While this paradigm is fully automated, their time-
+section 4, which followed by the discussion of threats in section 5,
+                                                                            consuming nature renders them unsuitable for integration within
+related works in section 6 and the conclusion in section 7.
+                                                                            practical, time-sensitive CI/CD pipelines. Furthermore, not all de-
+                                                                            fects identified during code review directly manifest observable
+2     CODE REVIEW
+                                                                            anomalous behaviors or trigger failures. For example, the defect in
+Code Review plays a pivotal role in ensuring the quality of code            fig. 3b violates coding style and can not cause any failures, while
+changes integrated into the codebase. Typically, the CR process en-         the defect in fig. 3a is a concurrency bug requiring robust tests to
+compasses two fundamental steps: defect identification and repair.          expose stably.
+Figure 1 provides an overview of the typical CR process practiced              This paper proposes a semi-automated paradigm to leverage APR
+in industrial settings.                                                     techniques effectively in the CR process. As illustrated in Figure 1,
+                                                                            an APR module in the pipeline takes as input the comprehensive
+2.1     Defect Identification                                               information available in the CR process, including code snippets
+The defect identification process, currently involving human re-            and associated comments from both the reviewers and checkers. It
+viewers and automated checkers, demonstrates the capability to              automatically generates patch suggestions tailored to the identified
+identify various defects with varying complexities. Both reviewers          code issues. These patch suggestions and the original comments are
+and checkers contribute by providing comments describing the                then presented to developers for consideration and further action.
+identified defects and, in some cases, offering suggestions on rec-         By adopting a semi-automated solution, developers can benefit
+tifying them. These crucial comments are vital in enhancing the             from the assistance provided by APR techniques in generating
+effectiveness of following repair and optimization operations.              potential fixes for identified code issues. This collaborative approach
+   Expert reviewers can identify intricate software semantic bugs.          combines developers’ expertise with APR techniques’ capabilities,
+Figure 2 shows two observed defects in the CR process. The ac-              leading to efficient and effective software development process.
+companying comments are highlighted by the “<Comment>” lines.                  Many repair methodologies have been proposed so far. Tra-
+In fig. 2a, the first reviewer discovered that throwing a Runtime-          ditional approaches, such as search-based, constraint-based, and
+Exception results in more crashes and thus recommended address-             template-based methods, can be adopted in practice. Nevertheless,
+ing the defect by directly returning TYPE_ERROR. In fig. 2b, the            these approaches are primarily effective in resolving simple de-
+second reviewer revealed that instead of the overridden one, the            fects, as evident in the case in fig. 3b. Regrettably, when confronted
+base method would be invoked because the code in line 3 does                with complicated or less prevalent cases, they have limitations that
+not cast type. Notably, the reviewer merely expressed a cautious            may result in incorrect patches or high time costs. Furthermore,
+concern about this anomalous behavior.                                      these approaches need help to effectively utilize the valuable in-
+   Automated checkers, such as PMD [20], Infer [8], and Spot-               formation provided by CR comments in natural language. Their
+bugs [27], offer the advantage of swiftly detecting common de-              inherent rigidity hinders their applicability and adaptability to a
+fects based on predefined patterns. These tools are also capable            broader range of defects, such as the case shown in fig. 2a and fig. 2b.
+of generating comments that describe the identified defects. Fig-           AI-based APR approaches exhibit significant promising prospects.
+ure 3 presents two defects identified by the PMD tool. In fig. 3a,          Especially with the development of LLMs, their capability of com-
+the DateFormatter type is not thread-safe when accessed by mul-             prehending both program languages and natural language offers
+tiple threads. To address this concurrent defect, the corresponding         a prospective solution that can effectively tackle the underlying
+                                                                        2
+    The Right Prompts for the Job: Repair Code-Review Defects with Large Language Model                                               ICSE 2024, April 2024, Lisbon, Portugal
+
+
+                                                                                           Commit
+
+
+                                                                                           Fix the following buggy code snippet ...
+                                                                                           <Buggy Code>
+                                                                                           if (date != null && time != null
+           ...                                                                               // <CMT> Avoid unnecessary ...
+           if (date != null && time != null                                                  && excessDays.isZero() == false)
+             && excessDays.isZero() == false) {           Reviewer                                                                                       +
+                                                                     <Comment>             ...
+             date = date.plus(excessDays);                                                 <Fixed Code>                                                  +
+             excessDays = Period.ZERO;                                                                                                                   -
+                                                                                          if (date != null && time != null            Developer
+           }
+           ...                                                       Defects &              && !excessDays.isZero())                                    Patches
+                                                          Checker    Comments             ...
+
+
+                                                                                                       The APR Module
+
+
+                                         Identification                                                                  Repairing
+
+
+    Figure 1: The code review process in industrial practice. Red lines denote the new steps and components to cooperate with CLM.
+
+1    public int getType () {                                                               1  static Date parse ( String day ) throws ParseException {
+2      if ( code . startsWith ( " ... warning " ) ) {                                      2    //<Comment> Static DateFormatter objects should be accessed in a
+ 3        return TYPE_WARNING ;                                                                  synchronized manner.
+ 4     } else if ( code . startsWith ( " ... disallowed " ) ) {                            3+   synchronized(DAY_STORAGE_FORMAT) {
+ 5        return TYPE_ERROR ;                                                              4       return DAY_STORAGE_FORMAT . parse ( day ) ;
+ 6     } else if ( info . startsWith ( " ... AbuseFilter " ) ) {                           5+   }
+ 7        return TYPE_ERROR ;                                                              6  }
+ 8     } else {                                                                                           (a) The patch fixes a possible concurrency defect.
+ 9       //<Comment> Why not simply return TYPE_ERROR for this “else” case, and
+        not worry about the contents of “info”? This would prevent even more               1  private void resolvePeriod () {
+        possible crashes.                                                                  2    if ( date != null && time != null
+10 -     throw new RuntimeException("Unknown abusefilter response!");                      3       //<Comment> Avoid unnecessary comparisons in boolean expressions.
+11 +     return TYPE_ERROR;                                                                4-       && excessDays.isZero() == false) {
+12     }                                                                                   5+       && !excessDays.isZero()) {
+13 }                                                                                       6      date = date . plus ( excessDays ) ;
+                                                                                           7      excessDays = Period . ZERO ;
+    (a) The patch fixes the control flow and prevents more crashes. String
+                                                                                           8    }
+    literals in conditions are simplified.                                                 9  }
+1  public ListCardItemView setSubtitle ( @Nullable                                               (b) The patch simplifies the code and improves the readability.
+       CharSequence subtitle ) {
+2    //<Comment> Wouldn’t this mean that we’re calling the base method of Text                 Figure 3: CR defects identified by automated checker, PMD.
+      -View.setText() and bypassing the overridden method?
+3-   subtitleView.setText(subtitle);
+4+   subtitleView.setText((String) subtitle);
+5    return this ;                                                                             prompts, and the utilization of finetuning datasets. Considering
+6  }                                                                                           these factors, we have formulated the following research questions
+         (b) The patch fixes a bug of incorrect method invocation.                             to guide our investigation of the automatic program repair task:
+                                                                                               • RQ1: To what extent can various LLMs repair CR defects using
+              Figure 2: CR defects identified by reviewers.                                      zero-shot learning or finetuning?
+                                                                                               • RQ2: How does the choice of prompts impact the performance
+                                                                                                 of LLMs in repairing defects?
+    problem. CR comments provide valuable insight into the defect                              • RQ3: How does the performance of LLMs in repairing defects
+    and even the critical hint of the correct patch in natural language.                         vary with different model sizes?
+    LLMs can effectively acquire this knowledge, and when combined                             • RQ4: How do different datasets affect the capacity to rectify de-
+    with the codebase, they can propose suitable fixes. We have made                             fects, and is it feasible to interchangeably employ these datasets?
+    a comprehensive experiment on the APR with various LLMs. Our                                  In the following section, we outline the specific details of our
+    experiment demonstrates that LLMs can successfully suggest accu-                           experimental setup for addressing the above research questions.
+    rate fixes for the issues depicted in fig. 2a and fig. 2b, utilizing the
+    reviewer comments as their prompts.                                                        3.1     Models
+                                                                                               Large language models display variations in their architectures
+    3    RESEARCH QUESTIONS AND EXPERIMENT                                                     and parameter quantities and undergo pretraining with different
+         SETTINGS                                                                              datasets. As a result, their performances also differ when they are
+    This section describes the research questions and experiment set-                          applied to different downstream tasks.
+    tings on the APR with LLMs. The effectiveness of a large language                             LLMs mainly follow the transformer architecture in three dif-
+    model in performing a downstream task is typically influenced                              ferent ways. Encoder-only models, like BERT [2], rely solely on
+    by three crucial factors: the underlying model base, the choice of                         Transformer encoders and are typically trained to generate neural
+                                                                                      3
+ICSE 2024, April 2024, Lisbon, Portugal                                                  Zelin Zhao, Zhaogui Xu, Jialong Zhu, Peng Di, Yuan Yao, and Xiaoxing Ma
+
+
+embeddings of data by predicting masked tokens from original                         model architecture and learning algorithm. It has been trained
+inputs. Decoder-only models, like GPTs [9], exclusively consist of                   with a mixed objective of causal language modeling and span
+Transformer decoders and are trained by predicting the next to-                      corruption on both natural language and source code. We utilized
+ken based on all preceding tokens. These models are suitable for                     the 7B version in our experiments.
+generative tasks. Encoder-Decoder models, like T5 [22], employ the                • CodeLLaMA [24]: CodeLLaMA is also a decoder-only Trans-
+full Transformer architecture and are usually trained by restoring                   former model derived from LLaMA-2. It has three variants: the
+the original sequence from corrupted inputs (e.g., span masking),                    base one is additionally trained on a code-heavy dataset based on
+which can be utilized in both tasks mentioned above.                                 LLaMA-2, and the other two are further finetuned on Python and
+    There are two primary approaches for accomplishing specific                      instruction datasets, respectively. We selected the base variant
+tasks, namely zero-shot learning and finetuning. Zero-shot learning                  with 7B parameters for our experiments.
+directly utilizes the underlying model for tasks, which typically                 • CodeReviewer [14]: CodeReviewer is an encoder-decoder Trans-
+necessitates a stronger inherent capability of the model. In contrast,               former model explicitly designed for the code review domain. It
+finetuning relies on a collection of high-quality labeled datasets                   is trained on annotated code changes sourced from GitHub repos-
+to additionally train the base model. In the context of the APR                      itories. The model consists of 220 million parameters, making
+task, selecting an appropriate model base is crucial. To evaluate                    it comparatively smaller. Notably, the model lacks training on
+the performance, we meticulously handpicked a few models from                        natural language, so we refrain from finetuning this model with
+the mainstream. These models were specifically chosen for their                      prompts and instead observe the results within its input-output
+demonstrated proficiency in comprehending both natural language                      format.
+and programming languages, as well as their ability to generate                       In our experiment, we utilized the library of HuggingFace trans-
+high-quality code snippets. In the following, we list the LLMs we                 formers to deploy the models and incorporated techniques such
+chose for our experiment.                                                         as Low-Rank Adaptation and Mixed Precision Training. The fine-
+• ChatGPT [9]: ChatGPTs are widely recognized for their awe-                      tuning process was performed using 2 NVIDIA A100-SXM4-80GB
+   inspiring generation capabilities in a conversational manner, re-              GPUs, 200 GB of memory, and an AMD EPYC 7T83 CPU. Con-
+   sembling human-like interactions. ChatGPT 3.5 175B was re-                     sistency was maintained across all models by adopting the same
+   leased in November 2022, followed by ChatGPT 4 in March 2023.                  hyperparameters, including two training epochs, a learning rate of
+   For our experiment, we selected both ChatGPT 3.5 and ChatGPT                   2e-4, and a batch size of 16.
+   4. We utilize them for zero-shot learning as the task baseline
+   through their open APIs.                                                       3.2    Prompts
+• InCoder [4]: InCoder is a decoder-only Transformer model de-                    Prompts serve as the primary means by which users engage with
+   signed for code infilling and synthesis. This model is pretrained              LLMs, establishing a crucial interface for interaction. The design of
+   with a causal masking objective on 159 GB of open-source code                  prompts holds significant influence over the resultant inferences,
+   from GitHub and GitLab and 57 GB of questions and answers                      rendering it a vital aspect to consider when employing LLMs for
+   from StackOverflow. The official release includes two variants,                specific tasks. Identifying the optimal prompt that maximizes per-
+   one with 1B and another with 6B parameters. We considered the                  formance while minimizing implementation effort becomes imper-
+   latter one for our experiment.                                                 ative. To compare the effects of different available information for
+• CodeT5+ [33]: CodeT5+ is a member of encoder-decoder Trans-                     the APR task, we design a set of prompts following the template
+   former models. It is specifically designed to enhance both code                shown in fig. 4. Each prompt contains a subset of information in
+   understanding and generative tasks. It has been trained on a                   this figure. We aim to systematically assess the effects of differing
+   large dataset of 51.5B tokens, encompassing both unimodal and                  information subsets on LLM performance.
+   bimodal data. The CodeT5+ family comprises five distinct model
+   sizes, ranging from 220M to 16B parameters. For comparison                 1     Fixing the following buggy code snippet ...
+   with other models, we selected the 6B version. Furthermore, we             2     <Buggy Code>
+   also conducted additional experiments to investigate the impact            3     public static Integer get ( String key ) {
+   of different model sizes on performance within this model family.          4        //<Comment> Can this key ever get null?
+                                                                              5        [BUG_LOCATION]
+• CodeFuse [7]: CodeFuse, developed by AntGroup Inc., is a mem-               6        [FIX_START]
+   ber of decoder-only Transformers, designed for producing accu-             7        if ( key == null ) {
+   rate, efficient, and compliant code. It is pretrained on a 1000B           8           return R . drawable . acc_none ;
+   token code dataset covering over 40 programming languages.                 9        }
+                                                                             10        [FIX_END]
+   The model size varies from 6B to 34B. We chose the 6B version
+                                                                             11        return ...;
+   for our experiment.                                                       12     }
+• LLaMA [29]: LLaMA, released by Meta Inc., is also a decoder-               13     <Fixed Code>
+   only Transformer model. The training dataset contains about
+   1.4T tokens extracted from various sources, including Common-                        Figure 4: The template of prompts in this paper.
+   Crawl, GitHub, Wikipedia, etc. We considered the model with 7B
+   parameters in our experiment.                                                     In addition to including the buggy code snippet, all prompts
+• CodeGen-2 [19]: CodeGen-2 is a Prefix-LM-based Transformer                      consist of three fundamental elements. First, the task instruction
+   model designed to unify common training schemes, such as                       is presented in the initial line, providing a concise description of
+                                                                         4
+The Right Prompts for the Job: Repair Code-Review Defects with Large Language Model                                        ICSE 2024, April 2024, Lisbon, Portugal
+
+
+the code repair task and pertinent details regarding the specific                       task instruction is “Fix the following buggy code snippet according
+settings and any additional requirements relevant to the desired                        to the suggestion in the "//<Comment> " line. [FIX_START] and
+inference result. Second, the “<Buggy Code>” marker is employed in                      [FIX_END] mark the range of the patch.”.
+the second line to indicate that the subsequent code snippet contains
+bugs or errors that necessitate correction. Third, the “<Fixed Code>”                 3.3    Datasets
+marker is employed in the final line of the prompt, signifying the                    We collected two kinds of high-quality datasets for finetuning. One
+expectation for the model to generate an inference of the fixed                       is from real-world reviewer comments, and the other is from the
+version of the buggy code snippet. Overall, we have prepared two                      PMD [20] checker. Each instance of the dataset consists of the
+categories of prompts, one for zero-shot learning and the other for                   following information.
+finetuning purposes.
+                                                                                           • the buggy code snippet;
+3.2.1 Prompts for Zero-shot Learning. As a baseline, we designed                           • the fixed code snippet;
+two prompts of zero-shot learning for ChatGPT-3.5 and ChatGPT-4.                           • the comment either from reviewers or checkers;
+• Prompt 1 (P1): It only contains basic information. The task in-                          • the defect location;
+   struction is “Fix the following buggy code snippet. In your response,                   • the code range for fixing the defect.
+   output the fixed code only.”. Note that ChatGPTs often generate
+                                                                                      3.3.1 Dataset from Reviewer Comments (RD). In our experiment,
+   natural language content to explain the bug or the patch, so we
+                                                                                      we used the dataset provided by Tufano etc. [32]. This dataset con-
+   add the extra requirement in the task instruction to reduce such
+                                                                                      sisted of approximately 17,000 reviewer comments gathered from
+   explanation.
+                                                                                      GitHub and Gerrit. However, we performed a manual inspection
+• Prompt 2 (P2): It additionally includes the review comment as
+                                                                                      to enhance the data’s quality and applied specific pruning rules to
+   the critical hint. The task instruction is “Fix the following buggy
+                                                                                      eliminate irrelevant or low-quality comments. The following rules
+   code snippet according to the suggestion in the "//<Comment> "
+                                                                                      were followed during the data pruning process:
+   line. In your response, output the fixed code only.”. We ask Chat-
+   GPTs to fix the bug according to the review comment after the                           • The code snippet should not be changed too significantly.
+  “<Comment>” marker.                                                                        For example, those even no intersection between the buggy
+                                                                                             and fixed code snippet were eliminated;
+3.2.2 Prompts for Finetuning. We designed five prompts to finetune                         • The comment should be meaningful. For example, the mean-
+other selected LLMs.                                                                         ingless comments “done” or “fixed” were eliminated.
+• Prompt 3 (P3): It is a variant of Prompt 1, which does not have
+                                                                                         After all, we obtained a set of 16,228 data entries for finetuning.
+   any hint of the defect within it. The task instruction is “Fix the
+   following buggy code snippet.”. The extra requirement is removed                   3.3.2 Dataset from the PMD Checker (PD). We utilized the PMD
+   because the finetuning process enables the model to learn the                      checker to collect the other kind of dataset. PMD is a powerful static
+   correct behavior, i.e., outputting code only.                                      rule-based checker that automatically examines source code in
+• Prompt 4 (P4): It additionally provides the defect location. It                     various programming languages and provides valuable feedback to
+   indicates the buggy code line from the reviewer comments or the                    developers. It is open-sourced and widely used in modern practices.
+   checker inspections. This line is denoted with “[BUG_LOCATION]”.                   In our experiment, we selected 30 rules frequently identified in
+   The task instruction is “Fix the following buggy code snippet.                     real-world coding practices.
+   [BUG_LOCATION] marks the bug location.”.                                              To construct our dataset, we performed scans on a collection of
+• Prompt 5 (P5): It provides the suggested fix location, i.e., the                    popular open-source Java projects hosted on GitHub. From these
+   line range where the code should be changed to fix the defect.                     projects, we carefully handpicked the target buggy code snippets.
+   Note that the fix location is not always the same as the defect                    To maintain a similar magnitude to the dataset from reviewer com-
+   location. Human review comments commonly present a sug-                            ments, we ultimately chose 20,000 code snippets that violated the
+   gested fix at certain code lines. The markers “[FIX_START]” and                    selected 30 rules. In order to provide the corresponding fixes for
+  “[FIX_END]” are denoted as the start and end of the patch, re-                      these code snippets, we engaged the expertise of six experienced
+   spectively. The task instruction is “Fix the following buggy code                  developers. They utilized the comments generated by PMD to guide
+   snippet. [FIX_START] and [FIX_END] mark the range of the patch.”.                  them in fixing the identified defects. The fixes were meticulously
+• Prompt 6 (P6): It is an advanced version of Prompt 4. It provides                   reviewed to ensure their accuracy and effectiveness. After this pro-
+   the review comment to help the LLM understand and repair the                       cess, our dataset comprised a total of 14,935 data entries.
+   defect. Compared to Prompt 4, the comment line indicates the                          When collecting the two datasets, we did not utilize code and
+   defect location with no special markers. It is designed to evaluate                comments from AntGroup internally. This is mainly because of the
+   whether the rich comments content can improve the performance                      confidentiality requirements. Additionally, the majority of reviewer
+   compared to the mere defect locations. The task instruction is                     comments in AntGroup are written in Chinese. The pretraining
+  “Fix the following buggy code snippet according to the suggestion in                datasets of some models only include a small portion of Chinese.
+   the "//<Comment> " line.”.                                                         Finetune these models with English comments is more reasonable.
+• Prompt 7 (P7): It is the combination of all information in fig. 4                      In our experiment, the two datasets is divided into training and
+   except “[BUG_LOCATION]”. We eliminate the defect location                          validation data in a 9:1 proportion. More specifically, the training
+   because it is often implicit in the review comment. Note that                      data consists of 28,063 samples, while the validation data comprises
+   compared to all prompts, this one is the most informative. The                     3,100 samples.
+                                                                                  5
+ICSE 2024, April 2024, Lisbon, Portugal                                             Zelin Zhao, Zhaogui Xu, Jialong Zhu, Peng Di, Yuan Yao, and Xiaoxing Ma
+
+
+3.4     Result Validation                                                    the corresponding corrected code. This reliance on pretraining
+Executing test cases is commonly used to validate patches gener-             knowledge introduces a potential limitation, as it may undermine
+ated by APR techniques. However, in our specific scenario, this              the meaningfulness of the results.
+approach is unsuitable due to the nature of the results generated
+by LLMs. These results consist of incomplete code snippets, and                  Table 1: Results of ChatGPTs in zero-shot learning.
+as mentioned before, some CR defects do not exhibit observable
+runtime behaviors, rendering validation through tests impossible.                                 ECM                            Code BLEU
+Directly comparing code snippets as strings can lead to inaccurate           Prompt
+                                                                                         ChatGPT-3.5  ChatGPT-4            ChatGPT-3.5  ChatGPT-4
+judgments. LLMs often introduce or remove whitespace in code
+                                                                               P1           14.10%            6.61%           0.7789           0.7012
+snippets and may even add comments to explain the fix, mainly ob-
+                                                                               P2           49.42%           55.10%           0.8554           0.8867
+served in ChatGPTs. These differences can significantly impact the
+evaluation results, making direct string comparisons impractical
+and unreliable.                                                                  Regarding the prompt P2, which provides review comments to
+   In our experiment, we have adopted two primary metrics for eval-          the models during the fixed code generation, ChatGPT-3.5 and
+uation purposes. Firstly, we propose the exact-code-match (ECM)              ChatGPT-4 exhibit significant improvements compared to the P1
+metric to compare the generated code snippet with the expected one.          setting. Specifically, ChatGPT-3.5 achieves an ECM of 49.42%, while
+The implementation of this metric involves using TreeSitter [30] to          ChatGPT-4 achieves an ECM of 55.10%. Such improvements suggest
+parse a code snippet into a partial abstract syntax tree (AST), then         that review comments are crucial in effectively repairing CR defects.
+removing non-code elements (such as comments) from the AST, and              Furthermore, it is observed that ChatGPT-4 surpasses ChatGPT-
+finally printing the AST as formatted code. By directly comparing            3.5 in terms of performance in this setting. This can be attributed
+the formatted code of the generated and expected snippets, we can            to the fact that ChatGPT-4 possesses a deeper understanding of
+determine if they match exactly. This approach enables a more pre-           review comments compared to ChatGPT-3.5. The Code BLEU metric
+cise and meaningful code comparison, resulting in more accurate              presented in table 1 corroborates the effectiveness of the ECM.
+evaluation results. Secondly, we calculate the Code BLEU [23] be-                The performances of ChatGPT-3.5 and ChatGPT-4 using prompt
+tween the generated result and the expected snippet. It is important         P2 demonstrate their effectiveness in repairing CR defects. However,
+to note that when calculating the Code BLEU in our experiments               it is worth noting that these models may occasionally generate
+(as described in section 4), we use the output result directly without       unexpected content, even when instructed to output only the fixed
+removing the non-code elements. The ECM metric does not con-                 code. For instance, both ChatGPT-3.5 and ChatGPT-4 may attempt
+sider non-code elements and evaluates the genuine capability of              to complete the code snippet instead of generating the necessary
+generating fixed code for CR defects. On the other hand, the Code            fixes. Additionally, they may generate natural language content
+BLEU metric considers the raw output and evaluates the overall               that describes the identified defect or explains the fix. While this can
+performance of each model.                                                   be informative, it often requires human intervention to prune and
+                                                                             refine the generated content to ensure its accuracy and relevance.
+4     EXPERIMENT RESULTS
+                                                                             4.1.2 Results of Finetuning. Table 2 presents each model’s ECM
+In this section, we individually demonstrate our experiment results          and Code BLEU scores, excluding CodeReviewer, after finetuning
+for the proposed research questions. Recall our research questions           with various prompts (P3 to P7). As a reminder, prompt P3 is the
+as the following:                                                            most straightforward prompt, containing no additional information.
+• RQ1: To what extent can various LLMs repair CR defects using               Prompt P4 includes the location of the bug within the code snippet.
+   zero-shot learning or finetuning?                                         Prompt P5 provides the range of locations that need to be fixed
+• RQ2: How does the choice of prompts impact the performance                 within the code. Prompt P6 inserts the review comment into the
+   of LLMs in repairing defects?                                             buggy code snippet. Lastly, prompt P7 combines the information
+• RQ3: How does the performance of LLMs in repairing defects                 from P5 and P6, including the range of fix locations and the review
+  vary with different model sizes?                                           comment.
+• RQ4: How do different datasets affect the capacity to rectify de-             In Table 2, a darker color represents a higher value within the
+   fects, and is it feasible to interchangeably employ these datasets?       same row. The performance of the models generally improves from
+                                                                             left to right for each prompt. Regarding the ECM column, both Code-
+4.1     Overall Effectiveness (RQ1)                                          LLaMA and CodeGen-2 consistently achieve the first and second
+4.1.1 Results of Zero-shot Learning. Table 1 shows the results of            highest results across all prompts. Notably, the best performance
+fixing CR defects by ChatGPT-3.5 and ChatGPT-4 through zero-shot             of CodeLLaMA attains a score of ECM as high as 72.97%. CodeFuse
+learning. When considering the most straightforward prompt (P1),             achieves the third-best performance in prompts P3 and P4, while
+it is evident that ChatGPT-3.5 outperforms ChatGPT-4 in terms                LLaMA achieves the third-best performance in prompts P5 to P7.
+of fixing defects. Specifically, the ECM for ChatGPT-3.5 is 14.10%,          The last three prompts, which provide additional information in
+while the ECM for ChatGPT-4 is only 6.61%. Prompt P1 instructs               natural language, are more beneficial for LLaMA, as it exhibits
+both models to fix the buggy code snippet without accompanying               better comprehension of such information than CodeFuse. InCoder
+reviewer comments. Consequently, both models rely exclusively on             and CodeT5+ demonstrate the worst ECM values despite being
+their pretraining knowledge to detect potential defects and generate         primarily code language models. However, even with the lowest
+                                                                         6
+     The Right Prompts for the Job: Repair Code-Review Defects with Large Language Model                                                      ICSE 2024, April 2024, Lisbon, Portugal
+
+
+     Table 2: The Performance of different models in the finetuning setting. The last row (#P7 -#P3 ) shows the performance improve-
+     ment from P3 to P7.
+
+                                               ECM                                            Code BLEU
+         Prompt
+                       InCoder CodeT5+ CodeFuse LLaMA CodeGen-2 CodeLLaMA InCoder CodeT5+ CodeFuse LLaMA CodeGen-2 CodeLLaMA
+             P3        39.87%      41.39%      44.26%       42.84%      45.61%        47.87%         0.8635      0.8625       0.8658      0.8817      0.8708         0.8861
+             P4        45.06%      46.65%      49.71%       49.42%      51.16%        54.48%         0.8737      0.8767       0.8788      0.8946      0.8835         0.9015
+             P5        52.61%      53.68%      56.48%       56.90%      60.00%        62.97%         0.8867      0.8873       0.8911      0.9100      0.8987         0.9222
+             P6        57.81%      57.65%      60.13%       60.55%      61.48%        66.39%         0.8961      0.8912       0.8949      0.9141      0.8996         0.9245
+             P7        62.52%      63.03%      65.77%       66.48%      67.87%        72.97%         0.9041      0.9011       0.9050      0.9237      0.9115         0.9394
+          #𝑃 7 -#𝑃 3   22.65%      21.64%      21.51%       23.64%      22.26%        25.10%         0.0406      0.0386       0.0392       0.042      0.0407         0.0533
+      In the same row, the darker the color, the higher the data. The ECM and Code BLEU of all models increase from P3 to P7. Because of the particular data format and smaller model
+     size, we only finetuned the CodeReviewer model with review comments, similar to P2 and P6. The ECM and Code BLEU of CodeReviewer are 47.87% and 0.8444.
+
+
+     ECM scores, they can still fix over 62% of the CR defects when                              all prompts. Instead, we performed finetuning on CodeReviewer,
+     prompted with P7.                                                                           utilizing its input-output data format and incorporating the review
+                                                                                                 comment within the training process. This approach is similar to
+ 1      public byte [] getData () {                                                              prompt P6, where the review comment is inserted into the buggy
+ 2-       Object base = slice.getBase();                                                         code snippet. The resulting ECM and Code BLEU scores for Code-
+ 3-       checkState(base instanceof byte[], ...);
+                                                                                                 Reviewer are 47.87% and 0.8444, respectively. These scores are lower
+ 4-       byte[] bytes = (byte[]) base;
+ 5        //<Comment> Should the above three lines actually happen in ‘if‘ branch? I             compared to the zero-shot learning performance of ChatGPT-3.5
+           don’t see why we would need to get ‘base‘ if the slice is not compact.                and all other models after finetuning. However, considering the
+ 6        if ( slice . isCompact () ) {                                                          smaller model size of CodeReviewer, it remains competitive among
+ 7+          Object base = slice.getBase();
+                                                                                                 all the models evaluated in this context.
+ 8+          checkState(base instanceof byte[], ...);
+ 9+          return (byte[]) base;
+10 -         return bytes;                                                                       4.1.3 Detailed Study of the Defects in PD. Our dataset has 30 dif-
+11        }                                                                                      ferent types of CR defects obtained from PMD checkers (PD). To
+12        return slice . getBytes () ;                                                           compare the performance of each model across different prompts,
+13      }                                                                                        we examined the ECM for each defect type. Table 3 overviews the
+                                                                                                 lowest and highest ECM values obtained among all the finetuning
+     Figure 5: A buggy code snippet that was only fixed by Code-
+                                                                                                 settings for each defect type. The first column includes a brief de-
+     LLaMA with P7. [FIX_START] is before line 2 and [FIX_END]
+                                                                                                 scription of each defect. Some defects are relatively easier to repair
+     is after line 10, they are omitted for simplicity.
+                                                                                                 as comments can explicitly describe them, or the code elements
+                                                                                                 that need to be changed are easily identifiable. Notably, four defect
+         Figure 5 presents an illustrative example where only CodeLLaMA,
+                                                                                                 types achieved a 100% fix rate, which are highlighted in green in
+     prompted with P7, successfully fixes the code defect. The reviewer’s
+                                                                                                 table 3.
+     comment clearly describes the defect’s underlying cause and spec-
+                                                                                                    Among the various types of defects, the last type is the most
+     ifies the range of code lines that need to be modified. This defect
+                                                                                                 challenging to fix. As illustrated in Figure fig. 6, the correct code
+     requires multiple code modifications and involves complex informa-
+                                                                                                 fix involves enclosing the Double.parseDouble invocation within
+     tion conveyed through natural language comments. This example
+                                                                                                 try-catch blocks. However, different code generation models may
+     showcases the distinct advantage of CodeLLaMA’s advanced capa-
+                                                                                                 generate different exception messages in the repaired code, deviat-
+     bilities.
+                                                                                                 ing from the expected output. Another complex defect type to fix,
+         In the Code BLEU column, CodeLLaMA achieves the highest
+                                                                                                 particularly with prompt P3, is the "Remove unused imports" issue.
+     score, while LLaMA consistently secures the second position across
+                                                                                                 Without any indication of which import statements are unused,
+     all prompts instead of CodeGen-2. Code BLEU is calculated based
+                                                                                                 most models struggle to accurately identify and remove the target
+     on the raw output, which includes natural language code comments.
+                                                                                                 imports. For defects with lower scores, a potential approach to im-
+     The overall trend observed in the Code BLEU scores aligns with
+                                                                                                 provement is to gather additional high-quality data and perform
+     the trend of the ECM, indicating the validity and reasonableness
+                                                                                                 further finetuning.
+     of using ECM as an evaluation metric for assessing defect repair
+     capabilities. The differing rankings of the models regarding ECM
+     and Code BLEU emphasize that Code BLEU may not be as suitable                               4.2     Prompt Comparison (RQ2)
+     as ECM for evaluating code generation tasks. This conclusion aligns                         Table 2 shows that all models perform the best in prompt P7, in-
+     with the findings presented in [3].                                                         dicating that the combination of review comments and fix range
+         CodeReviewer is pretrained with specially formatted code change                         significantly aids in repairing CR defects. The enhanced perfor-
+     data on a model base with 220 million parameters. However, it                               mance suggests that incorporating review comments and informa-
+     should be noted that this model lacks training in natural language,                         tion about the fix range helps the models better understand and
+     which influenced our decision to refrain from finetuning it with                            address the defects present in the code. On the other hand, the
+                                                                                            7
+    ICSE 2024, April 2024, Lisbon, Portugal                                                        Zelin Zhao, Zhaogui Xu, Jialong Zhu, Peng Di, Yuan Yao, and Xiaoxing Ma
+
+
+    Table 3: The lowest and hightest ECM of repairing each type                       1     public byte [] getData () {
+    of CR defects identified by PMD.                                                  2       if ( slice . isCompact () ) {
+                                                                                      3         return slice . getBytes () ;
+                                                                                      4       }
+            Short Description                           Lowest      Highest           5       return slice . getBytes () ;
+                                                                                      6     }
+            Unnecessary return                           96.60%      100.00%
+            Empty statement                              86.80%       97.20%
+                                                                                          Figure 7: The incorrect fixed code snippets generated by Code-
+            Use isEmpty()                                82.20%       91.30%
+            Simplified to while loop                     81.80%       90.90%
+                                                                                          LLaMA with prompt P5 and P6. The buggy code and the
+            Use existing BigDecimal instances            81.80%       90.90%              expected fixed code are shown in fig. 5.
+            Add default in switch                        80.80%       90.70%
+            Use String.indexOf(char)                     78.40%       94.60%
+                                                                                             Figure 7 presents the incorrect fixed code snippets generated
+            Convert primitives to Strings directly       72.70%       81.80%
+            Literal first in comparison                  71.70%       82.70%
+                                                                                          by CodeLLaMA with prompts P5 and P6. In contrast, CodeLLaMA
+            Compare boolean literal                      66.70%       79.50%              with prompt P7 can successfully repair the defect, as shown in
+            Use instanceof w/o null check                63.30%       86.70%              fig. 5. Only given the review comment or the fix range, CodeLLaMA
+            Nested if                                    57.30%       72.40%              cannot come up with the complete patch and only remove the three
+            Return boolean directly                      52.30%       76.10%              lines above the if statement and change line 3.
+            Make properties in enum final                50.00%       81.30%
+            Use BigDecimal.valueOf()                     45.50%      100.00%              Table 4: The improvement between adjacent prompts of each
+            No instantiating Boolean object              45.50%       90.90%              model.
+            DateFormatter is not thread safe             45.50%       90.90%
+            No instantiating String object               40.00%       80.00%
+            Use equals instead of “==”                   40.00%       70.00%                           InCoder CodeT5+ CodeFuse LLaMA CodeGen-2 CodeLLaMA        Average
+
+            Append literal to String directly            38.50%       92.30%              #𝑃 4 -#𝑃 3   5.19%   5.26%    5.45%    6.58%    5.55%       6.61%       5.77%
+            Make final fields static                     33.30%       73.30%              #𝑃 5 -#𝑃 4   7.55%   7.03%    6.77%    7.48%    8.84%       8.49%       7.69%
+            Inefficient String Buffer                    31.00%       48.30%              #𝑃 6 -#𝑃 5   5.20%   3.97%    3.65%    3.65%    1.48%       3.42%       3.56%
+            Remove unused variables                      30.00%      100.00%              #𝑃 7 -#𝑃 6   4.71%   5.38%    5.64%    5.93%    6.39%       6.58%       5.77%
+            Use String.equalsIgnoreCase()                27.30%       72.70%
+            Use StringUtils.isBlank()                    26.70%       66.70%
+            Use separate catch clause                    23.50%       58.80%                 To analyze the improvement in ECM between adjacent prompts,
+            Return value w/o storing                     22.20%       77.80%              we calculated the value of #𝑃𝑛 + 1-#𝑃𝑛 in table 4. The results pro-
+            Use “==” to check null                        9.10%       54.50%              vide insights into the impact of incorporating different cues in
+            Remove unused imports                         0.00%      100.00%              each prompt. From P3 to P4, the introduction of bug location in-
+            Catch exception when parsing double           0.00%        6.70%              formation leads to an average improvement in ECM of 5.77%. This
+           The value is compared among all finetuned models under all prompts             improvement suggests that identifying the location of the defect
+          (i.e., P3∼P7). The table is sorted in descending order of lowest ECM.           provides valuable context for the models, assisting them in better
+                                                                                          understanding and addressing the defects. From P4 to P5, replacing
+                                                                                          defect location with fix range information results in the highest
+1+     try {
+2        position . set ( Double . parseDouble ( values [ index ]) ) ;                    improvement in ECM, with an average increase of 7.69%. This im-
+3+     } catch(NumberFormatException e) {                                                 provement highlights the significance of fix range information,
+4+       throw new NumberFormatException("...");                                          because it represents the golden locations for repairing defects.
+5+     }                                                                                  The fact that the defect location and the fix locations are often
+                                                                                          different emphasizes the importance of incorporating the fix range,
+    Figure 6: A correct fix of “catch exception when parsing dou-
+                                                                                          as it provides more accurate and specific guidance for repairing
+    ble” defect. The generated exception message in line 4 can
+                                                                                          the defects. In P6, the inclusion of reviewer comments leads to
+    be easily different.
+                                                                                          an average improvement of 3.56% in ECM compared to P5. This
+                                                                                          improvement demonstrates the value of incorporating human feed-
+                                                                                          back and insights in the form of reviewer comments, enabling the
+    models perform the worst in prompt P3. This is because P3 only                        models to understand better and address the defects present in the
+    provides information that the code snippet is buggy without addi-                     code. Finally, in P7, the combination of the two powerful cues, i.e.
+    tional context or guidance. Without explicit details or cues from                     reviewer comments and fix range, further improves the ECM by an
+    review comments or fix range, the models struggle to accurately                       additional 5.77%. This improvement signifies the synergistic effect
+    identify and repair the CR defects in this prompt. The last row of                    of incorporating multiple cues, resulting in a more effective and
+    the table, denoted as #𝑃7-#𝑃3, represents the improvement of each                     accurate repair process.
+    model from the lowest value (in P3) to the highest value (in P7). It                     Overall, the analysis of the improvements in ECM between adja-
+    is noteworthy that all models exhibit improvements in ECM that                        cent prompts highlights the incremental benefits of incorporating
+    are uniformly greater than 20%. This indicates that incorporating                     different cues. Each prompt introduces a new cue or modifies an
+    review comments and fix range information substantially enhances                      existing one, leading to a progressive enhancement in the models’
+    the models’ ability to correct CR defects.                                            ability to repair CR defects. The results emphasize the importance
+                                                                                  8
+The Right Prompts for the Job: Repair Code-Review Defects with Large Language Model                                                 ICSE 2024, April 2024, Lisbon, Portugal
+
+
+of considering multiple cues and incorporating diverse information                       decreased by half. Furthermore, the combined scores of the two
+sources to improve models’ performance in code repair tasks.                             models on each test set show only marginal improvements, as indi-
+                                                                                         cated in the last row of table 5.
+4.3            Model Size Comparison (RQ3)
+To examine the impacts of model size, we conducted finetuning                            Table 5: Performance of finetuning CodeLLaMA with one
+experiments on five models from CodeT5+, which offers the most                           dataset and validate on another.
+extensive range of candidate sizes available, spanning from 220
+million parameters to 16 billion parameters. Figure 8 demonstrates                                                                         ECM
+                                                                                                            Finetuned Model
+the trends of the ECM and Code BLEU scores in CodeT5+. Overall,                                                                      RD𝑡         PD𝑡
+both ECM and Code BLEU scores gradually increased, except for a                                               CodeLLaMA𝑅𝐷           65.10%     44.18%
+slight decrease in Code BLEU from 2 billion parameters (0.9035) to                                            CodeLLaMA𝑃 𝐷          36.31%     80.65%
+6 billion parameters (0.9011). The most significant improvement in                                             Union of Fix         67.02%     82.41%
+both ECM and Code BLEU scores is observed when transitioning
+                                                                                          We use prompt P7 in this comparison. The first column shows the two CodeLLaMA
+from the 220 million to the 770 million parameter model. As the                          models finetuned on different datasets. The last row is calculated by combing the
+model size increases further, the rate of improvement gradually                          correct fixes generated by the two finetuned models.
+slows down, particularly from the 2 billion parameter model to the
+6 billion parameter model.                                                                  The above results signify the importance of training and evalu-
+                                                                                         ating models on the appropriate datasets to achieve optimal perfor-
+             0.92                                                     67
+                                                                                         mance and highlight the necessity of the PD and RD datasets in the
+                                                                                         finetuning process. In other words, finetuning models on diverse
+ Code BLEU
+
+
+
+
+             0.91                                                     62
+                                                                           ECM (%)
+
+
+                                                                                         datasets that represent human and automated perspectives allows
+                                                                                         for a more comprehensive and practical training procedure.
+              0.9                                                     57
+                                                                                         5     THREATS
+             0.89                                                     52
+                                                                                         We acknowledge that there may be certain threats to the validity
+                    0.22
+                       77
+
+
+
+
+                              6
+
+
+
+
+                                                             16
+                        2
+                    0.
+
+
+
+
+                                                                                         of our findings. Our study primarily focused on the performance
+                                Model size (B)
+                                                                                         of 6∼7B LLMs, but it is important to note that there are numerous
+                            Code BLEU             ECM                                    other models of varying scales available in the open source com-
+                                                                                         munity. In our research, we emphasized the significance of both
+Figure 8: The performance comparison of CodeT5+ at differ-                               inference efficiency and effectiveness in order to ensure smooth
+ent sizes (0.22B, 0.77B,2B, 6B, 16B).                                                    integration within the CI/CD process. The 6-7B LLMs demonstrate
+                                                                                         a favorable balance between efficiency and effectiveness, able to
+   Considering both efficiency and effectiveness, the 6 billion or 7                     infer within seconds while possessing strong capabilities compared
+billion parameter models are the most practical choices compared to                      to smaller models. To validate our perspective, we conducted an
+smaller or larger models. Additionally, we conducted finetuning and                      experiment comparing different scales of the CodeT5+ model. The
+validation on the 13 billion parameter models of CodeFuse, LLaMA,                        results reinforced our belief that the 6-7B model achieves an optimal
+and CodeLLaMA using prompt P7. Notably, we observed similar                              balance between efficiency and effectiveness.
+growth trends in their performance. The ECM showed a slight                                 Regarding data collection, it is essential to acknowledge potential
+increase for CodeFuse (2.2%) and LLaMA (1.87%), while a minor                            biases that may influence the performance of LLMs. Data collection
+decrease of 0.29% was noticed for CodeLLaMA. These findings                              is a continual challenge in research, and we took manual efforts
+further support that the intermediate-sized models are a practical                       to ensure the quality of the dataset. Furthermore, we observed
+and effective choice in our scenario.                                                    consistent trends in our results when comparing different models,
+                                                                                         prompts, and datasets, which suggests that the dataset meets the
+4.4            Impacts of Datasets (RQ4)                                                 necessary standards.
+In order to evaluate the different impacts of datasets from human
+reviewers and automated checkers, we conducted separate finetun-
+                                                                                         6     RELATED WORK
+ing experiments on CodeLLaMA using each dataset. The model                               Automated program repair has been extensively studied. Existing
+finetuned on the RD and PD is denoted as CodeLLaMA𝑅𝐷 and                                 APR tools typically involve three main steps: bug localization [35],
+CodeLLaMA𝑃𝐷 , respectively. We then cross-validated the two re-                          patch generation, and patch validation. Based on the techniques
+sulting models by evaluating them on both the RD test set, denoted                       employed in the patch generation step, APR tools can be classified
+as 𝑅𝐷𝑡 , and the PD test set, denoted as 𝑃𝐷𝑡 . Table 5 presents the                      into several types [5, 6, 38]: search-based, constraint-based, template-
+ECM scores. The findings indicate that finetuning and testing on                         based, and learning-based.
+homologous datasets yield the best results. For example, the model
+CodeLLaMA𝑅𝐷 can fix more defects in 𝑅𝐷𝑡 compared to 𝑃𝐷𝑡 , even                           6.1     Conventional APR Approaches
+though defects in the PD dataset may be more prevalent. Conversely,                      Search-based methods aim to explore the vast space of potential
+the scores of testing on the heterologous data are approximately                         patches by generating code variations at the most probable bug
+                                                                                     9
+ICSE 2024, April 2024, Lisbon, Portugal                                                 Zelin Zhao, Zhaogui Xu, Jialong Zhu, Peng Di, Yuan Yao, and Xiaoxing Ma
+
+
+locations. Techniques such as evolutionary computation [26] and               include context, buggy code, and fixed code, using natural language
+genetic programming [13, 21, 25, 34] are commonly employed to                 sentences to separate different parts. CoCoNut [16], on the other
+mutate the code at these bug locations. The search efficiency of              hand, utilizes two encoders to encode the buggy code and context
+search-based methods remains a critical challenge. The exploration            separately. Different from this paper, the two approaches aim at
+of the patch space can be computationally expensive and time-                 general bugs. InferFix [10] employs LLMs to repair bugs detected by
+consuming. Improving the efficiency of search-based methods is an             an automated checker (Infer [8]), including null pointer dereference,
+ongoing focus of research in APR, as enhancing the effectiveness              resource leak, and thread safety violations. They fine-tune Codex
+and practicality of these approaches is essential for their widespread        [1] using prompts that contain bug type, location, and the context of
+adoption.                                                                     the buggy method. They also collect a dataset of previous fixes and
+    Constraint-based methods transform the patch generation prob-             query similar fixes to include in the prompt. However, InferFix only
+lem into a constraint solving problem and leverage specifications to          focuses on a few types of bugs identified by automated checkers
+exclude infeasible patches. These methods aim to overcome the chal-           and does not consider reviewer comments.
+lenges of search-based approaches by providing a more structured
+and guided approach to generating patches. Nopol [36] explicitly              7     CONCLUSION
+targets conditional bugs and utilizes tests as specifications to guide        In this paper, we investigate the LLMs in repairing CR defects, fo-
+the patch generation process. SemFix [18] uses symbolic execution             cusing on the valuable insights provided by accompanying review
+to generate repair constraints for fixing single-line bugs. Angelix           comments. Our systematic experiment compares 9 models in zero-
+[17], on the other hand, introduces the concept of angelic forest as a        shot learning and finetuning scenarios, revealing that CodeLLaMA
+lightweight constraint representation and proposes a technique to             performs the best with a repair rate of up to 72.97% for CR defects.
+fix multi-line bugs using these constraints. Constraint-based meth-           Additionally, we design 7 prompts containing different useful infor-
+ods encounter challenges when they lack appropriate constraint                mation, highlighting the effectiveness of review comments and fix
+specifications for specific types of bugs.                                    ranges. By comparing the performance of different scales of Code-
+    Template-based approaches utilize predefined patch templates              T5+, the 6∼7B models are proved to be the practical and effective
+or patterns to generate patches for code defects. These templates             choice in repairing CR defects. Furthermore, we also find the poor
+can be extracted manually or automatically, providing a structured            transferability of learned abilities from different datasets, empha-
+and guided approach to patch generation. For instance, Kim et                 sizing the need for finetuning with diverse datasets of comparable
+al. [11] manually reviewed patches and abstracted ten templates,              size. Our paper provides valuable insights for leveraging LLMs in
+forming the PAR tool’s basis. Relifix [28] employed syntax-level              CR defect repair to enhance software quality and efficiency in the
+transformation rules manually extracted from version histories as             CI/CD pipeline.
+templates. Alternatively, automatic techniques have been developed
+to mine templates from project histories. HDRepair [12] utilized              REFERENCES
+graph mining to automatically abstract fix patterns, while Genesis             [1] Mark Chen, Jerry Tworek, Heewoo Jun, Qiming Yuan, Henrique Pondé de
+[15] extracted transformation rules from sampled code transforma-                  Oliveira Pinto, et al. 2021. Evaluating Large Language Models Trained on Code.
+tions. Recent studies [5] have shown that template-based methods                   arXiv:2107.03374 https://arxiv.org/abs/2107.03374
+                                                                               [2] Jacob Devlin, Ming-Wei Chang, Kenton Lee, and Kristina Toutanova. 2019. BERT:
+outperform search-based and constraint-based methods in terms of                   Pre-training of Deep Bidirectional Transformers for Language Understanding.
+effectiveness. However, one limitation of template-based tools is                  (2019). arXiv:1810.04805 [cs.CL]
+                                                                               [3] Mikhail Evtikhiev, Egor Bogomolov, Yaroslav Sokolov, and Timofey Bryksin. 2023.
+their rigidity, as they can only fix specific types of bugs that align             Out of the BLEU: How Should We Assess Quality of the Code Generation Models?
+with the predefined templates. This restricts their applicability and              J. Syst. Softw. 203, C (jul 2023), 17 pages. https://doi.org/10.1016/j.jss.2023.111741
+adaptability to a broader range of defects.                                    [4] Daniel Fried, Armen Aghajanyan, Jessy Lin, Sida I. Wang, Eric Wallace, Freda Shi,
+                                                                                   Ruiqi Zhong, Wen tau Yih, Luke Zettlemoyer, and Mike Lewis. 2022. InCoder: A
+                                                                                   Generative Model for Code Infilling and Synthesis. ArXiv abs/2204.05999 (2022).
+                                                                                   https://api.semanticscholar.org/CorpusID:248157108
+6.2     Intelligent APR Approaches                                             [5] Luca Gazzola, Daniela Micucci, and Leonardo Mariani. 2019. Automatic Software
+                                                                                   Repair: A Survey. IEEE Transactions on Software Engineering 45, 1 (2019), 34–67.
+Learning-based APR tools utilize bug repair samples to acquire em-                 https://doi.org/10.1109/TSE.2017.2755013
+pirical knowledge and generate patches. These data-driven repair               [6] Kai Huang, Zhengzi Xu, Su Yang, Hongyu Sun, Xuejun Li, Zheng Yan, and
+                                                                                   Yuqing Zhang. 2023. A Survey on Automated Program Repair Techniques.
+solutions leverage machine learning techniques to learn from the                   arXiv:2303.18184 [cs.SE]
+available data. One approach is to treat the APR problem as a trans-           [7] AntGroup Inc. 2023. CodeFuse. https://github.com/codefuse-ai Accessed: 2023-
+lation task, where the model learns to translate from buggy code                   09-22.
+                                                                               [8] Facebook Inc. 2023. Infer. https://github.com/facebook/infer Accessed: 2023-09-
+to fixed code. Tufano et al. [31] employed a neural machine trans-                 22.
+lation (NMT) model to train on pairs of buggy and fixed methods.               [9] OpenAI Inc. 2023. ChatGPT. https://openai.com/blog/chatgpt Accessed: 2023-
+The model learned the mapping between the two, enabling it to                      09-22.
+                                                                              [10] Matthew Jin, Syed Shahriar, Michele Tufano, Xin Shi, Shuai Lu, Neel Sundaresan,
+generate patches. Although learning-based APR tools have shown                     and Alexey Svyatkovskiy. 2023. InferFix: End-to-End Program Repair with LLMs.
+promise, they may have limitations in fully understanding natural                  arXiv:2303.07263 [cs.SE]
+                                                                              [11] Dongsun Kim, Jaechang Nam, Jaewoo Song, and Sunghun Kim. 2013. Automatic
+language comments. Improving their capability to comprehend and                    Patch Generation Learned from Human-Written Patches. In Proceedings of the
+effectively utilize review comments can enhance the quality and                    2013 International Conference on Software Engineering (ICSE ’13). 802–811.
+accuracy of generated patches.                                                [12] Xuan Bach D. Le, David Lo, and Claire Le Goues. 2016. History Driven Program
+                                                                                   Repair. In 2016 IEEE 23rd International Conference on Software Analysis, Evolution,
+   Benefiting from the rapid development of LLMs, APR approaches                   and Reengineering (SANER), Vol. 1. 213–224. https://doi.org/10.1109/SANER.2016.
+also utilized LLMs to repair bugs. Circle [37] designed prompts that               76
+                                                                         10
+The Right Prompts for the Job: Repair Code-Review Defects with Large Language Model                                                          ICSE 2024, April 2024, Lisbon, Portugal
+
+
+[13] Claire Le Goues, ThanhVu Nguyen, Stephanie Forrest, and Westley Weimer. 2012.              [33] Yue Wang, Hung Le, Akhilesh Deepak Gotmare, Nghi D.Q. Bui, Junnan Li, and
+     GenProg: A Generic Method for Automatic Software Repair. IEEE Transactions                      Steven C. H. Hoi. 2023. CodeT5+: Open Code Large Language Models for Code
+     on Software Engineering 38, 1 (2012), 54–72. https://doi.org/10.1109/TSE.2011.104               Understanding and Generation. arXiv preprint (2023).
+[14] Zhiyu Li, Shuai Lu, Daya Guo, Nan Duan, Shailesh Jannu, Grant Jenks, Deep                  [34] Westley Weimer, ThanhVu Nguyen, Claire Le Goues, and Stephanie Forrest. 2009.
+     Majumder, Jared Green, Alexey Svyatkovskiy, Shengyu Fu, and Neel Sundare-                       Automatically finding patches using genetic programming. In 2009 IEEE 31st
+     san. 2022. Automating Code Review Activities by Large-Scale Pre-Training. In                    International Conference on Software Engineering. 364–374. https://doi.org/10.
+     Proceedings of the 30th ACM Joint European Software Engineering Conference                      1109/ICSE.2009.5070536
+     and Symposium on the Foundations of Software Engineering (ESEC/FSE 2022).                  [35] W. Eric Wong, Ruizhi Gao, Yihao Li, Rui Abreu, and Franz Wotawa. 2016. A
+     1035–1047. https://doi.org/10.1145/3540250.3549081                                              Survey on Software Fault Localization. IEEE Transactions on Software Engineering
+[15] Fan Long, Peter Amidon, and Martin Rinard. 2017. Automatic Inference of                         42, 8 (2016), 707–740. https://doi.org/10.1109/TSE.2016.2521368
+     Code Transforms for Patch Generation. In Proceedings of the 2017 11th Joint                [36] Jifeng Xuan, Matias Martinez, Favio DeMarco, Maxime Clement, Sebastian Lame-
+     Meeting on Foundations of Software Engineering (ESEC/FSE 2017). 727–739. https:                 las Marcote, Thomas Durieux, Daniel Le Berre, and Martin Monperrus. 2017.
+     //doi.org/10.1145/3106237.3106253                                                               Nopol: Automatic Repair of Conditional Statement Bugs in Java Programs. IEEE
+[16] Thibaud Lutellier, Hung Viet Pham, Lawrence Pang, Yitong Li, Moshi Wei, and                     Trans. Softw. Eng. 43, 1 (jan 2017), 34–55. https://doi.org/10.1109/TSE.2016.
+     Lin Tan. 2020. CoCoNuT: Combining Context-Aware Neural Translation Models                       2560811
+     Using Ensemble for Program Repair. In Proceedings of the 29th ACM SIGSOFT                  [37] Wei Yuan, Quanjun Zhang, Tieke He, Chunrong Fang, Nguyen Quoc Viet
+     International Symposium on Software Testing and Analysis (ISSTA 2020). 101–114.                 Hung, Xiaodong Hao, and Hongzhi Yin. 2022. CIRCLE: Continual Repair
+     https://doi.org/10.1145/3395363.3397369                                                         across Programming Languages. In Proceedings of the 31st ACM SIGSOFT In-
+[17] Sergey Mechtaev, Jooyong Yi, and Abhik Roychoudhury. 2016. Angelix: Scalable                    ternational Symposium on Software Testing and Analysis (ISSTA 2022). 678–690.
+     Multiline Program Patch Synthesis via Symbolic Analysis. In Proceedings of                      https://doi.org/10.1145/3533767.3534219
+     the 38th International Conference on Software Engineering (ICSE ’16). 691–701.             [38] Quanjun Zhang, Chunrong Fang, Yuxiang Ma, Weisong Sun, and Zhenyu
+     https://doi.org/10.1145/2884781.2884807                                                         Chen. 2023.       A Survey of Learning-based Automated Program Repair.
+[18] Hoang Duong Thien Nguyen, Dawei Qi, Abhik Roychoudhury, and Satish Chan-                        arXiv:2301.03270 [cs.SE]
+     dra. 2013. SemFix: Program Repair via Semantic Analysis. In Proceedings of the
+     2013 International Conference on Software Engineering (ICSE ’13). 772–781.
+[19] Erik Nijkamp, Hiroaki Hayashi, Caiming Xiong, Silvio Savarese, and Yingbo
+     Zhou. 2023. CodeGen2: Lessons for Training LLMs on Programming and Natural
+     Languages. arXiv:2305.02309 [cs.LG]
+[20] PMD. 2023. PMD. https://pmd.github.io Accessed: 2023-09-22.
+[21] Yuhua Qi, Xiaoguang Mao, and Yan Lei. 2013. Efficient Automated Program
+     Repair through Fault-Recorded Testing Prioritization. In 2013 IEEE International
+     Conference on Software Maintenance. 180–189. https://doi.org/10.1109/ICSM.2013.
+     29
+[22] Colin Raffel, Noam Shazeer, Adam Roberts, Katherine Lee, Sharan Narang,
+     Michael Matena, Yanqi Zhou, Wei Li, and Peter J. Liu. 2020. Exploring the
+     Limits of Transfer Learning with a Unified Text-to-Text Transformer. J. Mach.
+     Learn. Res. 21, 1, Article 140 (jan 2020), 67 pages.
+[23] Shuo Ren, Daya Guo, Shuai Lu, Long Zhou, Shujie Liu, Duyu Tang, M. Zhou,
+     Ambrosio Blanco, and Shuai Ma. 2020. CodeBLEU: a Method for Automatic Evalu-
+     ation of Code Synthesis. ArXiv abs/2009.10297 (2020). https://api.semanticscholar.
+     org/CorpusID:221836101
+[24] Baptiste Rozière, Jonas Gehring, Fabian Gloeckle, Sten Sootla, Itai Gat, Xi-
+     aoqing Ellen Tan, Yossi Adi, Jingyu Liu, Tal Remez, Jérémy Rapin, Artyom
+     Kozhevnikov, Ivan Evtimov, Joanna Bitton, Manish Bhatt, Cristian Canton Fer-
+     rer, Aaron Grattafiori, Wenhan Xiong, Alexandre Défossez, Jade Copet, Faisal
+     Azhar, Hugo Touvron, Louis Martin, Nicolas Usunier, Thomas Scialom, and
+     Gabriel Synnaeve. 2023. Code Llama: Open Foundation Models for Code.
+     arXiv:2308.12950 [cs.CL]
+[25] Eric Schulte, Jonathan DiLorenzo, Westley Weimer, and Stephanie Forrest. 2013.
+     Automated Repair of Binary and Assembly Programs for Cooperating Embedded
+     Devices. In Proceedings of the Eighteenth International Conference on Architectural
+     Support for Programming Languages and Operating Systems (ASPLOS ’13). 317–328.
+     https://doi.org/10.1145/2451116.2451151
+[26] Eric Schulte, Stephanie Forrest, and Westley Weimer. 2010. Automated Pro-
+     gram Repair through the Evolution of Assembly Code. In Proceedings of the 25th
+     IEEE/ACM International Conference on Automated Software Engineering (ASE ’10).
+     313–316. https://doi.org/10.1145/1858996.1859059
+[27] Spotbugs. 2023. Spotbugs. https://github.com/spotbugs/spotbugs Accessed:
+     2023-09-22.
+[28] Shin Hwei Tan and Abhik Roychoudhury. 2015. Relifix: Automated Repair
+     of Software Regressions. In Proceedings of the 37th International Conference on
+     Software Engineering - Volume 1 (ICSE ’15). 471–482.
+[29] Hugo Touvron, Thibaut Lavril, Gautier Izacard, Xavier Martinet, Marie-Anne
+     Lachaux, Timothée Lacroix, Baptiste Rozière, Naman Goyal, Eric Hambro,
+     Faisal Azhar, Aurelien Rodriguez, Armand Joulin, Edouard Grave, and Guil-
+     laume Lample. 2023. LLaMA: Open and Efficient Foundation Language Models.
+     arXiv:2302.13971 [cs.CL]
+[30] TreeSitter. 2023. TreeSitter. https://tree-sitter.github.io/tree-sitter Accessed:
+     2023-09-22.
+[31] Michele Tufano, Cody Watson, Gabriele Bavota, Massimiliano Di Penta, Martin
+     White, and Denys Poshyvanyk. 2019. An Empirical Study on Learning Bug-Fixing
+     Patches in the Wild via Neural Machine Translation. ACM Trans. Softw. Eng.
+     Methodol. 28, 4, Article 19 (sep 2019), 29 pages. https://doi.org/10.1145/3340544
+[32] Rosalia Tufano, Luca Pascarella, Michele Tufano, Denys Poshyvanyk, and
+     Gabriele Bavota. 2021. Towards Automating Code Review Activities. In Pro-
+     ceedings of the 43rd International Conference on Software Engineering (ICSE ’21).
+     163–174. https://doi.org/10.1109/ICSE43902.2021.00027
+
+                                                                                           11
+

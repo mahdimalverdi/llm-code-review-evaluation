@@ -1,0 +1,850 @@
+                                         SecureReviewer: Enhancing Large Language Models for Secure
+                                                Code Review through Secure-aware Fine-tuning
+                                                                            Fang Liu1 , Simiao Liu1 , Yinghao Zhu1 , Xiaoli Lian1 , Li Zhang1∗
+                                                1 State Key Laboratory of Complex & Critical Software Environment, School of Computer Science and Engineering,
+
+                                                                                                        Beihang University, China
+                                                                                        {fangliu,buaalsm,zhuyinghao,lianxiaoli,lily}@buaa.edu.cn
+
+                                         Abstract                                                                                Keywords
+                                         Identifying and addressing security issues during the early phase                       Code Review, Software Security, Large Language Models
+                                         of the development lifecycle is critical for mitigating the long-
+                                                                                                                                 ACM Reference Format:
+                                         term negative impacts on software systems. Code review serves as
+arXiv:2510.26457v1 [cs.SE] 30 Oct 2025
+
+
+
+
+                                                                                                                                 Fang Liu1 , Simiao Liu1 , Yinghao Zhu1 , Xiaoli Lian1 , Li Zhang1∗ . 2026. Se-
+                                         an effective practice that enables developers to check their team-                      cureReviewer: Enhancing Large Language Models for Secure Code Review
+                                         mates’ code before integration into the codebase. To streamline the                     through Secure-aware Fine-tuning. In 2026 IEEE/ACM 48th International
+                                         generation of review comments, various automated code review                            Conference on Software Engineering (ICSE ’26), April 12–18, 2026, Rio de
+                                         approaches have been proposed, where Large Language Model                               Janeiro, Brazil. ACM, New York, NY, USA, 13 pages. https://doi.org/10.1145/
+                                         (LLM)-based methods have significantly advanced the capabilities                        3744916.3773191
+                                         of automated review generation. However, existing models primar-
+                                         ily focus on general-purpose code review, their effectiveness in                        1    Introduction
+                                         identifying and addressing security-related issues remains under-                       As software systems play increasingly critical roles in society, secu-
+                                         explored. Moreover, adapting existing code review approaches to                         rity vulnerabilities can have profound consequences for businesses
+                                         target security issues faces substantial challenges, including data                     and individuals [3, 34]. To mitigate these risks, modern software
+                                         scarcity and inadequate evaluation metrics. To address these limi-                      development adopts proactive "shift-left" practices [11, 24] that inte-
+                                         tations, we propose SecureReviewer, a new approach designed                             grate security testing into earlier development phases. Code review
+                                         for enhancing LLMs’ ability to identify and resolve security-related                    serves as a key preventive measure in this paradigm, where devel-
+                                         issues during code review. Specifically, we first construct a dataset                   opers submit code changes for systematic evaluation to identify and
+                                         tailored for training and evaluating secure code review capabili-                       address issues before codebase integration [15, 47]. For example,
+                                         ties. Leveraging this dataset, we fine-tune LLMs to generate code                       Heartbleed (CVE-2014-0160) [37], a famous OpenSSL vulnerability
+                                         review comments that can effectively identify security issues and                       from improper input validation, could have been prevented through
+                                         provide fix suggestions with our proposed secure-aware fine-tuning                      effective code review [13]. Furthermore, Bavota and Russo [3] find
+                                         strategy. To mitigate hallucination in LLMs and enhance the re-                         that unreviewed commits are more than twice as likely to introduce
+                                         liability of their outputs, we integrate the Retrieval-Augmented                        bugs and are less readable than reviewed ones.
+                                         Generation (RAG) technique, which grounds the generated com-                               There are several empirical studies that explore the role of code
+                                         ments in domain-specific security knowledge. Additionally, we                           review in finding and mitigating security issues [5, 55, 56]. While
+                                         introduce SecureBLEU, a new evaluation metric designed to as-                           these studies identify key challenges and limitations in practice
+                                         sess the effectiveness of review comments in addressing security                        and provide valuable recommendations and insights for improving
+                                         issues. Experimental results demonstrate that SecureReviewer                            secure code reviews, they do not offer automated solutions to sys-
+                                         outperforms state-of-the-art baselines in both security issue de-                       tematically address these issues. To efficiently generate review com-
+                                         tection accuracy and the overall quality and practical utility of                       ments and reduce reliance on manual effort, recent years have seen
+                                         generated review comments. Our code and data are available at                           the emergence of automated code review approaches, leveraging
+                                         https://github.com/SIMIAO515/SecureReviewer.                                            the rapid advancements in deep learning technologies [20, 43, 46].
+                                                                                                                                    For example, Gupta and Sundaresan [20] introduce an LSTM-
+                                         CCS Concepts                                                                            based model designed to analyze the relationships between code
+                                         • Software and its engineering; • Computing methodologies                               changes and review comments, and recommends review comments
+                                         → Artificial intelligence;                                                              automatically based on existing code reviews and code changes.
+                                                                                                                                 Building on advances in Transformer [48] architectures and pre-
+                                                                                                                                 trained models [16, 40, 51], researchers have developed code review
+                                         ∗ Corresponding author.
+                                                                                                                                 systems through two primary approaches: pre-training models on
+                                                                                                                                 code review-specific tasks [30] or fine-tuning large language models
+                                                                                                                                 (LLMs) for code review applications [32, 57]. These approaches,
+                                                                                                                                 particularly LLM-based methods, have significantly advanced the
+                                         This work is licensed under a Creative Commons Attribution 4.0 International License.   capabilities of automated review comment generation, pushing the
+                                         ICSE ’26, Rio de Janeiro, Brazil                                                        boundaries of what is achievable in this domain and creating new
+                                         © 2026 Copyright held by the owner/author(s).
+                                         ACM ISBN 979-8-4007-2025-3/26/04                                                        opportunities for secure code review practices. However, existing
+                                         https://doi.org/10.1145/3744916.3773191                                                 models focus primarily on general-purpose code review, and their
+ICSE ’26, April 12–18, 2026, Rio de Janeiro, Brazil                                                                                                    Fang Liu1 , Simiao Liu1 , Yinghao Zhu1 , Xiaoli Lian1 , Li Zhang1∗
+
+
+      Code Diff                                                                                                                       retrieving relevant examples from a prebuilt datastore of review
+      @@ -23,7 +23,8 @@ module Acuant
+       ...
+                                             Access Control and Information Security
+                                                                                                                                      templates.
+           def new_assure_id
+         - (Rails.env.test? ? Idv::Acuant::FakeAssureId : Idv::Acuant::AssureId).new                                                     To assess comment quality, we introduce SecureBLEU, a novel
+            (Figaro.env.acuant_simulator == ‘true’ ? Idv::Acuant::FakeAssureId :
+         + Idv::Acuant::AssureId).new                                                                                                 metric designed to evaluate the effectiveness of comments in identi-
+       ...                                                                                                                            fying and resolving security issues. We evaluate SecureReviewer
+     Reference Comment                                                                                                                on our constructed security dataset, performing a comprehensive
+      Description:
+      The code relies on an environmental variable `Figaro.env.acuant_simulator` to determine whether to use a real                   comparison against state-of-the-art (SOTA) code review baselines
+                                                                                                                                      and leading LLMs. The results demonstrate that SecureReviewer
+      or simulated service. This introduces a risk of misconfiguration, where incorrect or unauthorized changes to the
+      environment could lead to unintended behavior, such as using the real service in an insecure context or the
+      fake service in a production environment.
+                                                                                                                                      surpasses these baselines in both security issue detection accuracy
+      Impact:
+      If the environment is misconfigured, it could result in unauthorized access to sensitive data or services,
+      potentially exposing the application to security breaches or unintended operational behavior.
+                                                                                                                                      and the overall quality of generated comments. In summary, our
+      Advice:
+                                                                                                                                      contributions are:
+      Implement additional safeguards to validate the environmental configuration, such as checks during application startup
+      or runtime. Consider using secure defaults and logging any discrepancies for further investigation. Additionally, restrict
+                                                                                                                                      • We design an automated data collection and refinement pipeline
+      access to modify critical environmental variables to authorized personnel only.
+                                                                                                                                        to construct the dataset specially designed for training and eval-
+     Generated Comment: Type and Data Handling (predicted issue type)
+      Description:                                                                                                                      uating the model’s capabilities of secure code review.
+      The code relies on an environmental variable to determine which service to use. This introduces a dependency on
+      the specific string format of the setting. Any incorrect or alternate changes to the environment setting, such as               • We propose a secure-aware fine-tuning strategy, enhancing LLM
+      using a boolean `true` instead of a string, could lead to unintended behavior, such as using one service when the
+      other was intended in a specific operational context.                                                                             to focus on generating code review comments that can effectively
+      Impact:
+      A non-string configuration value (e.g., boolean `true`) will cause the `'true'` check to fail, making tests
+                                                                                                                                        identify security issues and provide fix suggestions.
+      incorrectly use the live `AssureId` class instead of the `FakeAssureId` mock, which risks unintended
+      interactions with a production system.
+                                                                                                                                      • We design SecureBLEU, a new evaluation metric for assessing
+      Advice:
+                                                                                                                                        the quality of code review comments by incorporating domain-
+      To protect the environmental configuration, implement default or fallback mechanisms during application startup or
+      runtime. Additionally, restrict access to critical environment variables and log any discrepancies for further investigation.     specific relevance to security.
+     BLEU = 26.44                   SecureBLEU = 12.12 (𝒔𝒄𝒐𝒓𝒆𝒃𝒍𝒆𝒖 = 17.57; 𝒔𝒄𝒐𝒓𝒆𝒌𝒆𝒚𝒘𝒐𝒓𝒅𝒔 = 6.67)                                      • We conduct a comprehensive comparison between SecureRe-
+Figure 1: A code review comment with its SecureBLEU score.                                                                              viewer and state-of-the-art baselines. The evaluation results
+                                                                                                                                        demonstrate the effectiveness and practicality of our model.
+
+effectiveness in identifying and addressing security-related issues                                                                   2     Methodology
+remains unexplored [2, 49]. Furthermore, adapting current code                                                                        Figure 2 presents the overview of SecureReviewer. Our approach
+review approaches to specifically target security issues faces the                                                                    begins with the construction of a high-quality dataset to enable
+following challenges:                                                                                                                 effective training and evaluation of the model’s secure code review
+❶ Noisy Code Review Dataset: Existing commonly used code                                                                              capabilities. Based on our dataset, we fine-tune LLM to focus on gen-
+review datasets [30, 46] are primarily collected from generative-                                                                     erating code review comments that can precisely identify security
+purpose review comment in open-source projects, where many of                                                                         issues and provide fix suggestions with our proposed secure-aware
+the comments may lack substantive content are often unrelated                                                                         fine-tuning strategy. Finally, we integrate the RAG technique to en-
+to identifying actual issues [57]. For instance, the comments of-                                                                     hance the relevance and reliability of generated review comments.
+ten contain non-informative content such as mentions of authors’
+names or generic statements like “Looks good to me” or “Why do we                                                                     2.1    Data Collection and Refining
+need this?”, rather than pinpointing specific issues. Moreover, there
+                                                                                                                                      As illustrated in Figure 3, we design an automated data collection
+is a scarcity of high-quality, security-focused datasets specifically
+                                                                                                                                      and refinement pipeline, integrating both LLMs and heuristic rules,
+constructed for training and evaluating code review models.
+                                                                                                                                      to construct the dataset for secure code review.
+❷ Inadequate Metric: BLEU score [39] is widely adopted in assess-
+ing the quality of the review comment by measuring the n-gram                                                                         2.1.1 Data Collection. We adopt the CodeReviewer dataset [30] as
+overlap between the ground truth and predicted comment [30, 32],                                                                      our primary data source, as it is a large-scale dataset curated from
+which fails to fully assess the effectiveness of the comments in                                                                      pull requests from well-regarded GitHub projects that includes
+detecting and resolving security issues. As illustrated in Figure 1,                                                                  detailed code changes (codediff ), commit logs, review comments (𝑅),
+even though the generated comment incorrectly classified the se-                                                                      covering nine programming languages. It provides a comprehensive
+curity issue from “Access Control and Information Security” to                                                                        representation of real-world code review practices, making it well-
+“Type and Data Handling” in the code diff, the BLEU score remains                                                                     suited for training and evaluating our secure code review model.
+relatively high due to the surface-level linguistic similarity between                                                                Specifically, the dataset consists of three sub-datasets corresponding
+the generated comment and the ground truth.                                                                                           to three downstream tasks: code change quality estimation, review
+   We propose SecureReviewer to enhance an LLM’s security code                                                                        comment generation, and code refinement. Both the code change
+review capabilities. Our approach first involves an automated data                                                                    quality estimation and review comment generation datasets are
+workflow, which integrates LLMs and heuristic rules to build a tai-                                                                   utilized to construct our dataset.
+lored dataset for training and evaluation. Leveraging this dataset, we                                                                   Due to a large number of code review comments (about 138K
+devise a security-aware fine-tuning strategy that trains the model                                                                    comments), it is not feasible for us to manually identify comments
+to generate precise comments identifying security vulnerabilities                                                                     related to security issues. To address this, we combine keyword
+and proposing actionable fixes. To further improve comment rele-                                                                      matching and semantic embedding matching [53] methods to cap-
+vance and mitigate hallucinations, we employ Retrieval-Augmented                                                                      ture both explicit mentions of security issues and implicit references
+Generation (RAG) [28], which grounds the generation process by                                                                        to secure coding practices.
+SecureReviewer: Enhancing Large Language Models for Secure Code Review through Secure-aware Fine-tuning                                                         ICSE ’26, April 12–18, 2026, Rio de Janeiro, Brazil
+
+
+
+               Data Collection and Refining                                           Secure-Aware Fine-tuning                                     Retrieval-augmented Review Generation
+
+                                                                   [INST]                                                                    Stage 1
+                                                                   You are a highly capable code reviewer
+                        CodeReviewer Dataset                       specializing in security assessments. Your                                                                              Security
+                                                                   primary task is to conduct a comprehensive                                                                               Type
+                                                                   security review of the provided code changes …
+                                                                   [CODE]                                                                                             Fine-tuned LLM
+                                                                                                                                                   Code Diffs
+                                                                   <code_diffs_here>
+                                                                   [Response]
+                                                                   Security Type:
+                                                                   <input_security_types_here>                                               Stage 2                                   Template Datastore
+                                                                                                                          LLM    LoRA
+                                                                   Description:
+                                                                   <input_description_here>
+                        Code Diffs       Reviews                   Impact:
+                                                                   <input_impact_here>
+                                                                   Advice:                                          Secure-aware Weighting
+                                                                   <input_advice_here>                                                            Final Reviews       Fine-tuned LLM       Template
+
+
+                                                                            Figure 2: Overview of SecureReviewer.
+
+      Data Collection                                Data Source
+                                                                                                                          quality and quantity. This candidate set is then filtered using the
+                       Comment Generation                              Quality Estimation
+                                                                                                                          identical LLM Judge process from our keyword matching stage,
+                         Data w/ issue       CodeReviewer Dataset           Data w/o issue                                ultimately yielding 2,771 security-tagged review comments.
+                                                                                                                          Data Combination. We integrate the data gathered through key-
+                                              Keyword
+                                              Matching                                                                    word and embedding matching by removing duplicates, merging
+                               Keywords
+                                                                      LLM Judge
+                                                                                                 Merge                    similar security types, and ensuring a balanced distribution across
+    Code Diffs Reviews                        Embedding                                                                   security types. Specifically, we begin by eliminating duplicate en-
+                                                                                                                          tries, resulting in an initial dataset of 4,089 unique data instances
+                                               Matching
+                               CWE 699
+
+                                                                                                                          from 4,766. Next, we consolidate semantically similar security types
+      Data Refinement                      CoT Template
+                                                                                           W/ issue
+                                                                                                                          to reduce redundancy. Additionally, types with low sample counts
+                                                                                                                          are merged with related types to improve the overall balance of
+                                                                                                                          the dataset [7]. Finally, we derive seven security types, as detailed
+                                                                                           W/o issue
+
+
+            Test Set     Expert Refine     Dataset
+                                                         LLM Refine
+                                                                                                                          in Table 1. To ensure a realistic representation of real-world code
+                                                                                                                          scenarios and mitigate class imbalance, we further incorporate
+     Figure 3: The process of data collection and refining.
+                                                                                                                          “Non-Issue” data from the “code change quality estimation” task in
+Keyword Matching. To extract security weaknesses, we employ                                                               CodeReviewer dataset as the 8-th type, where instances without
+keyword matching using a set from Yu et al. [55]. From the original                                                       any code review comments are considered as “Non-Issue” [30], and
+122 keywords spanning 15 security defect types, we exclude the                                                            585 samples are selected to maintain balance with the other types
+“common keywords” category to reduce noise. Each defect type is                                                           (approximately 1/8 of the whole dataset). With the inclusion of this
+mapped to a Common Weakness Enumeration (CWE)1 . After text                                                               additional category, the final dataset comprises 4,674 entries, and
+normalization (lowercasing, stemming, and punctuation removal),                                                           the distribution of category proportions is illustrated in Table 1.
+this initial filtering yields 10,840 candidate comments. To ensure
+high precision, we further refine this set using GPT-4o [1] as an                                                         2.1.2 Data Refinement. Original review comments frequently con-
+LLM Judge [29, 59]. For each candidate, the LLM Judge receives                                                            tained ambiguous phrasing or lacked critical elements essential for
+the code change, the full review comment, and the matched secu-                                                           comprehensive security code review. To address these limitations,
+rity type. It then performs a binary classification on whether the                                                        we perform systematic data refinement that adapts the principles
+comment accurately reflects the security issue, resulting in a final,                                                     of effective code review [26, 57] to the security context. Specifically,
+high-quality dataset of 1,995 security-tagged review comments.                                                            we decomposed the secure code review task into the following four
+Embedding Matching. To identify security-related comments lack-                                                           sequential sub-tasks:
+ing explicit keywords, we employ an embedding-based matching                                                              • Identify the Security Type: Clearly specify the type of security
+approach. We generate vector representations for review comments                                                             issue that is being addressed.
+and Common Weakness Enumeration (CWE) descriptions using                                                                  • Describe the Issue: Provide a clear and logical description of
+SO_word2vec [14], a model tailored for the software engineer-                                                                the root cause of the identified issue.
+ing domain. As our semantic anchors, we leverage descriptions                                                             • Explain the Impact: Analyze the potential impact of the issue,
+from CWE-699 [36], a structured vulnerability classification fo-                                                             laying the foundation for proposing a solution.
+cused on the software development lifecycle. This classification                                                          • Advise an Improvement: Offer actionable and specific recom-
+organizes over 400 individual weaknesses into 40 major categories                                                            mendations to resolve the issue.
+and notably provides the keyword groups utilized in our preceding                                                         We argue the security code review comment should encompass
+keyword matching step. The process involves pre-processing both                                                           the above elements, and we formally define the security code
+text sources (e.g., removing stop words and normalizing) and then                                                         review comment 𝑅 as: 𝑅 = (𝑆𝑇 , 𝐷, 𝐼, 𝐴), where 𝑆𝑇 represents the
+computing the cosine similarity [44] between comment and CWE                                                              Security Type, 𝐷 is the issue description, 𝐼 denotes the impact, and
+vectors. We retain pairs exceeding a 70% similarity threshold, which                                                      𝐴 provides actionable advice for resolving the issue.
+was empirically chosen over 65% and 75% to best balance match                                                                 Leveraging the advanced capabilities of LLMs in tasks such as
+                                                                                                                          code understanding [33], vulnerability detection [12], and bug fix-
+1 https://cwe.mitre.org/                                                                                                  ing [54], we employ GPT-4o to automatically refine the collected
+ICSE ’26, April 12–18, 2026, Rio de Janeiro, Brazil                                                             Fang Liu1 , Simiao Liu1 , Yinghao Zhu1 , Xiaoli Lian1 , Li Zhang1∗
+
+
+                                                                  Table 1: Statistics of our dataset.
+      Security Type                           Keyword                                        CWE IDs                                              Count    Prop. (%)
+      Exception Handling                      Crash                                          CWE-389, CWE-429, CWE-1228                           532      11.38
+      Concurrency                             Race Condition, Deadlock                       CWE-557, CWE-387                                     412      8.81
+      Input Validation                        SQL Injection, Format String, Command In-      CWE-1215, CWE-133, CWE-137                           819      17.52
+                                              jection
+      Access Control and Information Se-      Improper Access, Cross Site Scripting (XSS),   CWE-1211, CWE-1212, CWE-1210, CWE-255,               795      17.01
+      curity                                  Cross Site Request Forgery, Encryption         CWE-417, CWE-310, CWE-320, CWE-1216,
+                                                                                             CWE-275, CWE-265, CWE-355, CWE-1217,
+                                                                                             CWE-199
+      Resource Management                     Buffer Overflow, Use After Free, Resource      CWE-1218, CWE-411, CWE-465, CWE-452,                 292      6.25
+                                              Leak                                           CWE-1219, CWE-399
+      State Management                        Denial of Service (DoS)                        CWE-1006, CWE-438, CWE-840, CWE-1226,                740      15.83
+                                                                                             CWE-1225, CWE-371
+      Type and Data Handling                  Integer Overflow                               CWE-1214, CWE-1227, CWE-569, CWE-1213,               499      10.68
+                                                                                             CWE-189, CWE-136, CWE-19
+      Non-Issue                               -                                              -                                                    585      12.52
+
+
+review comment data using one-shot prompting guided by the                                   on generating code review comments capable of accurately iden-
+aforementioned criteria, transforming raw review comments into                               tifying security issues and providing actionable fix suggestions,
+structured, comprehensive review comment.                                                    leveraging our curated dataset. Specifically, we refine the training
+Initial Data Quality Assessment: To validate the quality of the                              objective by modifying the loss function to prioritize two crite-
+LLM refined data, we randomly sampled 351 data entries from the                              ria: precise categorization of security issue types and heightened
+4,089 refined pieces (achieving 95% confidence level with 5% confi-                          attention to security-critical code elements in code diffs. This ap-
+dence interval [4]). Two domain experts, each with over 6 years of                           proach enhances the model’s capacity to produce context-sensitive,
+software development experience, independently evaluated these                               security-focused feedback, ultimately strengthening the efficacy of
+samples using aforementioned four criteria. This initial validation                          automated secure code reviews.
+required 8-10 minutes per sample for code understanding and secu-                                To achieve this, we introduce specific token sets that highlight
+rity validation, including bidirectional verification with the original                      security-critical elements within the code by adjusting the weight-
+comment, totaling 98 person hours. The experts achieved a Cohen’s                            ing scheme. These sets are defined as follows:
+Kappa score of 0.74, indicating substantial inter-rater agreement,                           • I𝑉 : The set of tokens corresponding to identifiers in code changes
+with disagreements resolved through discussion. This validation                                 referenced in review comments 𝑅 receive additional weighting,
+confirmed that 333 entries (95%) met all quality criteria, demon-                               as these elements are critical for pinpointing security issues (e.g.,
+strating the effectiveness of our automated refinement approach.                                insecure function usage, improper array indexing, etc).
+Following this initial validation, we partition the refined dataset                          • I𝑆𝑇 : The set of tokens representing the specific security type (e.g.,
+into training, validation, and test sets with sizes of 4,074, 300, and                          Input Validation) also receive additional weighting
+300 samples, respectively, ensuring proportional representation of                               Building upon this foundation, we design our secure-aware (SA)
+each security type across all subsets.                                                       loss function −L𝑆𝐴 as follows:
+Test Set Quality Control: To establish a reliable evaluation bench-                                             ∑︁                       ∑︁
+mark, the same two experts conducted additional quality control                                       −L𝑆𝐴 =       log 𝑃 (𝑥𝑡 |𝑥 <𝑡 ) + 𝛼    log 𝑃 (𝑥𝑡 |𝑥 <𝑡 ) +
+                                                                                                                𝑡 ∈𝑅                              𝑡 ∈ I𝑉
+specifically on the test samples (262 samples with security issues).                                                 ∑︁
+Through meticulous examination, they identified 83 samples re-                                                  𝛽             log 𝑃 (𝑥𝑡 |𝑥 <𝑡 )                               (1)
+quiring content clarification or enhancement, which were then                                                       𝑡 ∈ I𝑆𝑇
+collaboratively refined to ensure strict adherence to our secure
+                                                                                             where 𝑥𝑖 denotes the token at position 𝑖, and 𝑃 (𝑥𝑖 | 𝑥 <𝑖 ) is the
+code review criteria. This collaborative refinement process required
+                                                                                             probability of generating 𝑥𝑖 based on the proceeding tokens 𝑥 <𝑖 .
+experts to clarify technical descriptions, enhance impact analyses,
+                                                                                             The first part of the equation calculates the standard cross-entropy
+and optimize remediation advice specificity. The whole quality
+                                                                                             loss for all tokens in the review comment 𝑅. The second and third
+control process took approximately 87.3 person hours.
+                                                                                             terms introduce a targeted upweighting for security-critical ele-
+                                                                                             ments, i.e., tokens in I𝑉 and I𝑆𝑇 , modulated by coefficients 𝛼 and
+                                                                                             𝛽, respectively. This approach sharpens the model’s focus on key
+2.2      Secure-aware Fine-tuning                                                            security indicators.
+While standard end-to-end instruction-based fine-tuning for re-                                 We adopted Low-Rank Adaptation (LoRA) [22] to optimize our
+view comment generation enables LLMs to produce feedback, this                               training process in a cost-effective manner.
+approach fails to effectively identify security issues or provide
+context-specific actionable suggestions, often resulting in inaccu-                          2.3    Retrieval-augmented Review Generation
+rate or overly generic comments. To this end, we propose a new                               To further improve the quality of generated review comments and
+secure-aware fine-tuning strategy, which fine-tunes LLM to focus                             mitigate the hallucination issues commonly encountered in LLMs,
+SecureReviewer: Enhancing Large Language Models for Secure Code Review through Secure-aware Fine-tuning                      ICSE ’26, April 12–18, 2026, Rio de Janeiro, Brazil
+
+
+we leverage the RAG technique to incorporate specialized security                                                        Review Generation
+domain knowledge. RAG is a widely adopted paradigm that im-                              [INST]
+proves LLMs by integrating relevant information retrieved from                           You are a highly capable code reviewer specializing in security assessments. Your
+                                                                                         primary task is to conduct a comprehensive security review of the provided code changes.
+external databases into the input [17], and has been widely used                         Identify and evaluate any potential security weaknesses, and generate a detailed review
+                                                                                         report that includes the following sections:
+in various code-related tasks [42, 52, 58]. We first construct a tem-                    1. Security Type //The vulnerability type detected.
+                                                                                         2. Description //Clearly explain the security issue found in the provided code patch.
+plate datastore consisting of high-quality code review comment                           3. Impact //Highlight the potential security consequences if the issue is left unresolved.
+templates, and then retrieve the most similar comment from the                           4. Advice //Offer recommendations for resolving the issue.
+                                                                                         If you judge that there is no security risk, output No Issue.
+datastore based on the code under review and incorporate it into                         [CODE]
+                                                                                         Now review this code {diff}
+the generation process.                                                                  [Response]
+                                                                                         {Review Comment}
+Template datastore construction. Following established RAG prac-
+tices [50] that build retrieval datastores from training data, we                                            Retrieval-Augmented Review Generation
+use our fine-tuning dataset to create templates. Given the current                       [INST]
+                                                                                         Given a code change with identified security type: {security_type}.
+landscape of limited high quality secure code review data, this ap-                      Your task is to provide a detailed security review focusing on the following aspects:
+proach maximizes resource utilization. We manually crafted 261                           1. Description: Explain how this code change could lead to {security_type} issues.
+                                                                                         2. Impact: Describe the potential security consequences if these issues are not
+high-quality code review comment templates from the training set                         addressed.
+                                                                                         3. Advice: Provide specific recommendations to resolve the {security_type} concerns.
+adhering to our previously defined structure for security code re-                       Below is the similar example where the same {security_type} issue is identified:
+                                                                                         The code change is {diff},the comment is {Review Comment}
+view comments (𝑅 = (𝑆𝑇 , 𝐷, 𝐼, 𝐴)), encompassing all security types                      [CODE]
+presented in Table 1, with a distribution that closely approximates                      Now review this code {diff}
+                                                                                         [Response]
+the proportional representation of each security type in the training                    {Review Comment}
+
+dataset. These templates serve as a knowledge base for generating                     Figure 4: Prompt templates used for review generation.
+high-quality review comments.
+Retrieval-Augmented Review Generation (RARG). In this process, we                   assess the effectiveness of review comments in detecting and re-
+employ a two-stage strategy. SecureReviewer first generates an                      solving security issues, we design SecureBLEU to capture both the
+initial review comment based on the code change, from which we                      general linguistic similarity between generated and reference texts
+extract the corresponding security issue type. In the second stage,                 and the critical inclusion of security-specific content.
+we utilize the BM25 algorithm to retrieve the most relevant review                     As shown in Algorithm 1, the metric computes a score by com-
+comment template. This retrieval process uses the code change                       bining two components. The first component is a modified BLEU
+as the query and the set of code changes linked to the predicted                    score (scorebleu ) evaluated across multiple fields of the review com-
+security issue type within the template library as the document                     ment: security type, description, impact, and advice. The security
+corpus.                                                                             type field is assessed through direct comparison—yielding a score of
+   The retrieved template serves as an auxiliary context of the                     100 for an exact match and 0 otherwise—while the remaining fields
+prompt to guide the generation of the final review comment, en-                     (description, impact, and advice) are evaluated using BLEU-4. The
+suring it is more accurate and normative. It is important to note                   second component (scorekeywords ) evaluates the overlap of security-
+that incorporating RAG does not affect the model’s performance on                   specific keywords (associated with the detected security type 𝑆𝑇 )
+issue detection since the retrieval is based on the predicted issue and             within the description, impact, and advice. These keywords are
+does not alter the issue type within the review comment; instead, it                identified using a predefined dictionary 𝐾 [𝑆𝑇 ], where 𝐾 is a key-
+solely updates other aspects of the comment’s content. The prompt                   word dictionary organized by security type. The final score for each
+templates used in this process are illustrated in Figure 4.                         instance is calculated by equally weighting these two components,
+                                                                                    which was empirically validated in Section 5.2, ensuring a balanced
+3 Experimental Setup                                                                assessment of both linguistic quality and security relevance while
+                                                                                    maintaining alignment with human judgment. Scorebleu assesses
+3.1 Metrics
+                                                                                    overall linguistic similarity, treating security-critical keywords no
+3.1.1 Issue Detection. For this task, following existing work [30,                  differently than ordinary words. In contrast, scorekeywords specifi-
+57], we employ conventional metrics, Precision, Recall, F1-score,                   cally targets these security-critical terms as independent indicators
+and Accuracy, to quantitatively assess the model’s capability to                    of technical accuracy and domain expertise.
+accurately identify specific security issue within the framework
+of an 8-category classification task (7 security types + 1 non-issue                3.1.3 Rationale behind SecureBLEU. To justify the rationale be-
+type). The security type is extracted from the generated comment                    hind SecureBLEU, we provide a detailed breakdown of how its two
+(𝑆𝑇 ).                                                                              components work complementarily in Figure 1, where the model
+                                                                                    incorrectly classified a security issue from “Access Control
+3.1.2 Review Comment Generation. For this task, samples with a                      and Information Security” to “Type and Data Handling”. Tra-
+reference security type of “Non-Issue” are excluded from this evalua-               ditional BLEU-4 scores this comment at 26.44, focusing primar-
+tion, as no review comments are expected for these cases, resulting in              ily on surface-level linguistic similarity. However, SecureBLEU’s
+262 samples from the test set being evaluated (38 out of the original               two-component analysis reveals critical deficiencies: (1) scorebleu
+300 were excluded). To evaluate the quality of generated secure                     = 17.57, where the incorrect security type classification (ST field =
+review comments, we use both BLEU-4 score and a new metric we                       0) penalized the overall linguistic assessment. This penalty mecha-
+designed, SecureBLEU. Given that BLEU score struggles to fully                      nism is implemented through our modified BLEU computation in
+ICSE ’26, April 12–18, 2026, Rio de Janeiro, Brazil                                              Fang Liu1 , Simiao Liu1 , Yinghao Zhu1 , Xiaoli Lian1 , Li Zhang1∗
+
+
+Algorithm 1, which incorporates the security type accuracy mul-             Algorithm 1 SecureBLEU
+tiplier to ensure that misclassified security types receive substan-         1: Input: 𝑅 𝑝 : predicted review, 𝑅𝑟 : reference review, 𝐾 : security-specific keywords
+tially reduced scores regardless of surface-level text similarity. (2)          dict, W: weight dict for fields
+                                                                             2: Output: SecureBLEU score
+scorekeywords = 6.67, indicating that the model fails to include critical    3: if 𝑅 𝑝 [ST] = "Non-Issue" then return 0
+security keywords like “unauthorized access”, “misconfiguration”,            4: end if
+and “environmental security” in its generated review comment.                5: scorebleu ← 0
+                                                                             6: for each field in {ST, D, I, A} do // First Term
+This omission occurred primarily due to misclassification of the             7:     if field = ST then
+security issue type, significantly impairing the comment’s ability           8:          score ← 100 if 𝑅 𝑝 [ 𝑓 𝑖𝑒𝑙𝑑 ] =𝑅𝑟 [ 𝑓 𝑖𝑒𝑙𝑑 ] , 0 otherwise
+to properly address the “Access Control and Information Security”            9:     else
+                                                                            10:          score ← BLEU-4 (𝑅 𝑝 [ field ], 𝑅𝑟 [ field ] )
+concern. The final SecureBLEU score of 12.12 through weighted av-           11:     end if
+eraging provides a more justifiable quality assessment that BLEU’s          12:     scorebleu ← scorebleu + score*W[field]
+                                                                            13: end for
+surface-level matching failed to capture, demonstrating how the             14: scorekeywords ← 0
+two components together expose both linguistic and technical in-            15: for each field in {D, I, A} do // Second Term
+adequacies in security-focused code review.                                 16:     keywords𝑟 ← extract_keywords (𝑅𝑟 [ field ], 𝐾 [𝑆𝑇 ] )
+                                                                            17:     keywords𝑝 ← extract_keywords (𝑅 𝑝 [ field ], keywords𝑟 )
+                                                                            18:     if | keywords𝑟 | > 0 then
+3.2      Baselines                                                          19:          ratio ← | keywords𝑝 |/| keywords𝑟 |
+                                                                            20:     else
+We select a diverse set of baselines, including both specialized code       21:          ratio ← 0
+review models and general-purpose LLMs, to ensure a comprehen-              22:     end if
+                                                                            23:     scorekeywords ← scorekeywords + ratio*W[field]
+sive comparison with our proposed method.                                   24: end for
+• CodeReviewer [30]: A pre-trained model specifically designed              25: return 0.5 ∗ score𝑏𝑙𝑒𝑢 + 0.5 ∗ score𝑘𝑒𝑦𝑤𝑜𝑟𝑑𝑠
+   for code review. We fine-tuned the model on our dataset using
+   the official code scripts and recommended hyperparameters.
+• LlamaReviewer [32]: A fine-tuned LLaMA model for code re-           standard deviation results (in Table 2). For our SA loss function,
+   view tasks. We fine-tuned the model on our dataset, maintaining    after extensive experiments to balance the trade-off between gen-
+   the same LoRA configurations as in our experiments.                erating fluent review comments and focusing on security-critical
+• General LLMs: We evaluated a wide range of general-purpose          elements, we set the coefficients to 𝛼 = 2 and 𝛽 = 5. To ensure a
+   LLMs that have shown strong performance in code-related tasks.     fair evaluation and to eliminate potential output format bias, all
+   These models span diverse architectures and parameter scales, in-  models were trained/prompted to generate reviews in standardized
+   cluding GPT-4o [1], Claude-3.5-sonnet [9], DeepSeek-V3 [31],       format according to our definition in Section 2.1.2.
+   DeepSeek-R1 [18], DeepSeek-Coder-6.7B-Instruct [19], Codellama-
+   7B-Instruct [41], and Qwen2.5-Coder-7B [23].                       3.4 Dataset Construction Cost
+                                                                      Our dataset construction relies on both GPT-4o and expert vali-
+3.3 Implementation Details                                            dation, incurring financial and human costs. For the LLM judge
+Given their strong performance in code-related tasks and our ∼4K      process in data collection, the LLM processed 13,611 candidate sam-
+fine-tuning samples, we selected CodeLlama-7B [41], DeepSeek-         ples (10,840 from keyword matching and 2,771 from embedding
+Coder-6.7B [19], and Qwen2.5-Coder-7B [23] as our backbone mod-       matching), requiring an average of 230.43 input tokens per judg-
+els. Their 6-7B parameter size offers an optimal balance of capacity  ment. For data refinement procedure, LLM handled 4,089 samples,
+and efficiency, mitigating overfitting risks. We configured LoRA      consuming an average of 692.14 input and 193.73 output tokens per
+with parameters of 𝑟 = 8, lora_alpha=16, and lora_dropout=0.05.       sample. The total dataset construction cost was approximately $46
+Training was conducted with a maximum token length of 2048, a         based on GPT-4o pricing ($5/1M input, $20/1M output tokens). For
+batch size of 4, gradient accumulation of 8, and a learning rate of   the expert validation, each review took an average of 8–10 minutes
+3e-4. To ensure reproducible outputs, inference utilized determin-    per sample, totaling 98 person hours for the initial quality assess-
+istic generation with greedy decoding. For baseline reproduction,     ment (351 samples) and 87.3 person hours for test set refinement
+we ensured fair comparisons by adhering to original specifications.   (262 samples, including collaborative enhancements).
+CodeReviewer [30] was fine-tuned using its official repository and
+recommended hyper-parameters. To isolate architectural differ-
+                                                                            4    Experimental Results and Analysis
+ences, LlamaReviewer [32] was adapted using identical LoRA con-             To assess the effectiveness of SecureReviewer, we conduct exper-
+figurations as our method. The hyper-parameters for the baseline            iments to address the following research questions:
+versions of CodeLlama-7B, DeepSeek-Coder-6.7B, and Qwen2.5-                 • RQ1: Overall Performance - How does SecureReviewer per-
+Coder-7B were also kept consistent with our model’s setup.                    form compared to state-of-the-art code review models in terms
+   For the remaining baseline models—i.e., GPT-4o, Claude-3.5-                of (1) accuracy in security issue detection, and (2) overall quality
+Sonnet, and DeepSeek-V3/R1—we used API with consistent parame-                of generated review comments?
+ters: temperature=0.7, top_p=0.7, and frequency_penalty=0.5                 • RQ2: Ablation Study - What is the contribution of each com-
+to ensure fair comparison. To account for the stochastic nature               ponent in SecureReviewer to its overall performance?
+of these models with temperature=0.7, we conducted three inde-              • RQ3: Quality Analysis - How effectively does SecureReviewer
+pendent runs for each API-based model and report the mean and                 address different types of security issues?
+SecureReviewer: Enhancing Large Language Models for Secure Code Review through Secure-aware Fine-tuning             ICSE ’26, April 12–18, 2026, Rio de Janeiro, Brazil
+
+
+Table 2: Results on issue detection and review comment generation. For general LLMs, we conducted three independent runs
+and report the mean and standard deviation of the results.
+                                                                   Issue Detection                              Comment Generation
+                    Model
+                                               Precision         Recall          F1            Accuracy          BLEU    SecureBLEU
+                    CodeReviewer                 65.88           57.44            59.03           58.53           8.66              21.31
+                    LlamaReviewer                66.06           60.29            61.46           61.20           9.20              24.56
+                    DeepSeek-R1              54.73 (±1.77)    46.54 (±1.45)   46.24 (±1.31)   46.27 (±2.05)    5.81 (±0.38)     15.84 (±1.27)
+                    DeepSeek-V3              62.83 (±0.29)    51.89 (±0.38)   53.31 (±0.43)   53.56 (±0.51)   10.80 (±0.34)     21.84 (±0.92)
+                    DeepSeek-Coder-6.7B          36.30            18.55           15.58           23.23            6.85             16.00
+                    CodeLlama-7B                 14.69            12.35           6.22            17.39            4.26             11.68
+                    Qwen2.5-Coder-7B             46.31            39.61           38.57           45.00            7.04             20.63
+                    GPT-4o                   58.74 (±0.52)    52.66 (±043)    53.18 (±0.35)   54.50 (±0.44)    7.60 (±0.26)     19.33 (±0.52)
+                    Claude-3.5-sonnet        60.74 (±0.46)    53.56 (±0.51)   52.81 (±0.65)   54.27 (±0.51)    8.83 (±0.24)     19.54 (±0.83)
+                    SecureReviewer𝐶𝐿             73.28           71.48           71.98           71.91           11.34              29.31
+                    SecureReviewer𝐷𝑆             72.25           71.23           71.62           72.24           11.01              29.23
+                    SecureReviewer𝑄𝑊             73.56           70.64           71.60           71.33            9.35              28.76
+
+4.1    RQ1: Overall Performance                                                     7 and 10. However, DeepSeek-R1 and CodeLlama diverge signifi-
+4.1.1 RQ1-1: Performance of Issue Detection. The left section of                    cantly from this range, scoring 5.81 and 4.26, respectively. After
+Table 2 presents the performance comparison on the issue detec-                     analyzing the results, we observe that the lower performance of
+tion task. Among all the baselines, LlamaReviewer and CodeRe-                       DeepSeek-R1 is primarily due to its overly divergent and unstruc-
+viewer, both fine-tuned on our constructed dataset, demonstrate su-                 tured reasoning processes during code analysis. Specifically, the
+perior performance compared to general-purpose LLMs. This high-                     model tends to engage in excessive and repetitive thinking pat-
+lights the effectiveness and importance of fine-tuning on domain-                   terns, frequently shifting between analytical approaches without
+specific and high-quality datasets, enabling these models to out-                   fully developing any single line of reasoning. This leads to shallow
+perform their general-purpose counterparts by leveraging domain-                    analyses that overlook critical issues while emphasizing irrelevant
+specific knowledge. SecureReviewer, implemented in three vari-                      aspects of the code. As for CodeLlama, it often fails to adhere to
+ants (SecureReviewer𝐶𝐿 based on CodeLlama, SecureReviewer𝐷𝑆                         instruction guidelines, frequently repeating input code verbatim
+based on DeepSeek-Coder, and SecureReviewer𝑄𝑊 based on Qwen2.5-                     rather than providing meaningful feedback.
+Coder), consistently outperforms all baseline models across all eval-                  Unlike BLEU-4, the SecureBLEU metric, which measures the
+uation metrics. This highlights the efficacy of our secure-aware                    effectiveness of the review comment in detecting and resolving the
+fine-tuning strategy, which enhances the model’s sensitivity to                     security issues, reveals more pronounced differences across models.
+security-related classification tokens, thus achieving better results               This metric effectively captures variations in the quality of security-
+in identifying security issues. It is also worth noting that while                  focused content within the generated comments, providing a more
+CodeLlama initially struggles to detect security issues, its fine-tuned             nuanced assessment of their relevance and utility in addressing
+version, SecureReviewer𝐶𝐿 , achieves significant performance im-                    security concerns.
+provements. This further underscores the effectiveness of our fine-                    Among the baseline models, LlamaReviewer achieves the highest
+tuning strategy in enhancing the model’s capabilities. Moreover, we                 SecureBLEU score of 24.56, aligning with its strong performance
+observe that general LLMs such as Claude, DeepSeek-V3, Qwen2.5-                     in issue detection. This correlation indicates that the quality of
+Coder, and GPT-4o, while not fine-tuned, still achieve considerable                 generated review comments is closely tied to the model’s ability to
+performance, demonstrating their promising potential and per-                       detect security issues. In other words, if a model can accurately iden-
+formance in detecting security issues even without task-specific                    tify security vulnerabilities, it is more likely to produce clear issue
+optimization. The consistent results across multiple runs further                   descriptions, thorough impact analyses, and actionable remedia-
+validate the reliability of these comparisons.                                      tion recommendations. Among general-purpose LLMs, DeepSeek-
+                                                                                    V3 and Claude achieve promising performance, with SecureBLEU
+                                                                                    scores of 21.84 and 19.54, respectively, even exceeding that of the
+                                                                                    fine-tuned CodeReviewer (21.31), demonstrating the adaptability of
+4.1.2 RQ1-2: Performance of Review Comment Generation. For the                      these LLMs to security-related tasks despite their lack of domain-
+evaluation of review comment generation, we utilize both the BLEU-                  specific fine-tuning. Nevertheless, SecureReviewer outperforms
+4 score and the SecureBLEU metric.                                                  all baselines substantially, achieving a 19% relative improvement
+   While BLEU-4 measures general linguistic similarity, Secure-                     over the best baseline, underscoring the effectiveness of our fine-
+BLEU provides a more nuanced assessment by focusing on security-                    tuning strategy combined with retrieval-augmented generation,
+specific content. The results are shown in the right portion of Ta-                 which improves both the linguistic quality and security relevance
+ble 2. Regarding BLEU-4 score, SecureReviewer𝐶𝐿 achieves a score                    of the generated comments.
+of 11.34, outperforming the best-performing baseline (DeepSeek-
+V3) by 5%. Among all the evaluated models, BLEU-4 scores show
+relatively modest variation, with most baselines falling between
+ICSE ’26, April 12–18, 2026, Rio de Janeiro, Brazil                                                   Fang Liu1 , Simiao Liu1 , Yinghao Zhu1 , Xiaoli Lian1 , Li Zhang1∗
+
+
+  Answer to RQ1: SecureReviewer achieves state-of-the-art perfor-                     are less pronounced compared to those achieved through domain-
+  mance in secure code review. For issue detection, it achieves 17%                   specific fine-tuning, this approach sharpens the model’s sensitivity
+  higher F1 score and 18% better accuracy than the best-performing                    to security-related features, thus striking a better balance between
+  baseline. Regarding the quality of generated review comments,                       precision and recall in issue detection and further enhancing the
+  it exceeds the best baseline of 11% in BLEU-4 and demonstrates                      overall quality of the generated review comments.
+  approximately 19% improvement in SecureBLEU.
+                                                                                      4.2.3 Impact of RARG. As mentioned in Section 2.3, applying the
+                                                                                      RARG does not affect model’s issue detection performance. As a
+4.2      RQ2: Ablation Study                                                          result, the results of issue detection remain consistent with those
+We conduct an ablation study to evaluate each component’s con-                        achieved through fine-tuning and SA loss optimization. Regarding
+tribution in SecureReviewer, including: (1) domain-specific fine-                     the review comment generation, we observe that applying the
+tuning to establish baseline security expertise, (2) security-aware                   RARG does not yield consistent or significant improvements.
+loss optimization to enhance focus on critical security elements,                        This primarily stems from the following two aspects. First, domain-
+and (3) retrieval-augmented generation to ground reviews in es-                       specific capabilities instilled during fine-tuning render retrieved
+tablished security best practices. We incrementally incorporate                       templates largely redundant with the model’s internal knowledge
+these components using CodeLlama-7B, DeepSeek-Coder-6.7B, and                         base. The fine-tuned model already encodes specialized patterns for
+Qwen2.5-Coder-7B as backbone models. The results are presented                        security issue detection and resolution, reducing the added value of
+in Table 3.                                                                           external templates. Second, fine-tuning may diminish the model’s
+                                                                                      general instruction-following capacity, constraining its ability to
+    Table 3: Ablation study results of SecureReviewer.                                leverage RAG’s external context effectively. This is compounded
+                                    Issue Detection              Comment Generation   by an inconsistency in instruction formats between training and
+                                                                                      inference phases. During fine-tuning, the model learns to gener-
+ Model
+                        Precision    Recall    F1     Accuracy   BLEU   SecureBLEU
+ DeepSeek-Coder-6.7B      36.30      18.55   15.58     23.23      6.85     16.00      ate comments without example-based instructions, whereas dur-
+ + Fine-tuning            70.70      68.76   68.90     68.23     11.08     26.27
+ + SA-Loss                72.25      71.23   71.62     72.24     11.27     28.79      ing RAG inference, a retrieved template is injected into the input
+ + RARG (our model)       72.25      71.23   71.62     72.24     11.01     29.23      prompt. This structural mismatch disrupts the model’s ability to
+ CodeLlama-7B             14.69      12.35    6.22     17.39      4.26     11.68      generalize under the altered input format, leading to suboptimal
+ + Fine-tuning            71.64      69.95   71.09     70.23     11.91     27.88
+ + SA-Loss                73.28      71.48   71.98     71.91     12.46     29.69      adaptation and diminishing returns.
+ + RARG (our model)       73.28      71.48   71.98     71.91     11.34     29.31         Building on the aforementioned analysis, we argue that our
+ Qwen2.5-Coder-7B         46.31      39.61   38.57     45.00     7.04      20.63      RARG framework may prove particularly advantageous for general-
+ + Fine-tuning            71.12      68.42   68.84     68.67     9.41      27.61
+ + SA-Loss                73.56      70.64   71.60     71.33     9.47      29.21      purpose LLMs. To validate this hypothesis, we apply RARG to
+ + RARG (our model)                                              9.35      28.76
+                          73.56      70.64   71.60     71.33
+                                                                                      GPT-4o, Claude-3.5-Sonnet, and DeepSeek-V3, with results sum-
+                                                                                      marized in Table 4. As demonstrated in the results, RARG brings
+4.2.1 Impact of Fine-tuning. Domain-specific fine-tuning repre-                       substantially improvements in SecureBLEU scores for these models.
+sents a fundamental adaptation strategy for LLMs to specialize                        This notable improvement stems from a key distinction: general-
+in security-focused code review. We evaluate its contribution to                      purpose LLMs are inherently trained on broad, diverse datasets
+enhancing our model’s performance.                                                    without task-specific specialization, rendering them deficient in
+   As seen from the results, the performance of vanilla LLMs re-                      domain-specific security knowledge compared to fine-tuned coun-
+veals limited capability in secure code review. This is particularly                  terparts. The RARG framework effectively bridges this critical gap
+pronounced in CodeLlama-7B, where poor instruction-following be-                      by retrieving and integrating security-relevant contextual patterns
+havior significantly impairs its effectiveness. It frequently generates               that these models would otherwise fail to prioritize. This supple-
+irrelevant identifiers, repetitive code snippets, and meaningless out-                mentation enables them to produce more security-relevant and
+puts, which may due to its insufficient exposure to security review                   actionable review comments.
+tasks and code-diff patterns during pre-training.
+   Applying domain-specific fine-tuning yields substantial improve-                         Table 4: Performance of RARG on general LLMs.
+ments, aligning the models with intricate code patterns and security                               Model                  BLEU       SecureBLEU
+vulnerabilities. For instance, fine-tuning CodeLlama-7B achieves
+                                                                                                   GPT-4o                   7.60           19.33
+an absolute improvement of 64.87 F1-score in issue detection, while
+                                                                                                   + RARG                   7.47           23.93
+Qwen2.5-Coder-7B improves by 30.27 F1-score, enhancing review
+comment quality with BLEU-4 increasing by 7.65 and SecureBLEU                                      Claude-3.5-sonnet        8.83           19.54
+improving by 16.2 for CodeLlama-7B. These gains highlight fine-                                    + RARG                   7.75           29.34
+tuning’s critical role in adapting general-purpose LLMs to the nu-                                 DeepSeek-V3             10.80           21.84
+anced requirements of secure code review.                                                          + RARG                  10.19           25.64
+
+4.2.2 Impact of SA-Loss. After employing our proposed secure-                          Answer to RQ2: Each component contributes to SecureReviewer’s
+aware loss optimization, which enhances the model’s focus on                           performance gains, with domain-specific fine-tuning delivering
+security-critical tokens through a re-weighted loss function, the per-
+formance of both issue detection and review comment generation is
+further improved. Although the overall performance improvements
+SecureReviewer: Enhancing Large Language Models for Secure Code Review through Secure-aware Fine-tuning          ICSE ’26, April 12–18, 2026, Rio de Janeiro, Brazil
+
+
+
+
+              (a) F1 score on issue detection.          (b) SecureBLEU score on review generation.        (c) BLEU score on review generation.
+                                              Figure 5: Performance across various security types.
+ the most substantial improvements. While RARG provides lim-                        all categories, substantially outperforming the baselines. Notably,
+ ited benefits for fine-tuned models, it substantially enhances                     the score distribution of all models aligns closely with the F1-score
+ general-purpose LLMs by augmenting their security knowledge.                       trends observed in issue detection (Figure 5a). This consistency high-
+                                                                                    lights a strong correlation between issue detection performance
+4.3    RQ3: Quality Analysis                                                        and the quality of generated review comments, as captured by
+We analyze SecureReviewer’s performance in issue detection and                      SecureBLEU.
+review generation across the seven security types detailed in Ta-                       Conversely, categories with lower F1 performance in issue de-
+ble 1. We compare our model against four top-performing base-                       tection like State Management and Resource Management show
+lines—CodeReviewer, LlamaReviewer, DeepSeek-V3, and Claude-                         correspondingly modest SecureBLEU scores. On one hand, lower
+3.5-sonnet—with the results presented in Figures 5.                                 F1 scores indicate fewer successful predictions, resulting in reduced
+                                                                                    overlap of category-specific security keywords and consequently
+4.3.1 Issue Detection. Figure 5a illustrates the issue detection per-               lower weighted SecureBLEU scores. On the other hand, human-
+formance across various security types. We can observe that all                     crafted reference comments for State Management and Resource
+three variants of SecureReviewer achieve balanced performance                       Management issues extensively incorporate contextual code iden-
+in issue detection, outperforming baseline models across multi-                     tifiers and causal explanations (e.g., “variable X not released leads
+ple categories. The results reveal that baseline performance de-                    to resource leak”), while our model still struggles to capture these
+grades with higher vulnerability complexity. Specifically, Concur-                  contextual references.
+rency issues—which require complex semantic reasoning about                             Regarding BLEU scores, as shown in Figure 5c, SecureReviewer
+thread synchronization—show large performance gaps between                          achieves comparable or slightly higher scores than baselines, though
+baselines and SecureReviewer. CodeReviewer and LlamaReviewer,                       performance improvements are less pronounced compared to Se-
+fine-tuned with domain-specific data, display more balanced perfor-                 cureBLEU and F1 gains. This discrepancy primarily arises from our
+mance across all types. These findings underscore the importance of                 proposed secure-aware fine-tuning strategy, which is specifically
+domain-specific fine-tuning for achieving robust and generalizable                  optimized to prioritize security-critical tokens over general linguis-
+performance on security-focused tasks. Despite SecureReviewer’s                     tic fluency. By focusing on accurately detecting security issues and
+substantial improvements over baselines, its performance varies                     providing precise explanations and advice, SecureReviewer gen-
+across different security types. The approach is less effective on                  erates comments that, while highly relevant to security, may differ
+State Management and Resource Management issues. Notably, while                     from reference review comments in phrasing or structure, resulting
+demonstrating significant gains for Concurrency issues, they remain                 in relatively lower BLEU scores despite enhanced practical utility
+a particularly challenging category across all model variants. This                 for security review purposes.
+variation is attributable to the fundamental differences in how these                 Answer to RQ3: SecureReviewer shows balanced and superior
+distinct issue types manifest.                                                        performance across various security types in identifying and ad-
+   Specifically, Concurrency, State Management, and Resource Man-                     dressing security issues. An obvious correlation exists between
+agement issues require deeper semantic reasoning about thread                         the issue detection accuracy and the quality of the generated re-
+synchronization, state transitions, and resource lifecycles that ex-                  view comments. However, issues requiring deep semantic under-
+tend beyond isolated code diff contexts. These limitations highlight                  standing remain challenging due to limited context incorporation
+the tension between pattern recognition and comprehensive seman-                      and the inherent capabilities of LLMs.
+tic reasoning in our approach, as further analyzed in Section 5.1.
+   Figures 5b and 5c present the review comment performance
+across different security types, evaluated using SecureBLEU and
+BLEU metrics, respectively. For SecureBLEU, all variants of Se-
+cureReviewer deliver balanced and superior performance across
+ICSE ’26, April 12–18, 2026, Rio de Janeiro, Brazil                                        Fang Liu1 , Simiao Liu1 , Yinghao Zhu1 , Xiaoli Lian1 , Li Zhang1∗
+
+
+5 Discussion
+5.1 Human Evaluation
+Since automatic metrics do not always agree with the practical
+utility of the review, we conduct human evaluation to further assess
+the quality of review comments generated by SecureReviewer.
+Procedure. We recruit two software engineers in the evaluation,
+each with over 6 years of experience in Java and Python devel-
+opment, code review practices, and expertise in CWEs. The core
+security concepts in CWE—such as injection attacks, access control
+flaws, and cryptographic issues—share common security principles         Figure 6: Human evaluation results of SecureReviewer𝐷𝑆 .
+across different languages, enabling our evaluators to assess review
+comments based on security concepts and impact analysis rather
+than language-specific syntax details. These experts independently
+evaluated the 262 generated comments from the test set (cases
+labeled "Non-Issue" were excluded). For each data point, evalua-
+tors were presented with the code diff, its corresponding reference
+comment, and the generated comment. Each generated comment
+was rated against four criteria drawn from academic research on          Figure 7: Correlation between human evaluation scores and
+code review effectiveness [8] and industry standards for security-       SecureBLEU&BLEU scores.
+focused reviews [35, 38]:① Clarity: Whether the review comment           further confirm SecureBLEU’s superior alignment with human pref-
+clearly explain the root cause of the issue, and references specific     erences, establishing it as a more reliable metric for the automated
+code snippets or patterns. ② Relevance: Whether the review com-          evaluation of secure code review.
+ment relevant to the code contexts and issues, and avoid irrelevant      Error Analysis. To gain deeper insight into the limitations of Se-
+or overly generic content. ③ Comprehensiveness: Whether the              cureReviewer, we perform a thorough error analysis of review
+impact analysis thoroughly explain potential consequences. ④ Ac-         comments that received low human evaluation scores and iden-
+tionability: Whether the improvement advice specific, feasible,          tify the following two error patterns. ❶ Superficial Pattern Match-
+and aligned with best practices. All ratings are integers on a scale     ing: SecureReviewer occasionally prioritizes surface-level pattern
+of 1 to 5, with higher scores indicating better performance.             recognition-such as security-related keywords (e.g., map) or syn-
+Results. Figure 6 presents the results of the human evaluation.          tactic structures (e.g., mutex operations)-over in-depth semantic
+Each score represents the average rating from two evaluators for         reasoning. For instance, when analyzing code with map operations,
+the 262 test samples. A Cohen’s Kappa coefficient [10] of 0.66 con-      our model may focus on superficial indicators like the presence of
+firms a substantial agreement between the raters. The generated          map keywords or deletion operations. Thus, it erroneously flags
+comments received consistently high ratings across all four crite-       concurrency issues (e.g., suggesting mutex protection for maps) but
+ria, with average scores of 3.93 for Clarity, 4.06 for Relevance, 3.98   fails to diagnose the underlying root cause of the actual vulnerabil-
+for Comprehensiveness, and 3.90 for Actionability. These scores          ity, such as missing input validation or array bounds checking.
+indicate that the reviews generated by SecureReviewer demon-                ❷Limited Contextual Awareness: In some cases, our model strug-
+strate strong practical utility, effectively combining the proficiency   gles to accurately interpret code semantics due to its reliance on
+to identify security issues with the ability to provide actionable       isolated code diff, which lack the broader context of the full code-
+guidance. This highlights the model’s effectiveness in supporting        base, execution flows, and inter-procedural dependencies, result-
+real-world security review workflows.                                    ing in failures on identifying possible issues. For example, when
+Correlation with SecureBLEU&BLEU. We further calculate the               reviewing array operations, SecureReviewer may fail to detect
+Pearson’s correlation between the human evaluation score with the        out-of-bounds vulnerabilities because it cannot infer how the ar-
+two metrics used in our evaluation (BLEU and SecureBLEU). The            ray is initialized or modified in other parts of the codebase. These
+values are 𝑟 = 0.7533 and 𝑟 = 0.4026 for SecureBLEU and BLEU,            findings highlight the need for enhanced semantic understand-
+respectively, which validate the strong alignment of SecureBLEU          ing and broader contextual integration in automated code review,
+with human judgment.                                                     which will be the focus of our future work to further improve the
+   Figure 7 shows the distribution of human evaluation scores along-     effectiveness of our model.
+side the corresponding BLEU and SecureBLEU scores. Notably, Se-
+cureBLEU exhibits a stronger correlation with human judgment             5.2    Impact of Weight Setting for SecureBLEU
+compared to BLEU. The BLEU plot shows numerous points in the             When computing SecureBLEU, we employ an equal weighting
+top-left region, where comments received low BLEU scores but             scheme for scorebleu and scorekeywords to balance linguistic qual-
+high human ratings, indicating BLEU undervalues comments that            ity and security relevance. To validate this choice, we empirically
+human experts consider high quality. In contrast, the SecureBLEU         compared different weighting schemes by measuring Pearson cor-
+plot shows a more desirable distribution with fewer inconsistently       relation between human evaluation scores and SecureBLEU (fol-
+evaluated points, broader score range, and stronger clustering of        lowing Section 5.1). We systematically evaluated weight ratios for
+high human ratings with high SecureBLEU scores. These findings           (scorebleu , scorekeywords ) ranging from 0.2/0.8 to 0.8/0.2. The results
+SecureReviewer: Enhancing Large Language Models for Secure Code Review through Secure-aware Fine-tuning           ICSE ’26, April 12–18, 2026, Rio de Janeiro, Brazil
+
+
+demonstrate that the 0.5/0.5 setting achieves the highest correlation               using parametric efficient fine-tuning techniques to fine-tune the
+coefficient (r = 0.7533) with human preferences, outperforming all                  LLaMA model. Yu et al. [57] fine-tune open-source LLMs with chain-
+alternative configurations. This confirms that an equal weighting                   of-thought-guided data to generate review comment that not only
+aligns best with human judgment, thereby justifying our choice for                  pinpoint code issues in detail but also provide logical explanations
+computing SecureBLEU.                                                               and actionable repair suggestions. However, these general-purpose
+                                                                                    code review approaches often produce inaccurate or irrelevant
+5.3    Threats to Validity                                                          comments, are impacted by dataset noise [30, 45], and lack secu-
+Threats to internal validity relate to the hyper-parameters set-                    rity specialization. Moreover, current widely-adopted evaluation
+ting during the fine-tuning. For API-based models, we used temper-                  metrics, such as BLEU-4 score, also fail to address security-specific
+ature=0.7 and conducted three runs to ensure statistical reliability.               needs, underscoring the need for tailored automated techniques
+We conduct a small-range grid search on learning rate, batch size,                  and evaluation frameworks focused on security issue detection.
+LoRA parameters, the coefficients 𝛼 and 𝛽 in SA loss, and the final
+setting was selected based on the best performance observed on                      6.2     Code Review for Security Issues
+the validation set. It is expected that more hyper-parameter tuning                 Existing research on security-related code review predominantly
+would bring more improvements. Our study was also constrained                       focus on empirical studies, which investigate the role of code review
+by several factors. The limited size of our dataset restricted train-               in finding and mitigating security issues [5, 55, 56].
+ing to 7B backbone LLMs, and it is possible that newer models                           Charoenwet [5] find that conventional reviews struggle with
+not included in our evaluation may offer superior performance.                      language-specific security issues, such as C++ memory manage-
+Furthermore, our use of the fine-tuning dataset to construct RAG                    ment [27] or cross-site scripting attacks [21]. Similarly, Yu et al. [55]
+templates, a decision necessitated by the scarcity of high-quality                  analyze 430,000 comments from open-source communities and re-
+secure code review data, may limit the technique’s effectiveness.                   veal that security defects accounted for less than 1% of discussions,
+Future work will explore additional LLMs and alternative datastores                 with race conditions and resource leaks dominating the conver-
+for RAG template construction.                                                      sation. Charoenwet et al. [6] show that static analysis tools can
+Threats to external validity arise from potential errors in the                     detect certain vulnerabilities but falter when faced with context-
+LLM-based data refinement. We mitigated this by confirming that                     dependent issues. Developers also resist these tools due to usability
+95% of the data met our quality standards via manual sampling                       and integration difficulties, as noted by Johnson et al. [25]. More
+(Section 2.1.2) and by having two domain experts manually review                    recently, Yu et al. [56] demonstrate that LLMs outperform static
+and refine the entire test set. Moreover, our dataset construction                  analysis tools in detecting security defects but still face limitations
+relies on both LLM (GPT-4o) and expert annotation, incurring fi-                    in accuracy and contextual understanding.
+nancial and human costs. Future work could leverage emerging                           While these studies identify challenges and limitations in prac-
+cost-effective models like DeepSeek-V3 to reduce this expense while                 tice and provide valuable insights for improving secure code re-
+maintaining quality. While manual validation of the test set remains                views, they fall short of providing automated solutions to systemat-
+essential for ensuring reliable evaluation, this process can be op-                 ically address these issues. These studies directly inspire our work
+timized. Strategic automation, such as using CodeQL for initial                     in several key ways. For example, the security defect categories
+security checks and leveraging cost-efficient LLMs for preliminary                  identified by Yu et al. [55] guide our selection of security-relevant
+assessments and formatting, could further streamline this workflow.                 keywords for the SecureBLEU metric and serve as filtering criteria
+Threats to construct validity relate to the rationality of evalua-                  during dataset construction.
+tion metrics. Following existing code review research [30, 32, 57],
+we employ Precision, Recall, F1, and Accuracy to assess the model’s
+capability to correctly identify security issues, and use BLEU-4 score              7     Conclusion
+and our proposed SecureBLEU to evaluate the quality of generated                    In this paper, we propose SecureReviewer, a framework designed
+secure review comments. We further conduct human evaluation                         for secure code review. We begin by constructing a dataset for
+studies to assess the practical utility and quality of review comments              training and evaluating the model’s secure code review capabili-
+generated by SecureReviewer.                                                        ties. Building on this foundation, we introduce a security-aware
+                                                                                    fine-tuning strategy to enhance the LLM’s ability to generate code
+6 Related Work                                                                      review comments that effectively identify security issues and pro-
+                                                                                    vide actionable fix recommendations. Additionally, we integrate the
+6.1 Code Review Automation
+                                                                                    RAG technique to mitigate LLM hallucinations and improve the rel-
+Code review is a key practice in software development that involves                 evance and reliability of generated comments. Experimental results
+a systematic review of the source code to find defects as well as                   demonstrate that SecureReviewer outperforms state-of-the-art
+improve quality. Recent advances in deep learning and LLMs have                     models, validating its effectiveness and practical applicability.
+enabled significant progress in automating code review. Tufano et al.
+[46] fine-tune T5 [40] model for generating review comments. Li
+et al. [30] introduce the CodeReviewer, a transformer-based model                   Acknowledgments
+pre-trained with four pre-training tasks for code review. Recent ad-                This research is supported by the National Natural Science Founda-
+vances using LLMs have shown promising results in both accuracy                     tion of China Grants Nos. 62302021, 62332001, and the Fundamental
+and interpretability. Lu et al. [32] propose the LLaMA-Reviewer                     Research Funds for the Central Universities (Grant No. JK2024-28).
+ICSE ’26, April 12–18, 2026, Rio de Janeiro, Brazil                                                            Fang Liu1 , Simiao Liu1 , Yinghao Zhu1 , Xiaoli Lian1 , Li Zhang1∗
+
+
+References                                                                                     2013 35th International Conference on Software Engineering (ICSE). IEEE, 672–681.
+ [1] Josh Achiam, Steven Adler, Sandhini Agarwal, Lama Ahmad, Ilge Akkaya, Floren-        [26] Oleksii Kononenko, Olga Baysal, and Michael W Godfrey. 2016. Code review
+     cia Leoni Aleman, Diogo Almeida, Janko Altenschmidt, Sam Altman, Shyamal                  quality: How developers see it. In Proceedings of the 38th international conference
+     Anadkat, et al. 2023. Gpt-4 technical report. arXiv preprint arXiv:2303.08774             on software engineering. 1028–1038.
+     (2023).                                                                              [27] Woo Hyong Lee and Morris Chang. 2002. A study of dynamic memory manage-
+ [2] Enna Basic and Alberto Giaretta. 2024. Large Language Models and Code Security:           ment in C++ programs. Computer Languages, Systems & Structures 28, 3 (2002),
+     A Systematic Literature Review. arXiv preprint arXiv:2412.15004 (2024).                   237–272.
+ [3] Gabriele Bavota and Barbara Russo. 2015. Four eyes are better than two: On the       [28] Patrick Lewis, Ethan Perez, Aleksandra Piktus, Fabio Petroni, Vladimir Karpukhin,
+     impact of code reviews on software quality. In 2015 IEEE International Conference         Naman Goyal, Heinrich Küttler, Mike Lewis, Wen-tau Yih, Tim Rocktäschel,
+     on Software Maintenance and Evolution (ICSME). IEEE, 81–90.                               et al. 2020. Retrieval-augmented generation for knowledge-intensive nlp tasks.
+ [4] CJ Bulpitt. 1987. Confidence intervals. The Lancet 329, 8531 (1987), 494–497.             Advances in neural information processing systems 33 (2020), 9459–9474.
+ [5] Wachiraphan Charoenwet. 2023. Complementing Secure Code Review with                  [29] Bowen Li, Wenhan Wu, Ziwei Tang, Lin Shi, John Yang, Jinyang Li, Shunyu Yao,
+     Automated Program Analysis. In 2023 IEEE/ACM 45th International Conference on             Chen Qian, Binyuan Hui, Qicheng Zhang, Zhiyin Yu, He Du, Ping Yang, Dahua
+     Software Engineering: Companion Proceedings (ICSE-Companion). IEEE, 189–191.              Lin, Chao Peng, and Kai Chen. 2024. DevBench: A Comprehensive Benchmark
+ [6] Wachiraphan Charoenwet, Patanamon Thongtanunam, Van-Thuan Pham, and                       for Software Development. CoRR abs/2403.08604 (2024).
+     Christoph Treude. 2024. An empirical study of static analysis tools for secure       [30] Zhiyu Li, Shuai Lu, Daya Guo, Nan Duan, Shailesh Jannu, Grant Jenks, Deep
+     code review. In Proceedings of the 33rd ACM SIGSOFT International Symposium               Majumder, Jared Green, Alexey Svyatkovskiy, Shengyu Fu, et al. 2022. Automating
+     on Software Testing and Analysis. 691–703.                                                code review activities by large-scale pre-training. In Proceedings of the 30th
+ [7] Nitesh V Chawla, Kevin W Bowyer, Lawrence O Hall, and W Philip Kegelmeyer.                ACM Joint European Software Engineering Conference and Symposium on the
+     2002. SMOTE: synthetic minority over-sampling technique. Journal of artificial            Foundations of Software Engineering. 1035–1047.
+     intelligence research 16 (2002), 321–357.                                            [31] Aixin Liu, Bei Feng, Bing Xue, Bingxuan Wang, Bochao Wu, Chengda Lu, Cheng-
+ [8] Junkai Chen, Zhenhao Li, Qiheng Mao, Xing Hu, Kui Liu, and Xin Xia. 2025.                 gang Zhao, Chengqi Deng, Chenyu Zhang, Chong Ruan, et al. 2024. Deepseek-v3
+     Understanding Practitioners’ Expectations on Clear Code Review Comments.                  technical report. arXiv preprint arXiv:2412.19437 (2024).
+     Proceedings of the ACM on Software Engineering 2, ISSTA (2025), 1257–1279.           [32] Junyi Lu, Lei Yu, Xiaojia Li, Li Yang, and Chun Zuo. 2023. LLaMA-Reviewer: Ad-
+ [9] claude. 2023. Claude. https://claude.ai/                                                  vancing code review automation with large language models through parameter-
+[10] Jacob Cohen. 1968. Weighted kappa: Nominal scale agreement provision for                  efficient fine-tuning. In 2023 IEEE 34th International Symposium on Software
+     scaled disagreement or partial credit. Psychological bulletin 70, 4 (1968), 213.          Reliability Engineering (ISSRE). IEEE, 647–658.
+[11] Abdallah Dawoud, Soeren Finster, Nicolas Coppik, and Virendra Ashiwal. 2024.         [33] Yingwei Ma, Qingping Yang, Rongyu Cao, Binhua Li, Fei Huang, and Yong-
+     Better Left Shift Security! Framework for Secure Software Development. In 2024            bin Li. 2024. How to understand whole software repository? arXiv preprint
+     IEEE European Symposium on Security and Privacy Workshops (EuroS&PW). IEEE,               arXiv:2406.01422 (2024).
+     642–649.                                                                             [34] Gary McGraw. 2004. Software security. IEEE Security & Privacy 2, 2 (2004), 80–83.
+[12] Xueying Du, Geng Zheng, Kaixin Wang, Jiayi Feng, Wentai Deng, Mingwei                [35] Metridev. 2023. Code Review Guidelines: Best Strategies. https://www.metridev.
+     Liu, Bihuan Chen, Xin Peng, Tao Ma, and Yiling Lou. 2024. Vul-rag: Enhanc-                com/metrics/code-review-guidelines-best-strategies/.
+     ing llm-based vulnerability detection via knowledge-level rag. arXiv preprint        [36] MITRE. n.d.. CWE VIEW: Software Development (View ID: 699). https://cwe.
+     arXiv:2406.11147 (2024).                                                                  mitre.org/data/definitions/699.html
+[13] Zakir Durumeric, Frank Li, James Kasten, Johanna Amann, Jethro Beekman,              [37] MITRE Corporation. 2014. CVE-2014-0160 Detail. https://cve.mitre.org/cgi-
+     Mathias Payer, Nicolas Weaver, David Adrian, Vern Paxson, Michael Bailey, et al.          bin/cvename.cgi?name=CVE-2014-0160. [Accessed: 2023-10-01].
+     2014. The matter of heartbleed. In Proceedings of the 2014 conference on internet    [38] OWASP Foundation. 2023. OWASP Risk Rating Methodology. https://owasp.org/
+     measurement conference. 475–488.                                                          www-community/OWASP_Risk_Rating_Methodology.
+[14] Vasiliki Efstathiou, Christos Chatzilenas, and Diomidis Spinellis. 2018. Word        [39] Kishore Papineni, Salim Roukos, Todd Ward, and Wei-Jing Zhu. 2002. Bleu: a
+     embeddings for the software engineering domain. In Proceedings of the 15th                method for automatic evaluation of machine translation. In Proceedings of the
+     international conference on mining software repositories. 38–41.                          40th annual meeting of the Association for Computational Linguistics. 311–318.
+[15] Michael Fagan. 2002. A history of software inspections. Software pioneers:           [40] Colin Raffel, Noam Shazeer, Adam Roberts, Katherine Lee, Sharan Narang,
+     contributions to software engineering (2002), 562–573.                                    Michael Matena, Yanqi Zhou, Wei Li, and Peter J Liu. 2020. Exploring the limits
+[16] Zhangyin Feng, Daya Guo, Duyu Tang, Nan Duan, Xiaocheng Feng, Ming Gong,                  of transfer learning with a unified text-to-text transformer. Journal of machine
+     Linjun Shou, Bing Qin, Ting Liu, Daxin Jiang, et al. 2020. Codebert: A pre-trained        learning research 21, 140 (2020), 1–67.
+     model for programming and natural languages. arXiv preprint arXiv:2002.08155         [41] Baptiste Roziere, Jonas Gehring, Fabian Gloeckle, Sten Sootla, Itai Gat, Xiao-
+     (2020).                                                                                   qing Ellen Tan, Yossi Adi, Jingyu Liu, Romain Sauvestre, Tal Remez, et al. 2023.
+[17] Yunfan Gao, Yun Xiong, Xinyu Gao, Kangxiang Jia, Jinliu Pan, Yuxi Bi, Yi Dai,             Code llama: Open foundation models for code. arXiv preprint arXiv:2308.12950
+     Jiawei Sun, Haofen Wang, and Haofen Wang. 2023. Retrieval-augmented gen-                  (2023).
+     eration for large language models: A survey. arXiv preprint arXiv:2312.10997 2       [42] Ensheng Shi, Yanlin Wang, Wei Tao, Lun Du, Hongyu Zhang, Shi Han, Dongmei
+     (2023).                                                                                   Zhang, and Hongbin Sun. 2022. RACE: Retrieval-augmented commit message
+[18] Daya Guo, Dejian Yang, Haowei Zhang, Junxiao Song, Ruoyu Zhang, Runxin                    generation. arXiv preprint arXiv:2203.02700 (2022).
+     Xu, Qihao Zhu, Shirong Ma, Peiyi Wang, Xiao Bi, et al. 2025. Deepseek-r1:            [43] Shu-Ting Shi, Ming Li, David Lo, Ferdian Thung, and Xuan Huo. 2019. Automatic
+     Incentivizing reasoning capability in llms via reinforcement learning. arXiv              code review by learning the revision of source code. In Proceedings of the AAAI
+     preprint arXiv:2501.12948 (2025).                                                         Conference on Artificial Intelligence, Vol. 33. 4910–4917.
+[19] Daya Guo, Qihao Zhu, Dejian Yang, Zhenda Xie, Kai Dong, Wentao Zhang,                [44] Amit Singhal et al. 2001. Modern information retrieval: A brief overview. IEEE
+     Guanting Chen, Xiao Bi, Yu Wu, YK Li, et al. 2024. DeepSeek-Coder: When the               Data Eng. Bull. 24, 4 (2001), 35–43.
+     Large Language Model Meets Programming–The Rise of Code Intelligence. arXiv          [45] Rosalia Tufano, Ozren Dabić, Antonio Mastropaolo, Matteo Ciniselli, and Gabriele
+     preprint arXiv:2401.14196 (2024).                                                         Bavota. 2024. Code review automation: strengths and weaknesses of the state of
+[20] Anshul Gupta and Neel Sundaresan. 2018. Intelligent code reviews using deep               the art. IEEE Transactions on Software Engineering (2024).
+     learning. In Proceedings of the 24th ACM SIGKDD International Conference on          [46] Rosalia Tufano, Simone Masiero, Antonio Mastropaolo, Luca Pascarella, Denys
+     Knowledge Discovery and Data Mining (KDD’18) Deep Learning Day.                           Poshyvanyk, and Gabriele Bavota. 2022. Using pre-trained models to boost code
+[21] Abdelhakim Hannousse, Salima Yahiouche, and Mohamed Cherif Nait-Hamoud.                   review automation. In Proceedings of the 44th international conference on software
+     2024. Twenty-two years since revealing cross-site scripting attacks: A systematic         engineering. 2291–2302.
+     mapping and a comprehensive survey. Computer Science Review 52 (2024), 100634.       [47] Rosalia Tufano, Luca Pascarella, Michele Tufano, Denys Poshyvanyk, and
+[22] Edward J Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-Zhu, Yuanzhi Li, Shean             Gabriele Bavota. 2021. Towards Automating Code Review Activities. In 2021
+     Wang, Lu Wang, and Weizhu Chen. 2021. Lora: Low-rank adaptation of large                  IEEE/ACM 43rd International Conference on Software Engineering (ICSE). IEEE
+     language models. arXiv preprint arXiv:2106.09685 (2021).                                  Computer Society, 163–174.
+[23] Binyuan Hui, Jian Yang, Zeyu Cui, Jiaxi Yang, Dayiheng Liu, Lei Zhang, Tianyu        [48] A Vaswani. 2017. Attention is all you need. Advances in Neural Information
+     Liu, Jiajun Zhang, Bowen Yu, Kai Dang, et al. 2024. Qwen2. 5-Coder Technical              Processing Systems (2017).
+     Report. arXiv preprint arXiv:2409.12186 (2024).                                      [49] Jiexin Wang, Xitong Luo, Liuwen Cao, Hongkui He, Hailin Huang, Jiayuan Xie,
+[24] Emmanuel Ichu and Rao Nemani. 2011. The role of quality assurance in software             Adam Jatowt, and Yi Cai. 2024. Is your ai-generated code really safe? evaluating
+     development projects: Project failures and business performance. Int. J. Comp.            large language models on secure code generation with codeseceval. arXiv preprint
+     Tech. Appl 2, 4 (2011), 716–725.                                                          arXiv:2407.02395 (2024).
+[25] Brittany Johnson, Yoonki Song, Emerson Murphy-Hill, and Robert Bowdidge.             [50] Shuohang Wang, Yichong Xu, Yuwei Fang, Yang Liu, Siqi Sun, Ruochen Xu,
+     2013. Why don’t software developers use static analysis tools to find bugs?. In           Chenguang Zhu, and Michael Zeng. 2022. Training Data is More Valuable than
+                                                                                               You Think: A Simple and Effective Method by Retrieving from Training Data.
+SecureReviewer: Enhancing Large Language Models for Secure Code Review through Secure-aware Fine-tuning                      ICSE ’26, April 12–18, 2026, Rio de Janeiro, Brazil
+
+
+     In Proceedings of the 60th Annual Meeting of the Association for Computational           and Measurement (ESEM). IEEE, 1–12.
+     Linguistics (Volume 1: Long Papers). 3170–3179.                                     [56] Jiaxin Yu, Peng Liang, Yujia Fu, Amjed Tahir, Mojtaba Shahin, Chong Wang,
+[51] Yue Wang, Weishi Wang, Shafiq Joty, and Steven CH Hoi. 2021. Codet5: Identifier-         and Yangxiao Cai. 2024. An Insight into Security Code Review with LLMs:
+     aware unified pre-trained encoder-decoder models for code understanding and              Capabilities, Obstacles and Influential Factors. arXiv preprint arXiv:2401.16310
+     generation. arXiv preprint arXiv:2109.00859 (2021).                                      (2024).
+[52] Di Wu, Wasi Uddin Ahmad, Dejiao Zhang, Murali Krishna Ramanathan, and               [57] Yongda Yu, Guoping Rong, Haifeng Shen, He Zhang, Dong Shao, Min Wang,
+     Xiaofei Ma. 2024. Repoformer: Selective retrieval for repository-level code com-         Zhao Wei, Yong Xu, and Juhong Wang. 2024. Fine-tuning large language models
+     pletion. arXiv preprint arXiv:2403.10059 (2024).                                         to improve accuracy and comprehensibility of automated code review. ACM
+[53] Lingfei Wu, Ian EH Yen, Kun Xu, Fangli Xu, Avinash Balakrishnan, Pin-Yu Chen,            transactions on software engineering and methodology 34, 1 (2024), 1–26.
+     Pradeep Ravikumar, and Michael J Witbrock. 2018. Word mover’s embedding:            [58] Fengji Zhang, Bei Chen, Yue Zhang, Jacky Keung, Jin Liu, Daoguang Zan, Yi Mao,
+     From word2vec to document embedding. arXiv preprint arXiv:1811.01713 (2018).             Jian-Guang Lou, and Weizhu Chen. 2023. Repocoder: Repository-level code com-
+[54] Chunqiu Steven Xia and Lingming Zhang. 2024. Automated program repair                    pletion through iterative retrieval and generation. arXiv preprint arXiv:2303.12570
+     via conversation: Fixing 162 out of 337 bugs for $0.42 each using ChatGPT. In            (2023).
+     Proceedings of the 33rd ACM SIGSOFT International Symposium on Software Testing     [59] Lianmin Zheng, Wei-Lin Chiang, Ying Sheng, Siyuan Zhuang, Zhanghao Wu,
+     and Analysis. 819–831.                                                                   Yonghao Zhuang, Zi Lin, Zhuohan Li, Dacheng Li, Eric Xing, et al. 2023. Judging
+[55] Jiaxin Yu, Liming Fu, Peng Liang, Amjed Tahir, and Mojtaba Shahin. 2023. Security        llm-as-a-judge with mt-bench and chatbot arena. Advances in Neural Information
+     Defect Detection via Code Review: A Study of the OpenStack and Qt Communities.           Processing Systems 36 (2023), 46595–46623.
+     In 2023 ACM/IEEE International Symposium on Empirical Software Engineering
+

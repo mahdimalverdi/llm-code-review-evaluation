@@ -1,0 +1,804 @@
+                                            Distilling Desired Comments for Enhanced Code
+                                                   Review with Large Language Models
+                                                  Yongda Yu                           Lei Zhang                  Guoping Rong*                    Haifeng Shen
+                                              Software Institute          Software Institute       Software Institute Faculty of Science and Engineering
+                                              Nanjing University          Nanjing University      Nanjing University       Southern Cross University
+                                               Nanjing, China              Nanjing, China           Nanjing, China      Bilinga, Queensland, Australia
+                                          yuyongda@smail.nju.edu.cn 522023320200@smail.nju.edu.cn ronggp@nju.edu.cn         haifeng.shen@scu.edu.au
+
+                                               Jiahao Zhang                         Haoxiang Yan                          Guohao Shi                       Dong Shao
+                                             Software Institute                   Software Institute                   Software Institute              Software Institute
+                                            Nanjing University                   Nanjing University                   Nanjing University               Nanjing University
+arXiv:2412.20340v2 [cs.SE] 5 Jan 2025
+
+
+
+
+                                              Nanjing, China                       Nanjing, China                       Nanjing, China                  Nanjing, China
+                                        211250031@smail.nju.edu.cn           211250009@smail.nju.edu.cn           211250033@smail.nju.edu.cn          dongshao@nju.edu.cn
+
+                                                   Ruiqi Pan                                          Yuan Li                                        Qiushi Wang
+                                        Huawei Technologies Co., Ltd.                     Huawei Technologies Co., Ltd.                     Huawei Technologies Co., Ltd.
+                                             Shenzhen, China                                    Shenzhen, China                                  Shenzhen, China
+                                           panruiqi@huawei.com                               liyuan50@huawei.com                              wangqiushi6@huawei.com
+
+                                                  Zhao Tian
+                                        Huawei Technologies Co., Ltd.
+                                              Shenzhen, China
+                                           tianzhao@huawei.com
+
+
+                                           Abstract—There has been a growing interest in using Large         Alignment
+                                        Language Models (LLMs) for code review thanks to their proven
+                                        proficiency in code comprehension. The primary objective of most                           I. I NTRODUCTION
+                                        review scenarios is to generate desired review comments (DRCs)
+                                        that explicitly identify issues to trigger code fixes. However,         Code review is a crucial component of modern software
+                                        existing LLM-based solutions are not so effective in generating      development and has been widely applied in the development
+                                        DRCs for various reasons such as hallucination. To enhance their     of software systems [1]. The primary objective of most re-
+                                        code review ability, they need to be fine-tuned with a customized    view scenarios is to generate review comments that explicitly
+                                        dataset that is ideally full of DRCs. Nevertheless, such a dataset   identify issues in a code to trigger code fixes before it is
+                                        is not yet available, while manual annotation of DRCs is too
+                                        laborious to be practical. In this paper, we propose a dataset       executed for quality assurance [2], [3]. We refer to these
+                                        distillation method, Desiview, which can automatically construct     comments as DRCs (Desired Review Comments). Typically,
+                                        a distilled dataset by identifying DRCs from a code review           a DRC should accurately pinpoint the locations of the issues
+                                        dataset. Experiments on the CodeReviewer dataset comprising          in the code, correctly describe the nature of the issues, and/or
+                                        more than 150K review entries show that Desiview achieves an         lead to meaningful subsequent repairs to the code. However, as
+                                        impressive performance of 88.93%, 80.37%, 86.67%, and 84.44%
+                                        in terms of Precision, Recall, Accuracy, and F1, respectively,       code review is generally a lengthy and costly process [3], [4],
+                                        surpassing state-of-the-art methods. To validate the effect of       considerable efforts have been made to automate the process
+                                        such a distilled dataset on enhancing LLMs’ code review ability,     by adopting machine learning or deep learning techniques [5].
+                                        we first fine-tune the latest LLaMA series (i.e., LLaMA 3 and        In recent years, the emergence of Large Language Models
+                                        LLaMA 3.1) to build model Desiview4FT. We then enhance               (LLMs) has introduced new possibilities to automated code
+                                        the model training effect through KTO alignment by feeding
+                                        those review comments identified as non-DRCs to the LLMs,            review [2]. Owing to their stronger semantic understanding
+                                        resulting in model Desiview4FA. Verification results indicate        capabilities than traditional machine learning methods and
+                                        that Desiview4FA slightly outperforms Desiview4FT, while both        general language models, they have the potential to enable
+                                        models have significantly improved against the base models in        more accurate identification of subtle issues in the code. Ad-
+                                        terms of generating DRCs. Human evaluation confirms that both        ditionally, their inherent content generation capabilities allow
+                                        models identify issues more accurately and tend to generate
+                                        review comments that better describe the issues contained in         them to generate better review comments [2], [5].
+                                        the code than the base LLMs do.                                         However, existing LLM-based solutions may not be able
+                                           Index Terms—LLM, Automated Code Review, Fine-tuning,              to effectively generate DRCs for various reasons such as
+                                                                                Desired review comments
+                   Original Code Commit                              Original Review Comment                              Subsequent code fixes                               Observation
+      if err != nil {
+      -        log.G(h.ctx).Warn("cannot get GPU devices list",                                              if err != nil {
+                                                                                                                                                                    The review comment required
+      zap.Error(err))                                                                                        +         return nil, err
+  A                                                               Return error instead.                                                                             returning error message, which is
+      -        gpuInfo = make([]gpu.Device, 0)                                                               }
+                                                                                                                                                                    implemented in the subsequent fix.
+      }                                                                                                      hardware := &Hardware{
+      hardware := &Hardware{
+                                                                               Undesired review comments
+                   Original Code Commit                              Original Review Comment                              Subsequent code fixes                               Observation
+                                                                                                             }
+                                                                                                             +
+                                                                                                                                                                    The review comment suggests that it
+      }                                                                                                      +// XXX This is almost identical to timerChConfigIC.
+                                                                                                                                                                    would be better to remove ‘mhz’ and
+      static void serialICConfig(TIM_TypeDef *tim, uint8_t        BTW: It would be great to remove the mhz   +// XXX Expensive? Direct register manipulation?
+                                                                                                                                                                    pass ‘hz’ value", yet the subsequent
+  B   channel, uint16_t polarity)                                 nonsense - just pass the value around in   +
+                                                                                                                                                                    code fixes only adding some code
+      {                                                           Hz ...                                     static void serialICConfig(TIM_TypeDef *tim, uint8_t
+                                                                                                                                                                    comment, which has nothing to do
+      TIM_ICInitTypeDef TIM_ICInitStructure;                                                                 channel, uint16_t polarity)
+                                                                                                                                                                    with ‘mhz’ or ‘hz’.
+                                                                                                             {
+                                                                                                             TIM_ICInitTypeDef TIM_ICInitStructure;
+      client = None
+      try:                                                                                                                                                          The review comment suggests
+                                                                                                             client = None
+      - headers = {                                                                                                                                                 deleting the request header, which
+                                                                                                             try:
+      - 'Authorization': f'Bearer 23498534098845934865984'                                                                                                          has already been implemented by the
+                                                                                                             client = Client(
+  C   -            }                                              i suggest the removing header here                                                                Diff under review. Such review
+                                                                                                             base_url="https://us-central1-bynextmonday-
+      client = Client(                                                                                                                                              comments, while also of some value,
+                                                                                                             4ffc3.cloudfunctions.net/securehealth/",
+      base_url="https://us-central1-bynextmonday-                                                                                                                   do not provide information for
+                                                                                                             headers=headers)
+      4ffc3.cloudfunctions.net/securehealth/",                                                                                                                      subsequent code improvements.
+      headers=headers)
+
+
+                                        Fig. 1. Examples of desired and undesired review comments in CodeReviewer [5] dataset
+
+
+
+their inherent characteristic of hallucination [6]. Among these                                        dataset contains a high proportion of DRCs.
+reasons, a critical one is that they are not effectively fine-                                            This paper aims to fill this gap by proposing a dataset
+tuned for the code review task [7] and a common cause is                                               distillation method, Desiview, which can automatically con-
+the lack of an adequate fine-tuning dataset comprising of                                              struct a distilled dataset that fine-tunes LLMs for code review
+DRCs [2]. For example, the dataset may contain a considerable                                          tasks by identifying DRCs from a code review dataset. By
+proportion of non-DRC data (i.e., undesired review comments,                                           employing this method to distinguish between desired and
+cf. Table I). Figure 1 illustrates examples of both desired                                            undesired review comments and subsequently constructing a
+and undesired review comments, which were drawn from one                                               distilled dataset with a high proportion of DRCs, we first fine-
+of the commonly used datasets in code review research [5].                                             tune the latest LLaMA series (i.e., LLaMA 3 and LLaMA
+Example A represents a DRC as it identifies an issue in the                                            3.1) to build a model Desiview4FT and then KTO-align the
+Diff to be reviewed, which has been fixed in the subsequent                                            model to build an enhanced model Desiview4FA. The main
+code. Conversely, Examples B and C depict undesired review                                             contributions of this paper are summarized below.
+comments, as the subsequent code changes indicate that they
+do not seem to be triggered by these comments. It has                                                    • We propose the Desiview method for automatically dis-
+been commonly acknowledged that the adequacy of datasets                                                   tilling DRCs from a code review dataset. It achieves an
+impacts the training effect of LLMs [8]–[10]. As such, to                                                  accuracy of 86.67% on the CodeReviewer dataset [5],
+enhance an LLM’s code review ability, it needs to be fine-                                                 surpassing previous methods including the GPT-4o’s
+tuned with a customized dataset that is ideally full of DRCs.                                              76.50%.
+   An intuitive way to obtain such a dataset is through manual                                           • We develop two code review models Desiview4FT and
+annotation [11], [12]. However, the enormous labor cost (e.g.,                                             Desiview4FA by fine-tuning and KTO-aligning the latest
+the dataset [5] contains more than 150000 review entries) be-                                              LLaMA series with the distilled dataset. Both models
+hind manual annotation [13], [14] makes it rather impractical.                                             have significantly improved against the base models in
+On top of that is its varying quality, which has been repeat-                                              terms of generating DRCs on the CodeReviewer dataset.
+edly raised in multiple studies [13], [15], [16]. Code review                                            • We conduct a human evaluation of the generated review
+researchers thereby have made various attempts to construct                                                comments. The results indicate that both Desiview4FT
+such a customized dataset automatically, most of which have                                                and Desiview4FA identify issues more accurately and
+relied on simple keyword or rule-based filtering methods [5],                                              tend to generate review comments that better describe
+[17]. For instance, some studies employ the 10-line rule, which                                            the issues contained in the code than the base LLMs do.
+deems a review desired if it results in modifications within
+10 lines in the new version of the code [17]. Other studies                                               The rest of the paper is organized as follows. Section
+consider the first record of all review comments as desired                                            II introduces some related work. Section III describes the
+by excluding the original author’s comments [5]. As these                                              research methodology followed by the evaluation process in
+methods lack semantic understanding and analysis of both the                                           Section IV. Section V discusses the implications, followed by
+review comments and the relevant code, their effectiveness is                                          the validity risks in Section VI. Section VII concludes the
+suboptimal such that there is no guarantee that the customized                                         paper with a summary of contributions and future work.
+                     II. R ELATED WORK                             more than 80 programming languages, surpassing CodeL-
+                                                                   LaMA in code tasks. StarCoder 2 [28], trained on 3.3 to
+   In this section, we describe related work to our study,
+                                                                   4.3 trillion tokens with carefully selected data, outperforms
+including automated code review and applications of LLMs
+                                                                   the 33B parameter DeepSeek Coder using 15.5B parameters.
+in software engineering.
+                                                                   LLaMA3 [29], one of the latest versions of the most widely
+A. Automated code review                                           used LLM architecture in the open-source community, has
+                                                                   achieved state-of-the-art in multiple tasks. In general, there
+   Code review, as an essential process in software devel-         are three main technical routes for applying LLMs in software
+opment, has garnered widespread attention from researchers         engineering – prompt engineering, fine-tuning, and alignment.
+[4], [18]. Given that code review may consume a significant           Prompt engineering focuses on leveraging the inherent
+amount of reviewers’ effort and time [3], [18], researchers have   capabilities of large models by carefully constructing prompts
+increasingly focused on building automated review systems to       and implementing processes to achieve better performance. For
+assist reviewers. An automated review system typically com-        example, CodeT [30] uses prompt engineering to first guide the
+prises two components: defect detection and review comment         large model to generate test code corresponding to the code
+recommendation/generation.                                         generation task and then continuously verifies the accuracy
+   Defect detection is used to find potential issues contained     of the generated code using the test code, thereby achieving
+in the code snippets under review. For example, DACE [19]          higher code generation accuracy. MapCoder [31] employs
+uses CNN and LSTM techniques to extract Diff features              prompt engineering to construct multi-agent prompting, simu-
+from the code, thereby predicting the quality of code Diff         lating the cycle of recalling relevant examples, planning, code
+patches. Some pre-trained models also have been used to            generation, and debugging in the human development process,
+assess code quality, such as CodeBert [20] and CodeT5 [21].        achieving state-of-the-art in multiple evaluation sets.
+CodeBert [20] is a bimodal pre-training model designed for            Fine-tuning involves training LLMs with data so that they
+programming languages and natural language. It performs            can solve problems based on the given information without
+well in tasks such as natural language-based code search           providing examples. Magicoder [32] enhances the instruc-
+and code documentation generation. CodeT5 [21] leverages           tion code generation capability of LLMs through fine-tuning
+a unified framework to support both code understanding and         by constructing diverse instruction data for code generation,
+generation tasks, thereby facilitating multi-task learning. This   surpassing ChatGPT in code generation performance on the
+method exhibits superior performance compared to previous          humaneval dataset using a 7B model. LLaMA-Reviewer [2]
+techniques in several relevant tasks such as code understanding    enhances the review capability of LLMs by fine-tuning them
+[20] and generation [22].                                          with the CodeReviewer [5] dataset, achieving state-of-the-
+   Review comment recommendation/generation produces re-           art in code review tasks. RepairLLaMA [33] fine-tunes the
+view comments through retrieval or generation methods. For         LLaMA series models to endow them with automatic repair
+example, CommentFinder [23] uses deep learning techniques          capabilities, achieving state-of-the-art on two code repair
+to retrieve relevant code review comments, thereby reducing        datasets. Research has shown that the quality of fine-tuning
+the time reviewers spend writing review comments. DCR [24]         datasets significantly affects the performance of LLMs [8].
+learns the similarity between code commit Diffs and review         Obtaining higher quality datasets has become an important
+comments to retrieve review comments related to a specific         research direction in fine-tuning LLMs [32], [34].
+code commit. CodeReviewer [5] achieves notable results in             Alignment enhances the ability of LLMs to generate valid
+code defect detection, code review comment generation, and         answers while reducing the probability of generating invalid
+code repair tasks by constructing pre-training tasks targeted at   answers by training them with both desired and undesired
+code review in an end-to-end manner. LLaMA-Reviewer [2]            datasets [35]. Large model alignment algorithms are mainly
+introduces LLMs into code review tasks, using low-parameter        divided into online alignment and offline alignment. Online
+fine-tuning techniques to fine-tune LLaMA, achieving impres-       alignment algorithms involve online sampling, online scoring,
+sive results in review comment generation. It is worth noting      and using the scores to optimize the model. Offline alignment
+that the above two studies use the same dataset [5] for model      algorithms, on the other hand, optimize model performance
+training and verification. They assume the existence of review     using only given desired and undesired data. Online alignment
+comments indicates ground truth without considering whether        algorithms typically consume a lot of resources but usually
+the review comments actually pertain to the code fixes.            perform better, while offline alignment algorithms are the
+                                                                   opposite [36]. RLHF [11] is the most representative online
+B. Large language models for software engineering                  alignment method, successfully learning human preferences
+  Recent years have witnessed widespread applications of           through a reward model and teaching these preferences to
+LLMs in various software engineering tasks, especially in          LLMs using the PPO algorithm [37]. Due to the high resource
+those related to code. For example, CodeLLaMA [25], an             consumption of online alignment algorithms, researchers have
+LLM by fine-tuning LLaMA2 [26] with a large amount of              turned their attention to offline alignment algorithms. DPO
+source code, achieves good performance on various code tasks.      [38] is the first proposed offline alignment algorithm, using the
+DeepSeek Coder [27] is pre-trained on 2 trillion tokens across     LLM itself as the reward model, achieving low-cost alignment
+of LLMs. However, DPO requires paired data, meaning that a         where X = (x0 , x1 , ..., xN ) is the answer to be evaluated, xi
+single effective alignment data entry must contain both desired    is the i-th token, logP (xi |x<i ) is the log-likelihood of the i-th
+and undesired data under one instruction, which is difficult to    token given the preceding tokens, and N is the total number
+obtain in practice. To solve this problem, researchers proposed    of tokens to be calculated. Perplexity is used to evaluate the
+the KTO [39] alignment method, which does not require paired       model’s ability to uniformly predict a specified set of tokens
+data for alignment and can also perform alignment in situations    for a given content. The higher the perplexity, the lower the
+where the ratio of desired to undesired data is unbalanced.        probability that the model successfully generates the given
+   Many researchers have started using alignment algorithms        content, and vice versa.
+to improve the performance of software engineering tasks.             For a code review task, the reviewer first writes review
+For example, RLSQM (Reinforcement Learning from Static             comments R based on the original code commit Co , denoted
+Quality) [40] proposes a novel technique to construct a quality    by P (R|Co ). Subsequently, the developer writes code fixes Cr
+model based on human analysis and optimize the LLM using           based on the review comments R, denoted by P (Cr |Co , R),
+PPO, surpassing GPT-4 in test code generation tasks. Step-         as shown in the upper left of Fig. 2. Since DRCs should
+Coder [41] scores code based on feedback from the compiler         lead to code fixes, as pointed out in several studies [3], we
+and uses alignment algorithms to enhance the code generation       can calculate the desiredness score of review comments DS
+capability of LLMs, achieving state-of-the-art results on test     according to the following formula:
+data. PanGu-Coder2 [42] proposes a Rank Responses to align
+Test & Teacher Feedback framework based on alignment
+                                                                      DS = −(PPL(P (Cr |Co , R)) − PPL(P (Cr |Co )))               (2)
+technology, effectively improving the performance of LLMs in
+code generation tasks. Similarly, alignment technology usually     The formula represents the difference in the perplexity of
+requires high-quality data by distinguishing between desired       the code fix with and without the review comments, using
+and undesired data to improve model performance. This data is      a negative sign to align with the human preference that
+often manually annotated [40] or generated based on relevant       higher scores indicate more desired comments. Generally,
+standards [41], [42]. Construction of high-quality alignment       when DS > 0, it is considered that the review comments have
+data remains one of the important research directions in the       had a positive impact on the code fix, making them desired.
+research of alignment techniques [43], and, to the best of our     When DS ≤ 0, it is considered that the review comments
+knowledge, there is no such work for code review tasks.            have not contributed to the code fix or have introduced noises,
+                                                                   making them undesired.
+                    III. M ETHODOLOGY                                 2) Dataset preparation and pre-processing: We select the
+   The primary objective of this research is to develop an         CodeReviewer dataset [5], one of the most widely adopted
+LLM-based solution that is effective in generating DRCs for        datasets in code review research, as the base dataset to
+code review tasks. The pivotal component of our research           construct a distilled dataset. To the best of our knowledge,
+methodology is to construct a customized dataset that contains     this is the only public multi-programming language dataset
+a high proportion of DRCs with a novel dataset distillation        in code review research field that contains the original code
+method. Subsequently, with such a dataset, we first fine-tune      submissions (Co ), code review comments (R), and subsequent
+the base model of LLaMA-3 and LLaMA-3.1 to develop                 code fixes (Cr ), thereby meeting all the requirements for
+the code review model of Desiview4FT and then align De-            identifying DRCs elaborated above. To perform the perplexity
+siview4FT to develop an enhanced model of Desiview4FA.             calculation, we use a straightforward prompt, as shown in Fig.
+                                                                   3, to generate code fixes with and without the review com-
+A. Desiview: Constructing a distilled dataset                      ments. The desiredness score of DRCs is then calculated as
+   The proposed Desiview dataset distillation method com-          the difference between the perplexity for both code fixes with
+prises two main steps: (1) identification of DRCs, and (2)         and without the review comments. An example of perplexity
+dataset preparation and pre-processing.                            calculation is shown in Fig. 4. We construct the dialogue input
+   1) Identification of DRCs: In theory, during a generation       using the chat templates of different models and calculate
+process, an LLM gradually generates content by continuously        the perplexity of the standard answers to obtain the required
+sampling data from the probability distribution of the next        perplexity. Note that the perplexity calculation does not involve
+token, in which tokens with higher probabilities are more          a content generation process, so it is not affected by errors
+likely to be selected. When the average probability of the given   due to LLM hallucinations. When this score is greater than 0,
+answer is higher, the model is considered to be more certain       the review comment is judged to be desired; otherwise, it is
+about that answer. Based on this principle, researchers [44],      considered undesired.
+[45] have proposed the concept of ‘perplexity’ and used it to         We use four commonly available LLMs to construct a con-
+evaluate models and guide the selection of hyperparameters         sensus mechanism(i.e., voting) so as to enhance the accuracy
+[45]. Generally, the definition of ‘perplexity’ is as follows:     of the resultant judgment, including: CodeLlama-13B [25],
+                                   N
+                                                                   starchat2-15B [28], Meta-Llama-3-8B [29], and deepseek-
+                               1 X                                 coder-6.7B [27]. The median of the results from the four LLMs
+          PPL(X) = exp{−             logP (xi |x<i )}        (1)
+                               N i=1                               is used as the final score to determine the desired review
+           A common commit, review and fix process
+
+
+
+
+                                  Review                                                 Final DS
+         Commit                                       Fix Commit                    (Desiredness Score)                                                      Base LLM
+                                 Comment
+
+
+
+
+                                                                                                                         DS > 0
+                ···                                   ···                                    Voting
+
+      LLM 1            LLM 4               LLM 1            LLM 4                                                                     Desired               Fine-tuning              Desiview4FT
+                                                                                                                                   Review Dataset
+
+
+                ···                                   ···                                    ···                         DS ≤ 0
+
+
+                                                                                Desiredness      Desiredness
+      Score 1          Score 4             Score 1'         Score 4'              Score 1                                           Undesired                Alignment               Desiview4FA
+                                                                                                   Score 4
+                                                                                                                                  Review Dataset
+      Code Fix PPLs without                  Code Fix PPLs with                    Desiredness Scores of
+        Review Comments                      Review Comments                        Review Comments
+
+                                                          Fig. 2. The process of developing Desiview4FT and Desiview4FA
+
+
+
+R e f i n e t h e g i v e n c o d e b a s e d on t h e p r o v i d e d c o d e r e v i e w            the parameter changes to be decomposed into the product of
+comment .                                                                                             low-rank matrices, i.e., W ′ = W0 + ∆W = W0 + BA. Here,
+The comment i s : ’{ comment } ’
+The c o d e i s : ’{ c o d e } ’                                                                      W ′ represents the fine-tuned model parameters, W0 is the set
+                                                                                                      of pre-trained model parameters, ∆W is the change in model
+                              Fig. 3. Code refine template
+                                                                                                      parameters after fine-tuning, B ∈ Rd×r , A ∈ Rr×k , with d
+                                                                                                      and k being the dimensions of the model parameters, and
+                                                                                                      satisfying r ≪ min(d, k). During training, the original pre-
+comments. The identification results of the desired review                                            trained parameter set W0 is frozen and does not participate in
+comments of the training set and testing set in CodeReviewer                                          gradient updates; only B and A are updated. Since the number
+dataset are shown in Table I. We can observe that less than                                           of parameters in the low-rank matrices is much smaller than
+half of the review comments are DRCs, which have a positive                                           that of the original model matrix, it allows for fine-tuning the
+effect on subsequent code fixes. In addition, the proportions                                         large model with a minimal number of parameters. The fine-
+of DRCs in the training and test sets are also close to each                                          tuning was conducted using 2 Nvidia A100 40GB GPUs, with
+other, somewhat indicating the reliability of Desiview.                                               the fine-tuning parameters shown in Table II. The prompts
+                                                                                                      used for fine-tuning were based on the LLaMA-Reviewer
+                                   TABLE I                                                            prompts to facilitate subsequent comparisons, and the code
+                A NALYSIS R ESULTS OF C ODE R EVIEWER DATASET                                         review task is illustrated in Fig. 5.
+       Dataset Type            Total                 Desired               Undesired
+         Training          150406 (100%)         64934 (43.17%)         85472 (56.83%)                                                         TABLE II
+         Testing           13103 (100%)           5727 (43.71%)          7376 (56.29%)                                               T RAINING HYPERPARAMETERS
+
+                                                                                                                                                                              lora        lora
+                                                                                                            Method          epochs       batch       lr    cutoff   lora r
+                                                                                                                                                                             alpha      dropout
+                                                                                                           Fine-tuning        10          32        1e-5   2048      16        32         0.05
+B. Desiview4FT: Fine-tuning Large Language Models                                                          Alignment          5           64        1e-5   2048      16        32         0.05
+
+   With the distilled dataset, we fine-tune base LLMs to
+develop our first code review model Desiview4FT. We choose
+LLaMA series as the base LLMs since they are among the                                                C. Desiview4FA: Aligning Large Language Models
+most commonly used models in the open-source community                                                   While LLM fine-tuning with task-specific data can improve
+[14]. To be specific, we use both LLaMA-3 [29] and the most                                           its task performance, LLM alignment goes a step further
+recently released LLaMA-3.1 since both LLMs represent the                                             by ensuring the LLM behaves in accordance with human
+latest models in the LLaMA series. In particular, we use the                                          intentions and values. Therefore, we align model Desiview4FT
+smallest version of these models, namely LLaMA-3-8B and                                               to develop an enhanced code review model Desiview4FA
+LLaMA-3.1-8B, due to our GPU resource limitations.                                                    by encouraging LLMs to generate desired review comments.
+   In terms of training methods, we opt to use LoRA [46] for                                          LLM alignment typically requires paired data, i.e., a desired
+fine-tuning the LLaMA series, thereby reducing the resource                                           answer and an undesired answer under the same prompt.
+requirements. LoRA assumes that the parameter changes dur-                                            However, in code review, there can be usually only one
+ing the fine-tuning phase have a low intrinsic rank, allowing                                         review comment within a piece of code, making it difficult
+      Code Fix PPL with Review Comment                                                     Code Fix PPL without Review Comment
+      [INST] <<SYS>><</SYS>> Chat template (Using LLaMA template as an example)            [INST] <<SYS>><</SYS>> Chat template (Using LLaMA template as an example)
+      Refine the given code based on the provided code review comment.                     Refine the given code based on the provided code review comment.
+      The comment is: 'Should we perhaps disallow reading the `ObjectHandle` once the      The comment is: ''
+      `Writer` has been made?'
+      The code is: ' if opts.BeforeWrite != nil {                                          The code is: ' if opts.BeforeWrite != nil {
+             asFunc := func(i interface{}) bool {                                                 asFunc := func(i interface{}) bool {
+                   *p = objp                                                                            *p = objp
+                   return true                                                                          return true
+               }'                                                                                   }'
+      [/INST]                                                                              [/INST]                                                               Inputs
+         if opts.BeforeWrite != nil {                                                         if opts.BeforeWrite != nil {
+             asFunc := func(i interface{}) bool {                                                 asFunc := func(i interface{}) bool {
+               if p, ok := i.(***storage.ObjectHandle); ok && w == nil {                            if p, ok := i.(***storage.ObjectHandle); ok && w == nil {
+                   *p = objp                                                                            *p = objp
+                   return true                                                                          return true
+               }                                                                                    }                                               Calculate Perplexity
+
+                                                                      Fig. 4. A perplexity calculation example
+
+
+
+Review t h e g i v e n c o d e and p r o v i d e a c o n s t r u c t i v e c o d e                                      IV. E VALUATION
+r e v i e w comment .
+The c o d e / ( d i f f hunk ) i s : ’{} ’                                                     In this section, we validate the performance of the Desiview
+                                                                                           dataset distillation method for identifying DRCs and examine
+                           Fig. 5. Code Review template                                    the effect of using the distilled dataset to fine-tune and align
+                                                                                           LLMs on their ability to perform code review tasks. Specifi-
+                                                                                           cally, we aim to answer the following research questions:
+to construct reasonable paired data. Therefore, we choose the                                  • RQ1: How accurately can the dataset distillation method
+KTO algorithm [39], which does not require paired data. The                                       identify DRCs?
+optimization objective of KTO is as follows:                                                   • RQ2: How much performance enhancement can LLMs
+                                                                                                  gain by being fine-tuned and aligned with the distilled
+               LKT O (πθ , πref ) = Ex,y∼D [λy − v(x, y)]                                         dataset?
+where:                                                                                         RQ1 aims to gauge the effectiveness of the proposed De-
+             (                                                                             siview dataset distillation method in identifying desired review
+              λD σ(β(rθ (x, y) − z0 )) if y ∼ ydesired |x                                  comments and subsequently constructing a high-quality dis-
+   v(x, y) =
+              λU σ(β(z0 − rθ (x, y))) if y ∼ yundesired |x                                 tilled dataset compared to that of existing alternative methods.
+                                                                                           RQ2 aims to test the hypothesis that LLMs fine-tuned and
+                                                   πθ (y|x)                                aligned with the distilled dataset (specifically Desiview4FT
+                           rθ (x, y) = log
+                                                  πref (y|x)                               and Desiview4FA) can generate more desired review comments
+               z0 = Ex′ ∼D [KL(πθ (y ′ |x′ )||πref (y ′ |x′ ))]                            than those fine-tuned and aligned with the original dataset
+                                                                                           (specifically LLaMA-Reviewer).
+                                   λ D nD      4
+                                          ∈ [1, ]
+                                   λU nU       3                                           A. Experimental settings
+πθ is the model to be optimized, which in this work is                                        Dataset. The base dataset is CodeReviewer dataset [5],
+the fine-tuned model with the LoRA model superimposed,                                     which is the only public multi-programming language dataset
+where LoRA is the trainable part. πref is the reference                                    for code review research in the open-source community and
+model, which in this work is the fine-tuned model. A KL                                    has been widely used in several studies [2], [5]. Besides, as
+(Kullback–Leibler) divergence penalty is introduced to restrict                            pointed out in Section III-A, it is so far the only publicly
+how far the language model can drift from πref . λy is usually                             available dataset that contains code snippets before and after
+set to 1, and λD and λU are set according to the ratio of                                  the review as well as the review comments that meet the needs
+desirable data nD and undesirable data nU and the constraint                               of this study.
+λD nD         4
+ λU nU ∈ [1, 3 ], with λD = 1.7 and λU = 1.0. σ is a nonlinear                                Benchmark approaches. For RQ1, we aim to compare the
+function, here taken as sigmoid, and β is used to control the                              effectiveness of different methods for identifying DRCs. We
+degree of risk aversion. The larger the value, the more quickly                            choose the 10-line rule [17], GPT-3.5, and GPT-4o as the
+the value saturates, meaning the model is simultaneously more                              benchmark methods. The first method is one of the few rule-
+risk-averse in gains and more risk-seeking in losses. This value                           based approaches and has been adopted by several studies
+is set to 0.1, consistent with the original paper [39]. To reduce                          [17], [47]. Meanwhile, the GPT family has been widely
+the GPU resource requirements for training, alignment also                                 used in numerous studies as a benchmark method for text
+uses LoRA for training. Other training hyperparameters are                                 comprehension and analysis. The latter, in particular, has been
+also shown in Table II.                                                                    confirmed by many studies as one of the strongest LLMs
+                                                                                          of sampling generation by large models, we set the sampling
+                                                                                          parameter temperature to 0, ensuring the model uses greedy
+                                                                                          search generation for result stability. As other methods did not
+                                      Sampled             Manual         Annotated
+                                       dataset           annotation       dataset         provide examples, to ensure a fair comparison, we did not use
+                                                                                          examples in the prompt engineering method either, i.e., we
+                  Desiredness
+                  judgement
+                                                  ···                                     adopted a zero-shot prompt [49] strategy. Common metrics
+                  evaluation                  Various data                                such as ‘accuracy’, ‘precision’, ‘recall’, and ‘F1-score’ were
+                                          distillation methods
+                                                                           Result         used for evaluation, thereby determining the effectiveness of
+                                                                                          different methods in identifying DRC(s).
+ Research Questions
+                                                                                          Your t a s k i s t o d e t e r m i n e w h e t h e r t h e c h a n g e s i n t h e g i v e n
+                                      Fine-tune         Desiview4FT     Automated
+                                                                                          o r i g i n a l c o d e and t h e m o d i f i e d c o d e p e r t a i n t o t h e p r o v i d e d
+                                       dataset                        evaluation result   r e v i e w comment . I f t h e y p e r t a i n , o u t p u t T r u e ; i f t h e y do n o t
+                                                                                          p e r t a i n , o u t p u t F a l s e . Only p r o v i d e T r u e o r F a l s e , w i t h o u t
+                                                                                          any a d d i t i o n a l c o n t e n t .
+                  Evaluate the                                                            ‘ ‘ ‘ o r i g i n a l code
+              improvement based                                                           {}
+               on distilled dataset                                       Human           ‘‘‘
+                                      Alignment         Desiview4FA
+                                                                      evaluation result   ‘ ‘ ‘ mod ified code
+                                       dataset
+                                                                                          {}
+                                                                                          ‘‘‘
+                                                                                          ‘ ‘ ‘ r e v i e w comment
+                             Fig. 6. The evaluation process                               {}
+                                                                                          ‘‘‘
+
+
+available for accomplishing such tasks. For RQ2, we select                                                      Fig. 7. The prompt used to detect DRCs
+LLaMA-Reviewer [2] as the benchmark method because it
+uses the same dataset, and, additionally, our study also uses                                 2) The experiment for RQ2: To evaluate the quality of
+LLaMA as the base model. Choosing LLaMA-Reviewer as the                                   DRCs generated by LLMs trained with the original and the dis-
+baseline approach facilitates a fair comparison.                                          tilled datasets, we compare three LLMs: (1) LLaMA (LLaMA-
+   1) The experiment for RQ1: First of all, we need to                                    3 and LLaMA-3.1) fine-tuned with the original dataset, i.e.,
+construct a test set containing explicit annotations of DRC                               LLaMA-Reviewer [2], (2) LLaMA (LLaMA-3 and LLaMA-
+and non-DRC for each entry. As shown in Table I, the                                      3.1) fine-tuned with the distilled data, i.e., Desiview4FT,
+CodeReviewer training set contains a total of 150,406 en-                                 and LLaMA (LLaMA-3 and LLaMA-3.1) aligned with both
+tries. We randomly selected 600 of these entries for manual                               distilled data (DRCs) and dropped data (non-DRCs), i.e.,
+annotation, achieving a margin of error of less than 4% at                                Desiview4FA. For a fair comparison, the fine-tuning process
+a 95% confidence level. The annotation was performed by                                   applies the same settings as study [2] with different datasets.
+two software engineering graduate students, each annotating                               The evaluation process consists of two parts: automated eval-
+450 data entries with 300 duplicated entries to check for                                 uation and human evaluation.
+consistency. To be specific, when a review comment triggers a                                 Automated evaluation uses a test set of 5,727 entries, as
+fix that pertains to the review comment, the review comment                               shown in Table I. As the distilled dataset contain a high
+is labeled “desired.” Otherwise, it is labeled “undesired.” We                            proportion of review comments that can lead to effective code
+used the Chi-Squared test [48] to check the determination                                 fixes, it is fair enough to regard the ground truth as the correct
+consistency of the duplicate annotations and obtained a p-value                           answer. With the trained LLMs generating review comments
+of 0.965, thereby rejecting the hypothesis of inconsistency in                            for a given code commit, the generated review comments are
+the annotations.                                                                          compared against the existing ones contained in the test set
+   To demonstrate the effectiveness of the Desiview dataset                               using the BLEU-4 metric [50] to calculate text similarity.
+distillation method, we compare it against the 10-line rule                                   Human evaluation is conducted by two software engineer-
+for change-triggering review comments [17], GPT-3.5-turbo,                                ing graduate students. The test set contains a total of 5,727
+and GPT-4o using prompt engineering. Different treatments                                 DRC entries (as shown in Table I), from which we randomly
+are required for these benchmark approaches.                                              selected 300 entries for human evaluation, ensuring a margin
+   The 10-line rule determines whether changes were made                                  of error of less than 6% at a 95% confidence level. Each
+within 10 lines of the given review comment. As the CodeRe-                               student evaluates 180 pieces of data, including 60 duplicated
+viewer dataset only contains information on changes at the                                evaluations, to check for consistency. We applied the Chi-
+corresponding locations, the rule was simplified to whether                               Squared test [48] to check consistency, obtaining a p-value
+modifications were made subsequently.                                                     of 0.887, thereby rejecting the hypothesis of evaluation incon-
+   GPT-3.5-turbo and GPT-4o require prompt engineering to                                 sistency and proving the consistency of the evaluations. The
+detect DRCs, as shown in Fig. 7. We experimented with                                     human evaluation involved observing the original code commit
+different phrasing methods and selected a relatively better-                              under review and the LLM-generated review comments to
+performing prompt as the final prompt. To avoid the impact                                determine whether the provided review comments correctly
+identify and describe the issues. In this sense, we divided the              code review comment generation task under both automated
+evaluation into two tasks: accurately locating code issues and               and human evaluation. It is evident that the distilled dataset
+accurately describing the issues. The criteria we adopted to                 significantly improves the performance of the LLMs in gener-
+determine the results of these two tasks are as follows:                     ating DRCs that present more accurate and useful information
+   1) Human Position: To be considered correct, it requires the              to users. Notably, LLMs fine-tuned with the distilled dataset
+      LLM-generated review comments to pinpoint the same                     that contains a high proportion of DRCs and whose size is less
+      location of the code issues as in the answer, regardless               than half of that of the original dataset significantly outperform
+      of whether the description of the code issues is correct               those fine-tuned with the original full dataset in terms of
+      or not.                                                                both localizing and describing code issues. Alignment further
+   2) Human Perfect: To be considered correct, it requires the               extends this advantage. It is worth noting that LLaMA-3.1
+      LLM-generated review comments to describe the same                     does not show a clear advantage over LLaMA-3, but it appears
+      issues and/or solutions as in the answer. It is clear that             to be more sensitive to the fine-tuning and alignment of the
+      the second task builds upon the first one.                             distilled dataset. Nevertheless, the distilled dataset improves
+B. Results analysis                                                          both versions.
+                                                                                Fig. 9 presents some intuitive examples of the review
+                                                                             comments generated by the three methods (based on LLaMA-
+                          TABLE III
+       P ERFORMANCE OF EACH METHOD IN IDENTIFYING DRC S                      3 only). It is apparent that training with the distilled dataset
+                                                                             significantly enhances LLaMA’s ability to identify key issues.
+           Method         Accuracy    Precision     Recall     F1-Score
+         10-line rule      58.33        51.92       100.00      68.35
+                                                                             Using alignment techniques can further improve the model’s
+      gpt3.5-turbo-0125    68.00        60.71       81.85       69.72        ability to generate accurate information and reduce the occur-
+         gpt-4o-0513       76.50        79.72       64.07       71.05        rence of irrelevant information.
+          Desiview         86.67        88.93       80.37       84.44
+
+                                                                                                     V. D ISCUSSION
+      a) RQ1: Accuracy of automated identification of DRCs:                      The primary contribution of this work is the dataset dis-
+Table III presents the performance of different methods in                   tillation method, Desiview, which can be used to construct
+identifying DRCs. As all entries in the test set contain code                a distilled dataset for fine-tuning LLMs to enhance their
+changes, the 10-line rule can always identify all DRCs,                      performance in code review tasks. This contribution has a pro-
+achieving 100% recall. However, this method only determines                  found impact on LLM-based code review research and can be
+changes and cannot assess whether the changes align with                     generally extended to other LLM-based software engineering
+the review comments, resulting in poor performance in com-                   tasks. In this section, we discuss the implications of dataset
+prehensive metrics such as accuracy and F1-score. The GPT-                   distillation in code review research.
+3.5-turbo and GPT-4o methods can somewhat understand the
+relationship between changes and review comments, but their                  A. Distilled dataset for training code review models
+performance is still inferior to our method, which significantly                Training data is fundamental to generating effective auto-
+outperforms existing methods in both comprehensive metrics                   mated code reviews. The results of our study partially demon-
+of accuracy and F1-score. Fig. 8 illustrates examples of desired             strate the value a distilled dataset brings to LLM-based code
+and undesired review comments. From these examples, it is                    review, confirming that distilled data often leads to better LLM
+evident that the determination of DRCs cannot be based solely                performance [8], [32]. However, acquiring distilled datasets is
+on the review’s phrasing or keywords to ascertain whether                    generally challenging. Specifically, in the field of code review,
+they can lead to effective code fixes. It requires a deeper                  previous studies have not effectively addressed this issue, aside
+understanding of both the code and the review comments.                      from the extremely costly manual annotation methods [11],
+                                                                             [12]. By leveraging the relationship between the content of
+                          TABLE IV
+  P ERFORMANCE OF THE CODE REVIEW COMMENT GENERATION TASK                    review comments and the code fixes as a criterion, we intro-
+                                                                             duce the perplexity metric to the quality assessment of code
+          Method           BLEU-4      Human Position        Human Perfect
+      LLaMA-Reviewer                                                         review data in terms of the desiredness of review comments.
+                            8.33            70.33                16.67
+     (LLaMA-3 Origin)                                                        The proposed dataset distillation method enables automated
+        Desiview4FT         11.87            76.67               18.33
+     (LLaMA-3 Based)      (+42.50%)        (+9.01%)            (+9.96%)
+                                                                             and reliable acquisition of large-scale, high-quality review
+        Desiview4FA         13.13            80.00               18.67       data at a low cost, thereby effectively addressing the scarcity
+     (LLaMA-3 Based)      (+57.62%)       (+13.75%)           (+12.00%)
+      LLaMA-Reviewer
+                                                                             of high-quality code review datasets. More importantly, we
+                            6.86            68.67                12.67       believe this method has the potential to be customized and
+    (LLaMA-3.1 Origin)
+        Desiview4FT         12.48          78.67                16.00        generalized to support other code review objectives, such as
+    (LLaMA-3.1 Based)     (+81.92%)      (+14.56%)            (+26.28%)
+        Desiview4FA         13.57          79.00                16.67        performance bottlenecks [51] and security risks [52] and even
+    (LLaMA-3.1 Based)     (+97.81%)      (+15.04%)            (+31.57%)      other software engineering objectives, such as vulnerability
+                                                                             detection [53]. Fig. 2 (upper left corner) illustrates a typical
+    b) RQ2: Effect of dataset distillation on the task per-                  pull-request development mode widely used in the open-source
+formance of LLMs: Table IV shows the performance of the                      community. Drawing on the principles behind Desiview, it
+  Desired review comment                                                                          Undesired review comment
+  Original Code Commit:                                                                           Original Code Commit:
+  return errors.Wrap(err, "[ Phase1Packet.DeserializeWithoutHeader ] Can't read                   private String getName(PublicizeConnection connection) {
+  Section 2")                                                                                     -        String name = connection.getExternalDisplayName();
+  }                                                                                               if (name.isEmpty()) {
+  -               data.Read(read)                                                                 -            name = connection.getExternalName();
+  }                                                                                               }
+  p1p.Signature = make([]byte, SignatureLength)                                                   return name;
+  Review Comment:                                                                                 Review Comment:
+  Error return value of `data.Read` is not checked                                                Let's use `TextUtils.isEmpty(name)` here so we also have `null` as a possibility.
+  Subsequent code fixes:                                                                          Subsequent code fixes:
+  return errors.Wrap(err, "[ Phase1Packet.DeserializeWithoutHeader ] Can't read                   private String getName(PublicizeConnection connection) {
+  Section 2")                                                                                     +        String name = connection.getExternalName();
+  }                                                                                               if (name.isEmpty()) {
+  +                _, err = data.Read(read)                                                       +             name = connection.getExternalDisplayName();
+  +                if err != nil {                                                                }
+  +                         return errors.Wrap(err, "failed to read raw data")                    return name;
+  +                }
+  }
+  p1p.Signature = make([]byte, SignatureLength)
+  Observation:                                                                                    Observation:
+  The review comment points out that the file was read without checking for reported              The review comment suggests using `TextUtils.isEmpty(name)` to check if `name` is
+  errors, and the subsequent fix added a check for the raised errors.                             null, but the subsequent code fix does not seem to accept this suggestion.
+
+                                                       Fig. 8. Examples of DRCs and non-DRCs identified by Desiview
+
+  Case 1
+  Original code commit:
+     auto r = get_if<record_type>(&t);
+  - return r ? is_flat(*r) : true;
+   }
+   size_t flat_size(const record_type& rec) {
+  Ground truth comment (reflected in the subsequent code):
+  Simpler: `return r && is_flat(*r)`.
+  LLaMA-Reviewer:
+  I think this is a bug. `is_flat` returns `false` for `record_type` that are not flat, but `get_if` returns `nullptr` for `record_type` that are not flat. So this will return `true` for non-
+  flat `record_type`s.
+  Desiview4FT:
+  ```suggestion return r && is_flat(*r); ```
+  Desiview4FA:
+  I think you want `return r && is_flat(*r)`
+  Observation:
+  Training with distilled data significantly improves the locating and describing issues in the code commit by LLMs.
+  Case 2
+  Original code commit:
+                    path + " Irohad config top element must be an object.");
+     const auto obj = src.GetObject();
+  - getValByKey(path, dest.blok_store_path, obj, config_members::BlockStorePath);
+     getValByKey(path, dest.torii_port, obj, config_members::ToriiPort);
+     getValByKey(path, dest.internal_port, obj, config_members::InternalPort);
+     getValByKey(path, dest.pg_opt, obj, config_members::PgOpt);
+  Ground comment (reflected in the subsequent code):
+  ```suggestion getValByKey(path, dest.block_store_path, obj, config_members::BlockStorePath); ```
+  LLaMA-Reviewer:
+  I think it's better to use `getValByKey` for all the keys.
+  Desiview4FT:
+  ```suggestion getValByKey(path, dest.blok_store_path, obj, config_members::BlockStorePath); getValByKey(path, dest.torii_port, obj, config_members::ToriiPort);
+  getValByKey(path, dest.internal_port, obj, config_members::InternalPort); getValByKey(path, dest.pg_opt, obj, config_members::PgOpt); ```
+  Desiview4FA:
+  ```suggestion getValByKey(path, dest.blok_store_path_, obj, config_members::BlockStorePath); ```
+  Observation:
+  The ground truth comment implies that the code, initially marked for deletion, should be reinstated to its original position. This is increasingly reflected in the outputs from
+  LLaMA-Reviewer, Desiview4FT, and Desiview4FA models. Notably, Desiview4FA generates a review comment that is identical to the ground truth.
+
+                               Fig. 9. Examples of review comments generated by LLaMA-Reviewer, Desiview4FT and Desiview4FA
+
+
+
+should be feasible to construct high-quality datasets applicable                                  review comments — specifically, predicting whether they can
+to various LLM-enabled software engineering scenarios by                                          trigger code fixes. One of the pain points in applying LLMs
+adjusting the desiredness criterion of review comments to other                                   to automated code review is the uncontrollable quality of
+relevant criteria, which necessitates further exploration.                                        generated review comments. In extreme cases, developers
+                                                                                                  have to check not only the code but also the generated
+B. Distilled dataset for training review quality prediction                                       review comments, which can even increase their workload.
+models                                                                                            This defeats the purpose of automated code review, which is
+                                                                                                  to reduce their workload. By applying the proposed dataset
+  The distilled dataset obtained from this study can also
+                                                                                                  distillation method, which divides the original dataset into
+be used to train models to predict the quality of generated
+high-quality and low-quality datasets, we can train a binary                 large enough (close to 65,000 entries of DRCs) to meet the
+classification model on traditional Bert series [20], [54] models            needs for fine-tuning LLaMA. Therefore, we did not expand
+with smaller parameter sizes to predict the quality of LLM-                  the concept of DRCs to cover other code review purposes.
+generated review comments. The training hyperparameters are                  Nevertheless, this leaves some room for future research.
+shown in Table V.                                                                  Noise in the distilled dataset: Based on the results in
+                                                                             Table III, it is reasonable to assume that a small number of
+                          TABLE V                                            non-DRCs remain in the distilled dataset when using Desiview
+   T RAINING HYPERPARAMETERS FOR PREDICTING DESIRED REVIEW
+                                 COMMENTS
+                                                                             to distil the CodeReviewer dataset, including the test set.
+                                                                             This may introduce some bias in addressing RQ2. However,
+     Pattern    epochs   batch     lr       label smoothing   weight decay   the amount of such data is minimal and unlikely to have
+     Value        5       32      1e-5             0.1             0
+                                                                             a significant impact. Moreover, the results of the human
+                                                                             evaluation fully corroborate the validity and efficacy of the
+                                                                             Desiview method, making this risk controllable.
+                              TABLE VI                                             Pre-trained models: Different pre-trained models exhibit
+               P ERFORMANCE OF THE DRC PREDICTION TASK                       varying performance in the task of code review. During the
+            Method       Accuracy        Precision   Recall   F1-Score       phase of assessing DRCs, we employed a voting mechanism
+          Robert-Base     79.82            84.28     80.71     82.46         using multiple models (without any preference) to reduce the
+         CodeBert-base    79.11            86.82     78.39     82.39
+                                                                             impact of a single LLM on the results. Although the results
+                                                                             show a positive effect of this strategy, it is possible that using
+   The review comment quality prediction task involves pre-                  different LLMs may impact the results.
+dicting whether a given review comment will lead to a modifi-                      Model parameter size: In general, the performance of
+cation based on the original code submission and the generated               a model can be significantly influenced by the size of its
+review comment. The input consists of a code Diff from the                   parameters within the same series. However, due to limitations
+original submission and a corresponding review comment, and                  in GPU capacity, we restricted our study to models with
+the output indicates whether it will lead to a code fix. We                  parameters under 16B for all computations. For tasks such as
+selected two commonly used Bert series models, Roberta [54]                  fine-tuning and alignment, we utilized models of 8B size. It is
+and CodeBERT [20], as our base models. Evaluation metrics                    worth noting that employing larger models could potentially
+include accuracy, precision, recall, and F1-score. The results               enhance performance, particularly in terms of assessing the
+in Table VI show a great potential to predict the quality of                 quality of review comments and generating desired review
+generated review comments. One possible application scenario                 comments more accurately. The size of the model parameters
+is to integrate an LLM-based code review solution with a                     also contributes to a substantial disparity in the quality of the
+review comment quality assessment mechanism to provide a                     review comments we generate compared to those generated by
+corresponding quality evaluation for each review comment,                    GPT4o. We believe one of the reasons for this difference is on
+which can assist developers in making better decisions on                    the scale of three orders of magnitude in terms of parameter
+whether to accept a particular review comment. A more                        numbers. Despite this, our distilled dataset has proven highly
+aggressive approach could be to embed this quality assess-                   effective in enhancing the original LLaMA series. Therefore, it
+ment mechanism within the LLM-based code review system,                      would be intriguing to explore and compare the effectiveness
+ensuring it only outputs high-quality review comments and                    of LLaMA-3 and GPT4o in conducting code review with a
+drops low-quality ones.                                                      comparable number of parameters (e.g., LLaMA-3.1-405B).
+                                                                                   Model training methods: Typically, large model train-
+                    VI. T HREATS TO VALIDITY                                 ing methods are divided into low-parameter training and
+   In this section, we discuss several validity risks.                       full-parameter training. Low-parameter training involves fine-
+      Definition of quality in terms of desiredness: In this pa-             tuning only a small portion of the LLM, making it possible to
+per, we define a high-quality code review dataset as one com-                train it with fewer resources. Full-parameter training involves
+posed of only DRCs. This approach inevitably carries some                    training all parameters of the LLM, which can lead to better
+validity risks. The concept of DRCs in this paper specifically               performance but at a significantly higher cost compared to
+refers to review comments that can trigger subsequent code                   low-parameter training [55]. Research has shown that full-
+fixes and improvements. This concept is based on multiple                    parameter training outperforms low-parameter training. Due to
+code review studies, all of which regard the detection of                    computational resource constraints, this work employed low-
+issues and triggering of subsequent code fixes as their primary              parameter training methods for training LLMs. Using full-
+purpose [3]. Our study does not intend to diminish other                     parameter training methods might result in better performance.
+purposes or the unique meaning of DRCs in these scenarios.                         Dataset: As far as we know, the only public multi-
+For instance, as shown in Fig. 1 (example C), acknowledging                  programming language dataset in the open-source community
+a developer’s fix can also be meaningful to the developer. In                that includes original submissions, subsequent fixes, and re-
+fact, during our exploration process, we found that the high-                view comments is the CodeReviewer dataset [5]. Therefore,
+quality dataset distilled according to our definition of DRC is              we could only use this dataset for our training and testing.
+This factor creates some risk in terms of the generalization of                 [7] A. Fan, B. Gokkaya, M. Harman, M. Lyubarskiy, S. Sengupta, S. Yoo,
+results, and we encourage the community to construct other                          and J. M. Zhang, “Large language models for software engineering: Sur-
+                                                                                    vey and open problems,” in 2023 IEEE/ACM International Conference
+datasets using our method to validate this work.                                    on Software Engineering: Future of Software Engineering (ICSE-FoSE).
+     Errors from human evaluation: Despite using standard-                          IEEE, 2023, pp. 31–53.
+ized methods and consistency checks to ensure the accuracy                      [8] C. Zhou, P. Liu, P. Xu, S. Iyer, J. Sun, Y. Mao, X. Ma, A. Efrat, P. Yu,
+                                                                                    L. Yu et al., “Lima: Less is more for alignment,” Advances in Neural
+of manual evaluations, errors in manual evaluation are still                        Information Processing Systems, vol. 36, 2024.
+possible, which may affect the results. We mitigated this                       [9] Y. Liu, S. Tao, X. Zhao, M. Zhu, W. Ma, J. Zhu, C. Su, Y. Hou,
+risk by employing evaluators with a background in software                          M. Zhang, M. Zhang et al., “Coachlm: Automatic instruction revisions
+                                                                                    improve the data quality in llm instruction tuning,” in 2024 IEEE 40th
+engineering, ensuring they have the necessary expertise to                          International Conference on Data Engineering (ICDE). IEEE, 2024,
+determine the relationship between source code and review                           pp. 5184–5197.
+comments during the evaluation. In addition, allowing some                     [10] R. Rejeleene, X. Xu, and J. Talburt, “Towards trustable language
+                                                                                    models: Investigating information quality of large language models,”
+degree of duplication across multiple evaluators, in addition                       arXiv preprint arXiv:2401.13086, 2024.
+to conducting chi-square tests, further reduces this risk.                     [11] L. Ouyang, J. Wu, X. Jiang, D. Almeida, C. Wainwright, P. Mishkin,
+                                                                                    C. Zhang, S. Agarwal, K. Slama, A. Ray et al., “Training language
+                        VII. C ONCLUSIONS                                           models to follow instructions with human feedback,” Advances in neural
+                                                                                    information processing systems, vol. 35, pp. 27 730–27 744, 2022.
+   In this work, we propose a method for analyzing, assessing                  [12] N. McAleese, R. M. Pokorny, J. F. C. Uribe, E. Nitishinskaya, M. Tre-
+and automatically identifying DRCs. This solves one critical                        bacz, and J. Leike, “Llm critics help catch llm bugs,” arXiv preprint
+problem of automated construction of high-quality datasets for                      arXiv:2407.00215, 2024.
+                                                                               [13] Y. Wang, Y. Kordi, S. Mishra, A. Liu, N. A. Smith, D. Khashabi,
+code review research. Empirical experiments reveal that this                        and H. Hajishirzi, “Self-instruct: Aligning language models with self-
+method surpasses all other methods in terms of identifying                          generated instructions,” arXiv preprint arXiv:2212.10560, 2022.
+DRCs, including GPT-4o, in terms of accuracy. Using this                       [14] W. X. Zhao, K. Zhou, J. Li, T. Tang, X. Wang, Y. Hou, Y. Min, B. Zhang,
+                                                                                    J. Zhang, Z. Dong et al., “A survey of large language models,” arXiv
+method, we constructed a distilled dataset containing a high                        preprint arXiv:2303.18223, 2023.
+proportion of DRCs, which not only can be used to train a                      [15] X. Luo, Q. Zhu, Z. Zhang, X. Wang, Q. Yang, D. Xu, and W. Che,
+model to predict whether a new review comment is DRC                                “Semi-instruct: Bridging natural-instruct and self-instruct for code large
+                                                                                    language models,” arXiv preprint arXiv:2403.00338, 2024.
+but also support fine-tuning and aligning LLMs to perform                      [16] B. Plank, “The’problem’of human label variation: On ground truth in
+better code review tasks in terms of generating DRCs. Both                          data, modeling and evaluation,” arXiv preprint arXiv:2211.02570, 2022.
+automated evaluation and human evaluation reveal that LLMs                     [17] A. Bosu, M. Greiler, and C. Bird, “Characteristics of useful code
+                                                                                    reviews: An empirical study at microsoft,” in 2015 IEEE/ACM 12th
+trained with the distilled dataset outperform those trained with                    Working Conference on Mining Software Repositories. IEEE, 2015,
+the original dataset. Future work includes applying the pro-                        pp. 146–156.
+posed dataset distillation method to construct datasets suitable               [18] C. Sadowski, E. Söderberg, L. Church, M. Sipko, and A. Bacchelli,
+                                                                                    “Modern code review: a case study at google,” in Proceedings of the 40th
+for different code review objectives, during which better LLMs                      international conference on software engineering: Software engineering
+can be leveraged to improve the accuracy of high-quality                            in practice, 2018, pp. 181–190.
+review comment identification. Additionally, using newer and                   [19] S.-T. Shi, M. Li, D. Lo, F. Thung, and X. Huo, “Automatic code review
+                                                                                    by learning the revision of source code,” in Proceedings of the AAAI
+stronger LLMs as the base models, along with new techniques                         Conference on Artificial Intelligence, vol. 33, no. 01, 2019, pp. 4910–
+for fine-tuning and alignment can also be explored to further                       4917.
+enhance the application efficacy of distilled datasets.                        [20] Z. Feng, D. Guo, D. Tang, N. Duan, X. Feng, M. Gong, L. Shou, B. Qin,
+                                                                                    T. Liu, D. Jiang et al., “Codebert: A pre-trained model for programming
+                                                                                    and natural languages,” arXiv preprint arXiv:2002.08155, 2020.
+                             R EFERENCES                                       [21] Y. Wang, W. Wang, S. Joty, and S. C. Hoi, “Codet5: Identifier-aware
+ [1] G. Gousios, M. Pinzger, and A. v. Deursen, “An exploratory study of            unified pre-trained encoder-decoder models for code understanding and
+     the pull-based software development model,” in Proceedings of the 36th         generation,” arXiv preprint arXiv:2109.00859, 2021.
+     international conference on software engineering, 2014, pp. 345–355.      [22] A. Radford, J. Wu, R. Child, D. Luan, D. Amodei, I. Sutskever et al.,
+ [2] J. Lu, L. Yu, X. Li, L. Yang, and C. Zuo, “Llama-reviewer: Advancing           “Language models are unsupervised multitask learners,” OpenAI blog,
+     code review automation with large language models through parameter-           vol. 1, no. 8, p. 9, 2019.
+     efficient fine-tuning,” in 2023 IEEE 34th International Symposium on      [23] Y. Hong, C. Tantithamthavorn, P. Thongtanunam, and A. Aleti, “Com-
+     Software Reliability Engineering (ISSRE). IEEE, 2023, pp. 647–658.             mentfinder: a simpler, faster, more accurate code review comments
+ [3] O. Kononenko, O. Baysal, and M. W. Godfrey, “Code review quality:              recommendation,” in Proceedings of the 30th ACM joint European
+     How developers see it,” in Proceedings of the 38th international con-          software engineering conference and symposium on the foundations of
+     ference on software engineering, 2016, pp. 1028–1038.                          software engineering, 2022, pp. 507–519.
+ [4] A. Bosu and J. C. Carver, “Impact of peer code review on peer impres-     [24] A. Gupta and N. Sundaresan, “Intelligent code reviews using deep
+     sion formation: A survey,” in 2013 ACM/IEEE International Symposium            learning,” in Proceedings of the 24th ACM SIGKDD International
+     on Empirical Software Engineering and Measurement. IEEE, 2013, pp.             Conference on Knowledge Discovery and Data Mining (KDD’18) Deep
+     133–142.                                                                       Learning Day, 2018.
+ [5] Z. Li, S. Lu, D. Guo, N. Duan, S. Jannu, G. Jenks, D. Majumder,           [25] B. Roziere, J. Gehring, F. Gloeckle, S. Sootla, I. Gat, X. E. Tan, Y. Adi,
+     J. Green, A. Svyatkovskiy, S. Fu et al., “Automating code review               J. Liu, T. Remez, J. Rapin et al., “Code llama: Open foundation models
+     activities by large-scale pre-training,” in Proceedings of the 30th ACM        for code,” arXiv preprint arXiv:2308.12950, 2023.
+     Joint European Software Engineering Conference and Symposium on           [26] H. Touvron, L. Martin, K. Stone, P. Albert, A. Almahairi, Y. Babaei,
+     the Foundations of Software Engineering, 2022, pp. 1035–1047.                  N. Bashlykov, S. Batra, P. Bhargava, S. Bhosale et al., “Llama
+ [6] X. Hou, Y. Zhao, Y. Liu, Z. Yang, K. Wang, L. Li, X. Luo, D. Lo,               2: Open foundation and fine-tuned chat models,” arXiv preprint
+     J. Grundy, and H. Wang, “Large language models for software engineer-          arXiv:2307.09288, 2023.
+     ing: A systematic literature review,” arXiv preprint arXiv:2308.10620,    [27] D. Guo, Q. Zhu, D. Yang, Z. Xie, K. Dong, W. Zhang, G. Chen,
+     2023.                                                                          X. Bi, Y. Wu, Y. Li et al., “Deepseek-coder: When the large language
+                                                                                    model meets programming–the rise of code intelligence,” arXiv preprint
+                                                                                    arXiv:2401.14196, 2024.
+[28] A. Lozhkov, R. Li, L. B. Allal, F. Cassano, J. Lamy-Poirier, N. Tazi,            D. Xiong, “Large language model alignment: A survey,” arXiv preprint
+     A. Tang, D. Pykhtar, J. Liu, Y. Wei et al., “Starcoder 2 and the stack           arXiv:2309.15025, 2023.
+     v2: The next generation,” arXiv preprint arXiv:2402.19173, 2024.            [44] F. Jelinek, R. L. Mercer, L. R. Bahl, and J. K. Baker, “Perplexity—a
+[29] AI@Meta, “Llama 3 model card,” 2024. [Online]. Available:                        measure of the difficulty of speech recognition tasks,” The Journal of
+     https://github.com/meta-llama/llama3/blob/main/MODEL CARD.md                     the Acoustical Society of America, vol. 62, no. S1, pp. S63–S63, 1977.
+[30] B. Chen, F. Zhang, A. Nguyen, D. Zan, Z. Lin, J.-G. Lou, and                [45] A. Miaschi, D. Brunato, F. Dell’Orletta, and G. Venturi, “What makes
+     W. Chen, “Codet: Code generation with generated tests,” arXiv preprint           my model perplexed? a linguistic investigation on neural language mod-
+     arXiv:2207.10397, 2022.                                                          els perplexity,” in Proceedings of Deep Learning Inside Out (DeeLIO):
+[31] M. A. Islam, M. E. Ali, and M. R. Parvez, “Mapcoder: Multi-                      The 2nd Workshop on Knowledge Extraction and Integration for Deep
+     agent code generation for competitive problem solving,” arXiv preprint           Learning Architectures, 2021, pp. 40–47.
+     arXiv:2405.11403, 2024.                                                     [46] E. J. Hu, Y. Shen, P. Wallis, Z. Allen-Zhu, Y. Li, S. Wang, L. Wang,
+[32] Y. Wei, Z. Wang, J. Liu, Y. Ding, and L. Zhang, “Magicoder: Em-                  and W. Chen, “Lora: Low-rank adaptation of large language models,”
+     powering code generation with oss-instruct,” in Forty-first International        arXiv preprint arXiv:2106.09685, 2021.
+     Conference on Machine Learning, 2024.                                       [47] G. Rong, Y. Yu, Y. Zhang, H. Zhang, H. Shen, D. Shao, H. Kuang,
+[33] A. Silva, S. Fang, and M. Monperrus, “Repairllama: Efficient repre-              M. Wang, Z. Wei, Y. Xu et al., “Distilling quality enhancing comments
+     sentations and fine-tuned adapters for program repair,” arXiv preprint           from code reviews to underpin reviewer recommendation,” IEEE Trans-
+     arXiv:2312.15698, 2023.                                                          actions on Software Engineering, 2024.
+[34] Z. Luo, C. Xu, P. Zhao, Q. Sun, X. Geng, W. Hu, C. Tao, J. Ma, Q. Lin,      [48] K. Pearson, “X. on the criterion that a given system of deviations from
+     and D. Jiang, “Wizardcoder: Empowering code large language models                the probable in the case of a correlated system of variables is such that it
+     with evol-instruct,” arXiv preprint arXiv:2306.08568, 2023.                      can be reasonably supposed to have arisen from random sampling,” The
+[35] J. Ji, T. Qiu, B. Chen, B. Zhang, H. Lou, K. Wang, Y. Duan, Z. He,               London, Edinburgh, and Dublin Philosophical Magazine and Journal of
+     J. Zhou, Z. Zhang et al., “Ai alignment: A comprehensive survey,” arXiv          Science, vol. 50, no. 302, pp. 157–175, 1900.
+     preprint arXiv:2310.19852, 2023.                                            [49] T. Brown, B. Mann, N. Ryder, M. Subbiah, J. D. Kaplan, P. Dhariwal,
+[36] Y. Tang, D. Z. Guo, Z. Zheng, D. Calandriello, Y. Cao, E. Tarassov,              A. Neelakantan, P. Shyam, G. Sastry, A. Askell et al., “Language mod-
+     R. Munos, B. Á. Pires, M. Valko, Y. Cheng et al., “Understanding                els are few-shot learners,” Advances in neural information processing
+     the performance gap between online and offline alignment algorithms,”            systems, vol. 33, pp. 1877–1901, 2020.
+     arXiv preprint arXiv:2405.08448, 2024.                                      [50] K. Papineni, S. Roukos, T. Ward, and W.-J. Zhu, “Bleu: a method for
+[37] J. Schulman, F. Wolski, P. Dhariwal, A. Radford, and O. Klimov, “Prox-           automatic evaluation of machine translation,” in Proceedings of the 40th
+     imal policy optimization algorithms,” arXiv preprint arXiv:1707.06347,           annual meeting of the Association for Computational Linguistics, 2002,
+     2017.                                                                            pp. 311–318.
+[38] R. Rafailov, A. Sharma, E. Mitchell, C. D. Manning, S. Ermon, and           [51] A. Shypula, A. Madaan, Y. Zeng, U. Alon, J. Gardner, M. Hashemi,
+     C. Finn, “Direct preference optimization: Your language model is                 G. Neubig, P. Ranganathan, O. Bastani, and A. Yazdanbakhsh, “Learning
+     secretly a reward model,” Advances in Neural Information Processing              performance-improving code edits,” arXiv preprint arXiv:2302.07867,
+     Systems, vol. 36, 2024.                                                          2023.
+[39] K. Ethayarajh, W. Xu, N. Muennighoff, D. Jurafsky, and D. Kiela, “Kto:      [52] N. Tihanyi, T. Bisztray, R. Jain, M. A. Ferrag, L. C. Cordeiro, and
+     Model alignment as prospect theoretic optimization,” arXiv preprint              V. Mavroeidis, “The formai dataset: Generative ai in software security
+     arXiv:2402.01306, 2024.                                                          through the lens of formal verification,” in Proceedings of the 19th
+[40] B. Steenhoek, M. Tufano, N. Sundaresan, and A. Svyatkovskiy, “Rein-              International Conference on Predictive Models and Data Analytics in
+     forcement learning from automatic feedback for high-quality unit test            Software Engineering, 2023, pp. 33–43.
+     generation,” arXiv preprint arXiv:2310.02368, 2023.                         [53] R. Croft, M. A. Babar, and M. M. Kholoosi, “Data quality for software
+[41] S. Dou, Y. Liu, H. Jia, L. Xiong, E. Zhou, J. Shan, C. Huang,                    vulnerability datasets,” in 2023 IEEE/ACM 45th International Confer-
+     W. Shen, X. Fan, Z. Xi et al., “Stepcoder: Improve code generation               ence on Software Engineering (ICSE). IEEE, 2023, pp. 121–133.
+     with reinforcement learning from compiler feedback,” arXiv preprint         [54] Y. Liu, M. Ott, N. Goyal, J. Du, M. Joshi, D. Chen, O. Levy, M. Lewis,
+     arXiv:2402.01391, 2024.                                                          L. Zettlemoyer, and V. Stoyanov, “Roberta: A robustly optimized bert
+[42] B. Shen, J. Zhang, T. Chen, D. Zan, B. Geng, A. Fu, M. Zeng, A. Yu,              pretraining approach,” arXiv preprint arXiv:1907.11692, 2019.
+     J. Ji, J. Zhao et al., “Pangu-coder2: Boosting large language models for    [55] D. Biderman, J. G. Ortiz, J. Portes, M. Paul, P. Greengard, C. Jennings,
+     code with ranking feedback,” arXiv preprint arXiv:2307.14936, 2023.              D. King, S. Havens, V. Chiley, J. Frankle et al., “Lora learns less and
+[43] T. Shen, R. Jin, Y. Huang, C. Liu, W. Dong, Z. Guo, X. Wu, Y. Liu, and           forgets less,” arXiv preprint arXiv:2405.09673, 2024.
+
