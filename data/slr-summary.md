@@ -6,8 +6,8 @@
 
 | Measure | Count |
 |---|---:|
-| Records | 71 |
-| Core evidence | 41 |
+| Records | 121 |
+| Core evidence | 91 |
 | Supporting evidence | 24 |
 | Peripheral evidence | 6 |
 
@@ -19,100 +19,104 @@
 | 2015 | 1 |
 | 2018 | 2 |
 | 2021 | 2 |
-| 2022 | 1 |
-| 2023 | 2 |
-| 2024 | 8 |
-| 2025 | 29 |
-| 2026 | 25 |
+| 2022 | 2 |
+| 2023 | 3 |
+| 2024 | 14 |
+| 2025 | 49 |
+| 2026 | 36 |
+| NR | 11 |
 
 ## Publication types
 
 | Type | Studies |
 |---|---:|
-| `conference` | 32 |
-| `preprint_or_other` | 22 |
-| `journal` | 17 |
+| `preprint_or_other` | 45 |
+| `conference` | 42 |
+| `journal` | 23 |
+| `other` | 11 |
 
 ## RQ1 failure types
 
 | Code | Studies with coded evidence |
 |---|---:|
-| `irrelevant` | 13 |
-| `low_value_or_nitpick` | 13 |
-| `incorrect_claim` | 12 |
-| `spurious_or_false_positive` | 8 |
-| `vague_or_generic` | 7 |
-| `unsupported_or_hallucinated` | 6 |
-| `missed_issue_or_false_negative` | 5 |
+| `incorrect_claim` | 25 |
+| `irrelevant` | 23 |
+| `spurious_or_false_positive` | 16 |
+| `low_value_or_nitpick` | 14 |
+| `unsupported_or_hallucinated` | 13 |
+| `vague_or_generic` | 12 |
+| `redundant` | 8 |
+| `non_actionable` | 7 |
+| `severity_miscalibration` | 7 |
+| `missed_issue_or_false_negative` | 6 |
+| `context_dependent` | 5 |
 | `adversarial_or_bias` | 5 |
-| `non_actionable` | 4 |
-| `context_dependent` | 2 |
-| `redundant` | 2 |
-| `severity_miscalibration` | 2 |
-| `invalid_fix` | 2 |
+| `wrong_location_or_cause` | 4 |
+| `invalid_fix` | 4 |
 
 ## RQ2 evaluation dimensions
 
 | Code | Studies with coded evidence |
 |---|---:|
-| `correctness` | 11 |
-| `usefulness` | 11 |
-| `evaluator_validity` | 9 |
-| `coverage` | 8 |
-| `acceptance_or_adoption` | 7 |
-| `cost_or_latency` | 6 |
-| `lexical_similarity` | 5 |
-| `explanation_quality` | 4 |
-| `workflow_impact` | 4 |
-| `actionability` | 3 |
-| `relevance` | 2 |
-| `specificity` | 2 |
-| `context_quality` | 2 |
-| `efficiency_validity` | 2 |
-| `security_validity` | 2 |
-| `grounding` | 1 |
+| `coverage` | 28 |
+| `lexical_similarity` | 23 |
+| `evaluator_validity` | 22 |
+| `usefulness` | 22 |
+| `cost_or_latency` | 19 |
+| `correctness` | 19 |
+| `acceptance_or_adoption` | 14 |
+| `workflow_impact` | 12 |
+| `explanation_quality` | 11 |
+| `relevance` | 10 |
+| `efficiency_validity` | 10 |
+| `actionability` | 9 |
+| `security_validity` | 9 |
+| `context_quality` | 4 |
+| `grounding` | 4 |
+| `specificity` | 3 |
 
 ## RQ3 mitigation families
 
 | Code | Studies with coded evidence |
 |---|---:|
-| `filtering_or_suppression` | 7 |
-| `verification_or_critic` | 6 |
-| `retrieval_or_rag` | 5 |
-| `prompting` | 4 |
-| `benchmark_or_rubric` | 3 |
-| `fine_tuning` | 3 |
-| `data_cleaning` | 2 |
-| `rewriting` | 2 |
-| `static_analysis_hybrid` | 2 |
-| `multi_agent` | 1 |
-| `specification_grounding` | 1 |
-| `routing` | 1 |
-| `reward_optimization` | 1 |
+| `filtering_or_suppression` | 30 |
+| `human_escalation` | 27 |
+| `fine_tuning` | 20 |
+| `verification_or_critic` | 15 |
+| `retrieval_or_rag` | 14 |
+| `prompting` | 11 |
+| `benchmark_or_rubric` | 10 |
+| `data_cleaning` | 5 |
+| `reward_optimization` | 4 |
+| `rewriting` | 4 |
+| `multi_agent` | 3 |
+| `routing` | 3 |
+| `static_analysis_hybrid` | 3 |
+| `specification_grounding` | 2 |
 
 ## RQ5 context types
 
 | Code | Studies with coded evidence |
 |---|---:|
-| `reviewer_or_workflow` | 27 |
-| `pr_or_issue` | 10 |
-| `repository_or_project` | 9 |
-| `retrieved_history` | 5 |
-| `adversarial_context` | 5 |
-| `diff_or_hunk` | 4 |
-| `specification_or_documentation` | 3 |
-| `execution_or_test` | 2 |
-| `static_analysis_or_tool` | 2 |
-| `file_or_function` | 1 |
+| `reviewer_or_workflow` | 68 |
+| `pr_or_issue` | 32 |
+| `repository_or_project` | 30 |
+| `diff_or_hunk` | 22 |
+| `retrieved_history` | 15 |
+| `specification_or_documentation` | 13 |
+| `static_analysis_or_tool` | 8 |
+| `execution_or_test` | 7 |
+| `adversarial_context` | 6 |
+| `file_or_function` | 4 |
 
 ## RQ4 reporting availability
 
 | Field | Yes | No | NR |
 |---|---:|---:|---:|
-| `preservation_reported` | 0 | 71 | 0 |
-| `coverage_reported` | 2 | 69 | 0 |
-| `escalation_reported` | 0 | 68 | 3 |
-| `cost_reported` | 7 | 64 | 0 |
+| `preservation_reported` | 45 | 76 | 0 |
+| `coverage_reported` | 46 | 75 | 0 |
+| `escalation_reported` | 27 | 91 | 3 |
+| `cost_reported` | 34 | 87 | 0 |
 
 ## Quality score
 

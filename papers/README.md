@@ -6,8 +6,8 @@ This directory separates manuscript-facing paper notes from search and extractio
 
 | Path | Role | Source of truth |
 |---|---|---|
-| `papers/canonical/notes/P01-*.md` through `papers/canonical/notes/P71-*.md` | Canonical baseline study notes | `data/slr-extraction.csv` and `references/references.bib` |
-| `papers/provisional/notes/P72-*.md` through `P123-*.md` | Extracted supplementary core candidates held before final corpus freeze | `data/search/core-reconciliation-queue.csv` |
+| `papers/canonical/notes/P01-*.md` through `P123-*.md` (excluding resolved duplicates P108/P116) | Frozen canonical study notes | `data/slr-extraction.csv` and `references/references.bib` |
+| `papers/provisional/notes/P108-*.md`, `P116-*.md`, `P124-*.md`, `P125-*.md` | Duplicate/provisional records retained outside the frozen corpus | `data/search/core-reconciliation-queue.csv`; external candidate ledger |
 | `papers/candidates/pdfs/` | PDFs acquired during supplementary search | `data/search/arxiv-full-text-manifest.csv` |
 | `papers/canonical/pdfs/` | PDFs associated with the baseline corpus | Paper IDs and the baseline paper pool |
 
@@ -28,7 +28,7 @@ They remain outside `papers/provisional/notes/` until a candidate receives a sta
 
 ## Promotion rule
 
-A provisional record is promoted only after full-text validation, duplicate/version resolution, relevance and evidence-tier assignment, and the final evidence-set freeze. Until then, its note, extraction packet, PDF, and bibliography entry must not be treated as part of the frozen baseline denominator.
+A provisional record is promoted only after full-text validation, duplicate/version resolution, relevance and evidence-tier assignment, and the final evidence-set freeze. Resolved duplicate records and access-limited external candidates remain outside the frozen denominator.
 
 ## Synchronization
 

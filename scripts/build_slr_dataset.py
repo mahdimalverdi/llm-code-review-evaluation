@@ -26,6 +26,14 @@ SUPPORTING = {
 }
 PERIPHERAL = {44, 45, 47, 50, 70, 71}
 
+# Supplementary records are promoted to canonical only after the freeze step.
+# Their provisional IDs are therefore discovered from the canonical note
+# directory instead of being hard-coded into the baseline tier sets.
+CANONICAL_PROJECT_NUMBERS = {
+    int(path.name.split("-", 1)[0][1:])
+    for path in CANONICAL_NOTES.glob("P[0-9]*-*.md")
+}
+
 FAILURES = {
     "unsupported_or_hallucinated": (r"hallucin", r"unsupported claim", r"ungrounded", r"context.misalign"),
     "incorrect_claim": (r"incorrect", r"factually false", r"technically wrong"),
@@ -268,20 +276,23 @@ def venue_and_type(fields: dict[str, str]) -> tuple[str, str]:
 
 
 def main() -> None:
+    all_canonical = set(CANONICAL_PROJECT_NUMBERS)
+    supplementary_core = {number for number in all_canonical if number >= 72}
+    core_ids = CORE | supplementary_core
     if CORE & SUPPORTING or CORE & PERIPHERAL or SUPPORTING & PERIPHERAL:
         raise SystemExit("Evidence-tier sets overlap")
     if CORE | SUPPORTING | PERIPHERAL != set(range(1, 72)):
-        raise SystemExit("Evidence-tier sets do not cover P01–P71 exactly")
+        raise SystemExit("Baseline evidence-tier sets do not cover P01–P71 exactly")
 
     bib = bib_entries()
     progress = progress_metadata()
     rows: list[dict[str, str]] = []
     audit_rows: list[dict[str, str]] = []
-    for path in sorted(CANONICAL_NOTES.glob("P[0-9][0-9]-*.md")):
-        pid = path.name[:3]
+    for path in sorted(CANONICAL_NOTES.glob("P[0-9]*-*.md")):
+        pid = path.name.split("-", 1)[0]
         num = int(pid[1:])
         text = path.read_text(encoding="utf-8")
-        key_match = re.search(r"`(p\d{2}_[^`]+)`", text)
+        key_match = re.search(r"`(p\d+_[^`]+)`", text)
         if not key_match:
             raise SystemExit(f"Missing citation key in {path}")
         key = key_match.group(1)
@@ -292,7 +303,7 @@ def main() -> None:
         s8 = last_titled_section(text, r"Annotation and evaluator validity", 8)
         relevant = "\n".join((s4, s5, s6, s7, s8))
         meta = progress.get(pid, {})
-        tier = "Core" if num in CORE else "Supporting" if num in SUPPORTING else "Peripheral"
+        tier = "Core" if num in core_ids else "Supporting" if num in SUPPORTING else "Peripheral"
         evaluator_types = []
         if re.search(r"human|annotator|developer|participant", s8, re.I): evaluator_types.append("human")
         if re.search(r"llm|gpt|judge", s8, re.I): evaluator_types.append("llm_judge")
@@ -361,8 +372,9 @@ def main() -> None:
                 "source_note": row["source_note"],
             })
 
-    if len(rows) != 71 or {r["paper_id"] for r in rows} != {f"P{i:02d}" for i in range(1, 72)}:
-        raise SystemExit("Dataset does not contain exactly P01–P71")
+    expected_ids = {f"P{i:02d}" for i in all_canonical}
+    if len(rows) != len(expected_ids) or {r["paper_id"] for r in rows} != expected_ids:
+        raise SystemExit("Dataset does not contain exactly the canonical note set")
 
     OUT_DIR.mkdir(exist_ok=True)
     csv_path = OUT_DIR / "slr-extraction.csv"
