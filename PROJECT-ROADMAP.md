@@ -27,7 +27,7 @@ The current review must be described as a **targeted structured literature revie
 | Canonical synthesis | Taxonomy, evaluation dimensions, context model, trade-off framework, and research gap drafted | `synthesis/` |
 | Manuscript | Twelve section files exist; several sections remain short or provisional | `drafts/paper/sections/` |
 | Reproducible arXiv amendment | 293 unique records screened by title/abstract; 140 assessed at full text; local acquisition state synchronized | `method/search-protocol-amendment.md`; `data/search/` |
-| arXiv full-text queue | 132 included for consideration and 8 excluded; 52 core records extracted and held for final freeze; supporting records remain to be assessed | `data/search/arxiv-full-text-screening-reviewed.csv`; `data/search/core-reconciliation-queue.csv` |
+| arXiv full-text queue | 132 included for consideration and 8 excluded; 52 core records extracted and held for final freeze; 70 supporting records have local text and extraction packets | `data/search/arxiv-full-text-screening-reviewed.csv`; `data/search/core-reconciliation-queue.csv`; `data/search/provisional-extraction/supporting/` |
 | External candidate export | 18 duplicates, 3 full-text includes, 8 provisional includes, and 1 exclusion | `data/search/external-candidate-screening.csv` |
 | External acquisition | 9 already downloaded, 3 newly downloaded, and 9 metadata-only records | `data/search/external-pdf-acquisition.csv` |
 | Citation-key integrity | 125 citation blocks checked across 22 synthesis and draft files; all 64 used keys exist in the bibliography | Audit completed 2026-08-04 |
@@ -43,7 +43,7 @@ The 132 arXiv inclusions are full-text screening outcomes, not 132 automatically
 | 1 | Baseline 71-paper corpus | Complete | Canonical notes, quality appraisal, and structured extraction | Every P01–P71 record has one valid note, a decision, a tier, and RQ-linked evidence |
 | 2 | Initial synthesis and manuscript structure | Complete | Canonical synthesis files and twelve manuscript section files | All framework components and manuscript sections exist in draft form |
 | 3 | Supplementary search consolidation | In progress | Deduplicated and reconciled candidate set | Every supplementary candidate has a final duplicate, include, or exclude outcome supported by evidence |
-| 4 | Final evidence-set freeze | Planned | Versioned final included-study register | Each included study appears exactly once with a stable ID and final evidence tier |
+| 4 | Final evidence-set freeze | In progress | Provisional freeze register for supplementary core candidates; duplicate companions resolved | Each included study appears exactly once with a stable ID and final evidence tier |
 | 5 | Evidence integration and data rebuild | Planned | Updated notes, bibliography, matrices, extraction data, and summary counts | All frozen studies pass validation and all generated datasets rebuild successfully |
 | 6 | Evidence and citation assurance | Planned | Semantic citation audit, metadata verification, and calibration record | High-impact claims are traceable; metadata issues are resolved or disclosed; calibration is documented |
 | 7 | Manuscript completion and quality control | Planned | Submission-ready Markdown, LaTeX, and PDF | All sections are coherent, denominator-based results are current, and the PDF passes visual inspection |
@@ -102,8 +102,9 @@ Current focus:
 - [ ] Reconcile all arXiv inclusions with P01–P71, external candidates, and other preprint/publisher versions.
 - [x] Generate an initial arXiv-to-corpus reconciliation ledger using exact arXiv-ID and title-similarity matching.
 - [x] Generate a provisional queue for the 52 unmatched core candidates with local arXiv metadata.
-- [ ] Resolve the eight provisional external inclusions through full-text assessment or a documented access limitation.
+- [x] Record the seven provisional external inclusions and their required full-text/access-resolution actions.
 - [ ] Resolve the metadata conflict recorded for EXT-0012.
+- [x] Acquire local text and create provisional extraction packets for the 70 supporting records selected from the full-text screen.
 - [ ] Update `method/next-session-todo.md` and search documentation whose counts predate completed screening.
 - [ ] Execute or formally close the remaining planned source searches: Semantic Scholar, ACM Digital Library, IEEE Xplore, ScienceDirect, SpringerLink, Google Scholar, and Scopus.
 - [ ] Record exact queries, dates, native result counts, deduplication counts, and access limitations for every executed source.
@@ -125,6 +126,8 @@ Status: `Planned`
 - [ ] Treat preprints and published versions as one study unless a documented reason requires separate treatment.
 - [ ] Freeze each study as core, supporting, or peripheral exactly once.
 - [ ] Produce a final included-study register and final exclusion counts with reasons.
+- [x] Produce a provisional freeze register for the 52 core reconciliation candidates; retain resolved duplicate rows for provenance.
+- [x] Resolve P108/EXT-0028 and P116/EXT-0030 as duplicate search-queue records.
 - [ ] Record the freeze date and version or commit identifier.
 
 Exit criteria:
@@ -269,6 +272,7 @@ Add one row after each substantial work session. Keep entries concise and link t
 | 2026-08-04 | 3 | Completed arXiv full-text screening and external-candidate triage; acquired three external PDFs | 132 arXiv includes, 8 excludes; external decisions recorded | Reconcile duplicates and provisional candidates |
 | 2026-08-04 | 6 | Audited citation-key integrity across synthesis and draft Markdown files | 64 used keys checked; no missing bibliography key | Perform semantic citation audit after corpus freeze |
 | 2026-08-04 | 3 | Synchronized local PDF acquisition, core reconciliation, and extraction checkpoint ledgers | 136 local PDFs no longer marked pending; 52 core records have validated notes; 50 held for final freeze and 2 duplicate/companion records retained | Process supporting records only where full text is available, then freeze the evidence set |
+| 2026-08-04 | 3 | Completed supporting-text acquisition and provisional extraction packet preparation | 70 supporting texts and 70 packets are present under `data/search/provisional-extraction/supporting/`; packets remain provisional until duplicate, tier, and evidence-location decisions are frozen | Resolve supplementary duplicates and freeze the final evidence set |
 | YYYY-MM-DD | _Phase_ | _Describe completed work_ | _Link output or record result_ | _State the next concrete action_ |
 
 ## Known Blockers and Risks
