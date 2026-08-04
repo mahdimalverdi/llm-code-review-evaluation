@@ -68,16 +68,14 @@ def run(command: list[str], *, cwd: Path | None = None, allow_failure: bool = Fa
 def clean_auxiliary_files() -> None:
     BUILD_DIR.mkdir(parents=True, exist_ok=True)
     for path in BUILD_DIR.iterdir():
-        if path.name == "paper.pdf":
-            continue
-        if path.suffix in AUXILIARY_SUFFIXES:
+        if path.name == "paper.pdf" or path.suffix in AUXILIARY_SUFFIXES:
             path.unlink()
 
 
 def extract_matches(text: str, patterns: list[re.Pattern[str]]) -> set[str]:
     matches: set[str] = set()
     for pattern in patterns:
-        matches.update(match.group(1) for match in pattern.finditer(text))
+        matches.update(re.sub(r"\s+", "", match.group(1)) for match in pattern.finditer(text))
     return matches
 
 
@@ -123,13 +121,19 @@ def main() -> int:
             print("ERROR: build/references.bib was not copied. Run scripts/build_latex.py first.")
             return 1
 
-        # The first post-BibTeX pass can return non-zero for transient auxiliary
-        # file warnings (undefined citations/labels); the following pass is the
-        # authoritative result after those files have been rewritten.
+        # The first pass creates the auxiliary citation database. BibTeX then
+        # materializes the bibliography. Some TeX versions return non-zero on
+        # the first post-BibTeX pass while still producing a usable PDF; the
+        # second post-BibTeX pass is the authoritative one.
         run(["pdflatex", "-interaction=nonstopmode", "paper.tex"], cwd=BUILD_DIR, allow_failure=True)
         run(["bibtex", "paper"], cwd=BUILD_DIR)
-        run(["pdflatex", "-interaction=nonstopmode", "paper.tex"], cwd=BUILD_DIR)
-        run(["pdflatex", "-interaction=nonstopmode", "paper.tex"], cwd=BUILD_DIR, allow_failure=True)
+        final_pass = run(
+            ["pdflatex", "-interaction=nonstopmode", "paper.tex"],
+            cwd=BUILD_DIR,
+            allow_failure=True,
+        )
+        if final_pass.returncode != 0:
+            run(["pdflatex", "-interaction=nonstopmode", "paper.tex"], cwd=BUILD_DIR, allow_failure=True)
 
         citations, references = unresolved_items()
         final_log = log_text(BUILD_DIR / "paper.log")

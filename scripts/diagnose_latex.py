@@ -32,7 +32,7 @@ PATTERNS = {
 def collect_matches(text: str, patterns: list[re.Pattern[str]]) -> list[str]:
     values: set[str] = set()
     for pattern in patterns:
-        values.update(match.group(1) for match in pattern.finditer(text))
+        values.update(re.sub(r"\s+", "", match.group(1)) for match in pattern.finditer(text))
     return sorted(values)
 
 
