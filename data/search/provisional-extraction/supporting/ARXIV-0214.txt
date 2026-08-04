@@ -1,0 +1,1561 @@
+                                         Knowledge-Guided Prompt Learning for Request Quality
+                                         Assurance in Public Code Review
+                                         LIN LI, School of Computer Science and Artificial Intelligence, Wuhan University of Technology, China
+                                         XINCHUN YU∗ , School of Computer Science and Artificial Intelligence, Wuhan University of Technology,
+                                         China
+                                         XINYU CHEN, China Mobile Design Institute Co., Ltd., China
+                                         PENG LIANG, School of Computer Science, Wuhan University, China
+arXiv:2410.21673v4 [cs.SE] 10 Nov 2025
+
+
+
+
+                                         Public Code Review (PCR) is developed in the Software Question Answering (SQA) community, assisting
+                                         developers in exploring high-quality and efficient review services. Current methods on PCR mainly focus on
+                                         the reviewer’s perspective, including finding a capable reviewer, predicting comment quality, and recommend-
+                                         ing/generating review comments. However, it is not well studied that how to satisfy the review necessity
+                                         requests posted by developers which can increase their visibility, which in turn acts as a prerequisite for
+                                         better review responses. To this end, we propose Knowledge-guided Prompt learning for Public Code Review
+                                         (KP-PCR) to achieve developer-based code review request quality assurance (i.e., predicting request necessity
+                                         and recommending tags subtask). Specifically, we reformulate the two subtasks via 1) text prompt tuning
+                                         which converts both of them into a Masked Language Model (MLM) by constructing prompt templates using
+                                         hard prompt; and 2) knowledge and code prefix tuning which introduces knowledge guidance from fine-tuned
+                                         large language models by soft prompt, and uses program dependence graph to characterize code snippets.
+                                         Finally, both of the request necessity prediction and tag recommendation subtasks output predicted results
+                                         through an answer engineering module. In addition, we further analysis the time complexity of our KP-PCR
+                                         that has lightweight prefix based the operation of introducing knowledge guidance. Experimental results on
+                                         the PCR dataset for the period 2011-2023 demonstrate that our KP-PCR outperforms baselines by 2.3%-8.4% in
+                                         the request necessity prediction and by 1.4%-6.9% in the tag recommendation. The code implementation is
+                                         released at https://github.com/WUT-IDEA/KP-PCR.
+
+                                         CCS Concepts: • Software and its engineering → Software post-development issues.
+
+                                         Additional Key Words and Phrases: public code review, review necessity prediction, tag recommendation,
+                                         prompt learning, knowledge enhancement
+
+                                         ACM Reference Format:
+                                         Lin Li, Xinchun Yu, Xinyu Chen, and Peng Liang. 2025. Knowledge-Guided Prompt Learning for Request
+                                         Quality Assurance in Public Code Review. ACM Trans. Softw. Eng. Methodol. 0, 0, Article 0 (August 2025),
+                                         27 pages. https://doi.org/XXXXXXX.XXXXXXX
+
+                                         ∗ Corresponding author
+
+
+
+                                         Authors’ Contact Information: Lin Li, School of Computer Science and Artificial Intelligence, Wuhan University of Technol-
+                                         ogy, Wuhan, China, cathylilin@whut.edu.cn; Xinchun Yu, School of Computer Science and Artificial Intelligence, Wuhan
+                                         University of Technology, Wuhan, China, evenyxc@whut.edu.cn; Xinyu Chen, China Mobile Design Institute Co., Ltd.,
+                                         Wuhan, China, chenxinyu@cmdi.chinamobile.com; Peng Liang, School of Computer Science, Wuhan University, Wuhan,
+                                         China, liangp@whu.edu.cn.
+
+
+                                         Permission to make digital or hard copies of all or part of this work for personal or classroom use is granted without fee
+                                         provided that copies are not made or distributed for profit or commercial advantage and that copies bear this notice and the
+                                         full citation on the first page. Copyrights for components of this work owned by others than the author(s) must be honored.
+                                         Abstracting with credit is permitted. To copy otherwise, or republish, to post on servers or to redistribute to lists, requires
+                                         prior specific permission and/or a fee. Request permissions from permissions@acm.org.
+                                         © 2025 Copyright held by the owner/author(s). Publication rights licensed to ACM.
+                                         ACM 1557-7392/2025/8-ART0
+                                         https://doi.org/XXXXXXX.XXXXXXX
+
+
+                                                                          ACM Trans. Softw. Eng. Methodol., Vol. 0, No. 0, Article 0. Publication date: August 2025.
+0:2
+
+
+1     Introduction
+Code review can be conducted either within a team or by public developers. As an application
+form of traditional code review [9, 24, 33, 34, 38], code review within a team, serves as an essential
+quality assurance mechanism in mature and successful commercial and Open Source Software
+(OSS) projects [7]. However, due to its labor-intensive nature, code review within team gradually
+increases the time and resources spent on review activities as projects become more complex
+and extensive [35, 36]. Therefore, beside the popularity of team code review [20], modern code
+review has evolved from a formal and rigorously regulated process [12, 37] to a less stringent
+practice [2, 3, 35].
+   Public Code Review (PCR) is a type of modern code review task developed in the Software
+Question Answering (SQA) community, which helps developers explore efficient and high-quality
+review services. Unlike traditional code review, PCR is typically directed towards a broader developer
+community, where users can submit review requests without being tied to a specific project context.
+This openness enables PCR to gather diverse perspectives and expertise on code, but the lack of
+project structure often leads to submissions that lack context or clear background information,
+introducing challenges in management and quality control of code review. Existing research on code
+review has already recognized the importance of quality assurance mechanisms [4, 5, 37]. Therefore,
+this issue should also be given attention in public code review tasks. In open environments lacking
+project structure, appropriate quality control not only helps guide users to submit clearer and more
+standardized review requests, but also provides safeguards for identifying potential issues and
+facilitating efficient collaboration.
+   In the PCR process implemented by the SQA community, request quality assurance for code
+review service mainly depends on developers. Developers are required and encouraged to submit
+PCR requests in the community. A review request1 consists of several parts, as shown in Fig. 1,
+including title, request description (text and code snippets), quality, and tags. The necessity of these
+code review requests is evaluated by public via request necessity prediction [10] subtask after the
+requests are posted. Meanwhile, developers always need to choose technical terms as review tags.
+These tags can be used to match requests with suitable reviewers via tag recommendation [23, 43]
+subtask. Since the quality and responsiveness of public code reviews typically rely on manual
+efforts by developers, which can be labor-intensive, the demand for transitioning from manual
+reviews to intelligent services has gradually emerged.
+   Existing methods on PCR are mostly based on pre-trained language models. However, these mod-
+els typically exhibit generalized capabilities, and their understanding of domain-specific knowledge
+in the PCR field, such as code-related semantic patterns, still has room for improvement. Early
+work regarded code snippets as non-linguistic characters, which impeded the model’s performance
+in understanding technical content. For example, the TagDC method proposed by Li et al. [22]
+and the PROFIT model proposed by Nie et al. [31] treated code snippets as irrelevant information
+and discarded them altogether. Recent studies have discovered valuable semantic information
+embedded in code snippets, but these studies mostly employed the same processing methods as
+they do with text [16, 42]. Knowledge enhancement can effectively address the gaps in existing
+models when handling programming terms and error patterns. For instance, entries on algorithms,
+programming languages, and common programming errors can help the model better understand
+the functionality and potential issues of complex code snippets, thus improving its performance in
+PCR tasks.
+
+
+1 https://codereview.stackexchange.com/questions/284179/proper-implementation-of-signal-handler-and-multithreading-
+
+pthread
+
+
+ACM Trans. Softw. Eng. Methodol., Vol. 0, No. 0, Article 0. Publication date: August 2025.
+Knowledge-Guided Prompt Learning for Request Quality Assurance in Public Code Review                                0:3
+
+
+
+
+                                                                                      Title
+
+
+
+
+                                                                               Description
+
+
+
+                   Quality
+
+
+
+
+                                                    Tags
+
+
+                             Fig. 1. An Example of a Public Code Review Request.
+
+
+
+
+   To this end, we propose Knowledge-guided Prompt learning for Public Code Review (KP-PCR).
+Specifically, we first design a task-descriptive prompt template that restructures the request necessity
+prediction subtask and the tag recommendation subtask into a generative task through a knowledge-
+guided prompt template, and input the request body (including tags and descriptions) into the
+prompt construction module of a language model. We reformulate both subtasks via 1) text
+prompt tuning which converts two subtasks into Masked Language Model (MLM) by constructing
+prompt templates using hard prompt; and 2) knowledge and code prefix tuning which introduces
+knowledge guidance from fine-tuned DeepSeek by soft prompt, and uses program dependence
+graph to characterize code snippets. Finally, the request necessity prediction and recommendation
+tags output predicted results through an answer engineering module. In addition, we delve deeper
+into the time complexity analysis of our KP-PCR with lightweight prefix based operations to
+introducing knowledge, which reveals that our KP-PCR can improve task accuracy performance
+without compromising overall efficiency. Experimental results demonstrate that our KP-PCR
+outperforms baselines in terms of accuracy-related metrics across both subtasks. Furthermore, we
+explore the impact of prompt learning construction and knowledge guidance sources on the results,
+and use a case study to compare our KP-PCR with Llama3, CodeLlama and DeepSeek.
+   The main contributions of this study can be summarized as follows:
+
+                             ACM Trans. Softw. Eng. Methodol., Vol. 0, No. 0, Article 0. Publication date: August 2025.
+0:4
+
+
+      • From the perspective of developers, to satisfy the request quality assurance, a unified method,
+        called KP-PCR, is proposed for the request necessity prediction subtask and the tag recom-
+        mendation subtask.
+      • We introduce knowledge guidance from fine-tuned DeepSeek to enhance the model’s semantic
+        understanding of domain knowledge in developers’ PCR requests.
+      • Experimental results on the PCR dataset for the time span 2011-2023 demonstrate that our
+        KP-PCR outperforms the baselines of two request quality assurance subtasks.
+
+   This paper extends the preliminary version of our study, as presented in [10]. In comparison, this
+extended version (1) introduces knowledge guidance from fine-tuned DeepSeek to generate prefix
+vectors as soft prompt for the representation of code snippets, (2) changes the code parsing mode
+to PDG to get more control dependency information, (3) analyzes the time complexity to prove that
+our KP-PCR can improve the accuracy of request necessity prediction and tag recommendation
+while maintaining the overall efficiency of our KP-PCR method, (4) comprehensively evaluates the
+effects of our task-descriptive prompt template to explore the influence of knowledge guidance
+and code parsing on unifiedly modelling the above two subtasks, and (5) conducts a case study to
+compare our KP-PCR with Llama3, CodeLlama and DeepSeek. Additionally, we have examined the
+challenges of how to design hard and soft prompt templates and delved further into the originally
+explored unified modelling in the initial study. More details on the extension points compared to
+our preliminary study in [10] can be found in Section 7.6.
+   The remainder of this paper is structured as follows. Section 2 presents a motivating example,
+and Section 3 introduces the task addressed in this paper. Section 4 details the proposed method.
+Section 5 provides the experimental setup, and Section 6 discusses the experiment results and
+presents a case study to explore the utilization of knowledge guidance by our KP-PCR. Section 7
+describes the related work. Section 8 concludes this work with future directions.
+
+2     Motivating Example
+Public Code Review (PCR) differs from internal team code reviews in its service format, as the
+quality of the PCR process primarily depends on the developers who write and submit review
+requests, rather than on the reviewers themselves. While existing research has been effective in
+improving review quality, there remains significant room for improvement. One of the limitations
+of the current approach is that pre-trained language models still require improvement in their
+ability to learn domain-specific knowledge. The text of review requests may also include vocabulary
+that is absent from the language model’s training data. During tokenization, the model may split
+these out-of-vocabulary words into subwords or individual characters, which limits its ability to
+accurately process the text and complete PCR tasks.
+   Table 1 provides an example from the tag recommendation subtask, in which the review request
+includes the abbreviation “OOP” to describe a concept. However, this term is not covered by the
+language model, and the model may struggle to connect “OOP” with its full form, “Object Oriented
+Programming”. In contrast, knowledge guidance provides definitions that link these terms, helping
+to resolve such discrepancies.
+   To address this limitation, we propose fine-tuning a large pre-trained model, such as DeepSeek.
+By fine-tuning DeepSeek-7B on Wikipedia’s extensive collection of programming terminology, tech-
+nical definitions, and domain-specific concepts, we can improve the model’s ability to understand
+and generate code-related content more accurately. This approach allows the model to internal-
+ize valuable knowledge during the training process, ensuring that the learned domain-specific
+knowledge is embedded directly within the model’s parameters.
+
+ACM Trans. Softw. Eng. Methodol., Vol. 0, No. 0, Article 0. Publication date: August 2025.
+Knowledge-Guided Prompt Learning for Request Quality Assurance in Public Code Review                                  0:5
+
+
+                              Table 1. Example of Professional Knowledge Guidance
+
+                       Data                               Tag                     Knowledge Guidance
+      An online store, being converted from       object oriented         Object-oriented programming
+      procedural to OOPI just start to learn                             (OOP) is a programming paradigm
+      OOP, and it’s far more interesting than                           based on the concept of objects, which
+        procedural style.I have a complete                                                ...
+         working online store written in
+               procedural style...
+
+
+3     Task Description
+In the PCR process conducted by the SQA community, the quality assurance of requests primarily
+relies on developers. Developers are required to submit necessary PCR requests to the community,
+and the necessity of these requests is assessed publicly via the request necessity prediction
+subtask after submission. At the same time, developers need to select several technical terms as
+review tags, which can be used to match requests with appropriate reviewers through the tag
+recommendation subtask.
+   In this section, we will first describe a public code review process, and then outline how these
+request quality assurance subtasks (request necessity prediction and tag recommendation) serve
+the public code review process. This process consists of five core steps (as shown in Fig. 2), starting
+from the submission of changes or optimization requests by the code developer in Step ○,     1 to the
+submission of reviews by reviewers in Step ○.  5
+
+3.1     Public Code Review Process
+First, the public code review process will be introduced through an example of public code review.
+As shown in Fig. 2, a review process can be abstracted into 5 steps, labeled as ○-1 ○.5 Code review
+typically involves two roles: the developer who submits the code request and the reviewer
+who provides suggestions and comments. In Step ○,            1 the developer writes and submits a
+review request. In Step ○,  2 practitioners in the community review and evaluate the requests to
+allocate necessary feedback. Subsequently, in Step ○,3 developers are asked to select several relevant
+technical terms to accompany their request. These tags are then used in Step ○       4 to match the
+request with appropriate reviewers, who provide their feedback on the code in Step ○.    5
+    In a review request, there are often many changes and optimizations needed in different parts of
+the code. Reviewers need to spend a significant amount of time reviewing all the changes. However,
+it is often the case that most changes are minor and do not require comments or suggestions. Li
+et al. [26] initially considered the task of assessing code change quality in the internal team code
+review process, which involves predicting whether a code change is of high quality and ready to be
+accepted in the review process. This work enhances the efficiency and quality of the review process
+by pre-evaluating before the request is reviewed. Therefore, transitioning to the public code review
+process, there is a task need for predicting request necessity. Request necessity prediction learns
+from the existing conventions of public code review and community feedback to determine the
+standards for submitting review requests, thereby ensuring review quality and reducing the time
+cost of unnecessary requests.
+    The task of tag recommendation is common in the software engineering community, typically
+used for labeling requests and enhancing visibility. In public code review, reviewers browse request
+content and conduct evaluations based on these tags. Therefore, appropriate tag recommendations
+contribute to improving review efficiency.
+
+                               ACM Trans. Softw. Eng. Methodol., Vol. 0, No. 0, Article 0. Publication date: August 2025.
+0:6
+
+
+
+                                                                                      Statistics Obtained by Reviewers
+      (1) Post a Review Request
+                                                                                                Based on Tags
+
+                                                                          Title
+
+
+
+
+                                                                          Code
+      (5) Guide to Optimize
+                              Quality                                                                   Personal Page
+
+                                                                                    (4) Submit Review     Reviewer
+         Developer
+                                                                     Description       Comments
+
+
+
+
+      (2) Choose Porper Tags                                                        (3) Guide to Find
+                                                                          Tags
+
+                                        Requests from Code Review Sites
+
+
+                                   Fig. 2. An Example of a Public Code Review Process.
+
+
+
+   Overall, our task logic will focus on two processes initiated by developers, aiming to optimize
+the services of public code review. This includes integrating the task of predicting request necessity
+with Step ○,2 to provide necessary feedback to practitioners in advance. This can guide them
+to optimize request expressions and improve request visibility while reducing the time spent by
+reviewers in Step ○.
+                   5 Additionally, the tag recommendation task is associated with Step ○, 4 allowing
+requests to be correctly matched with appropriate reviewers based on the usage of tags in the PCR
+community.
+
+3.2    Request Quality Assurance Task Definition
+The effectiveness of the PCR process depends on the interaction between developers and reviewers.
+However, this interaction can be time-consuming due to the need to identify issues, find suitable
+reviewers, etc. While current methods focus on reducing the time cost for reviewers, they overlook
+the impact of developers on the review process. For the PCR process, code review requests that
+comply with review standards are crucial for high-quality review responses and a conducive
+community atmosphere. To address this issue, this study proposes a quality assurance service
+for public code review, mainly relying on the request necessity prediction subtask and the tag
+recommendation subtask.
+   When considering a request in public code review, it is assumed that there exists a corpus of
+public code review requests (denoted as 𝑅), a set of tag labels (denoted by 𝐿), and a set of quality
+labels for all PCR requests (denoted by 𝑄). Typically, given a public code review request 𝑟𝑒𝑞𝑖 ∈ 𝑅,
+
+ACM Trans. Softw. Eng. Methodol., Vol. 0, No. 0, Article 0. Publication date: August 2025.
+Knowledge-Guided Prompt Learning for Request Quality Assurance in Public Code Review                                0:7
+
+
+the request consists of a title 𝑡𝑖𝑡𝑙𝑒 𝑖 ∈ 𝑇 , and a description 𝑑𝑒𝑠 𝑖 ∈ 𝐷, where the description 𝑑𝑒𝑠 𝑖
+includes both text 𝑡𝑒𝑥 𝑖 and code snippets 𝑐𝑜𝑑𝑒 𝑖 .
+   (1) The subtask of request necessity prediction. The objective of the request necessity
+prediction is to obtain the function quality that maps 𝑟 to the necessity label 𝑞 ∈ 𝑄. A public code
+review request 𝑟𝑒𝑞𝑖 corresponds to a necessity label 𝑞𝑟 . Therefore, the necessity prediction subtask
+can be regarded as a classification problem. The goal is to determine an optimal function 𝑓 that
+maps the necessity label 𝑞 to a label similar to the actual necessity label 𝑞𝑟 .
+   (2) The subtask of tag recommendation. The objective of the tag recommendation subtask is
+to obtain a function that maps 𝑟𝑒𝑞𝑖 to a set of labels 𝑙 = {𝑙 1, 𝑙 2, . . . , 𝑙𝑚 } ⊂ 𝐿 that are most relevant to
+the request 𝑟 . A review request 𝑟𝑒𝑞𝑖 corresponds to several labels, where 𝑙𝑟 = {𝑙𝑟 1, 𝑙𝑟 2, . . . , 𝑙𝑟𝑘 } ⊂ 𝑙,
+𝑘 represents the number of true labels of the review request. Therefore, the tag recommendation
+subtask can be viewed as a multi-label classification problem. The goal is to identify an optimal
+function 𝑓𝑡𝑎𝑔𝑟 𝑒𝑐 that maps the label subset 𝑙 to the true label set 𝑙𝑟 as closely as possible.
+   (3) Unified task definition. We design a descriptive prompt template for the two subtasks,
+summarized as: 𝑇 (·) = “𝑥 [𝑀𝐴𝑆𝐾]” (where 𝑥 represents a text string). The input sequence 𝑟 of
+the request is passed through this descriptive prompt and refactored into 𝑟 𝑝𝑟𝑜𝑚𝑝𝑡 = 𝑇 (𝑟 ). The
+request necessity prediction and tag recommendation subtasks are made by filling in the position
+of [𝑀𝐴𝑆𝐾]. Our unified task is how to improve the proximity of the predicted filler words against
+the truth label. We denote the total number of training examples as 𝑁 , the total number of available
+labels as 𝑀, and the number of labels in the training data as 𝑙. The number of 𝑀𝐴𝑆𝐾 is determined
+by the maximum length of the labels in the two subtasks.
+
+4     KP-PCR Method
+In this section, we propose a knowledge-guided prompt learning for PCR called KP-PCR to address
+the issue of insufficient learning of professional knowledge in public code review.
+
+4.1    Framework Overview
+Fig. 3 illustrates the overall framework of KP-PCR which has two modules, knowledge-guided
+prompt learning module and answer engineering module.
+   The knowledge-guided prompt learning module consists of text prompt, code prompt and
+knowledge-guided prompt. First, the request text is input into prompt learning module. The text
+prompt reconstructs the request text into a generative task, and the code prompt refactors the code
+snippets in text into the form of program dependence graph. These processes are described in more
+detail in Section 4.2. The request is then fed into the fine-tuned DeepSeek. The text generated by
+DeepSeek is used as knowledge guidance, which is then fed into the model in the form of prefix
+vectors. Further, the obtained prompt template is input into the Masked Language Model (MLM) to
+get the predicted word list. Then the answer engineering module maps the predicted words to the
+label list to get the final labels.
+
+4.2    Unified Prompt Template Design
+4.2.1 Text Prompt. This subsection elaborates on the process of restructuring subtasks through
+task descriptive prompt templates, which involves the following two steps:
+   (1) Task Descriptive Prompt Template
+   First, a descriptive prompt template 𝑇 (·) as a hard prompt is applied to map the input request
+body 𝑟𝑒𝑞𝐼 = {𝑡𝑖𝑡𝑙𝑒𝑖 , 𝑑𝑒𝑠𝑖 } to prompts. The prompt template retains the original tokens from 𝑟𝑒𝑞𝑖
+and includes at least one [MASK] for PLM to fill in label words for both subtasks. Specifically, this
+study modifies the descriptive prompt text based on the subtask objectives to reconstruct the data
+for different tasks.
+
+                             ACM Trans. Softw. Eng. Methodol., Vol. 0, No. 0, Article 0. Publication date: August 2025.
+0:8
+
+
+  Knowledge Guided Prompt Learning Module
+                                                                                                                                                                      Context vector                       Code vector
+                                                                 Request Text
+                                                                                                                                                                      Template vector                      CLS/SEP vector
+
+                                                                                                                                                                      Learnable vector                     Concat
+        External Knowledge                          Base             supervised          Fine-Tuned                              Knowledge
+               Base                                 LLM              fine-tuning            LLM                                   Guidance
+
+                                                                                                                                                                                             Code Vectors
+
+
+       [CLS]            Template                    Title       Description             knowledge                        Code                  [SEP]
+                                                                                                                                                                                         Code Encoder
+                   T(·) (Template )                         D (Title and Description)              Prefix                        C(PDG)
+  [CLS] The request is about [MASK] [MASK] [MASK]       I need optimize my previous code                            a      1         d    3     c                                   Program Dependency
+                                                                                             Pl1    Pl2   ... Plm                                                                          Graph
+
+       0   1   2    3   4       5   6   7   8   9       10      11   12     13     14   15   16    17        18     19      20       21   22     23     24
+                                                                                                                                                                          Code Vectors Generation
+           Tidx = [1,2,3,4,5]                                Tidx = [6,7,8,9,10,11]          Tidx = [12,13,14]           Tidx = [15,16,17,18,19]
+                                                                                                                                                             def comb(array):
+                                                                                                                                                                  comb = []
+                                                                                                                                                                  tcomb = 2 ** len(array) - 1
+
+                                                    Mask Language Model（MLM）                                                                                      for i in range(tcomb + 1):
+                                                                                                                                                                     indexes = ("{:0" +
+                                                                                                                                                             str(len(array))
+                                                                                                                                                             +"d}").format(int(str(bin(i))[2:]))
+                            Prediction                                                                    Answer Engineering                                          comb.append(index)
+                                                                                                                                                                   return comb
+                                                                                                                                                                                                                  Program
+                                                                                                                                                                                                   Parse into
+                                                               Prediction                      Answer                                                                    Code                        AST
+                                                                                                                                                                                                                 Dependency
+                                        MLM Head                                 TopK                                   Label List             Output                                                              Graph
+                                                                Scores                       Engineering
+        h[MASK]         [MASK]
+                                                                                                                                                                                  Code Prefix Tuning
+      Answer Engineering Module
+
+
+
+                                                                     Fig. 3. The Framework of KP-PCR.
+
+
+  Then, by using the descriptive prompt: “The requested label is [MASK][MASK][MASK]. Is this
+request necessary for review? [MASK]”, the tasks of necessity prediction and tag recommendation
+are restructured within the same framework.
+  Finally, with a guiding prompt “Request: ”, the model is directed to explicitly recognize the
+request content, and concatenate the title 𝑡𝑖𝑡𝑙𝑒, description 𝑑𝑒𝑠 (including text content 𝑡𝑒𝑥𝑡 and
+code snippet content 𝑐𝑜𝑑𝑒), and the template 𝑇 (·) together. After concatenation, we obtain a text
+input 𝑟𝑒𝑞𝑖 for the model, as shown in Equation 1:
+
+                                                                            𝐼𝑛𝑝𝑢𝑡𝑖 = {𝑇 (·) , 𝑡𝑖𝑡𝑙𝑒𝑖 , 𝑑𝑒𝑠𝑖 }                                                                                                            (1)
+  (2) Request Text Encoding
+  [𝐶𝐿𝑆] and [𝑆𝐸𝑃] are special tokens used in BERT-based pre-trained language models. [𝐶𝐿𝑆] is
+used to mark the beginning of a sentence, and the representation vector obtained from the encoder
+can be used for subsequent downstream tasks. [𝑆𝐸𝑃] is used to mark the end of a sentence or to
+separate two sentences. The input sequences are fed into a tokenizer which identifies each input
+with [𝐶𝐿𝑆] and [𝑆𝐸𝑃].
+  Next, as shown in Equation 2, the complete input sequence obtained earlier is fed into the model’s
+embedding layer for encoding.
+
+                                                             𝐼𝑛𝑝𝑢𝑡𝑖 = {[𝐶𝐿𝑆] ,𝑇 (·) , 𝑡𝑖𝑡𝑙𝑒𝑖 , 𝑑𝑒𝑠𝑖 , [𝐸𝑆𝑃]}                                                                                                             (2)
+  The embedding layer of the encoder model initializes each token according to the tokenizer’s
+tokenization results. Based on pre-learned vector representations, a representation vector for the
+input sequence is obtained.
+4.2.2 Code Prompt. This subsection systematically elaborates on the methodology for constructing
+prefix vectors based on program dependence analysis.
+
+ACM Trans. Softw. Eng. Methodol., Vol. 0, No. 0, Article 0. Publication date: August 2025.
+Knowledge-Guided Prompt Learning for Request Quality Assurance in Public Code Review                                                                                             0:9
+
+
+   In the label recommendation task, labels are often closely related to the behavior of code under
+different control flow paths. Similarly, in the necessity prediction task, it is often essential to
+understand both the control logic and the data dependencies within the surrounding context.
+Program Dependence Graph (PDG) captures both control dependencies and data dependencies,
+allowing for a comprehensive representation of the program execution logic. By hierarchically
+parsing code Data Flow Graph (DFG) and Control Flow Graph (CFG), as shown in Figure 4, we
+ultimately fuse these structures to build a Program Dependence Graph (PDG), enabling formal
+semantic representation of code.
+   Firstly, the language of the code snippet is identified, as each programming language has different
+coding styles and syntax. Therefore, it is necessary to parse the code snippet for each language,
+extract important nodes and variable information in the form of an abstract syntax tree (AST) after
+obtaining the language category. Secondly, the abstract syntax tree is further parsed into the form
+of DFG and CFG. When converting incomplete code snippets, technique such as filling in gaps with
+placeholder nodes is used to handle incomplete connections.
+   For a code snippet 𝐶, its DFG is defined as a directed graph 𝐺𝑑 𝑓 𝑔 = (𝑉𝑑 𝑓 𝑔 , 𝐸𝑑 𝑓 𝑔 ). Node set
+𝑉𝑑 𝑓 𝑔 = {𝑣 |𝑣 ∈ Variables(𝐶) ∪ Operations(𝐶)} represents variables and operators. Edge set 𝐸𝑑 𝑓 𝑔 =
+{ 𝑣𝑖 , 𝑣 𝑗 |𝑣 𝑗 →𝑑 𝑓 𝑔 𝑣𝑖 }, where 𝑣 𝑗 → 𝑣𝑖 denotes a data dependence from 𝑣𝑖 to 𝑣 𝑗 .
+   The CFG of code snippet 𝐶 is defined as a directed graph 𝐺𝑐 𝑓 𝑔 = (𝑉𝑐 𝑓 𝑔 , 𝐸𝑐 𝑓 𝑔 ). Node set 𝑉𝑐 𝑓 𝑔 =
+{𝑏 |𝑏 ∈ BasicBlocks(𝐶)}, where basic blocks are maximal sequences of branch-free instructions.
+Edge set 𝐸𝑐 𝑓 𝑔 = {(𝑏𝑖 , 𝑏 𝑗 )|𝑏𝑖 →𝑐 𝑓 𝑔 𝑏 𝑗 }, where 𝑏𝑖 →𝑐 𝑓 𝑔 𝑏 𝑗 denotes immediate control flow from 𝑏𝑖 to
+𝑏𝑗.
+   Finally, duplicate nodes between the DFG and CFG are merged to generate PDG with compre-
+hensive data and control dependency representation.
+
+                                                                                            Data Flow Graph
+                                                                                                      1                2
+                                                                                                 a                 b
+                                                                                                      6                5
+                                                                                                 a                 b
+   Source Code               Abstract Syntax Tree (AST)                                              10                8
+                                                                                                                                  3     4   Program Dependence Graph
+                                                                                                                              x        0
+                                                                                                 a                 b
+                                               function
+                                                                                                     9                 7
+                                                                                                                                                 def max(a, b):
+                                                                                                 x                 x
+                             Name              parameter
+  def max(a, b):                                                                                              11                                        if a>b          x=0
+                                                                      main part
+    x=0               max                 a                b                                              x                Source of
+    if b > a:                                                                                                               Values
+                             expression
+        x=b                                                  if                   return                                                         x=a              x=b
+    else:                     assign                                                                  x=0
+        x=a                                          conflict                       x                                                                                     Control
+                                                                                                                                                       return x
+    return x          left             right                                                                                                                            Dependence
+                                                                                                     if a>b
+                                                      left        Operator          right
+                       x                  0                                                                                                                                Data
+                                                      a              >               b        x=a                  x=b                                                  Dependence
+
+                                                                                                                            Execution
+                                                                                                    return x
+                                                                                                                              Path
+                                                                                            Control Flow Graph
+
+
+                                                Fig. 4. A Code Snippet Processing Example.
+
+
+4.2.3 Knowledge-Guided Prompt. In order to optimize the code representation and better guide
+the knowledge embedded in the request text and code snippets, we use the continuous prompting
+method (soft prompt) [28] to introduce knowledge guidance. Specifically, we first extract the
+professional term from the request using string matching, then initialize the 𝑃𝑝𝑟𝑒 𝑓 𝑖𝑥 vector prefix
+by concatenating the knowledge interpretation representation and concatenate the representation
+
+                                     ACM Trans. Softw. Eng. Methodol., Vol. 0, No. 0, Article 0. Publication date: August 2025.
+0:10
+
+
+vector of the program dependence graph of the code snippet after this prefix vector. Finally, the
+whole vector is represented as the model code snippet instead of the original code snippet. Further
+details on these extensions can be found in Section 4.3.
+
+4.3    Knowledge-Guided Prompt Learning Module
+4.3.1 Knowledge-Guided Prompt Learning. Soft prompting is one of the prompting paradigms,
+which operates in the embedding space of the model and adjusts the prompt parameters for
+downstream tasks. Currently, this method has shown superior performance in other data not in
+natural language, such as image encoding and visual question answering [27, 40]. This indicates that
+soft prompts are well-suited for learning and optimizing information with such graph structures,
+owing to the ability of vector embeddings in the embedding space to better adapt to non-natural
+language structures. The PCR task is not merely about code quality detection or generation; it
+involves a multi-step code review process, which includes predicting whether the code needs
+review and how to select appropriate labels for the code review task. Knowledge-guided learning
+in PCR can help the model understand the context of the code and identify common algorithms,
+functions, or libraries involved in the code snippets, thereby enhancing the model’s comprehension
+and judgment of code review requests.
+   To enhance the model’s performance by integrating external knowledge, our framework uses
+LLM, specifically introducing the DeepSeek-7B. The reason for choosing this model is that it has
+demonstrated proven adaptability in code understanding tasks, and its parameter scale is relatively
+small, requiring less computational resources. It can be deployed in an environment with at least
+16GB of GPU memory. By performing label retrieval on Wikipedia for the dataset, we have obtained
+1,000 articles related to software engineering, programming languages, algorithms, and technical
+concepts. These articles are then preprocessed to ensure that their format was suitable for the LLM’s
+input requirements. The data was cleaned to remove irrelevant content, leaving only technical
+definitions, code examples, and domain-specific knowledge. DeepSeek-7B is then fine-tuned using
+a supervised learning approach, with a learning rate of 2 × 10−5 , a batch size of 8, and trained for
+10 epochs. Regarding the consumption of inference time, after testing under the condition of a
+512-token input, the response time for every 1000 rounds is 8 minutes, and the average response
+time per round is 480 milliseconds. The additional computational overhead brought by using LLM
+is reasonable and controllable.
+   This study uses the labels of specialized terminology as a benchmark and selects words that
+are not present in the vocabulary of the pre-trained language model. First, string operations are
+used to split words based on spaces. Additionally, the split words undergo fuzzy case, tense, and
+part-of-speech transformations. Next, the processed text strings are used for string matching to
+extract domain-specific knowledge words contained in each request body, which are then input
+into the fine-tuned DeepSeek model to obtain their expert definitions. Finally, the definitions of
+domain-specific knowledge words are concatenated to form their representations as input into the
+model. And they work in the form of prefix vectors to aid in learning the knowledge within the
+request body.
+   Here, taking an input request 𝑟𝑒𝑞𝑖 as an example, first, based on the previous data processing,
+we can obtain two parts of a PCR request:
+   1. Natural language text 𝑡𝑒𝑥𝑡𝑖 , composed of the title and description (text part) of the request;
+   2. Code snippet 𝑐𝑜𝑑𝑒𝑖 , representing the code snippet extracted from the description.
+   The method for processing the code snippet and constructing the prefix vector is shown in
+Algorithm 1. In Step ○,   1 a code snippet 𝑐𝑜𝑑𝑒𝑖 is parsed into a program dependence graph to
+represent the dependency relationship among code variables (as shown on the right side of Fig. ??).
+Then, in Step ○,2 the variable relationship graph is input into a pre-trained code encoding model for
+
+ACM Trans. Softw. Eng. Methodol., Vol. 0, No. 0, Article 0. Publication date: August 2025.
+Knowledge-Guided Prompt Learning for Request Quality Assurance in Public Code Review                               0:11
+
+
+Algorithm 1 Knowledge-Guided Prompt Learning
+Input: 𝑟𝑒𝑞 = (𝑡𝑖𝑡𝑙𝑒, 𝑡𝑒𝑥𝑡, 𝑐𝑜𝑑𝑒)
+Output: 𝑟 𝑝𝑟𝑜𝑚𝑝𝑡
+             
+ 1: 𝐺𝑟𝑎𝑝ℎ𝑐 ← 𝐺𝑟𝑎𝑝ℎ (𝑐𝑜𝑑𝑒), 𝐺𝑟𝑎𝑝ℎ (𝑐𝑜𝑑𝑒) represents the program dependence graph of the code
+    snippet;
+ 2: ℎ𝐺𝑟𝑎𝑝ℎ𝑐 ← 𝑃𝐿𝑀 (𝐺𝑟𝑎𝑝ℎ𝑐 ), ℎ𝐺𝑟𝑎𝑝ℎ𝑐 represents the code hidden vector obtained through the
+    encoding model;
+ 3: 𝑘𝑛𝑜𝑤𝑙𝑒𝑑𝑔𝑒 = 𝑟𝑒𝑞 ∩ wiki;
+ 4: 𝑃𝑝𝑟𝑒 𝑓 𝑖𝑥 = 𝑃𝐿𝑀 (𝑘𝑛𝑜𝑤𝑙𝑒𝑑𝑔𝑒) , 𝑃𝐿𝑀 (𝑘𝑛𝑜𝑤𝑙𝑒𝑑𝑔𝑒) represents the representation vector obtained
+    through the n encoding model;               o
+       = 𝑇 (·) , 𝑡𝑖𝑡𝑙𝑒, 𝑡𝑒𝑥𝑡,
+ 5: 𝑟 𝑝𝑟𝑜𝑚𝑝𝑡           g g 𝑃𝑝𝑟𝑒 𝑓 𝑖𝑥 , ℎ𝐺𝑟𝑎𝑝ℎ ;
+                                              𝑐
+ 6: return 𝑟 𝑝𝑟𝑜𝑚𝑝𝑡
+              
+
+
+
+code tasks to obtain the hidden vector of the code snippet. In this work, the GraphCodeBERT [13]
+model is used as the encoding model. In Step ○,          3 professional knowledge terms are extracted
+from the request using string matching. Step ○        4 defines a prefix vector 𝑃𝑝𝑟𝑒 𝑓 𝑖𝑥 , then initializes the
+prefix vector 𝑃𝑝𝑟𝑒 𝑓 𝑖𝑥 with the representation vector of knowledge processed by the encoding model.
+Finally, the entire vector replaces the original code snippet as the model’s code representation.
+   Here, 𝑃𝑖𝑑𝑥 is used to represent the sequence of prefix indices, and 𝜎 is used to represent the
+non-linear output obtained from the hidden layers of the code pre-trained language model. To
+address the issue of low performance and high variance caused by the random initialization of
+𝑃𝑝𝑟𝑒 𝑓 𝑖𝑥 , we initialize the prefix vector 𝑃𝑝𝑟𝑒 𝑓 𝑖𝑥 with the text of knowledge guidance and then use an
+immutable program dependence graph based on semantic relationships to represent the meaning
+of individual code snippets. This allows us to guide the model to learn professional knowledge from
+the request text through knowledge guidance and to globally and locally understand the meaning
+of each code snippet through the form of prefix vectors.
+   In order to measure the efficiency of Algorithm 1, we analyze its time complexity. To this end, we
+consider the computational overhead in each step. In Step ○,        1 the size of a code snippet determines
+the time complexity to convert code into a program dependence graph. If there are 𝑛 variables or
+code fragments in the code snippet, generating a program dependence graph requires checking
+the dependencies between each pair of variables, and consequently the time complexity is 𝑂 𝑛 2 .
+Then, in Step ○,   2 the time complexity of GraphCodeBERT generally depends on the architecture
+of its pre-trained model and the input graph size of a program dependence graph. Overall, the
+complexity of Step 2 can be seen as 𝑂 (𝑉 + 𝐸), in which 𝑉 is the number            of nodes in the graph, and
+𝐸 is the number of edges. The complexity of this step is also 𝑂 𝑛 2 , because the encoding process
+                                                                           
+is proportional to the size of the graph. Step ○       3 uses string matching whose time complexity is
+𝑂 (𝑠), in which 𝑠 is the length of the request text. The time complexity of Step ○           4 depends on the
+size of the encoding model and the length of the knowledge representation vector. The process of
+initializing a vector can be regarded as a constant time operation, and the complexity is 𝑂 (𝑑), in
+which 𝑑 is the length of the    vector. Therefore, the overall time complexity of the algorithm can be
+expressed as 𝑂 𝑛 2 + 𝑠 + 𝑑 . Since the complexity         of language
+                                                                     model representation is much higher
+                                             2 ≫ 𝑂 (𝑠) and 𝑂 𝑛 2 ≫ 𝑂 (𝑑), and the time complexity can
+                                              
+than that of string matching,      i.e., 𝑂 𝑛
+also be expressed as 𝑂 𝑛 2 .
+                               
+   Our preliminary study [10], where the time complexity is also 𝑂 𝑛 2 , has an actual runtime of
+                                                                                 
+approximately 8 hours per epoch. The actual runtime of each epoch for our KP-PCR method is
+about 8 hours and 20 minutes, which is nearly the same. However, it can be found that according
+
+                             ACM Trans. Softw. Eng. Methodol., Vol. 0, No. 0, Article 0. Publication date: August 2025.
+0:12
+
+
+to the experimental results in Section 6, our KP-PCR method can improve the task accuracy of
+request necessity prediction and tag recommendation.
+4.3.2 Loss Function. Fig. 5 formalizes the construction of task inputs through an example request,
+showcasing the joint construction of task description prompt templates (hard prompt) and prefix
+vectors (soft prompt). It is divided into trainable vector parts and frozen vector parts that are not
+involved in training.
+
+                                                                    Trainable                                                                      Frozen
+                       T(·) (Template )                                              Text                         Prefix         code (Variable relation Graph)
+                                                                                                                                                                        Example
+ [CLS] The request is about [MASK] [MASK] [MASK] I need optimize my previous code                            P1     P2     P3      a       1         d    3     [SEP]   The topic of the request is [MASK]. This request
+                                                                                                                                                                        necessity is [MASK] . It is about the topic of this
+                                                                                                                                                                        request.
+  0       1        2       3        4       5       6       7       8   9     10   11    12    13      14    15     16      17      18      19      20    21     22     Title: Getting all combinations of an array by looping
+                                                                                                                                                                        through binary numbers
+                   Tidx = [1,2,3,4,5,6,7,8]                                 Tidx = [9,11,12,13,14]          Pdx = [15,16,17]           Cidx = [18,19,20,21,22]
+                                                                                                                                                                        Description: I need to loop through all possible
+                                                                                                                                                                        combinations of an array for a project I'm doing. Here is
+                                                            hard prompt                                                          soft prompt
+                                                                                                                                                                        my code:
+                                                                                                                                                                        Code:
+                                                                    Trainable                                                                      Frozen               def bcomb(array):
+                                                                                                                                 code (Variable relation Graph)              comb = []
+                       T(·) (Template )                                             Text                          Prefix
+                                                                                                                                                                             tcomb = 2 ** len(array) - 1
+   [CLS] The necessity of the request is [MASK]                         I need optimize my previous code     P1     P2     P3          a       1     d      3   [SEP]
+                                                                                                                                                                             for i in range(tcomb + 1):
+                                                                                                                                                                                indexes = ("{:0" + str(len(array))
+                                                                                                                                                                        +"d}").format(int(str(bin(i))[2:]))
+      0       1        2        3       4       5       6       7       8      9    10    11   12      13                                                                        comb.append(ccomb)
+                                                                                                            14     15      16      17      18       19    20    21
+                                                                                                                                                                              return comb
+                  Tidx = [1,2,3,4,5,6,7]                                    Tidx = [8,9,10,11,12,13]        Pidx = [14,15,16]          Cidx = [17,18,19,20,21]            Tags: C \posix\pthreads\signal-handling
+
+                                                            hard prompt                                                          soft prompt
+                               Context vector                Code vector             Template vector        CLS/SEP vector             Learnable vector
+
+
+
+
+                                                                                     Fig. 5. Trainable and Frozen Parameters.
+
+   First, the obtained text segment vector and code snippet vector are concatenated into the input
+prompt of the Masked Language Model (MLM). Within the entire input e         𝑐 is an immutable vector,
+while the rest of the vectors are updated based on the gradient optimization target. As shown in
+Fig. 5, the vector e
+                   𝑐 = ℎ𝐺𝑟𝑎𝑝ℎ𝑐 is encoded by the hidden layer of the pre-trained code language model
+is frozen and not updated, whereas the prefix is initialized using the code snippet text. Finally, the
+vector ℎ𝑃𝑅𝐸𝐹 𝐼𝑋𝑖 can be trained. The dimensions of the code   prefix tuning initialization trainable
+matrix 𝑃𝜎 (parameterized by 𝜎) are |𝑃𝑖𝑑𝑥 | × dim ℎ𝑋 𝑝𝑟𝑒 𝑓 𝑖𝑥𝑖 to store the prefix parameters.
+   Since multiple [MASK] tokens may appear in the descriptive prompt template, all masked
+positions are considered for prediction. The final learning objective of our KP-PCR framework is to
+consider multiple [MASK] tokens in a descriptive prompt template, using the sum of losses from
+all [MASK] positions to optimize the model. Specifically, the final learning objective of KP-PCR is
+to maximize Equation 3:
+                                                                           𝑛                                    
+                                                                         Ö
+                                                    log 𝑝𝜙 𝐿𝑎𝑏𝑙𝑒𝑝𝑟𝑒 |𝑅𝑒𝑞 =   𝑝𝜙 [𝑀𝐴𝑆𝐾] 𝑗 = 𝜑 𝑗 (𝑙𝑎𝑏𝑒𝑙𝑟 ) |𝑇 (𝑟𝑒𝑞) ,                                                                                                              (3)
+                                                                                                             𝑗=1
+   where 𝜑 is the predicted probability distribution, and 𝜑 𝑗 (𝑙𝑎𝑏𝑒𝑙𝑟 ) represents the mapping from the
+𝑗-th ℎ𝑀𝐴𝑆𝐾 token to the requested label word 𝑙𝑎𝑏𝑒𝑙 in the input sequence. 𝜙 denotes the parameters
+of the language model that are updatable. 𝑛 is the number of masked positions in the descriptive
+prompt template 𝑇 (𝑟𝑒𝑞).
+
+4.4           Answer Engineering Module
+After training the model with Equation 3, the final labels need to be obtained, so the answer
+engineering module maps the predicted words to the label list. The answer engineering module
+maps the 𝑇𝑂𝑃𝐾 token list 𝑝𝑟𝑒𝑙𝑖𝑠𝑡𝑖 to the predicted labels 𝑓𝑎𝑛𝑠 𝑝𝑟𝑒𝑙𝑖𝑠𝑡𝑖 through a mapping function
+
+ACM Trans. Softw. Eng. Methodol., Vol. 0, No. 0, Article 0. Publication date: August 2025.
+Knowledge-Guided Prompt Learning for Request Quality Assurance in Public Code Review                              0:13
+
+
+𝑓𝑎𝑛𝑠 . The answer engineering function 𝑓𝑎𝑛𝑠  maps the predicted words to the final label set 𝐿𝑎𝑏𝑒𝑙.
+Finally, the mapped answer 𝑓𝑎𝑛𝑠 𝑝𝑟𝑒𝑙𝑖𝑠𝑡𝑖 is the final top-k outputs 𝑣𝑖 . The mapping function of
+the answer engineering first compares the predicted words with the label word list to find the
+complete label by predicting partial label words. Secondly, for data where the predicted words do
+not exist in the entire label word list, the mapping is completed using the minimum edit distance
+algorithm. Edit distance, also known as Levenshtein distance, refers to the minimum number of
+editing operations required to transform one string into another. For example, for the strings “if”
+and “iff”, you can achieve the transformation by inserting or deleting a “f”.
+   In general, the smaller the edit distance between two strings, the more similar they are. If two
+strings are equal, their edit distance is 0 (no operations are needed). In this study, edit distance is
+used to evaluate the distance between predicted words and true words. If a predicted word is not in
+the list of true word labels, then by calculating the edit distance between the predicted word and
+all true words, we can find the true word with the minimum edit distance to the predicted word,
+thus correcting the predicted word.
+
+5     Experimental Setup
+5.1    Research Questions
+Our research goal is to provide quality assurance services for PCR from the perspective of developers.
+Therefore, our method is evaluated from the following three questions.
+
+ RQ1: Can our KP-PCR effectively deal with the request necessity prediction subtask and the tag
+ recommendation subtask in a unified modelling?
+
+   Our method and SOTA models are applied to examine necessity prediction and tag recommenda-
+tion subtasks respectively, and their performance on the two subtasks is evaluated.
+
+ RQ2: Is our knowledge-guided prompt learning effective for PCR?
+
+  Different prompt templates are explored to know the influence of propmt learning on model
+performance under different designs.
+
+ RQ3: How does our unified prompt template perform compared large language models?
+
+  we fine-tuned Llama3, CodeLlama and DeepSeek using the entire training dataset, and then
+evaluated them on the test set, comparing their performance with our model.
+
+5.2    Dataset and Metrics
+5.2.1 Dataset Description. To evaluate the effectiveness of our KP-PCR, experimental data is from
+the Code Review site within Stack Exchange, a reputable and well-known information-sharing
+platform. The selection of the dataset follows the criteria of being open, authoritative, and current.
+Stack Exchange is a large network of question and answer (Q&A) websites covering a wide range of
+topics, including but not limited to software domains such as programming, Linux & Unix, and code
+review. Each website within this network focuses on a specific theme, and the questions, answers,
+and users are subject to reputation-based recognition within their respective communities.
+   In the field of software engineering, there are several traditional public code review platforms
+such as GitHub and Reddit. Stack Exchange is a Q&A-based community that encourages quick
+feedback. Any developer can submit code snippets without the need to provide a complete project
+or engage in complex version control, making it highly accessible and ideal for extracting smaller,
+isolated code review requests. This contrasts with GitHub, which is more focused on project-driven
+
+                            ACM Trans. Softw. Eng. Methodol., Vol. 0, No. 0, Article 0. Publication date: August 2025.
+0:14
+
+
+collaboration, and Reddit, where the review process is often informal and may lack in-depth
+technical feedback. Unlike Reddit, where feedback is typically provided through informal post
+comments and may lack the necessary technical depth, Stack Exchange provides a more structured
+environment for feedback. Users are encouraged to give specific, detailed responses, and reviews
+often involve technical explanations and recommendations. This level of technical detail makes
+Stack Exchange an ideal environment for extracting meaningful data for public code review tasks.
+   As we are dedicated to providing intelligent service methods for the code review process, the
+most popular public code review website on Stack Exchange, Code Review2 , is used as the data
+source for this study. The dataset from Code Review used for this study is the latest and largest
+original data version available from 2011 to 20233 . It records the main content and quality label of
+PCR requests in separate XML files.
+   Code Review website, which is positioned as peer code review conducted in the form of SQA
+(Software Quality Assurance). It aims to facilitate a quick and convenient code review process to
+accelerate the exchange of professional knowledge among peer developers. Any developer can
+initiate a review request within the community. Professional reviewers in the community then
+browse through and assess the necessity of the request. Subsequently, the developer selects appro-
+priate tags for the request to match the corresponding reviewers. The dataset collects information
+on the requests content, the necessity of the request, and the corresponding tags.
+
+5.2.2 Data Preprocessing. To align with the model input requirements of the baseline methods in
+Section 5.3.2, we have divided the overall data preprocessing into four steps as detailed below.
+   (1) XML File Parsing: There are two common parsing methods for XML files: 1. DOM parsing
+which involves converting an XML document into a DOM tree, allowing access to XML document
+information through a hierarchical object model, describing the information in a node tree format.
+This parsing method offers flexible access but may suffer from long processing times and memory
+overflow issues due to machine performance factors. 2. SAX parsing, unlike DOM parsing, operates
+in a sequential access mode for reading and writing XML files. When using this method to parse
+XML files, multiple event handling functions need to be written for various data in the file, but it
+consumes less memory. Due to hardware constraints, this study adopts SAX parsing, resulting in
+an HTML formatted file.
+   (2) Data Cleaning and Code Snippet Extraction: Since the XML file contains noise such as
+URLs, garbled characters, HTML tags, tabs, and line breaks, this step designs regular expressions
+for the HTML file obtained in Step (1) to remove noise and irrelevant characters. Specifically, the
+BeautifulSoup library is used to identify HTML tags and separate the text, code snippets, and
+tags in the request objects. For example, code snippets are collected using the HTML element
+<code>...</code>.
+   (3) Necessity Determination: The distribution of request vote scores on the Code Review site
+is analyzed. It is observed that the distribution follows a power-law pattern, exhibiting a “long-tail”
+characteristic in which most posts receive relatively low scores, while a small proportion obtain
+significantly higher scores. In such distributions, the upper percentile (e.g., top 40–50%) of items are
+often regarded as high-quality “core contributions” recognized by the community [30]. The analysis
+showed that, in the Code Review community, requests with a score of at least 4 corresponded
+precisely to the top 43%. Therefore, requests with a vote score of at least 4 are classified as necessary
+requests, whereas those below this threshold are considered unnecessary requests. This resulted in
+a total of 26,632 necessary requests and 35,056 unnecessary requests.
+
+2 https://codereview.stackexchange.com/
+3 https://archive.org/download/stackexchange/codereview.stackexchange.com.7z
+
+
+
+ACM Trans. Softw. Eng. Methodol., Vol. 0, No. 0, Article 0. Publication date: August 2025.
+Knowledge-Guided Prompt Learning for Request Quality Assurance in Public Code Review                              0:15
+
+
+                               Table 2. Public Code Review Dataset Statistics
+
+                                                            Training Set     Validation Set    Test Set
+                             All Data                          61688              6855           7616
+                     Quality Necessity Task
+                           Necessary                           26632              2959           3288
+                         Unnecessary                           35056              3896           4328
+                  Tag Recommendation Task
+            Average Number of Tags / Request Object             2.95              2.89            2.94
+                Average Number of Words / Tag                   2.89              2.89            2.89
+
+
+   (4) Tag Filtering and Cleaning: The dataset contains a large number of low-frequency tags.
+The main reasons for the low frequency of tags are that they do not conform to developers’ usage
+habits, have weak relevance to the topic, or have low discussion relevance. Previous studies have
+considered a tag as rare if its frequency is below a predefined threshold 𝜃 [42]. Intuitively, if a tag
+appears infrequently in such a large dataset, it is not widely recognized by developers. To mitigate
+the impact on the quality of training and testing data, these rare tags are removed. Consistent with
+previous research, this study sets the threshold 𝜃 for rare tags to 50, and all requests and tags that
+are rare or contain only rare tags are removed. The statistical information of the cleaned dataset is
+shown in Table 2. Finally, a dataset containing 76,161 requests and 424 tags is obtained.
+   (5) Tag Processing and Vocabulary Addition: Unlike other topic information stations, the
+tags in the Code Review involve specialized terms. In addition to common language tags such as
+“java” and “python,” there are also specific version-related tags such as “c++13” and “python3.x”.
+The prompt learning method needs to learn and predict based on the words in the vocabulary.
+Since the model’s tokenization automatically divides words based on symbols, tags are designed as
+expressions in natural language and added to the model’s vocabulary by writing function rules.
+This preprocessing of tags is not necessary for baseline methods that do not require the use of a
+vocabulary for prediction.
+   Following previous research, we have utilized the common ten-fold cross-validation method to
+split the dataset. Specifically, we initially randomly have divided the dataset into 10 equally sized
+subsets. One of these subsets is selected as the test set. The remaining data samples are split into
+training and validation sets in an 8:1 ratio. This process is repeated during model training to test
+the model’s effectiveness, and the results is averaged to assess model performance. In summary, the
+dataset is split into training, validation, and test sets in an 8:1:1 ratio. Detailed statistical information
+is provided in Table 2.
+5.2.3 Evaluation Metrics. For the tag recommendation subtask, previous recommendation tasks in
+the SQA community [23] have used Precision@k, Recall@k and F1@k to evaluate performance. To
+maintain consistency, this study adopts the same evaluation metrics. Consistent with the review
+necessity subtask and the comment quality prediction subtask in the PCR domain [32], Accuracy
+and F1 are selected as metrics. The following will provide a detailed introduction to these evaluation
+metrics.
+   (1) 𝑇𝑜𝑝 − 𝑘 Precision 𝑃𝑟𝑒𝑐𝑖𝑠𝑖𝑜𝑛@𝑘: This metric is commonly used in recommendation-related
+methods, measuring the proportion of true labels among the top 𝑘 labels recommended by a model.
+For a single request, the calculation of its 𝑇𝑜𝑝 − 𝑘 Accuracy is shown in Equation 4 which computes
+𝑃𝑟𝑒𝑐𝑖𝑠𝑖𝑜𝑛@𝑘𝑖 by calculating the intersection of predicted labels 𝑣𝑘𝑖 with the corresponding true
+labels 𝑇 𝑡𝑎𝑔𝑖 for each request object. Since a public code review dataset contains multiple requests,
+
+                            ACM Trans. Softw. Eng. Methodol., Vol. 0, No. 0, Article 0. Publication date: August 2025.
+0:16
+
+
+when calculating accuracy metrics for the entire dataset, the average accuracy results for all requests
+need to be taken into account. The specific calculation method is shown in Equation 5 which
+represents the average accuracy of all request objects, calculated by first computing 𝑃𝑟𝑒𝑐𝑖𝑠𝑖𝑜𝑛@𝑘𝑖
+for each request object, and then averaging them to represent 𝑃𝑟𝑒𝑐𝑖𝑠𝑖𝑜𝑛@𝑘.
+
+                                                                  |𝑇 𝑡𝑎𝑔𝑖 ∩ 𝑣𝑘𝑖 |
+                                          𝑃𝑟𝑒𝑐𝑖𝑠𝑖𝑜𝑛@𝑘𝑖 =                                            (4)
+                                                                        𝑘
+                                                            |𝑅
+                                                            Í|
+                                                                  𝑃𝑟𝑒𝑐𝑖𝑠𝑖𝑜𝑛@𝑘𝑖
+                                                           𝑖=1
+                                        𝑃𝑟𝑒𝑠𝑖𝑠𝑜𝑛@𝑘 =                                              (5)
+                                                           |𝑅|
+   (2) 𝑇𝑜𝑝 − 𝑘 Recall 𝑅𝑒𝑐𝑎𝑙𝑙@𝑘: This metric is used to evaluate the model’s ability to predict
+the complete set of true labels. Specifically, it measures the proportion of true labels that are
+contained in the predicted labels. The 𝑇𝑜𝑝 − 𝑘 Recall for a single request object, 𝑅𝑒𝑐𝑎𝑙𝑙@𝑘𝑖 , is
+calculated as shown in Equation 6. In this work, due to the true label length range being 3-5, and
+following the metrics settings of recommendation-related methods, 𝑘 is set to 3, 5, and 10 in this
+study. Similarly, since there are multiple request objects in the public code review dataset, the
+performance calculation of Recall metric 𝑅𝑒𝑐𝑎𝑙𝑙@𝑘 for the entire dataset is shown in Equation 7.
+The average recall rate of all request objects is calculated to represent the model’s performance on
+this metric.
+
+                                                       𝑇 𝑡𝑎𝑔𝑖 ∩𝑣𝑘𝑖
+                                                                     , 𝑖 𝑓 |𝑇 𝑎𝑔𝑖 | < 𝑘,
+                                              
+                                              
+                                              
+                                                            𝑘
+                                  𝑅𝑒𝑐𝑎𝑙𝑙@𝑘𝑖 =          𝑇 𝑡𝑎𝑔𝑖 ∩𝑣𝑘𝑖
+                                                                                                    (6)
+                                              
+                                                         𝑇 𝑡𝑎𝑔𝑖     , 𝑜𝑡ℎ𝑒𝑟𝑤𝑖𝑠𝑒.
+                                              
+                                                            |𝑅
+                                                            Í|
+                                                                  𝑅𝑒𝑐𝑎𝑙𝑙@𝐾𝑖
+                                                            𝑖=1
+                                            𝑅𝑒𝑐𝑎𝑙𝑙@𝑘 =                                              (7)
+                                                      |𝑅|
+  (3) 𝑇𝑜𝑝 − 𝑘 Macro-Average 𝐹 1@𝑘: This metric is commonly used to evaluate a model’s overall
+performance on precision and recall by calculating the weighted average of these two metrics. It
+provides a balanced view of a model’s performance by considering both precision and recall. As
+described in Equation 8, the calculation method for the macro-average 𝐹 1@𝑘𝑖 of a single request
+object is similar to the previous two metrics, where 𝑘 is set to 3, 5, and 10 in this study. Similarly,
+for the overall macro-average metric 𝐹 1@𝑘 of the public code review dataset, its calculation is
+shown in Equation 9, derived from the average 𝐹 1 value of all request objects.
+
+                                                    𝑃𝑟𝑒𝑐𝑖𝑠𝑖𝑜𝑛@𝑘𝑖 × 𝑅𝑒𝑐𝑎𝑙𝑙@𝑘𝑖
+                                   𝐹 1@𝑘𝑖 = 2 ×                                                     (8)
+                                                    𝑃𝑟𝑒𝑐𝑖𝑠𝑖𝑜𝑛@𝑘𝑖 + 𝑅𝑒𝑐𝑎𝑙𝑙@𝑘𝑖
+                                                            |𝑅
+                                                            Í|
+                                                                  𝐹 1@𝑘𝑖
+                                                            𝑖=1
+                                                𝐹 1@𝑘 =                                             (9)
+                                                                   |𝑅|
+5.3    Implementation Details
+5.3.1 Implementation. In practice, the KP-PCR framework can be applied to various pre-trained
+language models, such as BERT [6], RoBERTa [18], ALBERT [39], GPT [18], etc. However, due to
+hardware limitations, this study uses the base version of BERT as the encoding model (BERT-base-
+uncased), and GraphCodeBERT as the code snippet encoder. In the experiments, the learning rate
+of the KP-PCR is set to 1e-5, and the number of epochs is set to 6.
+
+ACM Trans. Softw. Eng. Methodol., Vol. 0, No. 0, Article 0. Publication date: August 2025.
+Knowledge-Guided Prompt Learning for Request Quality Assurance in Public Code Review                              0:17
+
+
+                                     Table 3. Experimental Parameters
+
+                              Name        Parameter          Name           Parameter
+                            Max lenth         300         Hidden size         768
+                           Prefix lenth        50        Hidden layer          12
+                           Code lenth         150        Weight decay          0
+                            Batch size         4         Learning rate        1e-5
+                              epoch            6          Optimizer          Adamw
+
+
+                        Table 4. Experimental Environment and Version Information
+
+                                Name                     Version Information
+                                GPU                     NVIDIA Titan XP*4
+                                CPU             IntelR XeonR E5-2650 v4 @2.20GHz
+                          Memory Capacity                     64G*4
+                           CUDA Version                        11.0
+                           Python Version                      3.5
+                          Pytorch Version                      1.7
+
+
+   This study implements KP-PCR based on the PyTorch framework, and all experimental parameters
+are listed in Table 3. The maximum length of the text is set to 300, the length of the prefix vector is
+set to 50, and the code representation part of the prefix vector uses a code snippet with a length of
+150 to generate the code snippet representation, which is then used for model training and learning
+with a length of 100. The code snippet text length that is not optimized for model training is 150.
+5.3.2 Baselines. For overall comparisons, a series of state-of-the-art approaches are chosen as base-
+lines for the tag recommendation subtask and the request necessityprediction subtask, respectively.
+   (1) The request necessity prediction subtask, CommentBERT [32], MetaTransformer [8]
+and Commentfinder [18] are baseline methods, which have the same data input structure and task
+definition as review necessity prediction subtask.
+   (2) The tag recommendation subtask, TagDC [22], PROFIT [31], Post2Vec [42], PTM4Tag [16]
+and CDR4Tag [23] are compared for recommending tags to the SQA community.
+   Our previous study is also listed for comparison. In this paper, the source code provided by
+the baselines is used to fine-tune the parameters and obtain the optimal values to represent the
+experimental results of the baselines. For baselines which source code was not provided, this study
+reproduced the model design based on Pytorch framework. The related experiments in this study
+are conducted on four NVIDIA Titan XP GPUs. All hardware and software environments are shown
+in Table 4.
+
+6     Results
+6.1    Request Necessity Prediction Subtask (RQ1)
+Table 5 shows the KP-PCR experimental results on the request necessity prediction compared with
+similarity-based and fine-tuning-based methods.
+  In Table 5 it can be seen that KP-PCR achieves the best results compared to the other four
+baselines. Overall, the performance of the four methods on the non-necessary label F1 is lower
+than that on the necessary label F1. Based on actual data from public code reviews, this is because
+requests for unnecessary reviews appear in more diverse forms, such as asking questions about
+
+                            ACM Trans. Softw. Eng. Methodol., Vol. 0, No. 0, Article 0. Publication date: August 2025.
+0:18
+
+
+                     Table 5. Experiment Results of Request Necessity Prediction Subtask
+
+                               Model             Accuracy      F1 Necessary      F1 Unnecessary
+                      CommentBERT [32]              0.608          0.606               0.610
+                      MetaTransformer [8]           0.623          0.687               0.525
+                      Commentfinder [18]            0.616          0.711               0.426
+                         UniPCR [10]                0.798          0.817               0.775
+                          Our KP-PCR               0.848           0.894              0.795
+
+
+coding errors (which belong to coding issues rather than code review issues), submitting code that
+cannot be executed (which hinders reviewers from reading the code as a whole), and choosing
+inappropriate labels (which affects the professionalism of the review). In other words, requests that
+meet the review requirements have clearer expressions, executable code, and accurate identification
+of review issues.
+   (1) Compared to baseline methods, KP-PCR shows improved performance in the review
+necessity prediction subtask. As shown in Table 5, KP-PCR achieves a 2.3%-8.4% performance
+improvement over the second-best method (UniPCR) by introducing the code snippet optimization
+module. This demonstrates the effectiveness of our KP-PCR. By learning the representation of code
+snippets within the overall content through soft prompts in the prefix vectors, KP-PCR understands
+the differences in various code snippets under the review necessity criteria. During prediction, the
+representation in the learned code snippet prefix vectors enhances the prediction performance for
+review necessity, resulting in KP-PCR’s improved performance in this subtask.
+   (2) Optimizing code snippet representation is effective for the review necessity predic-
+tion task. The experimental results indicate that a large amount of representation information
+contained in code snippets are not fully utilized in previous traditional architectures. Comment-
+BERT [32] and MetaTransformer [8] use pre-trained language models to learn the entire request
+content but do not individually process or specially learn the code snippets. Commentfinder [18]
+treats the request body as a whole and uses similarity methods for matching. As mentioned earlier,
+non-essential tags in the review necessity subtask have more diverse forms and features in the data
+compared to essential tags, and these features are more prevalent in code snippets. The experimental
+results shown in Table 5 show that extracting potential features from code snippets indeed helps
+accomplish the review necessity prediction task.
+   (3) Introducing knowledge-guided prefix vectors in prompt learning is more conducive
+to learning code snippet representation. KP-PCR achieves an understanding of the differences
+in various code snippets by learning the representation of code snippets within the overall content
+through prefix vectors in prompt learning. This means that the small prefix vectors, during the
+model training process, learn the initialization parameters, allowing the relevant information for
+determining necessity to be extracted from the complex information contained in the overall code
+snippets. During prediction, the representation in the learned code snippet prefix vectors enhances
+the prediction performance for review necessity. Compared to the baselines, using prompt learning
+prefix vectors to optimize code snippets is effective.
+
+6.2 Tag Recommendation Subtask (RQ1)
+This subsection compares our KP-PCR with state-of-the-art baselines on the tag recommendation
+subtask and analyzes the experimental results, in terms of Precision@k, Recall@k and F1@k.
+  Tag recommendation subtask facilitates users to intuitively and quickly select the correct tags.
+As introduced in Section 3.2, users on code review websites can select 3-5 tags. Therefore, in the
+
+ACM Trans. Softw. Eng. Methodol., Vol. 0, No. 0, Article 0. Publication date: August 2025.
+Knowledge-Guided Prompt Learning for Request Quality Assurance in Public Code Review                              0:19
+
+
+                       Table 6. Experiment Results of Tag Recommendation Subtask
+
+                                   Precision                   Recall                        F1
+             Model
+                            @3        @5     @10       @3       @5       @10       @3        @5       @10
+          TagDC [22]       0.429    0.311   0.189     0.483    0.570     0.678    0.434     0.387    0.288
+          PORFIT [31]      0.511    0.368   0.217     0.571    0.668     0.774    0.516     0.456    0.330
+         Post2Vec [42]     0.550    0.384   0.223     0.624    0.707     0.799    0.558     0.478    0.339
+         PTM4Tag [16]      0.488    0.339   0.199     0.557    0.628     0.720    0.496     0.423    0.303
+         CDR4Tag [23]      0.564    0.396   0.227     0.635    0.724     0.806    0.572     0.491    0.345
+          UniPCR [10]      0.610    0.436   0.245     0.688    0.792     0.870    0.619     0.541    0.372
+         Our KP-PCR       0.626     0.447   0.262     0.701    0.803     0.889    0.647     0.561    0.393
+
+
+evaluation metrics, this study introduces @3, @5, and @10 as evaluation scopes. In addition, based
+on the analysis of the time complexity of our KP-PCR in Section 4.3.1, compared to the preliminary
+version of our study [10], our KP-PCR can improve the task accuracy performance without affecting
+the overall efficiency.
+   (1) Compared to baseline methods, KP-PCR enhances the tag recommendation subtask.
+Our KP-PCR outperforms baselines by 1.4%-6.9% in the tag recommendation task. In terms of
+handling code snippets, TagDC [22] and PORFIT [31] methods discard code snippets as noise,
+while Post2Vec [42] and PTM4Tag [16] methods encode code snippets separately using the same
+approach as text segments. The unified modeling of UniPCR adjusts the model architecture through
+a prompt learning paradigm. Under the similar architecture, KP-PCR achieves better performance
+by designing a unique training method for code snippets while maintaining the advantage of the
+unified modeling method, which allows for modeling multiple subtasks.
+   (2) Code snippet representation is also effective for the tag recommendation subtask.
+Unlike other baseline methods, CDR4Tag [23] designs a matching module for code snippets to
+capture potential information, resulting in superior performance compared to other methods. This
+matching module is based on similarity design, completing the task by calculating the similarity
+between the code snippet and the request body. However, using this similarity-based approach is
+still insufficient for learning code snippet representation, as the matching module can only capture
+parts of the code snippet that match the text content, lacking direct learning of the overall code
+snippet content. The experimental results indicate that focusing on learning code snippet features
+rather than discarding code snippet content is necessary for the tag recommendation subtask.
+Compared to the proposed KP-PCR, it is evident that using a training method more aligned with
+the structure of code snippets leads to better performance in this task.
+   (3) Introducing knowledge guidance is helpful for code snippet representation learning.
+Compared to UniPCR [10], it is evident that knowledge-guided prompt learning is more effective in
+the tag recommendation subtask. As previously mentioned, CDR4Tag [23] constructs code snippets
+based on a matching module, but its shortcomings lie in the complexity and difficult migration
+of the module, which obscures the information within the code snippets themselves. UniPCR
+achieves competitive experimental results by narrowing the gap through task reconstruction, while
+KP-PCR achieves superior performance by introducing prefix vectors and program dependence
+graph representations of code snippets to learn the professional knowledge within the request
+content.
+   Overall, KP-PCR shows improvements across all metrics. Compared to the runner-up method
+UniPCR, it’s evident that knowledge-guided prompting learning is more effective in the tag recom-
+mendation subtask. Moreover, CDR4Tag constructs code snippets based on a matching module,
+
+                            ACM Trans. Softw. Eng. Methodol., Vol. 0, No. 0, Article 0. Publication date: August 2025.
+0:20
+
+
+                                 Table 7. Template Designs for Prompt Learning
+
+                                 Name             Knowledge-Guided             Code Prefix
+                             Our KP-PCR        Fine-tuned DeepSeek-7B              PDG
+                                 (a)          Fine-tuned CodeLlama-7B              PDG
+                                 (b)            Fine-tuned Llama3-8B               PDG
+                                 (c)           Fine-tuned DeepSeek-7B              DFG
+                                 (d)                  Wikipedia                    PDG
+                                 (e)                  Wikipedia                    DFG
+                                 (f)                      ×                        DFG
+
+
+but its drawback lies in the complexity of the module, making it difficult to transfer and obscuring
+the information inherent in the code snippets themselves. While KP-PCR achieves even better
+performance by introducing prefix vectors and program dependence graph representations of code
+snippets for learning the professional knowledge embedded in the request content.
+
+6.3    Effects of Knowledge-Guided Propmt Template Designs (RQ2)
+This section conducts experiments on the template designs for prompt learning, aiming to investi-
+gate the impact of using different template designs on the model’s performance. Specifically, we
+detail the template designs for prompt learning as shown in Table 7.
+  (1) Knowledge-Guided Soft Prompt. We explore the impact of different types of knowledge
+guidance on model performance. Specifically, we analyze the effects of using (1) fine-tuned LLMs
+(DeepSeek, CodeLlama, LLaMA) and (2) general encyclopedic knowledge (Wikipedia) as knowledge
+guidance in two subtasks (request necessity prediction and tag recommendation). We fine-tune
+CodeLlama and LLaMA in the same manner as described in Section 4.3.1, using the same dataset
+and optimizing the fine-tuning parameters to their best values.
+  (2) Code Prefix Prompt Construction. We design experiments on different code parsing
+methods, converting code into DFG or PDG, to analyze their impact on the experimental results.
+                        Table 8. Ablation Experiments of Request Necessity Prediction
+
+                               Model        Accuracy      F1 Necessary      F1 Unnecessary
+                           Our KP-PCR          0.848          0.894               0.795
+                               (a)             0.845          0.892               0.793
+                               (b)             0.836          0.889               0.790
+                               (c)             0.838          0.890               0.791
+                               (d)             0.835          0.889               0.791
+                               (e)             0.830          0.885               0.785
+                               (f)             0.745          0.771               0.712
+
+   Table 8 shows the experimental results on the necessity prediction subtask. Table 9 shows the
+results of the ablation experiments on the tag recommendation subtask.
+   (1) Compared to template (a), (b), and (c), using the fine-tuned DeepSeek as an external knowledge
+source outperforms the fine-tuned CodeLlama, Llama3, or directly using Wikipedia. The fine-tuned
+DeepSeek improves performance by adjusting model parameters to the needs of specific tasks and
+providing more precise knowledge related to code review.
+   (2) The results of template (c) compared to our KP-PCR and the results of template (d) compared
+to template(e) show that if the code parsing method is changed from DFG to PDG, the accuracy
+
+ACM Trans. Softw. Eng. Methodol., Vol. 0, No. 0, Article 0. Publication date: August 2025.
+Knowledge-Guided Prompt Learning for Request Quality Assurance in Public Code Review                              0:21
+
+
+                          Table 9. Ablation Experiments of Tag Recommendation
+
+                                      Precision                                      Recall
+                  Model                                       Model
+                                @3       @5     @10                          @3       @5       @10
+              Our KP-PCR      0.626    0.447    0.262      Our KP-PCR       0.701    0.803     0.889
+                  (a)         0.625    0.446    0.261          (a)          0.699    0.800     0.887
+                  (b)         0.619    0.441    0.253          (b)          0.698    0.798     0.882
+                  (c)         0.621    0.442    0.255          (c)          0.699    0.799     0.884
+                  (d)         0.617    0.442    0.251          (d)          0.696    0.796     0.875
+                  (e)         0.613    0.438    0.247          (e)          0.692    0.793     0.871
+                  (f)         0.610    0.436    0.245          (f)          0.688    0.792     0.870
+
+                                                               F1
+                                       Model
+                                                      @3       @5       @10
+                                     Our KP-PCR      0.647    0.561     0.393
+                                         (a)         0.646    0.559     0.392
+                                         (b)         0.642    0.551     0.385
+                                         (c)         0.644    0.555     0.388
+                                         (d)         0.635    0.548     0.379
+                                         (e)         0.622    0.543     0.373
+                                         (f)         0.619    0.541     0.372
+
+
+can be improved by 1.5%. PDG and DFG are two commonly used intermediate representation
+methods, modeling the structural information of programs from different perspectives. PDG models
+a program as a graph structure composed of statement nodes, with edges representing the composite
+relationship of control dependence and data dependence. DFG focuses more on depicting the data
+transfer paths among variables in the program, where nodes typically represent variables or
+operation units, and edges represent the flow of data. In the PCR tasks we focus on, the model
+needs to understand the execution logic of code snippets, judge the context where potential defects
+may occur, and make reasonable inferences about complex dependency relationships. We find that
+the representation method based on PDG performs more accurately on PCR tasks. This is mainly
+attributed to the fact that PDG can simultaneously capture the control structure and data transfer
+of a program, possessing higher structural integrity and semantic expressiveness, and providing
+more precise context information.
+   (3) The results of template (f) show that the accuracy reduces when the external knowledge is
+removed, indicating that external knowledge plays an important auxiliary role in this task.
+
+6.4   LLM Baselines (RQ3)
+Recent advancements in large language models (LLMs) have demonstrated remarkable capabil-
+ities in code-related tasks. To rigorously evaluate the effectiveness of our proposed knowledge-
+guided prompt learning framework, we conducted a comparative study by fine-tuning Llama3-8B,
+CodeLlama-7B, and DeepSeek-7B for the two subtasks separately on our PCR dataset. These models
+were selected for their proven adaptability to code comprehension tasks.
+   The fine-tuning process utilized a training set of 61,688 samples and a validation set of 6,855
+samples, with task labels aligned to necessity prediction and tag recommendation subtasks. We
+employed a learning rate of 2 × 10−5 , a batch size of 8, and trained for 10 epochs using mixed-
+precision training. Both models were optimized with cross-entropy loss and early stopping based
+on validation performance.
+
+                            ACM Trans. Softw. Eng. Methodol., Vol. 0, No. 0, Article 0. Publication date: August 2025.
+0:22
+
+
+   The performance of the fine-tuned models was benchmarked against our proposed KP-PCR
+framework. Unlike zero-shot or prompt-based evaluations, this approach allows for a fair compari-
+son by leveraging domain adaptation through fine-tuning. As shown in Table 10, our experiments
+reveal that in the request necessity prediction subtask, LLMs are behind KP-PCR by 22.4%-11.9%.
+As shown in Table 11, LLMs lag behind KP-PCR by 34.2% and 12.6% in the tag recommendation
+subtask. These disparities demonstrate that, while LLMs exhibit baseline competence, their reliance
+on pure textual patterns fails to address the semantic complexity inherent in PCR tasks.
+                    Table 10. Experiment Results of Request Necessity Prediction Subtask
+
+                         Fine-Tuned LLM         Accuracy    F1 Necessary      F1 Unnecessary
+                           Llama3-8B             0.654           0.583              0.698
+                          CodeLlama-7B           0.692           0.617              0.709
+                          DeepSeek-7B            0.742           0.763              0.721
+                          Our KP-PCR             0.848           0.894              0.795
+
+
+                         Table 11. Experiment Results of Tag Recommendation Subtask
+
+                                      Precision                     Recall                      F1
+         Fine-Tuned LLM
+                                @3       @5     @10         @3       @5       @10       @3      @5     @10
+           Llama3-8B          0.411     0.334    0.215     0.321    0.452     0.575    0.346   0.312   0.259
+          CodeLlama-7B        0.546     0.391    0.207     0.487    0.601     0.762    0.518   0.463   0.352
+          DeepSeek-7B         0.583     0.457    0.281     0.535    0.634     0.781    0.529   0.508   0.446
+          Our KP-PCR          0.626     0.447    0.262     0.701    0.803     0.889    0.647   0.561   0.393
+
+
+7      Related Work
+This section introduces and analyzes related work from five perspectives: tag recommendation
+task on software Q&A sites, public code review, prompt learning in software engineering, code
+language model, and comparison with our preliminary study.
+
+7.1     Tag Recommendation Task on Software Q&A Sites
+Since code reviews are conducted in the form of software Q&A sites, developers need to select
+appropriate tags to label their review requests during the submission stage. These tags are also
+used to recommend requests to suitable reviewers. Therefore, the accuracy of these tags is directly
+related to the final review quality.
+   Tag recommendation techniques have become an important research focus for software Q&A
+sites aiming to provide better services for code review. Numerous studies have been proposed for
+software information sites [4]. In the early stages, some research works assumed that code snippets
+were noise and removing them during preprocessing would improve the model’s performance such
+as TagDC [22] and PROFIT [31].
+   Unlike previous works, the Post2Vec model [42] preserves code snippets and learns the content
+of posts, including titles, descriptions, and code snippets, seamlessly integrating them to learn a
+unified representation. The authors of the PTM4Tag model [16] argue that poorly chosen tags often
+introduce additional noise and redundancy, leading to problems such as tag synonyms and tag
+explosion. Domain knowledge is not well studied in previous studies which may reduce the quality
+of tag recommendation.
+
+ACM Trans. Softw. Eng. Methodol., Vol. 0, No. 0, Article 0. Publication date: August 2025.
+Knowledge-Guided Prompt Learning for Request Quality Assurance in Public Code Review                              0:23
+
+
+7.2   Code Review
+Due to the extensive review work involved, conducting code reviews has become one of the biggest
+challenges facing the industry [1]. Specifically, code reviews are labor-intensive because reviewers
+must manually inspect the code and provide written feedback. To alleviate the cost of review
+requests, considerable attention and research has been devoted to various automation techniques.
+   For instance, Thongtanunam et al. [39] proposed a code transformation service that automatically
+converts source code into improved versions that have been reviewed and approved. Kudrjavets
+et al. [21] investigated opportunities for potential speedups in code by analyzing the switch from
+manual to automatic merging, which they found could enhance code velocity.
+   Tufano et al. [41] used pre-trained transformers like T5 to automate specific code review tasks
+such as revising code and generating review comments, aiming to improve code quality and reduce
+the time developers spend on manual reviews. Hijazi et al. [17] proposed an approach to evaluate
+the quality of modern code reviews using biometric data, such as heart rate variability and pupillary
+response, to assess reviewers’ cognitive load and predict the effectiveness of bug detection, providing
+feedback on code regions that may require further review. This approach requires gathering the
+reviewer’s physiological signals such as Heart Rate Variability (HRV) and pupillary responses,
+which are difficult to retrieve in public code reviews. Hajari et al. [14] proposed a novel code review
+recommendation system, SofiaWL, which balances expertise, workload distribution, and turnover
+risk to improve code review efficiency and mitigate knowledge loss in software projects.
+   These methods are primarily designed around the comments and code changes of individual
+reviewers, which may limit their effectiveness in the context of community-driven public code
+reviews.
+
+
+
+
+7.3   Pubilc Code Review
+Unlike internal code reviews within teams, public code reviews are implemented in the form of
+software question-and-answer sites. Such as StackExchange Code Review, a public, community-
+driven platform, where developers seek feedback from a broad audience. This form, characterized
+by a large user base and rapid response, also has features such as high knowledge dissemination.
+However, it also introduces factors that can affect quality and efficiency, primarily related to
+developers. Public code reviews on websites often involve more complex and dynamic interactions,
+including discussions, negotiations, and multiple rounds of revisions.
+   Since the quality and responsiveness of a public code review are typically determined by develop-
+ers, this process is often carried out manually, making it difficult to achieve convenience and quality
+assurance. Therefore, with the popularity of this review format, the demand for a shift from manual
+to intelligent services in public code reviews has also arisen. The process of ensuring review quality
+in public code reviews can be seen as a review necessity prediction and a tag recommendation task.
+   Li et al. [26] proposed that by systematically considering the tasks involved in the entire review
+process and modeling them, the time and resource costs of the review process can be greatly
+reduced. Existing research works mostly employ fine-tuning paradigm modifications of model
+architectures to ensure the model’s performance in terms of accuracy and other relevant metrics
+for the tasks. This paradigmatic method can accomplish individual tasks with individual models.
+Table 12 shows the statistical information on model construction for the aforementioned two
+subtasks. It can be observed that although different modeling methods are used for different tasks,
+most existing research is based on pre-trained language models.
+
+
+                            ACM Trans. Softw. Eng. Methodol., Vol. 0, No. 0, Article 0. Publication date: August 2025.
+0:24
+
+
+                         Table 12. The Model Classifications Used in Existing Methods
+
+                            Name              Pre-trained Language       CNN      DAG        Similarity
+                                                                          √
+                       TagDC [22]
+                                                                                    √
+                      PORFIT [31]
+                                                         √
+                   CommentBERT [32]
+                                                         √
+                   MetaTransformer [8]
+                                                                                                 √
+                   Commentfinder [18]
+                                                         √
+                      Post2Vec [42]
+                                                                           √
+                     PTM4Tag [16]
+                                                         √
+                     CDR4Tag [23]
+                                                         √
+                      UniPCR [10]
+
+
+7.4    Prompt Learning in Software Engineering
+Fine-tuning paradigm, where models tailored to specific tasks are trained only on target task’s input-
+output example datasets, has long played a central role in many machine learning tasks [15, 25, 29].
+Currently, prompt learning can be divided into two types: hard prompts and soft prompts.
+   Currently, both have found rich applications in various natural language processing tasks. For
+example, Han et al. [15] augmented MLM with rule-based designs to decompose challenging tasks
+into several simpler sub-tasks. Similarly, Li et al. [25] introduced prefix tuning, which optimizes
+small vectors of task-specific parameters, achieving similar performance to fine-tuning by learning
+only 0.1% of the parameters.
+   In the field of software engineering, prompt tuning has seen increasing applications. Due to the
+lightweight and efficient nature pursued in software engineering tools, existing research efforts
+have gradually attempted to use methods similar to prompt tuning as alternatives to fine-tuning. For
+example, Lu et al. [29] proposed an LLaMA-Reverwer framework, which leverages mainstream large
+language models and adopts a parameter-efficient fine-tuning method to address the computational
+challenges of fine-tuning large language models. Similarly, the latest tool, POME, introduced by
+Huang et al. [19], infers non-fully qualified type name syntax and usage knowledge encapsulated
+in prompt-tuned code-masked language models through a fill-in-the-blank strategy.
+
+7.5    Code Language Model
+To better capture the inherent structure of code, GraphCodeBERT proposed by Guo et al. [13]
+and TRACED proposed by Ding et al. [11] can be used. GraphCodeBERT demonstrated significant
+improvements in adapting to downstream tasks compared to other pre-trained language models
+across multiple code-related tasks. GraphCodeBERT, as such a programming language-based
+pre-trained model, is constructed inspired by natural language pre-trained models, enhancing
+model training by incorporating code-specific pre-training tasks on top of natural language pre-
+training. Existing pre-trained models treat code snippets as token sequences, ignoring the inherent
+structure in code that provides crucial semantics for enhanced code understanding. TRACED,
+an execution-aware pre-training strategy for source code, to teach code models the complicated
+execution logic during the pre-training, enabling the model to statically estimate the dynamic code
+properties without repeatedly executing code during task-specific fine-tuning. GraphCodeBERT
+utilizes data flows in the pre-training phase, representing the semantic-level structure of code,
+encoding relationships between variable values. This semantic-level structure is less complex and
+does not introduce unnecessary deep hierarchical structures, making the model more effective.
+GraphCodeBERT is used as pre-trained model in our study.
+
+ACM Trans. Softw. Eng. Methodol., Vol. 0, No. 0, Article 0. Publication date: August 2025.
+Knowledge-Guided Prompt Learning for Request Quality Assurance in Public Code Review                                   0:25
+
+
+7.6   Comparison with Our Preliminary Study
+In our preliminary study [10], a unified model is proposed for the request necessity prediction
+subtask and the tag recommendation subtask. The study in this paper represents a significant
+expansion of that study in several respects. Firstly, we introduce a knowledge guidance base by soft
+prompt to generate prefix vectors which guide the model to understand the meaning of the code
+snippet. Secondly, we design the knowledge-guided prompt learning on request quality assurance
+task to show that the knowledge guide can further improve the request quality of PCR. Thirdly, we
+set up a prompt template design study to explore the influence of knowledge guidance. Further, we
+analyze the time complexity to prove that our KP-PCR can improve task accuracy while maintaining
+overall efficiency. Finally, we design a case study to investigate the performance of our prompt
+templates on large-scale language models. In accordance with these additional results, the entire
+paper has been thoroughly updated to reflect the new holistic study.
+
+8 Conclusions
+Through investigating and summarizing the relevant tasks of team code review and software
+question-and-answer sites, and combining them with the process of public code review, this study
+explores intelligent service methods for the necessity prediction task and tag recommendation
+task of public code review from the perspective of developers. Addressing the issue of semantic
+understanding of professional knowledge in the request content, we introduce knowledge guidance
+and adopt a processing and training method that conforms to the semantic structure of code
+snippets to achieve a more comprehensive learning of professional knowledge. We propose KP-PCR
+to optimize the learning of professional knowledge in public code review. In public code review,
+request content includes both text and code snippets. The text contains vocabulary related to
+professional knowledge, while the unique structure of code snippets contains representations of
+content strongly related to review quality as the main part of the content. By processing code
+snippets into program dependence graphs and guiding the model to learn professional knowledge
+with knowledge-guided prefix vectors, KP-PCR achieves significant improvements in both subtasks.
+In the experimental results of the two subtasks, KP-PCR shows an improvement of 5.3% to 27.9% in
+the necessity prediction subtask and an improvement of 2.4% to 31.4% in the tag recommendation
+subtask.
+
+Data Availability
+The replication package of this study has been made available at https://github.com/WUT-IDEA/KP-
+PCR.
+
+Acknowledgments
+This work has been partially supported by the National Natural Science Foundation of China (NSFC)
+with Grant Nos. 62276196 and 62172311. The numerical calculations in this paper have been done
+on the supercomputing system in the Supercomputing Center of Wuhan University.
+
+References
+ [1] Vipin Balachandran. 2013. Reducing Human Effort and Improving Quality in Peer Code Reviews Using Automatic Static
+     Analysis and Reviewer Recommendation. In Proceedings of the 35th International Conference on Software Engineering
+     (ICSE). 931–940.
+ [2] Tobias Baum, Hendrik Leßmann, and Kurt Schneider. 2017. The Choice of Code Review Process: A Survey on the State
+     of the Practice. In Proceedings of the 18th Product-Focused Software Process Improvement: 18th International Conference
+     (PROFES). 111–127.
+
+
+                                ACM Trans. Softw. Eng. Methodol., Vol. 0, No. 0, Article 0. Publication date: August 2025.
+0:26
+
+
+ [3] Tobias Baum, Olga Liskin, Kai Niklas, and Kurt Schneider. 2016. A Faceted Classification Scheme for Change-Based
+     Industrial Code Review Processes. In Proceedings of the 16th IEEE International Conference on Software Quality, Reliability
+     and Security (QRS). 74–85.
+ [4] Tobias Baum and Kurt Schneider. 2016. On the Need for a New Generation of Code Review Tools. In Proceedings of the
+     17th Product-Focused Software Process Improvement: 17th International Conference (PROFES). 301–308.
+ [5] Tobias Baum, Kurt Schneider, and Alberto Bacchelli. 2017. On the Optimal Order of Reading Source Code Changes
+     for Review. In Proceedings of the 29th IEEE International Conference on Software Maintenance and Evolution (ICSME).
+     329–340.
+ [6] Moritz Beller, Alberto Bacchelli, Andy Zaidman, and Elmar Juergens. 2014. Modern Code Reviews in Open-Source
+     Projects: Which Problems Do They Fix?. In Proceedings of the 11th Working Conference on Mining Software Repositories
+     (MSR). 202–211.
+ [7] Amiangshu Bosu and Jeffrey C Carver. 2013. Impact of Peer Code Review on Peer Impression Formation: A Survey. In
+     Proceedings of the 7th ACM/IEEE International Symposium on Empirical Software Engineering and Measurement (ESEM).
+     133–142.
+ [8] Lawrence Chen, Rui Abreu, Tobi Akomolede, Peter C Rigby, Satish Chandra, and Nachiappan Nagappan. 2022.
+     Leveraging Test Plan Quality to Improve Code Review Efficacy. In Proceedings of the 30th ACM Joint European Software
+     Engineering Conference and Symposium on the Foundations of Software Engineering (ESEC/FSE). 1320–1330.
+ [9] Qiuyuan Chen, Dezhen Kong, Lingfeng Bao, Chenxing Sun, Xin Xia, and Shanping Li. 2022. Code Reviewer Rec-
+     ommendation in Tencent: Practice, Challenge, and Direction. In Proceedings of the 44th International Conference on
+     Software Engineering: Software Engineering in Practice (ICSE). 115–124.
+[10] Xinyu Chen, Lin Li, Rui Zhang, and Peng Liang. 2024. On Unified Prompt Tuning for Request Quality Assurance in
+     Public Code Review. In Proceedings of the 29th International Conference on Database Systems for Advanced Applications
+     (DASFAA). 190–207.
+[11] Yangruibo Ding, Benjamin Steenhoek, Kexin Pei, Gail Kaiser, Wei Le, and Baishakhi Ray. 2024. Traced: Execution-aware
+     pre-training for source code. In Proceedings of the 46th IEEE/ACM International Conference on Software Engineering
+     (ICSE). 1–12.
+[12] Michael Fagan. 2011. Design and Code Inspections to Reduce Errors in Program Development. In Software Pioneers:
+     Contributions to Software Engineering. 575–607.
+[13] Daya Guo, Shuo Ren, Shuai Lu, Zhangyin Feng, Duyu Tang, Shujie Liu, Long Zhou, Nan Duan, Alexey Svyatkovskiy,
+     Shengyu Fu, Michele Tufano, Shao Kun Deng, Colin B. Clement, Dawn Drain, Neel Sundaresan, Jian Yin, Daxin Jiang,
+     and Ming Zhou. 2021. GraphCodeBERT: Pre-training Code Representations with Data Flow. In Proceedings of the 9th
+     International Conference on Learning Representations (ICLR). 1–18.
+[14] Fahimeh Hajari, Samaneh Malmir, Ehsan Mirsaeedi, and Peter C. Rigby. 2024. Factoring Expertise, Workload, and
+     Turnover Into Code Review Recommendation. IEEE Trans. Software Eng. (2024), 884–899.
+[15] Xu Han, Weilin Zhao, Ning Ding, Zhiyuan Liu, and Maosong Sun. 2022. PTR: Prompt Tuning with Rules for Text
+     Classification. AI Open 3 (2022), 182–192.
+[16] Junda He, Bowen Xu, Zhou Yang, DongGyun Han, Chengran Yang, and David Lo. 2022. Ptm4tag: Sharpening Tag
+     Recommendation of Stack Overflow Posts with Pre-Trained Models. In Proceedings of the 30th IEEE/ACM International
+     Conference on Program Comprehension (ICPC). 1–11.
+[17] Haytham Hijazi, João Durães, Ricardo Couceiro, João Castelhano, Raul Barbosa, Júlio Medeiros, Miguel Castelo-Branco,
+     Paulo de Carvalho, and Henrique Madeira. 2023. Quality Evaluation of Modern Code Reviews Through Intelligent
+     Biometric Program Comprehension. IEEE Trans. Software Eng. (2023), 626–645.
+[18] Yang Hong, Chakkrit Tantithamthavorn, Patanamon Thongtanunam, and Aldeida Aleti. 2022. Commentfinder: A
+     Simpler, Faster, More Accurate Code Review Comments Recommendation. In Proceedings of the 30th ACM Joint
+     European Software Engineering Conference and Symposium on the Foundations of Software Engineering (ESEC/FSE).
+     507–519.
+[19] Qing Huang, Zhiqiang Yuan, Zhenchang Xing, Xin Peng, Xiwei Xu, and Qinghua Lu. 2023. FQN Inference in Partial
+     Code by Prompt-Tuned Language Model of Code. ACM Transactions on Software Engineering and Methodology 33, 2
+     (2023), 1–32.
+[20] Philip M Johnson. 1998. Reengineering Inspection. Commun. ACM 41, 2 (1998), 49–52.
+[21] Gunnar Kudrjavets, Aditya Kumar, Nachiappan Nagappan, and Ayushi Rastogi. 2022. Mining Code Review Data
+     to Understand Waiting Times between Acceptance and Merging: An Empirical Analysis. In Proceedings of the 19th
+     International Conference on Mining Software Repositories (MSR). 579–590.
+[22] Can Li, Ling Xu, Meng Yan, and Yan Lei. 2020. TagDC: A Tag Recommendation Method for Software Information Sites
+     with a Combination of Deep Learning and Collaborative Filtering. Journal of Systems and Software 170 (2020), 110783.
+[23] Lin Li, Peipei Wang, Xinhao Zheng, Qing Xie, Xiaohui Tao, and Juan D Velásquez. 2023. Dual-Interactive Fusion for
+     Code-Mixed Deep Representation Learning in Tag Recommendation. Information Fusion 99 (2023), 101862.
+
+
+ACM Trans. Softw. Eng. Methodol., Vol. 0, No. 0, Article 0. Publication date: August 2025.
+Knowledge-Guided Prompt Learning for Request Quality Assurance in Public Code Review                                   0:27
+
+
+[24] Ruiyin Li, Peng Liang, and Paris Avgeriou. 2023. Code Reviewer Recommendation for Architecture Violations:
+     An Exploratory Study. In Proceedings of the 27th International Conference on Evaluation and Assessment in Software
+     Engineering (EASE). 42–51.
+[25] Xiang Lisa Li and Percy Liang. 2021. Prefix-Tuning: Optimizing Continuous Prompts for Generation. In Proceedings of
+     the 59th Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on
+     Natural Language Processing (ACL/IJCNLP). 4582–4597.
+[26] Zhiyu Li, Shuai Lu, Daya Guo, Nan Duan, Shailesh Jannu, Grant Jenks, Deep Majumder, Jared Green, Alexey Svy-
+     atkovskiy, Shengyu Fu, et al. 2022. Automating Code Review Activities by Large-Scale Pre-Training. In Proceedings of
+     the 30th ACM Joint European Software Engineering Conference and Symposium on the Foundations of Software Engineering
+     (ESEC/FSE). 1035–1047.
+[27] Dan Liu, Lin Li, Xiaohui Tao, Jian Cui, and Qing Xie. 2023. Descriptive prompt paraphrasing for target-oriented
+     multimodal sentiment classification. In Proceedings of the 27th Conference on Empirical Methods in Natural Language
+     Processing (EMNLP): Findings. 4174–4186.
+[28] Pengfei Liu, Weizhe Yuan, Jinlan Fu, Zhengbao Jiang, Hiroaki Hayashi, and Graham Neubig. 2023. Pre-Train, Prompt,
+     and Predict: A Systematic Survey of Prompting Methods in Natural Language Processing. Comput. Surveys 55, 9 (2023),
+     1–35.
+[29] Junyi Lu, Lei Yu, Xiaojia Li, Li Yang, and Chun Zuo. 2023. LLaMA-Reviewer: Advancing Code Review Automation
+     with Large Language Models through Parameter-Efficient Fine-Tuning. In Proceedings of the 34th IEEE International
+     Symposium on Software Reliability Engineering (ISSRE). 647–658.
+[30] Mark EJ Newman. 2005. Power laws, Pareto distributions and Zipf’s law. Contemporary Physics 46, 5 (2005), 323–351.
+[31] Liqiang Nie, Yongqi Li, Fuli Feng, Xuemeng Song, Meng Wang, and Yinglong Wang. 2020. Large-Scale Question
+     Tagging via Joint Question-Topic Embedding Learning. ACM Transactions on Information Systems 38, 2 (2020), 1–23.
+[32] Miroslaw Ochodek, Miroslaw Staron, Wilhelm Meding, and Ola Söder. 2022. Automated Code Review Comment
+     Classification to Improve Modern Code Reviews. In Proceedings of the 22th International Conference on Software Quality
+     (ICSQ). 23–40.
+[33] Prahar Pandya and Saurabh Tiwari. 2022. Corms: A Github and Gerrit Based Hybrid Code Reviewer Recommendation
+     Approach for Modern Code Review. In Proceedings of the 30th ACM Joint European Software Engineering Conference
+     and Symposium on the Foundations of Software Engineering (ESEC/FSE). 546–557.
+[34] Mohammad Masudur Rahman, Chanchal K Roy, and Raula G Kula. 2017. Predicting Usefulness of Code Review
+     Comments Using Textual Features and Developer Experience. In Proceedings of the 14th IEEE/ACM International
+     Conference on Mining Software Repositories (MSR). 215–226.
+[35] Peter C Rigby and Christian Bird. 2013. Convergent Contemporary Software Peer Review Practices. In Proceedings
+     of the 9th Joint Meeting of the European Software Engineering Conference and the ACM SIGSOFT Symposium on the
+     Foundations of Software Engineering (ESEC/FSE). 202–212.
+[36] Peter C Rigby, Daniel M German, Laura Cowen, and Margaret-Anne Storey. 2014. Peer Review on Open-Source Software
+     Projects: Parameters, Statistical Models, and Theory. ACM Transactions on Software Engineering and Methodology 23, 4
+     (2014), 1–33.
+[37] Caitlin Sadowski, Emma Söderberg, Luke Church, Michal Sipko, and Alberto Bacchelli. 2018. Modern Code Review: A
+     Case Study at Google. In Proceedings of the 40th International Conference on Software Engineering: Software Engineering
+     in Practice (ICSE-SEIP). 181–190.
+[38] Qianhua Shan, David Sukhdeo, Qianying Huang, Seth Rogers, Lawrence Chen, Elise Paradis, Peter C Rigby, and
+     Nachiappan Nagappan. 2022. Using Nudges to Accelerate Code Reviews at Scale. In Proceedings of the 30th ACM
+     Joint European Software Engineering Conference and Symposium on the Foundations of Software Engineering (ESEC/FSE).
+     472–482.
+[39] Patanamon Thongtanunam, Chanathip Pornprasit, and Chakkrit Tantithamthavorn. 2022. Autotransform: Automated
+     Code Transformation to Support Modern Code Review Process. In Proceedings of the 44th International Conference on
+     Software Engineering (ICSE). 237–248.
+[40] Maria Tsimpoukelli, Jacob L Menick, Serkan Cabi, SM Eslami, Oriol Vinyals, and Felix Hill. 2021. Multimodal few-shot
+     learning with frozen language models. Advances in Neural Information Processing Systems 34 (2021), 200–212.
+[41] Rosalia Tufano. 2023. Automating Code Review. In Proceedings of the 45th International Conference on Software
+     Engineering (ICSE). 192–196.
+[42] Bowen Xu, Thong Hoang, Abhishek Sharma, Chengran Yang, Xin Xia, and David Lo. 2021. Post2vec: Learning
+     Distributed Representations of Stack Overflow Posts. IEEE Transactions on Software Engineering 48, 9 (2021), 3423–
+     3441.
+[43] Pingyi Zhou, Jin Liu, Xiao Liu, Zijiang Yang, and John Grundy. 2019. Is Deep Learning Better than Traditional
+     Approaches in Tag Recommendation for Software Information Sites? Information and Software Technology 109 (2019),
+     1–13.
+
+
+                                ACM Trans. Softw. Eng. Methodol., Vol. 0, No. 0, Article 0. Publication date: August 2025.
+

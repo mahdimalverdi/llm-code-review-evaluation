@@ -1,0 +1,322 @@
+                                                         AI Observability for Developer Productivity Tools:
+                                                            Bridging Cost Awareness and Code Quality
+                                                                     Happy Bhati                                                        Twinkll Sisodia
+                                                              bhati.h@northeastern.edu                                                  twinklls@bu.edu
+                                                               Northeastern University                                                  Boston University
+                                                                  Boston, MA, USA                                                       Boston, MA, USA
+                                         Abstract                                                                   This paper presents a unified approach to AI observability that
+                                         As AI-assisted development tools proliferate, developers face a         bridges both levels. We synthesize techniques from two open-source
+                                         growing challenge: understanding the cost, quality, and behav-          systems:
+                                         ioral patterns of AI interactions across their workflow. We present
+arXiv:2604.17092v1 [cs.SE] 18 Apr 2026
+
+
+
+
+                                         a unified approach to AI observability for developer productiv-               (1) Workstream [1], a developer productivity dashboard that
+                                         ity tools, combining real-time token tracking, configurable model                 centralizes pull requests from GitHub and GitLab, Jira tasks,
+                                         pricing registries, response validation, and cost analytics into a                calendar events, and AI-powered code reviews into a single-
+                                         single-pane dashboard. Our work synthesizes two complementary                     page application backed by FastAPI and SQLite.
+                                         systems—Workstream, a developer productivity dashboard that cen-              (2) AI Observability Summarizer [2], an OpenShift-native
+                                         tralizes pull requests, Jira tasks, and AI code reviews; and an AI                platform that queries Prometheus/Thanos for vLLM serv-
+                                         observability summarizer that monitors inference workloads with                   ing metrics, provides multi-provider LLM chat with MCP
+                                         Prometheus-backed metrics and multi-provider LLM gateways. We                     tool-calling, and generates natural-language summaries of
+                                         describe the architectural patterns adopted, the implementation                   infrastructure state.
+                                         of real token tracking from provider APIs (replacing heuristic esti-
+                                                                                                                    Our contribution is the identification, adaptation, and implemen-
+                                         mation), a 24-model pricing registry, response validation pipelines,
+                                                                                                                 tation of seven reusable AI observability patterns for developer
+                                         LLM-powered review intelligence, and exportable reports. Our eval-
+                                                                                                                 tools: (1) real token tracking from provider APIs, (2) configurable
+                                         uation on a six-month development workflow shows the system
+                                                                                                                 model pricing registries, (3) unified telemetry schemas, (4) cost
+                                         captures per-review cost with less than 2% variance from provider
+                                                                                                                 analytics dashboards with multi-source ingestion, (5) response val-
+                                         billing and reduces time-to-insight for AI usage patterns by an
+                                                                                                                 idation pipelines, (6) LLM-powered intelligence summaries, and
+                                         order of magnitude compared to manual tracking.
+                                                                                                                 (7) exportable reports.
+
+                                         CCS Concepts
+                                         • Software and its engineering → Development frameworks
+                                                                                                                 2 Background and Related Work
+                                         and environments; Software maintenance tools.                           2.1 AI in Software Engineering
+                                                                                                                 Recent surveys [3, 4] document the rapid adoption of LLM-based
+                                         Keywords                                                                tools in professional development. GitHub reports that Copilot ac-
+                                         AI observability, developer productivity, token cost tracking, LLM      cepts roughly 30% of suggestions in production environments [5].
+                                         code review, model pricing registry                                     AI code review tools—both commercial (CodeRabbit, Sourcery) and
+                                                                                                                 open-source (PR-Agent)—have emerged as a complementary modal-
+                                                                                                                 ity, providing structured feedback on pull request diffs.
+                                         1   Introduction
+                                         The integration of large language models (LLMs) into software de-       2.2      Observability for ML Systems
+                                         velopment workflows has accelerated rapidly since 2023. Tools such      MLOps platforms (MLflow, Weights & Biases, Neptune) focus on
+                                         as GitHub Copilot, Cursor, and AI-powered code review bots now          training pipelines: experiment tracking, model versioning, and hy-
+                                         participate in millions of pull requests daily. Yet most development    perparameter search. Inference observability—monitoring deployed
+                                         teams lack visibility into the cost, quality, and behavioral patterns   models in production—is addressed by tools like Prometheus ex-
+                                         of these AI interactions.                                               porters for vLLM [6] and TGI, DCGM for GPU telemetry, and emerg-
+                                            Two distinct observability gaps exist. First, at the development     ing standards like OpenTelemetry for LLMs [7].
+                                         workflow level, individual developers have no centralized view of
+                                         how much they spend on AI reviews, which models produce the
+                                         highest-quality feedback, or whether token usage trends upward          2.3      Developer Productivity Measurement
+                                         over time. Second, at the inference infrastructure level, teams de-     The DORA metrics framework [8] and SPACE [9] established dimen-
+                                         ploying self-hosted models (e.g., vLLM on Kubernetes) need metrics      sions for measuring developer productivity. Workstream extends
+                                         on token throughput, latency percentiles, GPU utilization, and serv-    these frameworks by adding AI-specific dimensions: cost per re-
+                                         ing cost—often scattered across Prometheus, Grafana, and ad-hoc         view, token efficiency, model selection patterns, and review quality
+                                         dashboards.                                                             feedback loops.
+                                                                                                                 Happy Bhati and Twinkll Sisodia
+
+
+2.4    Cost Awareness in AI-Assisted Development                        (input, output, total), cost in USD, latency in milliseconds, feature
+Despite the financial implications of per-token pricing, few devel-     tag, status, error, and JSON metadata. The record_event function
+oper tools surface cost information at the point of use. The AI         dual-writes to both databases during transition, ensuring backward
+Observability Summarizer pioneered per-model cost metadata in           compatibility.
+its model-config.json registry, though it did not implement end-
+to-end cost calculation. Our work completes this chain.                 4.4    Pattern 4: Cost Analytics Dashboard
+                                                                        Problem. The existing Agents tab showed aggregate totals but no
+3     System Architecture                                               breakdown by model, feature, or time period.
+Figure 1 illustrates the combined architecture after adopting observ-      Solution. A dedicated “AI Costs” tab with:
+ability patterns. The system follows a layered design: a browser-             • Summary cards (total cost, token counts, average latency)
+based SPA communicates with a FastAPI backend over REST and                   • Daily cost trend bar chart and donut chart by model
+Server-Sent Events, six feature modules implement the observabil-             • Per-model and per-feature breakdown tables
+ity patterns, and a unified SQLite database persists all state.               • Period selector (7 d, 30 d, 90 d, all time)
+                                                                              • Claude Code CLI importer—reads session transcripts from
+4     AI Observability Patterns                                                 ~/.claude/projects/ and imports per-request token us-
+We identify seven reusable patterns for adding AI observability to              age with deduplication
+developer tools. Each pattern is described with its motivation, the           • Manual cost entry for tools lacking API access (Cursor,
+technique adopted from the AI Observability Summarizer, and the                 ChatGPT subscriptions, GitHub Copilot)
+adaptation made for Workstream.                                            All charts are rendered with the vanilla Canvas 2D API to avoid
+                                                                        adding charting library dependencies. The Claude Code importer
+4.1    Pattern 1: Real Token Tracking                                   demonstrates a general pattern: when a tool stores structured usage
+Problem. Workstream estimated input tokens as char_count // 4           data locally but lacks an export API, file-system scraping can bridge
+and hardcoded output tokens to 500—a heuristic borrowed from            the gap.
+early OpenAI tokenizer approximations.                                     Figure 2 shows how the three data-ingestion pathways converge
+   Solution. Parse the usage field from each provider’s API re-         in the unified telemetry table.
+sponse. The Anthropic Messages API returns usage.input_tokens
+and usage.output_tokens directly. Google’s Gemini API provides          4.5    Pattern 5: Response Validation
+usageMetadata.promptTokenCount and candidatesTokenCount.                Problem. LLM review output was consumed directly from provider
+Ollama exposes prompt_eval_count and eval_count.                        responses. Models occasionally prepend conversational preamble
+   Fallback. When a provider does not return usage metadata             (“Sure, I’ll analyze this PR. . . ”) or append postamble (“Hope this
+(e.g., network error mid-response), the system falls back to the        helps!”) that degrades the structured JSON output.
+character-based heuristic, flagging the event as estimated in teleme-      Solution. Adapted from the AI Observability Summarizer’s
+try metadata.                                                           ResponseValidator, we implement a Workstream-specific response_validator.
+                                                                        module that:
+4.2    Pattern 2: Configurable Model Pricing                             (1) Strips preamble using six regex patterns matching common
+       Registry                                                              LLM conversational openers
+Problem. A hardcoded five-entry dictionary mapped model names            (2) Strips postamble using patterns for “Note:”, “Feel free to
+to per-million-token rates. Unknown models defaulted to $0.                  ask”, etc.
+   Solution. Adopt the AI Observability Summarizer’s model-config.json (3) Extracts JSON from potentially wrapped markdown code
+pattern: a JSON registry of 24 models across six providers (An-              fences
+thropic, OpenAI, Google, DeepSeek, Mistral, Ollama) with per-            (4) Validates the expected structure (summary string, com-
+million input and output cost fields. User overrides are persisted in        ments array with file/line/body/severity)
+a model_pricing SQLite table and merged at runtime with TTL-             (5) Truncates oversized fields (summary to 1 000 chars, com-
+based cache invalidation.                                                    ment bodies to 2 000 chars)
+   Extensibility. REST endpoints (GET/POST/DELETE /api/ai/models)        (6) Caps total comments at 50 to prevent runaway output
+allow users to add custom model pricing without modifying source
+code—critical for teams using fine-tuned or self-hosted models.       4.6 Pattern 6: LLM-Powered Intelligence
+                                                                        Problem. The Review Intelligence module used keyword-based
+4.3    Pattern 3: Unified Telemetry Schema                              classification (nine category regex rules) to categorize human re-
+Problem. Workstream maintained two separate SQLite databases:           view comments. While effective for counting, it could not generate
+data.db for application state and agent_status_history.sqlite           narrative summaries or identify cross-cutting themes.
+for telemetry. Cross-cutting queries (e.g., “cost of reviews for PRs       Solution. An opt-in “Generate AI Summary” button sends the
+merged this sprint”) required manual joins across databases.            top patterns and category distribution to a configured LLM provider
+   Solution. Add an ai_telemetry table to the main database with        with a prompt requesting a 3–5 paragraph narrative analysis of the
+columns for agent name, operation, provider, model, token counts        team’s review culture. The call is tracked in the unified telemetry
+AI Observability for Developer Productivity Tools:
+Bridging Cost Awareness and Code Quality
+
+
+
+                                                  Browser SPA             (vanilla JS, dark/light theme, AI Costs tab, Reports)
+
+                                                                                            HTTP/REST + SSE
+
+                                                         FastAPI         (48 endpoints, optional auth middleware, CORS)
+
+                                                              AI Observability Modules
+
+
+                          AI Reviewer                    Telemetry              Model Registry            Validator         Intelligence          Reports
+
+
+
+
+                                              SQLite        (unified schema: PRs, Jira, calendar, ai_telemetry, model_pricing)
+
+
+
+
+                                 Anthropic                   Google AI                  Ollama              GitHub/GitLab                  Jira
+
+
+
+Figure 1: Workstream architecture after AI observability adoption. Shaded modules implement the seven patterns described in
+Section 4. All telemetry writes to a unified ai_telemetry table in the main database. External providers (bottom) are accessed
+via async HTTP clients.
+
+
+                Provider APIs                              reviewer.py                           5   Implementation
+                                                                                                 Table 1 summarizes the implementation scope.
+               Claude Code CLI                     claude_code_importer.py
+
+                                                                                                 Table 1: Implementation summary: files modified and cre-
+                Manual Entry                       POST /api/ai/costs/manual                     ated.
+
+
+                                 ai_telemetry (SQLite)                                            Component                 File                            Change
+                                                                                                  Token tracking            reviewer.py                     Modified
+Figure 2: Multi-source cost data ingestion. Three pathways                                        Model registry            model_registry.py               New
+converge into a unified telemetry table, enabling a single                                        Registry data             model_registry.json             New (24 models)
+cost-of-AI view.                                                                                  Unified telemetry         database.py                     Modified
+                                                                                                  Dual-write                agents/telemetry.py             Modified
+                                                                                                  Cost analytics            app.py                          +10 endpoints
+                                                                                                  Response validator        response_validator.py           New
+table, ensuring the cost of meta-analysis is visible alongside direct                             LLM intelligence          intelligence/analyzer.py        Modified
+review costs.                                                                                     Report engine             reports.py                      New
+                                                                                                  CLI importer              claude_code_importer.py         New
+                                                                                                  Dashboard UI              static/index.html               Modified
+4.7     Pattern 7: Report Generation
+Problem. No mechanism existed to export dashboard state for
+sharing in standups, retrospectives, or management reviews.
+                                                                      5.1 Technology Stack
+  Solution. Three report types are available via POST /api/reports/generate:
+                                                                      The implementation uses Python 3.12 with FastAPI [10] for the
+     • Weekly Digest: PR counts, Jira status, recent activity, and    backend, aiosqlite for async database operations, and httpx for
+       AI cost summary for the past 7 days.                           provider API calls. The frontend is a single-file vanilla JavaScript
+     • Cost Report: Detailed model-level and feature-level cost       SPA (approximately 5 600 lines) with no framework dependencies.
+       breakdown with daily trends.                                   The Canvas 2D API replaces chart libraries for cost visualizations.
+     • Review Summary: Intelligence overview including re-
+       viewer profiles, category distribution, and extracted pat-     5.2 Provider Integration Details
+       terns.                                                         Each AI provider returns token usage in a different response struc-
+   Reports are generated in both Markdown and self-contained                                     ture:
+HTML (with embedded CSS) using a lightweight converter that                                              • Anthropic: response.usage.input_tokens and output_tokens
+requires no external dependencies.                                                                         in the Messages API response body.
+                                                                                                               Happy Bhati and Twinkll Sisodia
+
+
+      • Google Gemini: response.usageMetadata.promptTokenCount Table 3: Cost data from multi-source ingestion validation.
+         and candidatesTokenCount.
+      • Ollama: response.prompt_eval_count and eval_count                Source                       Events Tokens    Cost
+         in the chat completion response.
+                                                                         Claude Code CLI (Sonnet 4.5)    352  24.9 M $14.44
+   All provider callers now return a tuple of (result_dict, token_usage_dict),
+                                                                         Claude Code CLI (Haiku 4.5)      23   1.1 M  $0.36
+maintaining backward compatibility through the orchestrator func-        Manual entry (Cursor Pro)         1       — $20.00
+tion.
+                                                                         Total                           376  26.7 M $34.80
+6 Evaluation
+6.1 Token Tracking Accuracy                                           6.5    Dashboard Performance
+We compared reported token counts against provider billing dash-      The /api/ai/costs endpoint aggregates telemetry data with SQL
+boards over 47 AI review requests (28 Claude, 12 Gemini, 7 Ollama).   grouping. For a database with 376 telemetry events, response time
+For Claude and Gemini, the system’s reported tokens matched           averaged 12 ms. The Canvas-based charts render in under 50 ms on
+billing exactly (0% variance). For Ollama (local, no billing refer-   modern hardware, verified using the Performance API.
+ence), we verified consistency between prompt_eval_count and
+manual tiktoken estimates, finding less than 3% deviation.
+                                                                      6.6    Evaluation Summary
+                                                                      Table 4 provides a consolidated view of key metrics.
+6.2   Cost Calculation Accuracy
+                                                                                Table 4: Consolidated evaluation metrics.
+Using the 24-model registry, cost calculations for known models
+matched provider pricing pages exactly. The fuzzy-matching fall-
+back (substring comparison) correctly resolved model aliases in              Metric                                           Value
+100% of test cases (e.g., claude-sonnet-4-20250514 matching the              Token tracking accuracy (Claude, Gemini)           100%
+registry entry).                                                             Token tracking accuracy (Ollama)                  >97%
+                                                                             Model alias resolution accuracy                    100%
+6.3   Response Validation Impact                                             Responses requiring validation cleanup              29%
+We ran the response validator on 100 cached AI review responses.             Validation parse failure rate                        2%
+Table 2 summarizes the outcomes.                                             Models in pricing registry                           24
+                                                                             Providers supported                                   6
+                                                                             Cost API response time (376 events)               12 ms
+Table 2: Response validation results on 100 cached reviews.                  Chart render time                               <50 ms
+                                                                             Claude Code sessions imported                         3
+        Outcome                                    Count                     Total tokens ingested                           26.7 M
+                                                                             Total cost unified from 3 sources                $34.80
+        Clean (no modifications needed)                 71
+        Preamble stripped                               18
+        Postamble stripped                               9
+        JSON extraction from markdown fences            14            7 Discussion
+        Comment body truncated                           3            7.1 Cross-Pollination Between Systems
+        Failed to parse (fallback to raw)                2            The most effective patterns were those that mapped cleanly be-
+                                                                      tween infrastructure-level and developer-level observability. The
+                                                                      model pricing registry, originally designed for multi-tenant infer-
+  29% of responses required some form of cleanup, validating the      ence platform billing, adapted naturally to individual developer
+need for the validation layer.                                        cost tracking. Conversely, the response validation pipeline—born
+                                                                      from the need to clean vLLM metric summaries—proved equally
+6.4   Multi-Source Cost Ingestion                                     valuable for code review output.
+To validate the import pipeline, we ingested three Claude Code
+CLI sessions (375 API calls, 26.7 M tokens) from real development
+                                                                      7.2    The Case for Unified Observability
+work. The importer parsed per-request token fields (input_tokens,     Splitting telemetry across multiple databases is a common anti-
+output_tokens, cache-read and cache-creation counts) from ses-        pattern in observability systems. Our migration to a unified schema
+sion JSONL transcripts. Combined with one manual Cursor sub-          enabled queries like “total AI spend on reviews for PRs in the active
+scription entry ($20/month), the dashboard immediately reflected      sprint” that were previously impossible without custom ETL.
+$34.80 in total AI spend across two sources. Table 3 shows the
+breakdown.                                                            7.3    Multi-Source Ingestion as a Design Principle
+   This demonstrates that heterogeneous cost data can be unified      Modern developers use multiple AI tools simultaneously—Cursor
+in a single view without requiring API access from every tool.        for code completion, Claude Code for terminal tasks, ChatGPT
+AI Observability for Developer Productivity Tools:
+Bridging Cost Awareness and Code Quality
+
+
+for exploration. No single API can capture all AI expenditure. Our                         [4] S. Peng et al. 2023. The Impact of AI on Developer Productivity: Evidence from
+three-pathway architecture (Figure 2) establishes a reusable pattern:                          GitHub Copilot. arXiv:2302.06590.
+                                                                                           [5] GitHub. 2024. GitHub Copilot Research Recitation. https://github.blog/2023-06-
+combine API-level tracking where available, file-system scraping                               27-the-economic-potential-of-generative-ai/
+for CLI tools, and manual entry as a universal fallback.                                   [6] W. Kwon et al. 2023. Efficient Memory Management for Large Language Model
+                                                                                               Serving with PagedAttention. In Proceedings of SOSP ’23.
+                                                                                           [7] OpenTelemetry. 2024. Semantic Conventions for Generative AI Systems. https:
+7.4     Privacy and Cost Transparency                                                          //opentelemetry.io/docs/specs/semconv/gen-ai/
+                                                                                           [8] N. Forsgren, J. Humble, and G. Kim. 2018. Accelerate: The Science of Lean Software
+AI cost tracking raises privacy considerations. Our system operates                            and DevOps. IT Revolution Press.
+as a personal tool: all data remains local, no telemetry is sent to                        [9] N. Forsgren et al. 2021. The SPACE of Developer Productivity. ACM Queue 19, 1.
+                                                                                          [10] S. Ramírez. 2018. FastAPI: Modern Python Web Framework. https://fastapi.
+external services, and the model registry contains only pricing meta-                          tiangolo.com
+data. This design ensures developers benefit from cost awareness                          [11] Anthropic. 2024. Model Context Protocol Specification. https:
+without organizational surveillance.                                                           //modelcontextprotocol.io
+                                                                                          [12] Prometheus Authors. 2024. Prometheus Monitoring System. https://prometheus.
+                                                                                               io
+7.5     Limitations
+      (1) Tools that proxy LLM calls through proprietary backends
+          (e.g., Cursor via its cloud API) expose no local usage data;
+          tracking relies on manual entry or future vendor APIs.
+      (2) The response validator is tuned for JSON-structured code
+          reviews; free-form responses require separate handling.
+      (3) Cost data depends on manual registry updates when providers
+          change pricing; automated price fetching is future work.
+      (4) Claude Code import parses file-system artifacts whose for-
+          mat may change across CLI versions.
+
+8     Conclusion
+We presented seven reusable AI observability patterns for developer
+productivity tools, implemented by synthesizing techniques from a
+Kubernetes-scale inference monitoring platform and a personal de-
+veloper dashboard. The patterns—real token tracking, configurable
+pricing registries, unified telemetry, cost analytics, response valida-
+tion, LLM-powered intelligence, and exportable reports—provide
+a comprehensive framework for AI cost and quality awareness in
+development workflows.
+   Our implementation demonstrates that infrastructure-level ob-
+servability techniques can be effectively adapted for individual de-
+veloper use, and that the resulting visibility enables more informed
+decisions about AI tool selection, usage patterns, and budget alloca-
+tion. By combining API-level token tracking, local file-system scrap-
+ing (Claude Code CLI), and manual cost entry, the system unifies
+heterogeneous AI expenditure into a single cost-of-AI view—even
+when vendors provide no export mechanism.
+   Both systems are open source, and we encourage the community
+to adopt and extend these patterns as AI becomes an increasingly
+integral part of the software development lifecycle.
+
+Acknowledgments
+We thank the open-source communities around FastAPI, vLLM,
+and the Model Context Protocol for the foundations that made this
+work possible.
+
+References
+ [1] H. Bhati. 2025. Workstream: An Open-Source Developer Productivity Dashboard.
+     GitHub. https://github.com/happybhati/workstream
+ [2] T. Sisodia et al. 2025. AI Observability Summarizer: OpenShift AI Metrics Analysis
+     with LLM-Powered Insights. GitHub. https://github.com/rh-ai-quickstart/ai-
+     observability-summarizer
+ [3] A. Fan et al. 2023. Large Language Models for Software Engineering: A Systematic
+     Literature Review. arXiv:2308.10620.
+

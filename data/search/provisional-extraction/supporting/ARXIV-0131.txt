@@ -1,0 +1,1141 @@
+                                                                                                                                                                                   1
+
+
+
+
+                                                 Enhancing Code Review through Fuzzing and
+                                                             Likely Invariants
+                                             Wachiraphan Charoenwet              , Patanamon Thongtanunam              , Van-Thuan Pham        , and Christoph Treude
+
+
+
+
+                                            Abstract—Many software projects employ manual code review              aspects while overlooking more subtle problems. Automated
+                                         to gatekeep defects and vulnerabilities in newly introduced code          program analysis tools, such as static analyzers, can reduce
+                                         before integration. However, reviewers often work under time              reviewer effort by generating warnings similar to reviewer
+                                         pressure and rely primarily on static inspection of code changes,
+                                         leaving the dynamic aspects of program behavior largely unex-             comments [5], suggesting potential defects worth address-
+arXiv:2510.15512v1 [cs.SE] 17 Oct 2025
+
+
+
+
+                                         plored during review. Dynamic analyses could help reveal such             ing [6], or prioritizing code changes under reviews [7]. Yet,
+                                         behaviors, but they are rarely integrated into review practices.          static analysis tools primarily rely on predefined rules and
+                                         Among them, fuzzing is typically applied later in the testing             syntactic patterns, which limit their ability to account for
+                                         pipeline to uncover crashing bugs. Yet its ability to exercise code       dynamic behaviors, complex control-flow interactions, and
+                                         with diverse inputs also makes it promising for exposing non-
+                                         crashing, but unexpected, behaviors earlier in the review process.        subtle context-dependent effects. As a result, they struggle
+                                         Still, without suitable mechanisms to analyze program behaviors,          to capture the behavioral properties of programs [8] that are
+                                         the rich data produced during fuzzing remains inaccessible to             critical for reasoning about the implications of code changes.
+                                         reviewers, limiting its practical value in this context.                     In contrast, dynamic analysis, particularly fuzzing, offers
+                                            We hypothesize that unexpected variations in program behav-            a complementary perspective by executing the program under
+                                         iors could signify potential bugs. To capture such variations, we
+                                         look beyond static inspection and leverage dynamic execution              diverse, automatically generated inputs. In traditional software
+                                         data, which fuzzing readily produces in abundance. Instead of             development workflows, fuzzing is usually applied in the
+                                         requiring reviewers to infer potential behavioral consequences            later stages of the SDLC, after code review and integration,
+                                         solely from source code and static analyses, the impact of code           where its findings, such as crashes or assertion violations,
+                                         changes can be automatically captured at runtime. Representing            primarily guide security testing and post-integration quality
+                                         program behavior as likely invariants, dynamic properties consis-
+                                         tently observed at specific program points, can provide practical         assurance by security experts [9]. However, this rich behavioral
+                                         signals of behavioral changes, potentially revealing unintended           information could also be valuable during code review, if
+                                         or anomalous behavior. Such signals offer a way to highlight              presented in a way that helps reviewers reason about the
+                                         code regions exhibiting behavioral differences and to distinguish         consequences of code changes. For example, differences in a
+                                         between intended changes and unexpected behavioral shifts.                program’s behaviors are often more relevant to understanding
+                                            We present FuzzSight, a framework that leverages likely
+                                         invariants from non-crashing fuzzing inputs to highlight behav-           the implications of code changes, yet such insights are rarely
+                                         ioral differences across program versions. By surfacing such              extracted or highlighted during the review process. Even when
+                                         differences, it provides insights into which code blocks may need         artifacts such as execution traces are collected, they tend to
+                                         closer attention. In our evaluation, FuzzSight flagged 75% of             be too technical and low-level for practical use by reviewers.
+                                         regression bugs and up to 80% of vulnerabilities uncovered by             Thus, the challenge remains in adapting fuzzing’s strengths, its
+                                         24-hour fuzzing. It also outperformed static security application
+                                         testing (SAST) in identifying buggy code blocks, achieving ten            ability to reveal behavioral diversity, into concise information
+                                         times higher detection rates with fewer false alarms. In summary,         that can meaningfully assist review activities.
+                                         FuzzSight demonstrates the potential and value of leveraging                 One promising way to make this information available is to
+                                         fuzzing and invariant analysis for early-stage code review, bridg-        focus on behavioral deviations that indicate potential issues.
+                                         ing static inspection with dynamic behavioral insights.                   Many bugs, especially regression bugs, manifest as behavioral
+                                                                                                                   deviations rather than outright crashes or failures. Detecting
+                                                                 I. I NTRODUCTION                                  such deviations can help identify suspicious code changes
+                                                                                                                   responsible for unexpected effects. Our intuition further sug-
+                                            Software systems should be inspected and tested early
+                                                                                                                   gests that security vulnerabilities may also surface through
+                                         to minimize the impact of late bug discovery [1, 2]. Code
+                                                                                                                   distinctive behavioral patterns observable at runtime. Likely
+                                         review, a common early-stage quality assurance practice, aims
+                                                                                                                   invariants, properties that consistently hold at specific program
+                                         to detect potential issues in proposed changes before inte-
+                                                                                                                   points for a given input [10], provide a structured way to
+                                         gration. However, effective code review requires deep code
+                                                                                                                   capture and summarize these behaviors. We hypothesize that
+                                         understanding, which is both time-consuming and cognitively
+                                                                                                                   differences in likely invariants across program versions can
+                                         demanding [3]. In practice, reviewers often face time con-
+                                                                                                                   signal anomalous behaviors introduced by code changes [11].
+                                         straints [4], leading to reviews that focus on surface-level
+                                                                                                                   Fuzzing can produce inputs that reveal rich execution data,
+                                           W. Charoenwet, P. Thongtanunam, and V.T. Pham are with The University   capturing program behavior in the form of likely invariants
+                                         of Melbourne, Victoria, Australia, 3000                                   even without triggering crashes. This motivates our approach,
+                                         E-mail: {charoenwetw, patanamon.t, thuan.pham}@unimelb.edu.au
+                                           C. Treude is with Singapore Management University, Singapore, 188065    which focuses on analyzing these behavioral differences to
+                                         E-mail: ctreude@smu.edu.sg                                                provide behavioral insights for code review.
+                                                                                                                                      2
+
+
+
+   In this work, we develop FuzzSight, a framework that              our findings. Section VIII outlines threats to validity, and
+leverages fuzzing inputs to capture program behaviors as likely      Section IX concludes the paper.
+invariants and compares them across two program versions.
+By focusing on non-crashing executions early in the review                     II. BACKGROUND AND R ELATED W ORK
+process, the framework can detect behavioral differences that
+                                                                        This section provides background on shift-left security
+are often invisible to traditional fuzzing or static analyzers ap-
+                                                                     assurance principle and the role of fuzzing in shift-left, and
+plied later in the development pipeline. As a result, FuzzSight
+                                                                     reviews related work on differential-testing approaches for
+highlights behavioral differences, pinpointing the suspicious
+                                                                     detecting bugs from behavioral inconsistencies and on likely
+code blocks based on the differences detected, distinguishing
+                                                                     invariants as a means to capture program behaviors.
+harmless refactorings from unintended regressions, and poten-
+tially prioritizing code changes during the code reviews.
+   To explore the feasibility of leveraging non-crashing inputs      A. Shift-left Quality Assurance
+for likely invariant analysis, we evaluate FuzzSight through            The shift-left principle encourages identifying and address-
+a multi-stage experiment, starting with a motivating example         ing various issues early in the software development lifecy-
+and a preliminary experiment to validate our hypothesis.             cle [12, 13]. Code review aligns with this principle by allowing
+Next, we evaluate the effectiveness of FuzzSight in detecting        reviewers to inspect code changes made by developers be-
+two types of bugs: vulnerabilities and regressions, that can         fore integration. Through this process, reviewers can identify
+manifest as subtle behavioral shifts without triggering failures.    potential issues and suggest improvements that enhance both
+Vulnerabilities may evade code reviews and fuzzing due to            functionality and maintainability of the code [14]. Despite its
+complexity or lack of oracles, while regressions often arise         benefits, code review is often constrained by limited time and
+from mistakes during code modification. These traits align           human effort. As a result, reviewers tend to rely heavily on
+with FuzzSight’s use of likely invariants to detect behavioral       static inspection, reading and reasoning about code without
+deviations. Finally, we evaluate the performance of FuzzSight        executing it [4, 15, 16]. This static nature means that dynamic
+against static application security testing (SAST) tools’ warn-      aspects of program behavior, such as runtime state changes
+ings in detecting buggy code changes at the code block level.        or subtle control-flow dependencies, can be overlooked. Con-
+   Our empirical results show that likely invariant differences      sequently, bugs that involve dynamic behavioral issues can
+occur in 10%-58% of vulnerabilities, and notably, up to 80%          remain undetected, especially when they manifest only under
+of bugs that fuzzing tools cannot expose in 24 hours. For real-      specific runtime conditions.
+world regression bugs, FuzzSight flags 75% of bugs reached              On the other hand, various automated testing techniques,
+by fuzzing inputs. FuzzSight can also flag buggy code blocks         including unit tests, integration tests, and fuzzing are typically
+in ten times as many bugs as SAST warnings, highlighting             executed after code changes are committed, often in the later
+its potential for fine-grained bug detection in code reviews         stages of the CI/CD pipeline [9, 17]. As shown in Fig. 1,
+with a lower false alarm rate. Based on the results, FuzzSight       code review occurs in the development stage, while automated
+demonstrates the feasibility of integrating fuzzing and invariant    testing may run in parallel or afterward in subsequent stages,
+analysis into early-stage code review, bridging the gap between      creating a temporal and process disconnect between the two
+static inspection and dynamic behavioral understanding.              activities. Although automated tests are effective at exercising
+                                                                     program behavior and checking correctness, the results are
+Novelty and Contribution: This work offers the following
+                                                                     rarely presented in a way that can inform reviewers about the
+novelty and contributions:
+                                                                     runtime impact of code changes. As a result, the insights from
+  1) Technique: Leverage non-crashing fuzzing inputs to              automated testing are often not readily available to reviewers,
+     identify behavioral shifts via likely invariant analysis,       highlighting an opportunity to better integrate runtime behav-
+     enabling fuzzing to inform code review decisions.               ioral information into the review process [18].
+  2) Empirical Findings: ⃝  1 Investigate benefits of lever-
+     aging fuzzing to detect vulnerability-related bugs and
+     bug-inducing regression code changes. ⃝    2 Evaluate the
+                                                                     B. Fuzzing
+     detection of likely invariant differences in buggy code            While integrating quality assurance early in the develop-
+     changes against SAST warnings.                                  ment lifecycle can reduce latent issues, dynamic analysis
+  3) Framework: Develop likely invariant analysis framework          techniques such as fuzzing are still predominantly applied in
+     that can integrate with state-of-the-art fuzzing tools.         later stages [9, 13]. Fuzzing is a form of automated dynamic
+                                                                     testing that executes programs with systematically or randomly
+FuzzSight and experiment replication package are available at:
+                                                                     generated inputs while monitoring for unwanted behaviors
+https://doi.org/10.5281/zenodo.15458082
+                                                                     using fuzzing oracles [19]. It can uncover both functional bugs
+Paper Organization: The rest of this paper is organized as           and security vulnerabilities in complex software systems. By
+follows. Section II introduces background and related work.          generating diverse inputs and observing program responses,
+Section III presents a motivating example and preliminary            fuzzing can reveal unintended behaviors and subtle execution
+experiments. Section IV details the framework design. Sec-           paths that may compromise program integrity, highlighting
+tion V describes the experimental setup, and Section VI              scenarios where inputs could be exploited to influence the
+reports the results. Section VII discusses the implications of       program in unexpected ways [20].
+                                                                                                                                                 3
+
+
+
+
+                  Code Review
+                                                                               implementations, using behavioral discrepancies as a cross-
+                                                                               reference oracle for bug detection [27].
+                                            Testing                               Although DT techniques are effective for uncovering un-
+                                                                               known bugs in the production stage, they are less suitable for
+   Code                                                         Software       code review because they typically report behavioral differ-
+  Changes                                                       Product
+                                                                               ences without identifying where in the code they originate.
+                                            disconnect                         This limits their usefulness for reviewers, who need guidance
+                                                                               on the problematic code lines or code blocks. Prior work pro-
+      0 produce                                                                posed GETTY [11], a DT-based approach for localizing buggy
+                                                                               functions, which provides finer detail than traditional DT but
+                                                                               still operates at the coarse level of functions. GETTY also
+              Development                    Automated                         requires reviewers to manually examine the results to interpret
+  Developer                                   Testing                          how functions’ behaviors have changed and how those changes
+                                                                               could map back to code, potentially adding cognitive load and
+Fig. 1. In typical software development lifecycle, code review and automated   contributing to review fatigue [3]. Moreover, the most recent
+testing can operate in parallel, yet remain disconnected.
+                                                                               DT techniques are domain-specific and do not address the fine-
+                                                                               grained, domain-agnostic needs of general code review. For
+   Fuzzing has proven effective at detecting bugs and security                 instance, TWINFUZZ [28] focuses on detecting discrepancies
+vulnerabilities [21], but it often requires extended run time                  between software and hardware video decoders, DiffCSP [29]
+to explore complex execution paths [22]. In fast-paced de-                     compares how browsers process generated Content Security
+velopment environments such as Continuous Integration and                      Policy and HTML instances, and Li and Rigger [30] test
+Deployment (CI/CD), this requirement can limit fuzzing’s                       differential behaviors across XML processors.
+ability to uncover bugs introduced by recent code changes.
+Even fuzzers designed for CI/CD, such as AFLChurn [23],
+which targets modified code, face challenges as they may                       D. Likely Invariants and Their Applications
+prioritize coverage while missing subtle interactions or data-
+                                                                                  Program invariants provide a simplified way to capture and
+flow effects around the changes. As a result, some bugs remain
+                                                                               represent program behaviors [11, 19]. They represent proper-
+undetected even when the affected code is executed [24],
+                                                                               ties that are always true at certain program states. For example,
+particularly those that manifest as behavioral differences rather
+                                                                               x > 0 or input_a is not null. Program invariants can be
+than crashes observable by standard oracles [25]. This high-
+                                                                               used for debugging, testing, verification, and bug detection by
+lights the need for complementary techniques to identify latent
+                                                                               ensuring expected behavior during execution [19, 24, 31].
+issues that fuzzing alone may miss.
+                                                                                  Typically, program invariants are derived from formal spec-
+   To support early-stage quality assurance and code review, it
+                                                                               ifications. When specifications are absent, likely invariants
+is imperative to maximize the utility of fuzzing by leveraging
+                                                                               can be inferred through concrete executions of the program
+its by-products, such as non-crashing inputs, to uncover bugs
+                                                                               using valid inputs. They are approximations of program in-
+that might otherwise go undetected. These fuzzing-generated
+                                                                               variants, offering an alternative representation of program
+inputs can reveal new program behaviors through techniques
+                                                                               behavior [10]. Likely invariant generators can infer properties,
+like automated debugging [26] and support more thorough
+                                                                               such as variable relationships and value constraints similar to
+testing of edge cases that may be overlooked [3, 18]. The
+                                                                               program invariants, based on values observed during execu-
+abundance of inputs provides a richer view of program behav-
+                                                                               tion. Therefore, likely invariants offer a practical substitute for
+ior, which can help identify unintended effects introduced by
+                                                                               program invariants when formal specifications are unavailable.
+code changes. This potential makes fuzzing-generated inputs
+a promising resource for shift-left quality assurance and for                     Previous research has explored applications of likely in-
+supporting human code review.                                                  variants. Le et al. [31] proposed Savant, an approach that
+                                                                               leverages likely invariants to localize failure causes at the
+                                                                               method level. While Savant analyzes differences in likely
+C. Differential Testing-Based Approaches                                       invariants, it assumes failures are already known via a test
+   FuzzSight aims to pinpoint suspicious code blocks by                        oracle, a condition that may not hold in code review. Fioraldi
+detecting unexpected shifts in program behaviors. While the                    et al. [24] developed INVSCOV, a fuzzing tool that navigates
+intuition is related to Differential Testing (DT), our approach                fuzzing direction by prioritizing paths that exhibit changing
+diverges in two key aspects. First, instead of relying on                      likely invariants, showing promise in discovering new bugs in
+manually crafted or purposefully designed test cases, Fuz-                     frequently fuzzed code. However, its focus on steering fuzzing
+zSight leverages fuzzing to generate diverse execution traces                  through control-flow-based invariant changes overlooks the
+that more realistically capture diverse program behaviors.                     complementary opportunity of systematically analyzing invari-
+Second, FuzzSight operates at the code-block level, enabling                   ants over an existing seed corpus.
+automated and fine-grained detection of behavioral shifts di-                     These works highlight the potential of likely invariants
+rectly associated with specific code changes. By contrast, DT                  to capture behavioral differences. Our work builds on this
+techniques typically compare program outputs across program                    foundation by leveraging fuzzing-derived non-crashing inputs
+                                                                                                                                                                                            4
+
+
+
+                            (1)                                                   (2)
+                                                                                                         their large volume and complexity, which hinders effective
+                                                                      Execution Trace
+                                                                      Function parameter:
+                                                                                                         examination [32]. Instead, these execution traces can be used
+                                                   Execute
+                                                                   arr = [9, 25, 53, 61, 91]             to infer the distinct sets of likely invariants that represent the
+                                                              Clean Version         Buggy Version        program behaviors. Given that both versions are expected to
+                                                             a, max     sec        a, max      sec       behave identically, this divergence can alert reviewers about
+                                                               9      -922...07         9    -922...07
+                                                              25          9             25   -922...07   potential unintended behavioral changes.
+                                                              53         25             53   -922...07
+Breakpoint
+
+
+
+
+               Modified Statements                            61         53             61   -922...07
+                                                              91         61             91   -922...07
+                                                                                                         B. Preliminary Experiment
+                                                                              Generate
+
+                                                                      Likely Invariants                     To further motivate this work, we evaluate the approach
+             Original Statements - Clean Version
+                                                             Version-specific likely invariants          on small, well-known C programs from The Art of Computer
+                                                              indicate behavioral changes.
+
+                                                                          Clean Version
+                                                                                                         Programming [33], including array concatenation, bubble sort,
+                                                                               ...
+                                                                         -max + sec <= 8
+                                                                                                         factorial, the greatest common divisor (GCD), permutation,
+                                                                       -sec === 3 (mod 4)
+                                                                               ...                       second maximum search, and string reversal. Each program
+              New Statements - Buggy Version                             Buggy Version
+                                                                                ...
+                                                                                                         is transformed into three versions: two clean, functionally
+                                                                      -a + sec === 0 (mod 2)
+                                                                                ...                      equivalent versions and one buggy version. The first version
+                                                                                                         follows the original algorithm, while the second applies logic-
+Fig. 2. Motivating example–⃝ 1 a bug is introduced when modifying a function                             preserving changes such as refactoring or an alternative al-
+(red box). ⃝
+           2 identical inputs yield different traces and likely invariants across
+versions.
+                                                                                                         gorithm. The buggy version is derived from the second by
+                                                                                                         deliberately altering its logic to introduce a behavioral bug.1
+                                                                                                            We perform fuzzing and generate likely invariants, compar-
+and invariant analysis to identify behavioral shifts between                                             ing likely invariants from the same inputs in two version pairs:
+program versions at the block level, without relying on failing                                          ⃝1 the two clean versions and ⃝     2 one clean and one buggy
+executions.                                                                                              version. We measure the difference using the Dice–Sørensen
+                                                                                                         coefficient to represent the distance (1 − Dice) between likely
+                       III. A PPROACH OVERVIEW                                                           invariant sets from two versions. A greater distance indicates
+  This section provides an overview of FuzzSight, present-                                               more difference. We determine the distribution of distances
+ing a motivating example and a preliminary experiment that                                               across inputs and identify the largest x-axis value where a local
+demonstrate its ability to analyze behavioral differences across                                         peak occurs, i.e., many inputs yield that distance. A peak at
+program versions.                                                                                        zero indicates no behavioral difference between versions.
+
+                                                                                                                                     TABLE I
+A. Motivating Example                                                                                    P RELIMINARY E XPERIMENT– LIKELY INVARIANT DIFFERENCES BETWEEN
+   To motivate the potential of likely invariant analysis in                                                 VERSIONS OF EXAMPLE PROGRAMS , MEASURED BY THE LARGEST
+                                                                                                             DISTANCE WITH LOCAL PEAK IN DISTRIBUTIONS ACROSS INPUTS .
+changed code, we present a small program that introduces a
+regression bug (Fig. 2.⃝).
+                         1 The second max program searches                                                Example Program                    Clean 1 - Clean 2            Clean 1 - Buggy
+and returns the second-largest item in an array. In the clean                                             array concatenation                  No Difference                       0.81
+version, the if-else conditional statement was used. A                                                    bubble sort                          No Difference                       0.58
+                                                                                                          factorial                            No Difference                       0.99
+developer then replaced a code block with a ternary operator                                              greatest common divisor                 0.71†                            0.91
+for conciseness. The automated static program analyzers did                                               permutation                             0.21†                            0.41
+not detect any issues. However, when the program is executed,                                             second maximum search                No Difference                       0.02
+                                                                                                          string reversal                      No Difference                       0.62
+the function could fail to return the second-largest element, as                                          † Invariant differences are the result of alternative implementations.
+the variable sec is incorrectly assigned to itself.
+   Given this example, it would be challenging for reviewers                                                Table I suggests that likely invariant differences can indi-
+to carefully inspect and test the code changes during the                                                cate behavioral changes. Clean versions consistently produce
+development cycle. Even for seemingly simple modifications,                                              identical invariants, while the buggy version shows notable
+revealing the new behavior requires substantial effort. It is                                            deviations across all examples. Even in GCD and permutation,
+a logical bug, or silent bug, that does not alter the control                                            buggy-clean differences exceed those between clean versions,
+flow or cause a crash. Moreover, as it only produces incorrect                                           which result from alternative implementations. For GCD, the
+results under specific test cases, it may go unnoticed due                                               clean versions’ differences stem from parameter swapping in
+to accidental correctness. In this work, we argue that likely                                            recursion. For permutation, both clean versions use recursion,
+invariants can serve as adaptable indicators of these traces,                                            which can lead to execution trace differences [34].
+enabling automated techniques to detect discrepancies.                                                      These differences in likely invariants between program ver-
+   In other words, this bug could be detected through execution                                          sions highlight the potential of fuzzing inputs to support code
+and program behavior via dynamic analysis. With the likely                                               reviews. This approach pinpoints the area of code changes
+invariant analysis, we can detect the behavioral shifts, which                                           that contains behavioral changes, which reviewers should
+could potentially reduce the reviewer’s effort. As illustrated in                                        further investigate. Unlike fault localization techniques [31],
+Fig. 2.⃝,
+        2 a single input produces different execution traces.
+Analyzing execution traces directly is challenging due to                                                  1 Example programs are included in the replication package.
+                                                                                                                                       5
+
+
+
+where differences in likely invariants help expose known                1) Likely Invariant Mining: We employ likely invari-
+bugs, behavioral changes introduced by code changes do not           ants [36], i.e., properties that always hold at certain program
+necessarily indicate bugs. For instance, behavioral changes can      locations, for analyzing how code changes introduce new be-
+be intentional or expected as a result of code changes, e.g.,        haviors. We mine likely invariants with DIG [37], a lightweight
+permutation and the greatest common divisor in our prelimi-          tool for likely invariant inference, capable of generating likely
+nary experiment (Table I). Our approach focuses on identifying       invariants for various numerical relations such as linear and
+behavioral changes as potential indicators of unintended bugs.       non-linear equalities as well as their corresponding inequali-
+                                                                     ties, from raw source code and pre-formatted execution traces.
+                                                                     Compared to Daikon [10], a well-known invariant mining tool
+                   IV. F UZZ S IGHT D ESIGN                          that typically requires source code and produces invariants
+                                                                     only at function entry and exit points, DIG offers greater
+   FuzzSight is a framework for analyzing data from dynamic          integration flexibility. To enable likely invariant generation
+analysis tools, aiming to help identify unexpected behavioral        with DIG, we convert the execution traces into DIG’s trace
+changes between two program versions: clean and buggy.               format before initiating the mining process. The resulting sets
+The buggy version contains the target bug, while the clean           of invariants for an input, corresponding to both program
+version is free from this bug. The framework comprises two           versions, are then stored for subsequent analysis.
+components (Fig. 3.): ⃝  1 execution trace generation, and ⃝
+                                                           2            We suppress DIG’s likely invariants simplification and fil-
+likely invariant analysis. We detail each component below.           tering mechanisms because they can introduce randomness in
+                                                                     the results [36]. Additionally, to manage the computational
+                                                                     overhead of likely invariant mining, we impose a five-minute
+A. Execution Trace Generation                                        timeout per input for likely invariant mining.
+                                                                        2) Distance Measurement: We use set distances as a proxy
+   Execution trace generation involves running the target pro-       for differences between likely invariant sets at a breakpoint in
+gram with an input and extracting values of variables at se-         the two program versions under the same input. Four distance
+lected breakpoints, i.e., specific locations in the target program   measures are used: Dice-Sørensen coefficient, Hamming dis-
+where likely invariant differences are analyzed. This comprises      tance, Jaccard index, and Overlap coefficient. Prior works used
+two steps: fuzzing and extracting execution trace.                   these distance measures to analyze various artifacts in software
+   1) Fuzzing and Breakpoint Selection: We use fuzzing to            engineering research [38, 39, 40]. For example, Dice-Sørensen
+generate an input corpus. In particular, we use inputs that          coefficient and Jaccard index are used in software clustering,
+do not crash the target program, i.e., non-crashing inputs,          Hamming distance is used for malware detection, and Overlap
+from the fuzzing input queue. These inputs can help expose           coefficient is used for measuring code similarity. Except for
+the dynamic behaviors of the program, although they do               Hamming distance, the other measures yield similarity scores
+not trigger crashes. The code accessed by these inputs is            in [0, 1]; we subtract these from 1 to interpret them as
+considered high-risk due to the attack surface it presents [20].     distances. Additionally, when likely invariants are generated
+   Breakpoints in the target program must be selected to             in only one version of the program, we treat them as the
+generate the execution trace. In general, placing a breakpoint       maximum distance. Given sets U and V of likely invariants
+in a code block after the modified code is suitable for our          from each program version, distances are described as follows.
+framework, as it can capture the effects of the changes. In            1) Dice-Sørensen coefficient: distance between two sets
+practice, techniques such as program slicing can assist in iden-                                                    2|U ∩V |
+                                                                          based on their common elements; 1 − |U      |+|V |
+tifying code lines impacted by changes. Breakpoint selection
+                                                                       2) Hamming distance: the number of differing positions
+strategies in our experiments are described in Section V-B.
+                                                                          between    two equal-length sequences of elements;
+   2) Trace Extraction: We extract the values of variables at             Pk
+                                                                             i=1 |Ui − Vi |
+selected breakpoints from each input. If the selected break-           3) Jaccard index: distance of two sets by dividing the
+points are executed multiple times, we retain the values from             intersection by the union; 1 − |U  ∩V |
+                                                                                                          |U ∪V |
+all execution rounds. This approach allows us to track changes         4) Overlap coefficient: distance of two sets based on their
+in variable values. We set breakpoints in the target functions                                                               |U ∩V |
+                                                                          intersection relative to the smaller set; 1 − min(|U   |,|V |)
+and retrieve the values of variables until the execution is
+completed using an automated debugging script in lldb,                  We use multiple distance measures because we aim to cap-
+the LLVM debugger [35]. To streamline trace extraction, we           ture and report various types of differences in likely invariant
+format all variable values as decimals. String variables are         sets. Hamming distance grows rapidly with positional differ-
+converted into a decimal value using a deterministic hash            ences. Jaccard and Dice-Sørensen reflect set-based dissimi-
+algorithm to enable likely invariant mining.                         larity, with Dice-Sørensen varying more smoothly. Overlap
+                                                                     coefficient emphasizes shared elements relative to the smaller
+                                                                     set, yielding lower distances when overlaps exist.
+B. Likely Invariant Analysis                                            3) Distance Analysis: We identify differences by analyzing
+                                                                     the distribution of likely invariant distances at each breakpoint.
+  This section describes likely invariant mining, distance           To systematically detect changes, we adopt Kernel Density
+measurement, and distance analysis across program versions.          Estimation (KDE) for its robustness and model-agnostic sim-
+                                                                                                                                                                                                                                  6
+
+
+
+                        Execution Trace Generation                                                                             Likely Invariant Analysis
+                 Data Preparation               Trace Extraction               Likely Invariant Mining                                     Distance Measuring                                  Distance Analysis
+  Buggy
+ Version
+ (Target)                                          Extract execution        Infer a set of likely invariants                   Measure the difference between two                         Detect non-zero local maxima
+                Generate                        trace per input at each       from each execution trace                        likely invariant sets mined from two                         in multiple distributions of
+                 Inputs                           selected breakpoint                                                                    program versions                                      distance measures
+                                                                          Invariant set           a >= 0; b - 2 = 0;           Invariant set
+                (Fuzzing)                                                                      c >= 0; min(a, b, c) = 0;           A                  ... c >= 0; ...
+                                                                               A                          ...
+                              Non-crashing            a=1;b=2;c=3                                                              Invariant set                                     DA
+                                 Inputs               a=1;b=2;c=4                                                                  A            ... min(a, c) - 3 >=0; ...
+                                                                                                  a >= 0; b - 2 = 0;
+   0                                                  a=1;b=2;c=0
+                                                           ...
+                                                                          Invariant set
+                                                                               B
+                                                                                          min(c) - 3 >= 0; min(a, b, c) > 0;
+                                                                                                          ...                  Invariant set
+                                                                                                                                               ... min(a, c) - 3 >= 0; ...
+                                                                                                     ...                           B
+  Clean                                                 Trace A                                                                                                                  DB
+                                                                                                                               Invariant set
+ Version                                                                                         a >= 0; b - 2 = 0;                B           ... min(a, c)...- 2 >= 0; ...
+  (Ref)
+                 Identify                                                 Invariant set
+                                                                               A          min(c) - 3 >=0; min(a, b, c) > 0;
+               Breakpoints                            a=1;b=2;c=3
+                                                                                                         ...                   Invariant set
+                                                      a=1;b=2;c=4                                                                                            ...
+                               Breakpoint                                                                                          C                                             DC
+                                                      a=1;b=2;c=3         Invariant set          a >= 0; b - 2 = 0;            Invariant set
+                               Locations &                 ...                            min(c) - 2 >= 0;min(a, b, c) > 0;                                  ...
+                             Target Variables                                  B                                                   C                                                      Likely Behavioral Unlikely Behavioral
+                                                                                                         ...                                                                                  Changes            Changes
+                                                        Trace A                                      ...                                                     ...
+
+
+
+
+Fig. 3. FuzzSight Design. Execution traces from two program versions are collected using non-crashing inputs (e.g., from fuzzing tools). Likely invariants
+are then mined from each trace, and differences between the resulting likely invariant sets are measured to reveal behavioral changes.
+
+
+
+plicity. KDE smoothes and estimates the probability density of                                      RQ3) Can FuzzSight outperform SAST warnings for bug
+distances from multiple inputs, enabling distribution visualiza-                                    detection in regression code changes? Prior work [7] shows
+tion without assuming an underlying model [41]. It has been                                         that SAST warnings can help detect functions containing
+effectively used in prior studies [42, 43] to capture and analyze                                   vulnerable code changes. As FuzzSight shares a similar goal,
+variations in data distributions. In particular, we detect local                                    we want to compare it against SAST to evaluate whether likely
+maxima, i.e., points in the distance distribution higher than                                       invariant analysis can offer complementary support for code
+their immediate neighbors, indicating distinct peaks in the data                                    review. To answer this question, we use SAST detection rates
+for each measure. A breakpoint is deemed behaviorally shifted,                                      as a baseline on the same dataset used in RQ2.
+i.e., flagged, when at least two of four distance measures show
+non-zero local maxima in their KDE distributions. We opt                                            B. Datasets
+to use a 50% threshold to ensure consistent signals emerge                                             To facilitate our experiments, the dataset must include fuzz
+across multiple measures. Although we do not claim the best                                         drivers, i.e., entry points that enable fuzzing tools to generate
+performance, this approach should regulate false alarms and                                         inputs for the target programs. We identify two datasets that
+improve statistical agreement and reliability even when indi-                                       meet our requirements. For RQ1, we use Magma [47] – a well-
+vidual measures are imperfect [44, 45]. Indeed, the threshold                                       known semi-synthetic fuzzing benchmark dataset, comprising
+can be adjusted to fit the target needs. The KDE computations                                       120 front-ported bugs of various difficulties. For RQ2, we
+are performed using the KernelDensity module from the                                               use BugOSS [48] – a manually curated real-world dataset,
+scikit-learn Python package [46], version 1.3.2.                                                    comprising 21 code commits containing real-world regression
+                                                                                                    bugs from OSS-Fuzz [49], the continuous fuzzing platform for
+                             V. S TUDY S ETTINGS                                                    open-source projects.
+   This section outlines our research questions and explains                                           We select Magma for RQ1 because it offers a large set
+the experimental setup and fuzzing configuration.                                                   of vulnerabilities with systematic support for creating buggy
+                                                                                                    and clean program versions. For RQ2 and RQ3, we select Bu-
+                                                                                                    gOSS, which contains code commits that introduced regression
+A. Research Questions                                                                               bugs (buggy version), providing real-world buggy and benign
+  In this work, we aim to understand the potential of Fuz-                                          changes, along with the prior commits that represent the clean
+zSight in identifying behavioral changes that may indicate                                          version. These commits closely resemble those encountered
+bugs. We answer the following research questions.                                                   during quality assurance in CI/CD pipelines, making them
+RQ1) To what extent do vulnerability-related bugs produce                                           appropriate for evaluating FuzzSight.
+different likely invariants compared to the clean version?
+                                                                                                                                    TABLE II
+Vulnerability, which can cause severe consequences [1, 2],                                                 M AGMA DATASET FOR RQ1– BUG INFORMATION IN SELECTED TARGETS
+may evade fuzzing without suitable oracles. We aim to inves-
+tigate how often likely invariant differences arise in vulnera-                                            Subject                       Total Bugs                            Hard-to-Fuzz               Breakpoints
+bilities. To answer this question, we compare likely invariants                                                                                                                  Bugs†
+
+in clean and buggy versions of vulnerabilities in Magma [47].                                              libpng                                  7                                  2                          13
+                                                                                                           libsndfile                              18                                 0                          20
+                                                                                                           libtiff                                 14                                 3                          27
+RQ2) How effectively can FuzzSight detect real-world                                                       libxml2                                 17                                 3                          28
+regression bugs? Building on RQ1, we want to further                                                       lua                                     4                                  0                          12
+                                                                                                           openssl                                 20                                 5                          26
+understand the effectiveness of likely invariant analysis to                                               php                                     16                                 2                          29
+detect behavioral changes in regression bugs, a type of bug                                                poppler                                 22                                 5                          28
+caused by mistakes during code changes that occur frequently                                               † Bugs that do not manifest after 24-hour fuzzing campaign reported by Magma [47]
+in software development [23] and potentially lead to vulnera-                                          Although we want to use all target bugs in the selected
+bilities. To answer this question, we apply FuzzSight to flag                                       datasets, we need to refine the selection to ensure a consis-
+buggy program points in regression bugs in BugOSS [48].                                             tent and comparable evaluation setting across all cases. For
+                                                                                                                                                              7
+
+
+
+Magma, we exclude SQLite because the amalgamation pro-                                   FunctionDeclaration
+cess merges all source files, obstructing breakpoint setup. For
+BugOSS, we exclude gdal-47716 and poppler-35789
+                                                                                           WhileStatement
+because they employ a multi-stage build process, affecting
+                                                                                                                                             Warned by SAST
+the framework integration. We also exclude yara-38952
+because it introduces new functionality in the buggy version,
+                                                                                         CompoundStatement
+resulting in the breakpoint being unavailable in the clean
+                                                                                                                              Changed line
+version. Information on the selected bugs in Magma (118)
+and BugOSS (18) is shown in Table II and Table III.                                              ...
+
+
+
+                          TABLE III
+B UG OSS DATASET FOR RQ2 & RQ3– SELECTED BUGS WITH NUMBER OF                        Fig. 4. Mapping SAST warnings with changed code block using Abstract
+CHANGES IN THREE GRANULARITIES AND REFACTORING - RELATED LABEL                      Syntax Tree (BugOSS: curl-8000)
+
+ Subject                    Changed       Changed        Breakpoints Refactoring-
+                             Files        Functions                   Related†
+                                                                                       3) select the condition line if the code changes include a
+ arrow-40653                    1              2             3                Yes
+ aspell-18462                   1              1             1                Yes
+                                                                                            code block that only has a return statement, to ensure
+ curl-8000                      3              2             2                Yes           observation within the function’s control flow
+ exiv2-50315                    3              3             1                Yes
+ file-30222                     1              3             1                No       At each breakpoint, we select variables that are present
+ grok-28418                     3             10             4                No    in both versions and affected by the actual code changes,
+ harfbuzz-55779                 3              4             2                No
+ leptonica-25212                1              1             2                No    specifically those that are referred to or assigned within
+ libarchive-44843               1              5             3                No    the modified code. To enable cross-version comparison, we
+ libhtp-17198                   1              2             9                No
+ libxml2-17737                  1              1             1                Yes   exclude breakpoints that are present in only one version
+ ndpi-49057                     1              2             3                Yes   of the program or that reference variables not shared be-
+ openh264-26220                 1              1             1                No
+ openssl-17715                  3              6             3                No    tween versions. To evaluate possible false alarms, we include
+ pcapplusplus-23592             3              6             2                No    breakpoints after code changes unrelated to the target bugs
+ readstat-13262                 1              1             2                No
+ usrsctp-18080                  1              1             1                Yes   (i.e., benign changes), applying the same criteria for variable
+ zstd-21970                     5              8             6                No    selection. In total, we set 47 breakpoints for 18 bugs in 18
+ † Changes involve structural modifications and likely preserving behaviors         target programs in RQ2.
+                                                                                       As regression bugs can be relevant to refactorings [51],
+                                                                                    we annotate whether selected bug-introducing changes are
+                                                                                    likely refactorings, using definitions from [52]. In general,
+C. Experimental Setup                                                               we label a bug as likely refactoring if the change preserves
+   For RQ1, we set breakpoints for the modified code block                          behavior and involves only structural modifications, such as
+in the Magma bug patches. Specifically, we automatically                            code reorganization without explicit functional changes.
+set a subsequent breakpoint after every modified code block.                           For RQ3, following [7], we run three top-performing SAST
+At each breakpoint, we extract the in-scope local variables                         tools: Flawfinder, CodeChecker, and CodeQL on the buggy
+and function arguments, i.e., variables accessible at the pro-                      versions in BugOSS and match their warnings to code changes.
+gram’s execution point within the function, using the frame                         Although prior work [7] shows SAST warnings can sup-
+variable command in LLDB [50]. To manage complexity,                                port function-level bug detection, achieving finer-grained level
+we extract up to ten variables per breakpoint. Too many                             detection remains challenging. As warnings may appear on
+variables can lead to an overwhelming number of invari-                             different lines [53], we focus on block-level rather than line-
+ants, diluting meaningful differences, hindering analysis, and                      level detection. To support block-level evaluation, we generate
+increasing computational cost. Note that we do not set a                            abstract syntax trees (ASTs) of the changed functions using
+breakpoint after the Canary2 because it is not a part of the bug                    tree-sitter [54] and map each warning to the compound
+and may inject biases into likely invariant analysis. In total,                     statement enclosing the code change. For example, a warning
+183 breakpoints are set for 118 bugs in eight target programs                       manifested in a loop can be associated with the entire loop
+in RQ1.                                                                             construct as shown in Fig. 4. This mapping facilitates the
+   For RQ2, we select breakpoints that reflect the impact of                        evaluation of SAST detection and likely invariant differences
+code changes in the buggy version. Given the bug-inducing                           at the same block level as the selected breakpoints.
+lines are known, breakpoints are chosen using a set of rules
+applied in order.                                                                   D. Fuzzing Setup
+  1) select the last line in the code block if the code change                         To fuzz the target programs and generate inputs, we follow
+     is a statement, allowing value propagation                                     the settings used by the datasets [47, 48]. We select three
+  2) select the last line of the inner block if the code changes                    fuzzing tools to represent diverse techniques and capabilities,
+     cover a code block                                                             offering a broad perspective on methodologies commonly
+                                                                                    used in real-world scenarios. AFL++ [55] is a state-of-the-
+  2 Magma’s monitoring instrumentation                                              art fuzzing tool that identified numerous real-world critical
+                                                                                                                                        8
+
+
+
+vulnerabilities. Honggfuzz [56] is an open-source fuzzing tool                                 TABLE IV
+developed by Google that outperforms other tools on the             RQ1 R ESULTS – NUMBER OF BUGS FOR WHICH F UZZ S IGHT FLAGS LIKELY
+                                                                         INVARIANT DIFFERENCES IN AT LEAST ONE BREAKPOINT USING
+Magma benchmark. libFuzzer [57] is the lightweight built-                    NON - CRASHING INPUTS FROM THREE FUZZING TOOLS
+in fuzzing tool of the Clang compiler. We use up-to-date
+fuzzing tools, specifically AFL++ v4.21c, Honggfuzz v2.6,            Subject        Reached Bugs    Flagged Bugs        Flagged
+                                                                                                                    Hard-to-fuzz Bugs
+and libFuzzer in Clang-15.
+                                                                     libpng            5 (71%)        3 (43%)           1 (50%)
+   We use the build scripts, fuzz drivers, and initial seeds from    libsndfile        8 (44%)        2 (11%)               -
+each dataset. We build two program versions per target: clean        libtiff           7 (50%)        7 (50%)           1 (33%)
+                                                                     libxml2          10 (41%)        10 (58%)          2 (67%)
+and buggy. If there are multiple fuzz drivers, we select the         lua               3 (75%)        2 (50%)               -
+one with the highest coverage. For Magma, coverage data              openssl           5 (25%)        2 (10%)            0 (0%)
+                                                                     php               4 (25%)        3 (19%)            0 (0%)
+for openssl and php is based on OSS-Fuzz reports, while              poppler          14 (64%)        8 (36%)           4 (80%)
+for libxml2, we ran a coverage test due to missing data.
+BugOSS provides a single fuzz driver per program.
+   The buggy version of each target program is fuzzed for           code. As a result, the two versions may exhibit similar behav-
+36 core-hours (six CPU cores for six hours) on a virtual            ior around these breakpoints, limiting observable differences.
+machine running Ubuntu 20.04. For BugOSS, we apply the              For example, SSL016 (MAE111 – CVE-2015-1788) has a
+Change-aware Seed Reuse (CSR) [58] technique to increase            conditional break in the clean version, which is difficult to
+the chance that fuzzing inputs reach the changed functions,         trigger via fuzzing, that is missing in the buggy version.
+based on BugOSS’s recommendation [48]. If CSR fails to
+generate inputs that reach the changed functions in the clean
+version, we fuzz the buggy version with initial seeds. We then          Finding 1.1 Vulnerability’s likely invariants: 10%-
+collect inputs that do not trigger crashes, i.e., non-crashing          58% of the vulnerability bugs exhibit likely invariant
+inputs, from the input queue for the next steps. If no inputs           differences.
+reach the changed functions, we manually run the program
+to verify binary correctness and repeat fuzzing to rule out            Several bugs flagged by FuzzSight correspond to hard-
+methodological misconfigurations                                    to-fuzz bugs that survived, or remained untriggered, in the
+                                                                    Magma benchmark [47], despite at least 24 hours of fuzzing,
+                                                                    a duration commonly adopted in many fuzzing studies and
+                VI. A NALYSIS AND R ESULTS                          projects. We find that up to 80% of the hard-to-fuzz bugs in
+  We report the experiment results and answer the research          one subject (poppler) are flagged in at least one breakpoint.
+questions in this section.                                          Hard-to-fuzz bugs often require multiple conditions to be
+                                                                    satisfied, making it challenging for fuzzers. For example,
+                                                                    PNG004 (AAH004 – CVE-2015-0973) exhibits likely invari-
+A. RQ1: The differences of likely invariant in vulnerabilities
+                                                                    ant differences due to a variable being cast between data
+   We use FuzzSight to analyze likely invariants at break-          types, though the bug is only triggered under some exact input
+points following the modified code in Magma (Section V-C).          values. Likely invariant analysis can capture the effects of this
+We compare likely invariants at each breakpoint across the          behavior.
+buggy and clean versions, i.e., the target program with and
+without injected bugs. Likely invariants are generated using
+                                                                        Finding 1.2 Hard-to-fuzz bugs’ likely invariants: Up
+non-crashing inputs from AFL++, Honggfuzz, and libFuzzer
+                                                                        to 80% of bugs not triggered after a 24-hour fuzzing
+(Section V-D). We consider a vulnerability bug to have likely
+                                                                        campaign exhibit differences in likely invariants.
+invariant differences if FuzzSight flags at least one breakpoint
+in such a bug. We report the results and findings below.
+Results: Table IV shows the number of bugs for which                B. RQ2: FuzzSight detecting regression bugs
+FuzzSight flags likely invariant differences. In total, 10%-58%
+                                                                       To answer RQ2, we apply FuzzSight to BugOSS, which
+of Magma bugs show likely invariant differences in one or
+                                                                    represents real-world regression code changes. The buggy
+more breakpoints. The non-crashing input corpus from three
+                                                                    version is the regression commit, while the clean version is the
+fuzzing tools reached 25%-75% of the bugs. Many flagged
+                                                                    code commit prior to the regression commit. We select break-
+bugs with likely invariant differences share common traits,
+                                                                    points and variables (Section V-C), fuzz the buggy version of
+such as having slight changes in a statement or conditions. For
+                                                                    the program (Section V-D), and analyze the likely invariant
+example, TIF010 (AAH018 – CVE-2018-8905), flagged by
+                                                                    difference. We report the number of bugs that FuzzSight flags
+FuzzSight, involves a modification of a while loop condition.
+                                                                    in at least one buggy breakpoint.
+   We observe that the absence of likely invariant differences
+in some subjects may be attributed to the nature of Magma           Results: FuzzSight successfully analyzes likely invariants in
+patches. After an investigation, we find that code changes          16 out of 18 bugs in the BugOSS dataset. It flags at least one
+preceding over 45% of the breakpoints introduce fixes, e.g.,        buggy breakpoint in 75% of the reached bugs, as shown in
+condition checks. This suggests that buggy versions often lack      Table V. Notably, over 41.2% (5 out of 12) of the flagged
+necessary safeguards, rather than containing explicit buggy         bugs are associated with refactoring changes (Table III) where
+                                                                                                                                                9
+
+
+
+                            TABLE V
+RQ2 R ESULTS – NUMBERS OF REACHED AND FLAGGED BREAKPOINTS ARE
+           ACCUMULATED FROM INPUTS OF THREE FUZZING TOOLS                                                               Loop Block
+
+
+
+ Subject                Total   Buggy   Reached   Flagged   Buggy BPs
+                        BPs      BPs     BPs       BPs       Flagged
+                                                                                                                            BP 1
+ Flagged Bugs
+                                                                                                                            BP 2
+ aspell-18462            1       1        1         1           1
+ curl-8000               2       1        1         1           1                                                           BP 3
+
+ grok-28418              9       2        8         4           1
+ harfbuzz-55779          5       2        5         1           1                                                           BP 4
+
+ libhtp-17198            2       1        2         2           1
+                                                                                                                            BP 5
+ libxml2-17737           3       1        3         2           1
+ ndpi-49057              5       3        4         2           2
+ openh264-26220          1       1        1         1           1
+ openssl-17715           2       2        2         2           2
+ pcapplusplus-23592      6       1        6         4           1
+ usrsctp-18080           1       1        1         1           1
+ zstd-21970              5       1        3         3           1       Fig. 5. Interdependency between breakpoints via the program’s control-flow
+ Missed Bugs
+                                                                        can cause likely invariant differences in non-buggy breakpoints (BP3-BP4)
+
+ arrow-40653             2       2        1         0           0
+ exiv2-50315             2       1        2         0           0
+ file-30222              1       1        1         0           0
+ readstat-13262          1       1        1         0           0
+                                                                            Finding 2.2 False alarms and handling strategies:
+ Unreached Bugs
+                                                                            41.7% of bugs are flagged in non-buggy breakpoints,
+                                                                            partly due to the data propagation. Accounting for
+ leptonica-25212         3       1        0         0           0
+ libarchive-44843        5       3        0         0           0           interdependencies can help reduce false alarms, in our
+                                                                            study down to 16.7%.
+
+                                                                           We examine the false negatives of FuzzSight by reviewing
+                                                                        the cases where no buggy breakpoints were flagged. Some
+                                                                        inputs reached the selected breakpoints and successfully gen-
+most variables remain unchanged, but the surrounding logic              erated likely invariants, but still could not flag four bugs,
+has been modified. For example, aspell-18462 replaces a                 i.e., arrow-40653, exiv2-50315, file-30222, and
+while loop with a for loop using an incorrect exit condition,           readstat-13262. Based on our results, we identify two
+which is detectable through likely invariants.                          primary reasons why some bugs are not flagged. First, the
+                                                                        only conditions that can trigger likely invariant differences
+                                                                        may also be detected by fuzzing tools, cases that fall outside
+                                                                        the scope of FuzzSight. For example, file-30222 bug was
+    Finding 2.1 Detecting regression bugs: FuzzSight                    due to a missing null check. Non-crashing inputs may lack the
+    flags likely invariant differences in 75% of fuzzing-               necessary variability to reveal these issues. Second, when the
+    reached bugs.                                                       buggy code is confined to a single statement, it may not offer
+                                                                        sufficient behavioral complexity to motivate exploration of all
+                                                                        edge cases by fuzzing tools once overall paths are met [21, 59].
+
+
+   Table V shows that FuzzSight flags at least one benign                   Finding 2.3 Limitations: FuzzSight is limited when
+breakpoint in 41.2% of the flagged bugs in our dataset (5                   bugs can only surface by very specific, or crashing,
+out of 12). These flagged benign breakpoints constitute false               inputs or where fuzzing fails to thoroughly explore
+alarms that may distract reviewers from identifying the truly               input space.
+buggy breakpoints. Our investigation reveals that most false
+alarms arise from the program’s data-flow and control-flow
+dependencies. For example, non-buggy breakpoints involve the            C. RQ3: Evaluating FuzzSight for code review
+variables modified by buggy code changes, allowing propaga-                We compare FuzzSight results with SAST in flagging pos-
+tion of faulty data. Fig. 5. illustrates the control-flow between       sible bugs in code changes. A study [7] shows that identifying
+breakpoints in zstd-21970, showing that the variables in                buggy changed functions with SAST warnings can signifi-
+a buggy breakpoint can propagate to other breakpoints. By               cantly reduce code review effort. To this end, we compare
+accounting for such interdependent breakpoints through simple           RQ2 results against the SAST warnings via the hit rates
+dependency tracing, i.e., treating all breakpoints on the same          on the buggy code at various granularities. Similar to prior
+call graph as a single unit, false alarms can be decreased to           works [7, 53], we determine the detection performance based
+16.7% of the bugs (2 out of 12). These remaining false alarms           on various scenarios. A bug is considered detected by SAST
+may stem from intentional behavioral changes, although this             warnings at the file, function, or code block level when at least
+remains inconclusive due to limited information about the               one warning is produced in buggy files, functions, or code
+specific changes in each commit.                                        blocks. Specifically, at the code block level, we associate a
+                                                                                                                                                                  10
+
+
+
+
+        1.0                                                                 CodeChecker                Finding 3.2 Comparing False Alarms with SAST:
+
+                   0.94
+                                                                            CodeQL
+
+
+                0.89
+                                                                            Flawfinder                 SAST produces warnings in non-buggy changed
+                                                                            FuzzSight - AFL++          blocks for 6%–11% of the bugs, while FuzzSight does
+        0.8                                                                 FuzzSight - Honggfuzz
+                                                                            FuzzSight - libFuzzer      so in only 6%.
+              0.72
+
+                            0.61
+
+
+
+                                             0.61
+
+
+
+                                                               0.61
+                         0.56
+
+
+
+                                          0.56
+
+
+
+                                                            0.56
+        0.6                                                                                                               VII. D ISCUSSION
+Rates
+
+
+
+
+                                       0.44                                                            We discuss the implications of our findings for the potential
+                                                                                                    use of FuzzSight in code review in this section. We frame the
+        0.4
+                                                                                                    discussion around four dimensions: intended use, benefits for
+                                                                                                    code review, operational considerations, and future work.
+                                  0.17
+
+
+
+                                                0.17
+
+
+
+                                                                         0.17
+        0.2
+                               0.11
+
+
+
+
+                                                                      0.11
+
+                                                                      0.11
+                                                                                                    A. Intended Use of FuzzSight
+                                                       0.06
+                                                       0.06
+
+
+                                                                   0.06
+                                                                   0.06
+
+                                                                   0.06
+
+                                                                   0.06
+                                                                   0.06
+                                                                                                       A central motivation of FuzzSight is to empower reviewers
+        0.0
+                                                             ck                                     to act as an active intelligent oracle, interpreting behavioral
+                     y File             ction           y Blo           n File nction Block
+              Bugg                 y Fun            Bugg          Beniegnign Fu Benign
+                              Bugg                                  B                               signals. Existing review support often leans on syntactic
+                                                                                                    changes or SAST warnings, which risk overlooking semantic
+Fig. 6. Hit rates and False alarms–number of bugs for which SAST warnings                           discrepancies. By surfacing likely invariant differences be-
+and FuzzSight correctly flagged at least one buggy code, or mistakenly flagged                      tween program versions, FuzzSight could highlight the po-
+all benign code, at different granularities                                                         tential behavioral changes that may otherwise remain hidden,
+                                                                                                    providing an additional lens for the reviewers.
+                                                                                                       Our experiments demonstrate that FuzzSight detects mean-
+                                                                                                    ingful invariant shifts associated with a substantial portion of
+warning with a block using AST-based mapping, as explained                                          vulnerability-inducing bugs (10%–58%) and in up to 80% of
+in Section V-C. On the other hand, a bug is considered detected                                     bugs untriggered after long fuzzing campaigns (RQ1). These
+by FuzzSight at the file, function, or code block level when at                                     findings indicate that behavioral differences are relatively
+least one breakpoint is flagged in any buggy file, function, or                                     common in buggy code and that non-crashing fuzzing inputs
+code block. We also report false alarms when SAST produces                                          provide a practical way to expose them. In this way, FuzzSight
+warnings on, or FuzzSight flags, only non-buggy (benign)                                            can serve as a complementary signal in code review: alongside
+code in a given bug. We consider FuzzSight’s hit rate of each                                       syntactic checks or automated warnings, it offers reviewers
+fuzzing tool to highlight their individual performance.                                             additional behavioral context to help judge whether a detected
+                                                                                                    difference reflects an intentional change or a potential defect.
+Results: FuzzSight can detect more buggy code blocks com-                                              Nonetheless, these signals are not absolute indicators of
+pared to SAST warnings. Fig. 6. displays the hit rates in the                                       bugs. A detected difference may reflect a deliberate semantic
+three granularity-based scenarios. SAST warnings are capable                                        refinement (as illustrated in our preliminary experiments) or
+of detecting buggy changed files in 72%-94% of the bugs.                                            a defect (such as a regression in data structure handling).
+At the function level, the SAST warning detection rates drop                                        Interestingly, we observed that most refactoring-related bugs
+to 11%-44%. At the block level, SAST warnings can detect                                            (5 out of 7 in our dataset, RQ2) were among the flagged
+only 6% of the bugs. On the other hand, FuzzSight achieves                                          cases, suggesting that unintended structural changes frequently
+17%–61% detection rate throughout all scenarios.                                                    manifest as behavioral shifts in likely invariants. The value
+                                                                                                    of FuzzSight lies in providing such behavioral context, not
+                                                                                                    in replacing the reviewer’s judgment. In this way, FuzzSight
+                                                                                                    serves as a supporting information provider, bridging the gap
+         Finding 3.1 Block-level hit rate: FuzzSight flags
+                                                                                                    between abstract specifications and concrete execution traces.
+         buggy code blocks in 61% of the bugs, while SAST
+         warnings appear in buggy code blocks of only 6% of
+         the bugs.                                                                                  B. Complementary Benefits of FuzzSight in Code Review
+                                                                                                       We now discuss the possible application of FuzzSight in
+                                                                                                    practice. In particular, we outline several ways in which the
+                                                                                                    findings suggest potential benefits.
+   False alarms can mislead bug detection among code
+changes. While SAST warnings are effective at detecting                                             Complementarity with existing tools. In regression bugs,
+buggy files and functions, false alarms also occur in 6%–11%                                        FuzzSight reports invariant differences in 75% of fuzzing-
+of bugs where warnings only appear in non-buggy files, func-                                        reached bugs (RQ2). At the block level, it highlights buggy
+tions, and code blocks. FuzzSight correctly flags the buggy                                         blocks in 61% of the bugs, while SAST warnings cover only
+breakpoint in nearly all bugs being flagged, with only one                                          6% (RQ3). This disparity illustrates how static and dynamic
+exception case where Honggfuzz mistakenly flagged a non-                                            analyses capture different aspects of code quality. Likely
+buggy breakpoint, affecting up to 6% of the total bugs.                                             invariants reflect runtime semantics, whereas SAST relies on
+                                                                                                                                      11
+
+
+
+syntactic or structural properties. Combined, they provide a          closely tied to workflow context, ensuring that the framework’s
+more comprehensive context for code review.                           outputs are both usable and informative for code review
+                                                                      purposes.
+Precision relative to SAST. FuzzSight demonstrates higher
+                                                                         One promising direction is adaptive configuration, where
+precision at the block level compared to SAST. While SAST
+                                                                      breakpoints are prioritized based on contextual information
+warnings appear in buggy code blocks for only 6% of the bugs
+                                                                      such as historical bug patterns or other review signals, further
+and in non-buggy changed blocks for 6%–11%, FuzzSight
+                                                                      improving efficiency without compromising coverage.
+flags buggy blocks in 61% of the bugs and produces false
+positives in non-buggy changed blocks for only 6% (RQ3).              Tool Independence and Input Generation Flexibility. Fuz-
+   Considering all flagged breakpoints, FuzzSight’s false pos-        zSight requires external tools to generate dynamic execution
+itives are higher (41.7% of bugs, RQ2) due to dynamic                 traces. In our implementation, fuzzing is used to produce
+propagation, where an upstream change can affect down-                diverse program inputs, enabling likely invariant mining and
+stream breakpoints. However, accounting for interdependen-            detection of behavioral shifts. While fuzzing provides practical
+cies through lightweight graph analyses reduces these distrac-        coverage for our experiments, the framework is not inherently
+tions to 16.7% of bugs, highlighting that many false alarms are       tied to any specific input generator. Any sufficiently rich input
+systematic and can be mitigated. This distinction underscores         pool or alternative generator that exercises relevant program
+that, at the granularity relevant for review (changed blocks),        paths can be substituted, allowing FuzzSight to adapt to
+FuzzSight offers both higher hit rates and fewer false alarms         different languages, domains, or testing workflows. In fact,
+compared to SAST, while the remaining propagated signals              as illustrated in RQ3 (Fig. 6.), different fuzzing tools exhibit
+can be managed with simple dependency understanding that              varying effectiveness, underscoring that the framework’s utility
+are a part of code review practices [60].                             stems from the availability of diverse inputs rather than
+                                                                      reliance on a particular tool. This modularity ensures that
+C. Operational Considerations                                         the framework’s effectiveness is not limited by the choice
+                                                                      of fuzzing tool and can evolve alongside advances in input
+   Adopting FuzzSight in practice requires attention to several
+                                                                      generation techniques.
+operational factors that influence its effectiveness and usability.
+In this subsection, we discuss key considerations for config-
+uring and deploying the framework.                                    D. Future Work
+                                                                         We discuss potential directions to extend FuzzSight.
+Fuzzing budget and campaign time. FuzzSight relies on
+execution traces, which in turn depend on fuzzing campaigns.          Address limitation in execution trace generation. Execution
+While 24-hour campaigns are standard in fuzzing research,             traces cannot capture program elements beyond the variable’s
+review cycles often demand shorter feedback loops [61].               values. For example, a bug in an inline statement with no
+Our experiments suggest that even shorter runs can yield              variable assignment, such as in poppler-35789 3 , can go
+informative signals (RQ1 & RQ2), but longer runs can also             undetected. As likely invariants depend on execution traces,
+uncover additional invariant differences, as illustrated by           enhancing the trace generation process is crucial.
+file-30222. This highlights a tension as deeper fuzzing                  This challenge is compounded by FuzzSight’s reliance on
+yields richer behavioral signals, but may exceed practical            fuzzing, requiring fuzzing infrastructure such as fuzz drivers
+review timelines. A potential compromise is to integrate Fuz-         for input generation. If fuzzing saturates coverage, important
+zSight into CI pipelines, where longer campaigns accumulate           likely invariants may not be inferred. Moreover, it is ineffective
+traces incrementally, while reviewers access the latest available     for bugs that manifest only under highly specific inputs or
+signals during review.                                                under certain crash conditions. Addressing these limitations
+Configuration, Scalability, and Interpretability. The effec-          will require improvements in both FuzzSight and fuzzing tools.
+tiveness of FuzzSight depends on careful configuration of             Investigate automated solutions for false alarm reduction.
+breakpoints, variable inclusion, and timeout thresholds, as           In RQ2, false alarms from interdependent breakpoints are
+these choices can influence both precision and computational          reduced by identifying their relationships, which can be done
+cost. Overly broad instrumentation may flood reviewers with           via taint analysis, call graphs, or control-flow graphs. However,
+irrelevant signals, while overly narrow selections risk miss-         different techniques are suitable for different projects. Simi-
+ing critical differences. Our experiments demonstrate that            larly, the sensitivity for detecting differences in KDE distribu-
+lightweight dependency analyses can help filter false alarms          tions (Section IV-B3), a potential source of false negatives, can
+(RQ2), reducing distractions while retaining coverage.                also be adjusted. We leave this exploration for future work.
+   Even with the computational overhead of likely invariant
+                                                                      Investigate code change prioritization. Static applica-
+mining, FuzzSight generates useful signals at a scale suitable
+                                                                      tion security testing (SAST) tools can help prioritize code
+for typical code changes (RQ2 & RQ3). By carefully manag-
+                                                                      changes [7]. In contrast, fuzzing tools usually detect concrete
+ing the number and scope of traced breakpoints and variables,
+                                                                      failures, emphasizing soundness over completeness [19], limit-
+the framework ensures that signals remain understandable and
+                                                                      ing their utility for prioritization. In RQ3, we show that likely
+relevant, allowing reviewers to focus on meaningful behavioral
+changes while minimizing false positives. This emphasizes               3 https://gitlab.freedesktop.org/poppler/poppler/-/commit/
+that scalability, configuration, and signal interpretability are      2b2808719d2c91283ae358381391bb0b37d9061d
+                                                                                                                                  12
+
+
+
+invariant analysis using fuzzing inputs can help flag buggy         evaluate the detection rates of FuzzSight against a baseline of
+code changes, potentially supporting prioritization. However,       SAST warnings. FuzzSight correctly flags ten times more bugs
+our dataset includes limited code changes, making it difficult to   than SAST warnings at the code block level, with lower false
+draw definitive conclusions. Further investigation is necessary.    alarm rates. These findings suggest that FuzzSight can detect
+                                                                    behavioral changes at the code-block level, complementing
+Address performance overhead. Post-fuzzing trace genera-
+                                                                    SAST warnings, which are more cost-effective at the file and
+tion is a repetitive process. Integrating trace generation into a
+                                                                    function levels. They highlight the potential of combining
+fuzzer can streamline data generation and reduce overhead. On
+                                                                    fuzzing and invariant analysis to bring dynamic insights into
+the other hand, mining likely invariants from execution traces
+                                                                    early code review.
+remains time-intensive. We observe that processing a single
+execution trace can take several minutes, becoming impractical                       X. ACKNOWLEDGEMENTS
+when analyzing large inputs. To ensure the feasibility of this
+                                                                       This work was supported by the use of Nectar Research
+study, we applied a timeout for the mining process. Despite
+                                                                    Cloud, a collaborative research platform supported by NCRIS-
+practicality, it highlights the need for scalable techniques that
+                                                                    funded Australian Research Data Commons (ARDC). Patana-
+balance the output quality and the applicability.
+                                                                    mon Thongtanunam and Van-Thuan Pham were supported
+                                                                    by two Australian Research Council’s Discovery Early Ca-
+                VIII. T HREATS TO VALIDITY                          reer Researcher Award (DECRA) projects (DE210101091 and
+                                                                    DE230100473).
+Internal Validity Building the executable binary is a complex
+process. Project-specific setup may be incorrect due to missing                             R EFERENCES
+information or some changes in the build scripts. To reduce
+                                                                     [1] J. M. Stecklein, J. Dabney, B. Dick, B. Haskins,
+this threat, we rely on the scripts provided by the datasets and
+                                                                         R. Lovell, and G. Moroney, “Error Cost Escalation
+the recent version of OSS-Fuzz to initiate the experiments.
+                                                                         Through the Project Life Cycle,” in 14th Annual Inter-
+   We fuzzed target programs for 36 core-hours, following
+                                                                         national Symposium, Toulouse, 2004.
+prior work [48]. However, fuzzing durations may affect out-
+                                                                     [2] L. M. Karg, M. Grottke, and A. Beckhaus, “A systematic
+comes. We replicated selected experiments using a 24-hour
+                                                                         literature review of software quality cost research,” Jour-
+campaign and discuss the results in Section VII-C. Finally,
+                                                                         nal of Systems and Software, vol. 84, no. 3, pp. 415–427,
+as some breakpoints can record over 20k execution traces,
+                                                                         3 2011.
+we limit each breakpoint to 1,500 randomly sampled traces
+                                                                     [3] L. Pascarella, D. Spadini, F. Palomba, M. Bruntink,
+to prevent memory issues. While this may impact analysis
+                                                                         and A. Bacchelli, “Information Needs in Contemporary
+quality, the sample size supports a 99% confidence interval
+                                                                         Code Review,” in Proceedings of the ACM on Human-
+with a margin of error under 0.05, ensuring reliable results.
+                                                                         Computer Interaction, vol. 2, no. CSCW.              ACM-
+Construct Validity Construct validity concerns whether the               PUB27New York, NY, USA, 11 2018, p. 27.
+chosen measurements accurately capture the intended concept.         [4] O. Kononenko, O. Baysal, and M. W. Godfrey, “Code
+We acknowledge that the distance measures used in this study             review quality: How developers see it,” in Proceedings -
+are not perfect. We selected four distance measures previously           International Conference on Software Engineering, vol.
+applied in software engineering research [38, 39, 40], to                14-22-May-2016. IEEE Computer Society, 5 2016, pp.
+capture different types of differences in likely invariant sets.         1028–1038.
+Other distance measures may be suitable for certain subjects.        [5] D. Singh, V. R. Sekar, K. T. Stolee, and B. John-
+                                                                         son, “Evaluating how static analysis tools can reduce
+External Validity External validity concerns the generaliz-
+                                                                         code review effort,” in Proceedings of IEEE Symposium
+ability of the results. We are aware that our approach may not
+                                                                         on Visual Languages and Human-Centric Computing,
+be able to cover every type of bug. While our datasets include
+                                                                         VL/HCC, vol. 2017-October. IEEE Computer Society,
+136 vulnerabilities and regression bugs from over 20 diverse
+                                                                         11 2017, pp. 101–105.
+OSS projects, our results may not necessarily reflect all types
+                                                                     [6] S. Panichella, V. Arnaoudova, M. Di Penta, and G. An-
+of vulnerabilities and bugs.
+                                                                         toniol, “Would static analysis tools help developers with
+                                                                         code reviews?” in 2015 IEEE 22nd International Confer-
+                      IX. C ONCLUSION                                    ence on Software Analysis, Evolution, and Reengineer-
+   This work investigates the potential of dynamic program               ing, SANER 2015 - Proceedings. Institute of Electrical
+analysis techniques to enhance code reviews. We develop                  and Electronics Engineers Inc., 4 2015, pp. 161–170.
+FuzzSight to analyze likely invariant differences between two        [7] W. Charoenwet, P. Thongtanunam, V.-T. Pham, and
+program versions and detect unexpected behaviors using non-              C. Treude, “An Empirical Study of Static Analysis Tools
+crashing fuzzing inputs. We test FuzzSight with Magma and                for Secure Code Review,” in Proceedings of the 33rd In-
+BugOSS datasets, which represent synthetic vulnerabilities and           ternational Symposium on Software Testing and Analysis,
+real-world bug-introducing code commits. The results show                7 2024.
+that FuzzSight flags 10%-58% vulnerabilities and 75% of              [8] N. Ayewah, D. Hovemeyer, D. J. Morgenthaler, J. Penix,
+regression bugs reached by fuzzing inputs. Notably, up to                and W. Pugh, “Using static analysis to find bugs,” IEEE
+80% of hard-to-fuzz vulnerabilities can be flagged. We further           Software, vol. 25, no. 5, pp. 22–29, 2008.
+                                                                                                                              13
+
+
+
+ [9] T. Klooster, F. Turkmen, G. Broenink, R. T. Hove, and           “Fuzzing: State of the Art,” IEEE Transactions on Reli-
+     M. Bohme, “Continuous Fuzzing: A Study of the Effec-            ability, vol. 67, no. 3, pp. 1199–1218, 9 2018.
+     tiveness and Scalability of Fuzzing in CI/CD Pipelines,”   [22] D. Liyanage, M. Bohme, C. Tantithamthavorn, and
+     in Proceedings - 2023 IEEE/ACM International Work-              S. Lipp, “Reachable Coverage: Estimating Saturation in
+     shop on Search-Based and Fuzz Testing, SBFT 2023.               Fuzzing,” in Proceedings - International Conference on
+     Institute of Electrical and Electronics Engineers Inc.,         Software Engineering. IEEE Computer Society, 2023,
+     2023, pp. 25–32.                                                pp. 371–383.
+[10] M. D. Ernst, J. H. Perkins, P. J. Guo, S. McCamant,        [23] X. Zhu and M. Böhme, “Regression Greybox Fuzzing,”
+     C. Pacheco, M. S. Tschantz, and C. Xiao, “The Daikon            in Proceedings of the ACM Conference on Computer and
+     system for dynamic detection of likely invariants,” Sci-        Communications Security. Association for Computing
+     ence of Computer Programming, vol. 69, no. 1-3, pp.             Machinery, 11 2021, pp. 2169–2182.
+     35–45, 12 2007.                                            [24] A. Fioraldi, D. D. Cono, and D. Balzarotti EURECOM,
+[11] M. Menarini, Y. Yan, and W. G. Griswold, “Semantics-            “The Use of Likely Invariants as Feedback for Fuzzers,”
+     assisted code review: An efficient tool chain and a user        in 30th USENIX Security Symposium, 2021, pp. 2829–
+     study,” ASE 2017 - Proceedings of the 32nd IEEE/ACM             2846.
+     International Conference on Automated Software Engi-       [25] L. Pan, S. Cohney, T. Murray, and V. T. Pham, “EDE-
+     neering, pp. 554–565, 11 2017.                                  Fuzz: A Web API Fuzzer for Excessive Data Exposures,”
+[12] D. Firesmith, “Four Types of Shift Left Testing,”               in Proceedings - International Conference on Software
+     2015. [Online]. Available: https://insights.sei.cmu.edu/        Engineering. IEEE Computer Society, 2 2024.
+     blog/four-types-of-shift-left-testing/                     [26] C. Parnin and A. Orso, “Are automated debugging tech-
+[13] A. Dawoud, S. Finster, N. Coppik, and V. Ashiwal,               niques actually helping programmers?” in 2011 Inter-
+     “Better Left Shift Security! Framework for Secure Soft-         national Symposium on Software Testing and Analysis,
+     ware Development,” in Proceedings - 9th IEEE European           ISSTA 2011 - Proceedings, 2011, pp. 199–209.
+     Symposium on Security and Privacy Workshops, Euro S        [27] M. Gulzar, Y. Zhu, and X. Han, “Perception and Prac-
+     and PW 2024. Institute of Electrical and Electronics            tices of Differential Testing,” in Proceedings - 2019
+     Engineers Inc., 2024, pp. 642–649.                              IEEE/ACM 41st International Conference on Software
+[14] M. V. Mäntylä and C. Lassenius, “What types of defects        Engineering: Software Engineering in Practice, ICSE-
+     are really discovered in code reviews?” IEEE Transac-           SEIP 2019.        Institute of Electrical and Electronics
+     tions on Software Engineering, vol. 35, no. 3, pp. 430–         Engineers Inc., 5 2019, pp. 71–80.
+     448, 2009.                                                 [28] M. Leonelli, A. Crump, M. Wang, F. Bauckholt, K. Has-
+[15] D. Spadini, M. Aniche, M. A. Storey, M. Bruntink, and           sler, A. Abbasi, and T. Holz, “TWINFUZZ: Differential
+     A. Bacchelli, “When testing meets code review: Why              Testing of Video Hardware Acceleration Stacks,” in
+     and how developers review tests,” in Proceedings - In-          Network and Distributed System Security Symposium.
+     ternational Conference on Software Engineering. IEEE            Internet Society, 2025.
+     Computer Society, 5 2018, pp. 677–687.                     [29] Seongil Wi, Trung Tin Nguyen, Jihwan Kim, Ben Stock,
+[16] F. Ebert, F. Castor, N. Novielli, and A. Serebrenik,            and Sooel Son, “DiffCSP: Finding Browser Bugs in Con-
+     “An exploratory study on confusion in code reviews,”            tent Security Policy Enforcement through Differential
+     Empirical Software Engineering, vol. 26, no. 1, pp. 1–          Testing.” in Network and Distributed System Security
+     48, 1 2021.                                                     Symposium, 2023.
+[17] S. Deshmukh, R. Patil, and S. Narkhede, “Automated         [30] S. Li and M. Rigger, “Finding XPath Bugs in XML Doc-
+     Security Testing Using CI/CD Pipeline,” in ICT: Appli-          ument Processors via Differential Testing,” in Proceed-
+     cations and Social Interfaces. ICTCS 2024, vol. 1384            ings - International Conference on Software Engineering.
+     LNNS. Springer Science and Business Media Deutsch-              IEEE Computer Society, 2024, pp. 1787–1798.
+     land GmbH, 2025, pp. 183–194.                              [31] T. D. B. Le, D. Lo, C. Le Goues, and L. Grunske,
+[18] S. Panichella and N. Zaugg, “An Empirical Investigation         “A learning-to-rank based fault localization approach
+     of Relevant Changes and Automation Needs in Modern              using likely invariants,” in Proceedings of the 25th Inter-
+     Code Review,” Empirical Software Engineering, vol. 25,          national Symposium on Software Testing and Analysis.
+     no. 6, pp. 4833–4872, 11 2020.                                  Association for Computing Machinery, Inc, 7 2016, pp.
+[19] E. T. Barr, M. Harman, P. McMinn, M. Shahbaz, and               177–188.
+     S. Yoo, “The oracle problem in software testing: A         [32] C. Sánchez, G. Schneider, W. Ahrendt, E. Bartocci,
+     survey,” IEEE Transactions on Software Engineering,             D. Bianculli, C. Colombo, Y. Falcone, A. Francalanza,
+     vol. 41, no. 5, pp. 507–525, 5 2015.                            S. Krstić, J. M. Lourenço, D. Nickovic, G. J. Pace,
+[20] C. Theisen, K. Herzig, P. Morrison, B. Murphy, and              J. Rufino, J. Signoles, D. Traytel, and A. Weiss, “A sur-
+     L. Williams, “Approximating Attack Surfaces with Stack          vey of challenges for runtime verification from advanced
+     Traces,” in Proceedings - International Conference on           application domains (beyond software),” Formal Methods
+     Software Engineering, vol. 2. IEEE Computer Society,            in System Design, vol. 54, no. 3, pp. 279–335, 11 2019.
+     8 2015, pp. 199–208.                                       [33] D. E. Knuth, The art of computer programming.
+[21] H. Liang, X. Pei, X. Jia, W. Shen, and J. Zhang,                Addison-Wesley, 2005.
+                                                                                                                               14
+
+
+
+[34] S. Ciobâcă, D. Lucanu, and A. S. Buruiană,                 [49] “OSS-Fuzz — Documentation for OSS-Fuzz.” [Online].
+     “Operationally-based program equivalence proofs                    Available: https://google.github.io/oss-fuzz/
+     using LCTRSs,” Journal of Logical and Algebraic               [50] “LLDB - GDB to LLDB command map.”
+     Methods in Programming, vol. 135, p. 100894, 10 2023.              [Online]. Available: https://lldb.llvm.org/use/map.html#
+[35] “LLDB.” [Online]. Available: https://lldb.llvm.org/                examining-variables
+[36] T. V. Nguyen, K. H. Nguyen, and M. B. Dwyer, “Using           [51] G. Bavota, B. De Carluccio, A. De Lucia, M. Di Penta,
+     Symbolic States to Infer Numerical Invariants,” IEEE               R. Oliveto, and O. Strollo, “When does a refactoring
+     Transactions on Software Engineering, vol. 48, no. 10,             induce bugs? An empirical study,” in Proceedings -
+     pp. 3877–3899, 10 2022.                                            12th International Working Conference on Source Code
+[37] T. Nguyen, D. Kapur, W. Weimer, and S. Forrest, “DIG,”             Analysis and Manipulation, 2012, pp. 104–113.
+     ACM Transactions on Software Engineering and Method-          [52] E. Murphy-Hill, C. Parnin, and A. P. Black, “How we
+     ology (TOSEM), vol. 23, no. 4, 9 2014.                             refactor, and how we know it,” IEEE Transactions on
+[38] M. Shtern and V. Tzerpos, “Clustering Methodologies for            Software Engineering, vol. 38, no. 1, pp. 5–18, 2012.
+     Software Engineering,” Advances in Software Engineer-         [53] S. Lipp, S. Banescu, and A. Pretschner, “An empirical
+     ing, vol. 2012, no. 1, p. 792024, 1 2012.                          study on the effectiveness of static C code analyzers for
+[39] F. B. Allyson, M. L. Danilo, S. M. Jose, and B. C.                 vulnerability detection,” in Proceedings of the 31st ACM
+     Giovanni, “Sherlock N-overlap: Invasive normalization              SIGSOFT International Symposium on Software Testing
+     and overlap coefficient for the similarity analysis between        and Analysis. New York, NY, USA: ACM, 7 2022, pp.
+     source code,” IEEE Transactions on Computers, vol. 68,             544–555.
+     no. 5, pp. 740–751, 5 2019.                                   [54] “Tree-sitter.” [Online]. Available: https://tree-sitter.
+[40] R. Taheri, M. Ghahramani, R. Javidan, M. Shojafar,                 github.io/tree-sitter/
+     Z. Pooranian, and M. Conti, “Similarity-based Android         [55] “The AFL++ fuzzing framework — AFLplusplus.”
+     malware detection using Hamming distance of static                 [Online]. Available: https://aflplus.plus/
+     binary features,” Future Generation Computer Systems,         [56] “Honggfuzz — honggfuzz.” [Online]. Available: https:
+     vol. 105, pp. 230–247, 4 2020.                                     //honggfuzz.dev/
+[41] B. W. Silverman, Density estimation for statistics and        [57] “libFuzzer – a library for coverage-guided fuzz testing.
+     data analysis. London ;: Chapman and Hall,, 1986,                  — LLVM 20.0.0git documentation.” [Online]. Available:
+     vol. 37, no. 1.                                                    https://llvm.org/docs/LibFuzzer.html
+[42] M. F. Bosu, S. G. MacDonell, and P. A. Whigham,               [58] H. Yoo, J. Hong, L. Bader, D. W. Hwang, and S. Hong,
+     “Analyzing the Stationarity Process in Software Effort             “Improving Configurability of Unit-level Continuous
+     Estimation Datasets,” International Journal of Software            Fuzzing: An Industrial Case Study with SAP HANA,”
+     Engineering and Knowledge Engineering, vol. 30, no.                in Proceedings - 2021 36th IEEE/ACM International
+     11-12, pp. 1607–1640, 1 2021.                                      Conference on Automated Software Engineering, ASE
+[43] M. d’Errico, E. Facco, A. Laio, and A. Rodriguez,                  2021. Institute of Electrical and Electronics Engineers
+     “Automatic topography of high-dimensional data sets                Inc., 2021, pp. 1101–1105.
+     by non-parametric density peak clustering,” Information       [59] M. Boehme, C. Cadar, and A. Roychoudhury, “Fuzzing:
+     Sciences, vol. 560, pp. 476–492, 6 2021.                           Challenges and Reflections,” IEEE Software, vol. 38,
+[44] M. Pease, R. Shostak, and L. Lamport, “Reaching Agree-             no. 3, pp. 79–86, 5 2021.
+     ment in the Presence of Faults,” Journal of the ACM           [60] P. W. Goncalves, P. Rani, M. A. Storey, D. Spinellis, and
+     (JACM), vol. 27, no. 2, pp. 228–234, 4 1980.                       A. Bacchelli, “Code Review Comprehension: Reviewing
+[45] L. Lamport, “The part-time parliament,” ACM Transac-               Strategies Seen Through Code Comprehension Theories,”
+     tions on Computer Systems (TOCS), vol. 16, no. 2, pp.              in 2025 IEEE/ACM 33rd International Conference on
+     133–169, 5 1998.                                                   Program Comprehension (ICPC).              IEEE Computer
+[46] L. Buitinck, G. Louppe, M. Blondel, F. Pedregosa,                  Society, 4 2025, pp. 589–601.
+     A. C. Müller, O. Grisel, V. Niculae, P. Prettenhofer,        [61] G. Kudrjavets, A. Kumar, N. Nagappan, and A. Rastogi,
+     A. Gramfort, J. Grobler, R. Layton, J. Vanderplas,                 “Mining Code Review Data to Understand Waiting Times
+     A. Joly, B. Holt, and G. Varoquaux, “API design for                Between Acceptance and Merging: An Empirical Anal-
+     machine learning software: experiences from the scikit-            ysis,” in 2022 IEEE/ACM 19th International Conference
+     learn project,” 9 2013.                                            on Mining Software Repositories (MSR). IEEE Com-
+[47] A. Hazimeh, A. Herrera, and M. Payer, “Magma: A                    puter Society, 5 2022, pp. 579–590.
+     Ground-Truth Fuzzing Benchmark,” in Proceedings of
+     the ACM on Measurement and Analysis of Computing
+     Systems, vol. 4, no. 3.       Association for Computing
+     Machinery (ACM), 9 2020, pp. 1–29.
+[48] J. Kim and S. Hong, “BugOss: A benchmark of real-
+     world regression bugs for empirical investigation of
+     regression fuzzing techniques,” Journal of Systems and
+     Software, vol. 216, p. 112119, 10 2024.
+

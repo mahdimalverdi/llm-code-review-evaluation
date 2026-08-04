@@ -1,0 +1,1864 @@
+                                        Empirical Software Engineering manuscript No.
+                                        (will be inserted by the editor)
+
+
+
+
+                                        CL4SE: Benchmarking Context Learning on Software
+                                        Engineering
+
+                                        Haichuan Hu · Quanjun Zhang · Ye Shang ·
+                                        Guoqing Xie · Chunrong Fang · Zhenyu
+                                        Chen · Liang Xiao ·
+
+
+
+
+                                        Received: date / Accepted: date
+arXiv:2602.23047v3 [cs.SE] 6 Apr 2026
+
+
+
+
+                                        Abstract Context engineering has emerged as a pivotal paradigm for unlocking
+                                        the potential of Large Language Models (LLMs) in Software Engineering (SE)
+                                        tasks, enabling performance gains at test time without model fine-tuning. Despite
+                                        its success, existing research lacks a systematic taxonomy of SE-specific context
+                                        types and a dedicated benchmark to quantify the heterogeneous effects of different
+                                        contexts across core SE workflows. To address this gap, we propose CL4SE (Con-
+                                        text Learning for Software Engineering), a comprehensive benchmark featuring
+                                        a fine-grained taxonomy of four SE-oriented context types (interpretable exam-
+                                        ples, project-specific context, procedural decision-making context, and positive &
+                                        negative context), each mapped to a representative task (code generation, code
+
+                                        Haichuan Hu
+                                        School of Computer Science and Engineering, Nanjing University of Science and Technology,
+                                        China
+                                        E-mail: huhaichuan2024@gmail.com
+                                        Quanjun Zhang
+                                        School of Computer Science and Engineering, Nanjing University of Science and Technology,
+                                        China
+                                        E-mail: quanjunzhang@njust.edu.cn
+                                        Ye Shang
+                                        State Key Laboratory for Novel Software Technology, Nanjing University, China
+                                        E-mail: yeshang@smail.nju.edu.cn
+                                        Guoqing Xie
+                                        State Key Laboratory for Novel Software Technology, Nanjing University, China
+                                        E-mail: 522025320181@smail.nju.edu.cn
+                                        Chunrong Fang
+                                        State Key Laboratory for Novel Software Technology, Nanjing University, China
+                                        E-mail: fangchunrong@nju.edu.cn
+                                        Zhenyu Chen
+                                        State Key Laboratory for Novel Software Technology, Nanjing University, China
+                                        E-mail: zychen@nju.edu.cn
+                                        Liang Xiao
+                                        School of Computer Science and Engineering, Nanjing University of Science and Technology,
+                                        China
+                                        E-mail: xiaoliang@mail.njust.edu.cn
+2                                                                  Haichuan Hu et al.
+
+
+summarization, code review, and patch correctness assessment). We construct
+high-quality datasets comprising over 13,000 samples from more than 30 open-
+source projects and evaluate five mainstream LLMs across nine metrics. Extensive
+experiments demonstrate that context learning yields an average performance im-
+provement of 24.7% across all tasks. Specifically, procedural context boosts code
+review performance by up to 33% (Qwen3-Max), mixed positive-negative context
+improves patch assessment by 30% (DeepSeek-V3), project-specific context in-
+creases code summarization BLEU by 14.78% (GPT-Oss-120B), and interpretable
+examples enhance code generation PASS@1 by 5.72% (DeepSeek-V3). Beyond
+these task-level gains, our results show that the effectiveness of context depends
+strongly on its alignment with task-specific cognitive demands, that more context
+does not necessarily lead to better performance, and that reasoning-intensive SE
+tasks benefit most from well-structured contextual support. CL4SE establishes the
+first standardized evaluation framework for SE context learning, provides action-
+able empirical insights into task-specific context design, and releases a large-scale
+dataset to facilitate reproducible research in this domain.
+
+Keywords Context Learning, Large Language Models, Software Engineering,
+Benchmark
+
+
+
+1 Introduction
+
+With the rapid advancement of Large Language Models (LLMs), context engineer-
+ing (Mei et al., 2025; Zhang et al., 2025) has emerged as a pivotal paradigm for
+unlocking their potential in downstream tasks. Unlike pre-training or fine-tuning,
+which encode knowledge via model weight updates, context engineering improves
+LLM performance at inference time through the construction of effective contex-
+tual inputs, without modifying the model parameters. In Software Engineering
+(SE), researchers have increasingly leveraged this paradigm together with mod-
+els’ In-Context Learning (ICL) capabilities to improve performance across a wide
+range of development tasks (Li et al., 2025; Gao et al., 2025; Wu et al., 2025;
+Tang et al., 2024; Xu et al., 2024; Yun et al., 2024; Geng et al., 2024; Shao et al.,
+2026). For example, (Li et al., 2025) trains a model-aware retriever to select more
+effective exemplars for code generation, while (Shao et al., 2026) incorporates rele-
+vant repair patterns as context to guide models toward more effective vulnerability
+repair.
+    Despite the demonstrated effectiveness of ICL and context engineering in SE
+tasks, existing research still lacks a systematic understanding of how different
+context types affect different tasks, and of the mechanisms through which such
+contexts take effect. Early work (Gao et al., 2023) explored how to construct in-
+context demonstrations more effectively, but did not establish a systematic taxon-
+omy of SE-specific contexts or analyze how models learn from them. More recently,
+CL-Bench (Dou et al., 2026) extended traditional ICL research by investigating
+the patterns and effectiveness of context learning for complex tasks, particularly
+in settings where prior knowledge is limited. Inspired by this line of work, we aim
+to fill the critical gap in context learning for software engineering by proposing
+CL4SE, a dedicated benchmark tailored to SE tasks. Figure 1 illustrates the re-
+lationship between CL4SE and related concepts, including prompt engineering,
+CL4SE: Benchmarking Context Learning on Software Engineering                      3
+
+
+context engineering, in-context learning, and context learning. As an SE-oriented
+extension of CL-Bench, CL4SE goes beyond generic context learning benchmarks
+for general NLP or broad reasoning tasks. Instead, it systematically character-
+izes heterogeneous SE-specific context types and examines how they guide LLMs’
+in-context learning across core SE workflows.
+
+
+
+                               Prompt Engineering
+
+
+                               Context Engineering
+
+
+
+              In-Context Learning      Context Learning(CL-Bench)
+
+
+
+                                       Math     Game       SE
+
+
+                                                         CL4SE
+
+
+     Fig. 1: The relationship between CL4SE, prompt engineering, context
+              engineering, in-context learning and context learning.
+
+
+    To this end, we define a fine-grained taxonomy of four SE-oriented context
+types, namely interpretable examples, project-specific context, procedural decision-
+making context, and positive & negative context, each aligned with a representa-
+tive SE task: code generation, code summarization, code review, and patch cor-
+rectness assessment. We further construct high-quality real-world datasets with
+over 13,000 samples collected from more than 30 open-source projects, and eval-
+uate five mainstream LLMs using nine metrics. Extensive experiments show that
+each context type exhibits a distinct efficacy profile aligned with the cognitive
+demands of its target task. Interpretable reasoning context is most effective for
+complex code generation, project-specific context substantially improves stylistic
+alignment in code summarization, procedural decision context yields strong gains
+in code review, and dual positive-negative context improves the precision-recall
+balance in patch correctness assessment. Overall, the results confirm that context
+learning is not a one-size-fits-all strategy, with our benchmark revealing an aver-
+age performance improvement of 24.7% across tasks and gains of up to 33% in
+decision-centric workflows.
+    In addition, our study leads to the following key findings:
+– The effectiveness of context depends on task-context alignment. Context
+   becomes most useful when its structure matches the cognitive demands of the
+4                                                                   Haichuan Hu et al.
+
+
+  target task, suggesting that context learning in SE should be designed in a
+  task-aware rather than task-agnostic manner.
+– More context does not necessarily lead to better performance. In many
+  cases, such as code summarization, a small amount of well-targeted context is
+  more effective than a large amount of redundant context. This suggests that the
+  quality and relevance of context matter more than its volume.
+– Context learning is especially valuable for reasoning-intensive tasks. The
+  strongest benefits arise in tasks involving judgment, comparison, and multi-step
+  reasoning, indicating that context can shape not only what models output, but
+  also how they reason.
+– Effective context teaches both solutions and reasoning processes. The most
+  informative contexts do not merely provide correct outputs; they also expose
+  reasoning paths, decision procedures, and contrasts between valid and invalid
+  cases, enabling models to learn both what to do and how to do it.
+– Context learning should be recognized as a core capability for SE intel-
+  ligence. Our findings suggest that context is not merely an auxiliary prompt
+    component, but a central medium through which LLMs acquire and apply task-
+    relevant knowledge at inference time. In SE settings, the ability to learn effec-
+    tively from context may be as important as the model’s parametric knowledge
+    itself.
+    Our work not only establishes a standardized evaluation framework for future
+research on SE-focused context learning, but also provides actionable empirical
+insights into how to construct effective contextual inputs, enabling researchers and
+practitioners to better unlock LLMs’ potential in real-world software development
+through principled context design rather than ad-hoc prompt crafting.
+
+
+2 Related Work
+
+2.1 Prompt/Context Engineering
+
+Prompt Engineering. Traditional prompt engineering (Giray, 2023; Marvin et al.,
+2023; Chen et al., 2025; Liu et al., 2023; Sahoo et al., 2024) is the process of
+designing and refining input queries to elicit desired responses from LLMs. This
+paradigm aims to guide models to better leverage parameterized knowledge, rather
+than introducing new content that requires learning into the prompt. Subsequent
+works (Wang et al., 2024a; Syahputri et al., 2025; Ronanki et al., 2025; Rodriguez
+et al., 2023; Liu et al., 2024d; Wang et al., 2024b) have discussed the application
+of Prompt Engineering in the context of Software Engineering. However, with
+the emergence of the latest reasoning models (e.g., GPT-o1 (Hu et al., 2025b)),
+researchers (Wang et al., 2024a) have found that earlier prompt techniques may
+no longer yield significant effects and may even lead to negative returns.
+    Context Engineering. Nowadays, a growing body of researchers is moving
+away from prompt engineering and towards context engineering (Mei et al., 2025;
+Zhang et al., 2025; Dai et al., 2025). Unlike prompt engineering that prioritizes
+prompt structure and crafting tricks, context engineering shifts the focus to the
+full lifecycle of prompt content. It revolves around retrieving (Singh et al., 2025),
+organizing, managing (Xu et al., 2025a,b), and optimizing task-relevant context
+sourced from heterogeneous repositories including private documents, databases,
+CL4SE: Benchmarking Context Learning on Software Engineering                    5
+
+
+and knowledge bases. For example, in complex code repair tasks that require
+long contexts, researchers (Xia et al., 2024) use hierarchical positioning tech-
+niques to compress the context. Code repository analysis based on knowledge
+graphs (Ouyang et al., 2024) facilitates the rapid acquisition of context in vari-
+ous SE tasks. With the rise of agent technologies, context engineering has become
+increasingly important. Agents require continuous, multi-turn context understand-
+ing and management, which imposes higher requirements on the effectiveness and
+efficiency of context. Recent studies (Liu et al., 2026; Cheng et al., 2026) show
+that in long multi-turn dialogues, early context errors can trigger a butterfly ef-
+fect, where minor initial mistakes gradually propagate, accumulate, and eventually
+lead to severe degradation in reasoning accuracy and task performance. This fur-
+ther motivates the need for dedicated research into effective context engineering
+principles tailored for advanced LLMs and agentic workflows.
+     In-Context Learning and Context Learning. ICL (Dong et al., 2024a; Akyürek
+et al., 2022) serves as the fundamental paradigm that underpins both prompt en-
+gineering and context engineering, acting as the core mechanism through which
+LLMs generalize to unseen tasks without parameter updates. Traditional prompt
+engineering primarily leverages ICL by manually crafting a small set of exemplars
+within the prompt to guide the model’s output (Brown et al., 2020), treating con-
+text as a static input component. In contrast, context engineering elevates the
+role of ICL by systematically curating, structuring, and maintaining high-quality
+contextual information, thereby enabling more robust and scalable ICL perfor-
+mance in complex scenarios such as long-horizon code repair and multi-turn agent
+interactions. Building upon the advancements in context engineering, the concept
+of Context Learning (CL) (Dou et al., 2026) has emerged as a broader and more
+principled framework that transcends the limitations of traditional ICL. Rather
+than merely relying on ad-hoc exemplar selection as in ICL,CL emphasizes the
+ability of models to learn and apply new knowledge from scarce or complex data.
+     Accordingly, our work deepens and refines the study of context learning in
+the field of software engineering. We move beyond generic context learning bench-
+marks by constructing a specialized evaluation framework that captures the unique
+scarcity and complexity of data in real-world SE workflows. This refined focus
+enables us to provide empirical insights into the practical application and effec-
+tiveness of context engineering for advanced LLMs and agent systems in the SE
+domain.
+
+
+
+2.2 LLM-based Software Engineering
+
+The integration of LLMs has profoundly reshaped the landscape of SE. Modern
+SE encompasses a systematic lifecycle primarily including requirement and de-
+sign (Wang et al., 2024c), development (Mathews and Nagappan, 2024; Joel et al.,
+2024), testing (Chen et al., 2024b; Nan et al., 2025), maintenance (Patil, 2025;
+Bouzenia et al., 2024; Hu et al., 2025a), and management (Zhang et al., 2023b;
+He et al., 2025; Hu et al., 2025c; Zhang et al., 2026). LLMs have demonstrated
+remarkable capabilities across SE lifecycle, particularly in software development
+and software maintenance, which heavily rely on code understanding, reasoning,
+and generation. In this paper, we focus on four representative SE tasks that span
+6                                                                  Haichuan Hu et al.
+
+
+these critical phases: code generation, code summarization, code review, and patch
+correctness assessment.
+    During the software development phase, code generation and code summariza-
+tion are two fundamental tasks. For code generation (Crupi et al., 2025; Joel et al.,
+2024), recent advancements have shifted from direct sequence-to-sequence transla-
+tion to more sophisticated requirement-guided and execution-guided paradigms (Jiang
+et al., 2024; Dong et al., 2024b). Researchers increasingly rely on prompt engi-
+neering and in-context learning to help LLMs understand complex intents, which
+naturally necessitates highly interpretable contextual examples (Gao et al., 2023).
+Similarly, code summarization (Sukkasem et al., 2025; Crupi et al., 2025) aims to
+generate high-level natural language descriptions for source code. Existing studies
+emphasize that providing LLMs with specific semantic contexts or employing few-
+shot learning can significantly align the generated text with human intent (Geng
+et al., 2024; Ahmed et al., 2024). However, generating summaries that strictly ad-
+here to specific coding conventions requires project-specific context, an area that
+has not been systematically benchmarked.
+    During the software maintenance phase, LLMs are increasingly deployed for
+code review (Zeng et al., 2025; Rasheed et al., 2024) and patch correctness assess-
+ment (Zhang et al., 2026; Yang et al., 2025b; Zhou et al., 2024). Code review is
+a critical yet labor-intensive process. While early learning-based approaches au-
+tomated review comment generation (Li et al., 2022), recent empirical studies on
+LLMs (e.g., ChatGPT) reveal that effective code review requires complex reason-
+ing and is heavily influenced by prompt designs and conversational contexts (Guo
+et al., 2024). This highlights the necessity of modeling code review as a procedu-
+ral decision-making process rather than a static classification task. Furthermore,
+Automated Program Repair (APR) often suffers from the patch overfitting issue.
+To assess patch correctness, researchers have explored utilizing LLMs for syntactic
+and semantic reasoning, transitioning from feature extractors to zero-shot or few-
+shot evaluators (Zhou et al., 2023; Le-Cong et al., 2023). Distinguishing between
+valid and overfitting patches inherently demands comparative reasoning, making
+the exploration of positive and negative contexts highly relevant.
+    Despite the proliferation of LLM applications across these SE tasks, exist-
+ing literature predominantly treats context selection as an ad-hoc component of
+prompt engineering. There remains a critical gap in systematically categorizing
+SE-specific context types and benchmarking their heterogeneous impacts on dif-
+ferent SE tasks. This motivates the design of CL4SE, bridging the gap between
+general in-context learning and domain-specific SE practices.
+
+
+
+3 Benchmark
+
+Before presenting the details of CL4SE, we compare it with representative exist-
+ing benchmarks in Table 1. Most prior SE benchmarks are task-specific, focusing
+on only one scenario. Moreover, they are typically limited to a single granularity
+level. Although several benchmarks have considered the role of context and demon-
+strated that contextual information can improve model performance, they do not
+provide a fine-grained analysis of how different categories of context influence dif-
+ferent software engineering tasks. In contrast, CL4SE unifies four representative
+CL4SE: Benchmarking Context Learning on Software Engineering                                              7
+
+
+SE tasks, spans multiple granularity levels, and supports systematic analysis of
+the relationship between context types and task-specific learning behavior.
+
+
+           Table 1: Comparison between CL4SE and current benchmarks.
+
+ Benchmark                            Time      Language             Task         Granularity   Context
+ ClassEval (Du et al., 2023)           2023    Python         Code Generation        Class       No
+ HumanEval                             2023    Python         Code Generation      Function      No
+ MBPP                                  2021    Python         Code Generation      Function      No
+ Code Contests                         2022   Multilingual    Code Generation        File        No
+ SWEBench (Jimenez et al., 2024)       2024    Python         Code Generation      Commit        Yes
+ ProjectEval (Liu et al., 2025)        2025    Python         Code Generation       Project      Yes
+ P-CodeSum (Yun et al., 2024)          2024   Multilingual   Code Summarization     Project      Yes
+ ProConSuL (Lomshakov et al., 2024)    2024    C/C++         Code Summarization     Project      Yes
+ ContextCRBench (Hu et al., 2025d)     2025   Multilingual      Code Review        Commit        Yes
+ AUGER (Li et al., 2022)               2022      Java           Code Review        Commit        Yes
+ Defects4J (Just et al., 2014)         2014      Java        Code Repair & PCA      Project      Yes
+ Bugs.jar (Saha et al., 2018)          2018      Java        Code Repair & PCA      Project      Yes
+ Bears (Madeiral et al., 2019)         2019      Java        Code Repair & PCA      Project      Yes
+ CL-bench Dou et al. (2026)            2026       NL              Multiple             -         Yes
+ CL4SE (Ours)                          2026   Multilingual          Multiple       Multiple      Yes
+
+
+
+
+3.1 Overview
+
+CL4SE is designed to evaluate the learning ability and learning style of LLMs
+across different software engineering tasks and contexts. Unlike typical few-shot
+learning, which simply guides the model to better adapt to tasks by including
+examples in the prompt, CL4SE focuses more on the types and organizational
+structures of contexts and their impact on the effectiveness of in-context learning
+for LLMs. Additionally, CL4SE examines scenarios where the model may struggle
+to gain guidance from parameterized knowledge, particularly in niche or special-
+ized contexts. This approach allows for a deeper understanding of how various
+contextual factors influence a model’s performance and adaptability, ultimately
+leading to improved strategies for leveraging LLMs in diverse and complex soft-
+ware engineering tasks.
+
+
+  Table 2: Statistics of CL4SE, including tasks, contexts, data and evaluation.
+
+ Task                           Context                      Data    Evaluation
+ Code Generation                Interpretable examples       636     Pass Rate
+ Code Summarizatioon            Project-specific             8225    ROUGE/BLEU/METEOR/BERTScore
+ Code Review                    Procedural decision-making   1916    ACC/PRE/REC/F1
+ Patch Correctness Assessment   Positive & negative          2274    ACC/PRE/REC/F1
+
+
+
+
+    In CL4SE, we select a total of four different software engineering tasks, includ-
+ing Code Generation (CG), Code Summarization (CS), Code Review (CR), and
+Patch Correctness Assessment (PCA). These tasks span various stages of software
+engineering and are both typical and representative. For each task, we collect a
+substantial amount of up-to-date data from real software projects and carefully
+8                                                                    Haichuan Hu et al.
+
+
+design and select the contexts. In addition, CL4SE is not limited to specific pro-
+gramming languages or types of LLMs. We select several mainstream programming
+languages, including Python, JavaScript, SQL, among others, and conduct evalu-
+ations across various LLMs, demonstrating the broad applicability of CL4SE. As
+shown in Table 2, we present a summary of the data utilized in CL4SE, including
+the volume of data for each task category, the contexts used by different tasks and
+the evaluation metrics employed.
+
+
+3.2 Context Taxonomy
+
+We conduct an extensive investigation of diverse scenarios in software engineering
+and identify four representative categories of contexts. In what follows, we present
+the classification and semantics of each context type in turn.
+Project-specific context. Software engineering often operates at the project level,
+and the software lifecycle consistently revolves around specific projects. In most
+SE tasks, contexts are generally shared across projects, such as code search (Chen
+et al., 2024a; Oskooei et al., 2025), where semantic similarity is used to match code
+snippets. However, in certain tasks (e.g., code summarization (Liu et al., 2024b;
+Yun et al., 2024), repository-level code completion (Zhang et al., 2023a; Liu et al.,
+2024c)), the context exhibits project-specific characteristics.
+     The contexts of different projects can vary significantly; for instance, the style
+of code summarization may differ based on each project’s objectives, coding stan-
+dards, and team practices. This project-specificity greatly influences how effec-
+tively a model can generate relevant and coherent summaries that align with the
+unique coding conventions and terminologies of a particular project. However,
+modern LLMs do not differentiate between project affiliations in the code corpora
+during the pre-training phase. Instead, they typically mix all the code together
+for training. Consequently, the programming output from these models tends to
+lack project-specific characteristics, making it challenging to identify and leverage
+unique distinctions between projects. Therefore, it is essential to tailor contextual
+inputs for each project in order to enhance model performance in these specialized
+tasks. In this paper, we specifically distinguish this type of context to emphasize
+its importance and to examine the learning capabilities of LLMs in relation to it.
+Context based on interpretable examples. Current few-shot learning methods
+mostly provide LLMs with superficial examples, such as output format examples
+and similar cases. For straightforward instruction-following tasks, such as requir-
+ing the model to output in JSON format, such examples can be quite effective.
+However, more complex tasks often require deeper explanations. LLMs may not
+be able to directly derive guidance from simple examples to apply to the current
+task. On one hand, for traditional non-reasoning models, it is very difficult to de-
+rive intermediate processes of a problem directly from the input-output pairs; if
+the examples are too dissimilar to the target problem, the model will lose meaning-
+ful guidance. On the other hand, for reasoning models, even if the model attempts
+to reason through the intermediate steps, it may fail or deviate from the expected
+path due to insufficient reasoning capabilities, thus introducing noise that inter-
+feres with solving the current task. In this paper, we aim to investigate the impact
+of the interpretable aspects of examples within the context on the model’s ability
+to solve new problems. Therefore, we specifically distinguish this type of context
+CL4SE: Benchmarking Context Learning on Software Engineering                      9
+
+
+to evaluate its effectiveness in enhancing the model’s performance. By examining
+how interpretable examples influence problem-solving capabilities, we aim to pro-
+vide insights that can guide the development of more effective learning strategies
+for complex tasks.
+Context based on positive & negative examples. Existing work typically uses
+positive examples to guide LLMs in learning the correct way to handle tasks (Luo
+et al., 2023; Rubin et al., 2022), or negative examples to help the model avoid
+incorrect trajectories (Liang et al., 2025; Hamdan and Yuret, 2025). However, there
+is limited research investigating the combined effects of these two different types
+of contexts, and even fewer studies compare the applicability and effectiveness
+of positive and negative examples across different tasks and models. Intuitively,
+positive and negative examples act like two distinct reference frames, and providing
+only one type may lead the model to focus excessively on that aspect. For instance,
+supplying only positive samples might lead the model to merely replicate the
+limited patterns within those examples, overlooking a broader range of possible
+solutions. Conversely, offering solely negative samples can teach the model how to
+avoid mistakes but does not guide it toward learning the correct approaches. This
+highlights the importance of a balanced approach that incorporates both types of
+examples, enabling the model to learn effectively by understanding both what to
+do and what to avoid. In this paper, we specifically distinguish between positive
+and negative contexts to compare their roles in specific software engineering tasks
+and the effects of their combination.
+Context based on procedural decision-making. In addition to the three types of
+contexts mentioned above, we also distinguish a fourth type. We find that in some
+software tasks (e.g., code review), the determination of decisions (approve/disap-
+prove) is not completed through a single interaction. Often, this interaction is a
+continuous and multi-turn process, during which the inclination of the decision can
+change. Previous relevant works (Li et al., 2022; Tufano et al., 2024; Frömmgen
+et al., 2024) have simplified the modeling by omitting the interactions and re-
+taining only the final decision, neglecting the explainability and transparency of
+decision-making in software engineering tasks. This incomplete context can also
+lead to misjudgments by LLMs. In this paper, we focus on studying how to utilize
+procedural decision-making contexts to help LLMs understand and anticipate the
+perspectives and turning points that may arise throughout the decision-making
+process, ultimately leading to a well-reasoned decision.
+
+
+3.3 Task Selection
+
+Against the four types of contexts proposed in the previous section, we further
+select four representative software engineering scenarios to examine the role and
+effectiveness of each context type in a task-specific setting. As shown in Figure 2,
+we present the mapping relationship between context types and downstream tasks,
+so as to provide a clearer view of how different forms of contextual information
+support different kinds of reasoning and decision-making.
+    For project-specific context, we choose code summarization, because this task
+strongly depends on project-level domain knowledge, implementation patterns,
+naming conventions, and coding styles that are often unique to a particular code-
+base. For context based on interpretable examples, we select code generation, since
+10                                                                Haichuan Hu et al.
+
+
+high-quality generation usually benefits from explicit reasoning demonstrations
+and transparent step-by-step guidance that can help the model better understand
+how to construct correct solutions. For context based on positive and negative ex-
+amples, we adopt patch correctness assessment, as the core challenge of this task is
+to distinguish genuinely correct patches from overfitting or misleading ones, which
+naturally requires learning from both successful and unsuccessful cases. Finally,
+for context based on procedural decision, we apply it to code review, because code
+review often involves iterative analysis, multi-turn interaction, and progressive
+judgment before reaching a final conclusion. Through this one-to-one mapping be-
+tween context types and tasks, we are able to systematically investigate how each
+type of context contributes to model performance in its most relevant software
+engineering scenario.
+
+
+
+                      Code                     Code
+                      Generation               Summarization Task
+
+                      Interpretable            Project           Context
+                      Examples                 Specific
+
+
+                      Code                     Patch
+                                                                  Task
+                      Review                   Assessment
+
+
+                      Procedural               Positive &
+                                                                  Context
+                      Decision                 Negative
+
+
+                 Fig. 2: The mapping between context and task.
+
+
+
+
+3.4 Data Collection
+
+3.4.1 Code Generation
+
+We collected various types of problems from the well-known programming contest
+platform LeetCode. These problems cover a wide range of categories, including
+algorithm problems (e.g., two pointers, quicksort), data structure problems (e.g.,
+linked lists, binary trees), real-world problem modeling, optimization, and so on.
+First, we crawled the problem descriptions and the official solution sets. Next, we
+collected various user discussions about solution approaches from the comment
+sections. Because these discussions contained noise, we further used Qwen3-Max
+to extract valuable and correct solution ideas from them. Because each prob-
+lem description contains only up to three simple example cases, these examples
+alone are insufficient to judge the correctness of solutions. Therefore, we used the
+CL4SE: Benchmarking Context Learning on Software Engineering                                                                                                 11
+
+
+code model Qwen3-Coder-Plus to generate test cases. The requirements for model-
+generated cases were: (1) inputs and outputs should be diverse and non-redundant;
+(2) include boundary cases whenever possible; (3) generate more than 10 cases per
+problem; and (4) the canonical solution must pass the generated cases. Through
+iterative generation, we first obtained a sufficient number of test cases, and then
+we manually evaluated and corrected the quality of the test cases. After filtering all
+valid samples (2,083 problems), we also rated problem difficulty. Using Qwen3-32B
+as the baseline model, we ran repeated tests on the full dataset 10 times and used
+the average pass rate across the 10 runs as the metric to rank problems from lowest
+to highest. Finally, we selected the top 30% as the test set (636 problems), the
+rest as the train set (1,447 problems).
+
+
+               Table 3: Difficulty distribution of code generation benchmark.
+
+                                                       Hard             Medium                 Easy                  Total
+                                      Train            111                    777                  559                1447
+                                      Test             101                    401                  134                 636
+                                      All              212                   1178                  693                2083
+
+
+    The difficulty distributions for the train and test sets are shown in Table 10.
+One surprising finding is that the model’s notion of difficulty does not always
+match the human labels in the LeetCode database: some problems labeled ”hard”
+are easily solved by the model, while some ”easy” problems are not. We believe this
+discrepancy is because classic problems that frequently appear in exams and tech-
+nical interviews also occur often in various real-world corpora; consequently, these
+problems were likely included in the model’s pretraining data and are therefore
+better mastered by the model. Therefore, by excluding problems with high pass
+rates from the test set, we can evaluate the model’s performance more objectively.
+
+
+
+
+                       23.6%                                                                          24.1%
+                                                             Array                                                                     Array
+                                       2.0%                  String                                                    1.8%            String
+                                         2.1%                Hash Table                                                  1.8%          Hash Table
+                                           2.3%              Math                                                          1.9%
+                                             2.4%                                                                            1.9%      Math
+                                                             Sorting                                                          2.1%     Greedy
+                                              2.4%           Greedy                                                                    Sorting
+                                               2.5%          Dynamic Programming                                               2.5%
+                                                                                                                                       Dynamic Programming
+       19.5%                                                 Two Pointers           18.7%                                       2.9%   Binary Search
+                                                2.5%
+                                                             Binary Search                                                      3.0%   Bit Manipulation
+                                                2.7%         Depth-First Search                                                        Depth-First Search
+                                               4.1%          Bit Manipulation                                                 4.7%     Counting
+                                                             Simulation                                                                Tree
+                                                             Tree                                                                      Simulation
+                                             5.0%            Counting                                                       5.4%
+               8.8%                                                                         8.3%                                       Two Pointers
+                                      5.4%                   Binary Tree                                                               Stack
+                                                             Other                                                   6.1%              Other
+                      7.8%     6.8%                                                                7.8%       7.0%
+
+
+
+
+      (a) Tags Distribution in Train Set                                            (b) Tags Distribution in Test Set
+
+
+
+    As shown in Figure 3(a) and Figure 3(b), we also visualize the problem cate-
+gories in the form of pie chart. The filtered test set does not concentrate on a few
+types of problems despite the reduced sample size; like the training set, it contains
+12                                                                Haichuan Hu et al.
+
+
+more than 15 categories. This demonstrates the richness and diversity of problem
+types in both sets of the code generation benchmark.
+
+
+3.4.2 Code Summarization
+
+To collect realistic code-summary samples from real-world software development,
+we aggregated the top ten large Python open-source projects on GitHub by star
+count. We cloned these repositories to our computing server and parsed each
+project at the function granularity using the general-purpose static analysis tool
+TreeSitter. For each extracted function we recorded metadata including project,
+file path, enclosing class (if any), function name, function body, and associated
+comments or docstrings. To improve the quality and relevance of the samples for
+summary tasks, we applied a set of conservative filtering rules: (1) exclude func-
+tions whose name or relative file path contains the substring ”test” or ”Test” to
+avoid test-only code; (2) exclude Python dunder methods (names that both start
+and end with ” ”) since they typically represent language- or framework-level
+hooks rather than domain logic; (3) exclude functions that have no comments or
+docstrings, because our task requires a natural-language summary associated with
+executable code; and (4) exclude functions whose comment/docstring length ex-
+ceeds 500 words to remove noisy or multi-paragraph documentation that does not
+reflect a concise summary. Any function that met one or more of these criteria was
+removed from the candidate pool.
+     After applying these filters and performing manual spot checks to verify filter
+correctness, we retained 8,225 high-quality samples (see Table 4). These samples
+originate from 2,495 distinct source files and cover 1,197 unique classes, yielding
+approximately 3.3 samples per file and about 6.9 samples per class on average. The
+retained set includes a mixture of short utility functions and longer behavior-rich
+methods. The wide spread of files and classes indicates that the dataset is not
+dominated by a few modules or types, but rather provides broad coverage across
+repositories and object hierarchies. This diversity and the conservative filtering
+strategy together ensure that the dataset is both representative of real development
+code and well-suited for training and evaluating code-summary models.
+
+
+3.4.3 Code Review
+
+To obtain realistic, high-quality code review data, we followed prior work such as
+SWE-bench-verified (Jimenez et al., 2024), SWE-bench-lite (Jimenez et al., 2024),
+and Multi-lingual SWE (Zan et al., 2025), and preselected 32 well-known, high-
+star GitHub repositories. As shown in Table 5, these repositories span multiple
+languages—including Python, JavaScript, and SQL—and cover diverse function-
+alities, ranging from component libraries to machine learning frameworks.
+    Second, we cloned the preselected GitHub repositories to our server. We then
+used the GitHub CLI to extract recent pull requests for each project. In terms
+of PR counts, we observed a large imbalance between Accepted and Rejected
+PRs: most projects have a majority of PRs approved by reviewers, while only a
+few projects (e.g., PyTorch) exhibit a comparatively high number of rejections.
+To ensure label balance in the dataset, we therefore sampled from each project’s
+recent PRs by selecting up to 5,00 accepted PRs and up to 5,000 rejected PRs.
+CL4SE: Benchmarking Context Learning on Software Engineering                                             13
+
+         Table 4: Repo distribution of the code summarization benchmark.
+
+                  Repo                    # Files        # Class        # Summary
+                  AutoGPT                   201             102                824
+                  LlamaFactory               17              7                  47
+                  OpenHands                 165              70                333
+                  django                    257             175               1060
+                  fastapi                    14               5                35
+                  flask                     18               13                73
+                  langchain                 120              56                283
+                  pytorch                   621             325               2445
+                  transformers              649             235               1903
+                  vllm                      433             209               1222
+                  Total                     2495           1197               8225
+
+               Table 5: Candidate repos of the code review benchmark.
+
+ Candidate Project
+ astropy/astropy, django/django, matplotlib/matplotlib, mwaskom/seaborn, pallets/flask, psf/re-
+ quests, pydata/xarray, pylint-dev/pylint, pytest-dev/pytest, scikit-learn/scikit-learn, sphinx-doc/sphinx,
+ sympy/sympy, sqlfluff/sqlfluff, marshmallow-code/marshmallow, pvlib/pvlib-python, pylint-dev/astroid,
+ pyvista/pyvista, pydicom/pydicom, chartjs/Chart.js, grommet/grommet, openlayers/openlayers, es-
+ lint/eslint, scratchfoundation/scratch-gui, prettier/prettier, PrismJS/prism, highlightjs/highlight.js,
+ GoogleChrome/lighthouse, bpmn-io/bpmn-js, alibaba-fusion/next, carbon-design-system/carbon, quarto-
+ dev/quarto-cli, pytorch/pytorch, langchain/langchain
+
+
+
+    We applied the following filtering criteria. First, we removed samples whose
+review conversation count is zero. Unlike prior code-review benchmarks that retain
+only a single review message, we found that reviews in real-world settings typically
+consist of multi-turn conversations involving multiple reviewers and the PR author.
+Because any single message cannot fully capture reviewers’ intentions, we preserve
+the entire review conversation. Second, we excluded PRs that modify more than
+three files to keep the dataset concise. Finally, we inspected the files changed
+by each PR and removed PRs that only modify test cases or that contain large,
+unrelated configuration-file changes (≥ 10000 chars).
+    After applying the above filtering steps, as shown in Table 6, we obtained
+1,916 valid code-review samples from the 32 candidate repositories, comprising
+1,191 positive samples and 725 negative samples. To our knowledge, this is the
+benchmark with the largest number of projects and the closest alignment to real-
+world code review scenarios.
+
+3.4.4 Patch Correctness Assessment
+
+Following prior work (Tian et al., 2020; Lin et al., 2022), we build our patch
+correctness assessment benchmark on Defects4J v2.0 (Just et al., 2014), which
+contains 835 bugs across 17 open-source projects and remains the standard eval-
+uation suite in APR and APCA research (Zhang et al., 2023b). We aggregate
+plausible patches produced by recent APR tools and reported in the literature,
+including results from Liu et al.Liu et al. (2020), Xiong et al.Xiong et al. (2018),
+14                                                                     Haichuan Hu et al.
+
+            Table 6: Repo distribution of the code review benchmark.
+
+               Project          # Accept       #Reject       # Review
+               lighthouse           4               2             6
+               astropy             148            44            192
+               bpmn-js              1               1            2
+               carbon                2             2             4
+               django              239              9           248
+               eslint              161              0           161
+               highlight.js          3              1             4
+               matplotlib           67             63           130
+               openlayers           70              6           76
+               prettier            23               8           31
+               requests             51              4            55
+               xarray                1             3             4
+               pydicom             14               0           14
+               astroid             41             12            53
+               pylint               28             21            49
+               pytest               43             33            76
+               pytorch              9             476           485
+               pyvista             19              14            33
+               quarto-cli          47               1           48
+               scikit-learn        112             19           131
+               sqlfluff            108              6           114
+               Total               1191           725           1916
+
+
+Ghanbari et al.Ghanbari and Marcus (2022), Tian et al.Tian et al. (2020, 2022,
+2023), and Lin et al. (Lin et al., 2022), and we further mine released artifacts to
+locate additional plausible patches from current tools.
+    To mitigate label imbalance we also incorporate developer patches previously
+identified as correct (Tian et al., 2020). We then deduplicate the collected patches
+by reconstructing the original buggy and patched snippets, stripping whitespace
+and comments, and marking patches as duplicates when the normalized snippets
+are identical. Table 7 summarizes the resulting dataset statistics.
+    The outcome is a publicly shareable patch-assessment benchmark for Defects4J
+that, to our knowledge, is the largest of its kind: 2,274 plausible patches in total, of
+which 1,169 are overfitting patches and 1,105 are correct patches. This benchmark
+is intended to facilitate reproducible evaluation and comparison of patch-ranking
+and patch-classification techniques.
+
+
+3.5 Evaluation and Metrics
+
+In code generation tasks, we use PASS@1 to measure the correctness of the gener-
+ated code. For code summarization tasks, we employ common text summarization
+and translation metrics (e.g., ROUGE (Lin, 2004), BLEU (Papineni et al., 2002),
+CL4SE: Benchmarking Context Learning on Software Engineering                    15
+
+  Table 7: Statistics of patches in the patch correctness assessment benchmark.
+
+             ID      APR Tool      # Correct   # Overfitting   # Total
+             1          3sFix          1            65          66
+             2          ACS           32            13          45
+             3        AVATAR           6            25          31
+             4          Arja          16            187         203
+             5         Arja-e          0            48          48
+             6        CapGen           9            39          48
+             7       Cardumen          0             8           8
+             8         ConFix          4            58          62
+             9      DeepRepair         4             8          12
+             10      Developer        965            0          965
+             11      DynaMoth          1            21          22
+             12         Elixir         7            14          21
+             13       FixMiner         3            26          29
+             14       GenProg          1            26          27
+             15      GenProgA          0            29          29
+             16      HDRepair          7             2           9
+             17       Hercules         0             4           4
+             18    JGenProg2015        1             6           7
+             19          Jaid         32            38          70
+             20          Kali          0            15          15
+             21        KaliA           3            40          43
+             22       LSRepair         2            11          13
+             23        Nopol           1            27          28
+             24      Nopol2015         7            29          36
+             25      Nopol2017         0            70          70
+             26        PraPR           1            13          14
+             27      RSRepair          0             8           8
+             28     RSRepairA          4            34          38
+             29        SOFix           2             1           3
+             30      SequenceR         8            46          54
+             31        SimFix         21            34          55
+             32      SketchFix         3             8          11
+             33         TBar          14            50          64
+             34        genPat          0             1           1
+             35      jGenProg          5            34          39
+             36         jKali          3            20          23
+             37     jMutRepair         0            12          12
+             38        kPAR            3            30          33
+             39         ssFix          3             5           8
+                  Our Dataset        1169          1105         2274
+
+
+
+
+BERTScore (Zhang et al., 2019), METEOR (Banerjee and Lavie, 2005)) to assess
+the quality of the generated summaries. In code review and patch correctness as-
+sessment tasks, we utilize Accuracy, Precision, Recall, and F1-score to evaluate
+the consistency between the model’s generated answers and the ground truth. We
+provide a brief overview of the definitions of these metrics as follows.
+
+    PASS@1 evaluates whether the model’s first output is successful in meeting the
+expected functionality, rather than requiring an exact match with the correct code.
+Let N be the total number of code generation attempts and K be the number of
+attempts where the code passes the test cases on the first try. The PASS@1 success
+16                                                                                 Haichuan Hu et al.
+
+
+rate can be expressed as:
+                                                             K
+                                              PASS@1 =                                           (1)
+                                                             N
+Where K is the count of successful first attempts that pass the test cases, N is the
+total number of code generation attempts.
+    BLEU (Papineni et al., 2002) primarily measures the precision of n-grams
+(sequences of words) in the generated text compared with reference text.
+
+                                    Count of n-grams in generated text
+                           Pn =                                                                  (2)
+                                    Count of n-grams in reference text
+
+            (
+                1                            if length of generated > length of reference
+     BP =            length of reference
+                (1− length               )
+                                                                                                 (3)
+                e           of generated     otherwise
+
+                                                         N
+                                                                               !
+                                                         X
+                              BLEU = BP · exp                  wn · log(Pn )                     (4)
+                                                         n=1
+
+    Where wn is a weight for each n-gram.
+    ROUGE (Lin, 2004) measures the overlap between the generated summary and
+reference summaries.
+                                          Number of overlapping n-grams
+                    ROUGE-P =                                                                    (5)
+                                        Total n-grams in generated summary
+
+                                           Number of overlapping n-grams
+                    ROUGE-R =                                                                    (6)
+                                         Total n-grams in reference summary
+
+                                               2 · ROUGE-P · ROUGE-R
+                            ROUGE-F =                                                            (7)
+                                                ROUGE-P + ROUGE-R
+    METEOR (Banerjee and Lavie, 2005) compares generated text against refer-
+ence text by considering precision and recall, while also accounting for factors such
+as stemming, synonymy, and fragmentation penalties.
+
+                                                        2·P ·R
+                                             Fmean =                                             (8)
+                                                        P +R
+
+                                METEOR = Fmean · (1 − Penalty)                                   (9)
+   Where P is the precision (correct matches divided by the total generated
+words), R is the recall (correct matches divided by the total reference words),
+Penalty accounts for fragmentation, reducing the score based on non-contiguous
+matches.
+   BERTScore (Zhang et al., 2019) evaluates the quality of generated text com-
+pared to reference text using embeddings derived from a pre-trained BERT model.
+By calculating precision, recall, and F1-score based on the similarity between the
+embeddings, it provides a comprehensive measure of textual similarity.
+
+                                                1 X
+                                  PBERT =                max sim(rj , ŷi )                     (10)
+                                               |x| r ∈x ŷi ∈x̂
+                                                    j
+CL4SE: Benchmarking Context Learning on Software Engineering                       17
+
+
+
+                                       1 X
+                         RBERT =                       max sim(rj , ŷi )        (11)
+                                      |x̂|             rj ∈x
+                                             ŷi ∈x̂
+
+
+                                             PBERT · RBERT
+                          FBERT = 2 ·                                            (12)
+                                             PBERT + RBERT
+
+   Where x is the embedding for the reference text, x̂ is the embeddings for
+the text generated by the model, and sim(rj , ŷi ) represents the similarity score,
+typically computed using cosine similarity.
+   Accuracy measures the proportion of correctly reported samples.
+
+                                            TP + TN
+                         Accuracy =                                              (13)
+                                       TP + TN + FP + FN
+
+   Recall measures the ratio of reported positive samples over all the real positive
+samples.
+                                                   TP
+                                Recall =                                         (14)
+                                                 TP + FN
+
+   Precision measures the proportion of real positive samples over the reported
+positive samples.
+                                                         TP
+                               P recision =                                      (15)
+                                                       TP + FP
+
+   F1 measures twice the multiplication of precision and recall divided by the
+sum of them.
+
+                                       P recision ∗ Recall
+                            F1 = 2 ∗                                             (16)
+                                       P recision + Recall
+
+
+
+4 Experiment
+
+4.1 Research Questions
+
+In this paper, we study the effectiveness of context learning for software engineering
+tasks through the following research questions.
+RQ1: What is the overall impact of context learning on different LLMs across
+various software engineering tasks?
+RQ2: How does context learning influence the performance of LLMs on code
+generation with interpretable examples?
+RQ3: To what extent does project-specific context learning affect code summa-
+rization quality?
+RQ4: What is the effect of procedural decision context on code review judgment?
+RQ5: How do positive and negative examples contribute to patch correctness
+assessment?
+18                                                                 Haichuan Hu et al.
+
+
+4.2 Model Selection
+
+To evaluate context learning on software engineering tasks, we select 5 represen-
+tative LLMs from diverse global manufacturers for comprehensiveness: Qwen3-
+Max (Yang et al., 2025a) and Qwen-Coder-Plus (Bai et al., 2023) (Alibaba Cloud,
+China), DeepSeek-V3 (Liu et al., 2024a) (DeepSeek, China), GPT-Oss-120B (Agar-
+wal et al., 2025) (OpenAI, US), and Claude-3.5-Haiku-20241022 (Anthropic, US).
+Covering both general and SE-specialized, closed-source and open-source models,
+these models ensure objective, generalizable evaluation, laying a foundation for
+our research questions.
+
+
+4.3 Implementation
+
+We present the implementation details of our experiments as follows, includ-
+ing model deployment, parameter configuration, search framework, and techni-
+cal stack, ensuring reproducibility. For model deployment, all experiments are
+conducted on an 8-card RTX 5880 GPU cluster. Closed-source models (Qwen3-
+Max, Qwen-Coder-Plus, DeepSeek-V3, Claude-3.5-Haiku-20241022) are accessed
+via their official APIs, with a concurrency request number set to 32 to balance
+efficiency and stability. The open-source model (GPT-Oss-120B) is deployed on
+4 of the 8 RTX 5880 GPUs, using bfloat16 precision to optimize inference speed
+while maintaining output accuracy. All models are set with a temperature of 0 to
+ensure deterministic outputs without randomness. The search framework is built
+using Langchain combined with the Chroma vector database, where the embed-
+ding model adopts Qwen3-Embedding-4B1 to convert text and code samples into
+high-quality vector representations. During the search process, the target sam-
+ple itself and samples with timestamps later than the target are excluded to avoid
+data leakage and ensure the fairness of experimental evaluations. The entire experi-
+mental system is implemented based on the PyTorch and Transformer frameworks,
+ensuring efficient model inference, stable experimental operation, and convenient
+reproduction of experimental results by researchers.
+
+
+5 Main Results
+
+5.1 RQ1: Overall Performances
+
+Experiment design. In RQ1, we focus on comparing the performance of LLMs
+under zero-shot and context learning settings across various software engineering
+tasks. For each task, we compute the average score across all evaluation metrics
+as the overall performance of a model on that task, and normalize it to the range
+[0, 1].
+Overall Performance. As shown in Figure 3(c) to Figure 3(f), we use radar charts
+to compare the performance differences between context learning and zero-shot
+across the four tasks. Results show that context learning demonstrates a consistent
+superiority over zero-shot across nearly all models and tasks, confirming its general
+effectiveness in enhancing LLM performance for software engineering.
+ 1   https://huggingface.co/Qwen/Qwen3-Embedding-4B
+CL4SE: Benchmarking Context Learning on Software Engineering                                                                                                           19
+
+
+Task and Model Specific Analysis. Across tasks, the magnitude of improvement
+varies significantly. Code Review sees the most substantial gains (e.g., Qwen3-Max
+improves by 33%), followed by PCA (e.g., DeepSeek-V3 improves by 30%). Code
+Generation and Code Summarization yield moderate but reliable improvements,
+with GPT-Oss-120B achieving the most notable lift in both tasks (20% and 34% re-
+spectively). In terms of models, GPT-Oss-120B and Claude-3.5 exhibit the highest
+elasticity to context learning, leveraging contextual examples to narrow the gap
+with stronger baselines. Qwen3-Max, despite its already strong Zero-Shot per-
+formance, still benefits significantly from context learning in reasoning-intensive
+tasks (Code Review/PCA), with only a negligible drop in Code Generation due
+to a potential ceiling effect.
+
+
+                               Qwen3-Max                          Zero-Shot                                      Qwen3-Max                          Zero-Shot
+                                                                  Context Learning                                                                  Context Learning
+
+
+
+
+   Claude-3.5                                                     Deepseek-V3        Claude-3.5                                                     Deepseek-V3
+
+
+                                           0.25     0.50   0.75     1.00                                                     0.25     0.50   0.75     1.00
+
+
+
+
+                GPT-Oss-120B                      Qwen-Coder-Plus                                 GPT-Oss-120B                      Qwen-Coder-Plus
+
+                        (c) Code Generation                                                           (d) Code Summarization
+
+
+                               Qwen3-Max                          Zero-Shot                                      Qwen3-Max                          Zero-Shot
+                                                                  Context Learning                                                                  Context Learning
+
+
+
+
+   Claude-3.5                                                     Deepseek-V3        Claude-3.5                                                     Deepseek-V3
+
+
+                                           0.25     0.50   0.75      1.00                                                    0.25     0.50   0.75     1.00
+
+
+
+
+                GPT-Oss-120B                      Qwen-Coder-Plus                                 GPT-Oss-120B                      Qwen-Coder-Plus
+
+                           (e) Code Review                                                  (f) Patch Correctness Assessment
+
+
+
+
+Answer to RQ1:
+1. General Effectiveness: Context Learning is a robust paradigm that consistently
+improves LLM performance across diverse SE tasks, including CG, CS, CR and
+PCA.
+2. Reasoning Sensitivity: Tasks demanding complex logical reasoning and
+decision-making (Code Review, PCA) benefit far more from context learning
+than tasks dominated by pattern matching.
+20                                                                                 Haichuan Hu et al.
+
+
+3. Heterogeneous Adaptation: Models with lower Zero-Shot baselines (e.g., GPT-
+Oss-120B) achieve larger proportional gains from context learning compared to
+SOTA models like Qwen3-Max.
+
+
+5.2 RQ2: Context Learning on Code Generation
+
+Experimental Design. RQ2 aims to systematically investigate the impact of con-
+text learning with interpretable examples. We select code generation as the evalu-
+ation scenario and task. We first use examples without interpretations as context,
+allowing the model to directly learn the problem-solving logic of the current task
+from the problem description, target input-output pairs, and solutions. We then
+employ the same examples but add interpretations to illustrate the reasoning pro-
+cess and problem-solving strategies. By comparing the results under these two
+setups, we analyze the impact of interpretable examples on the model’s code gen-
+eration capability. In addition, we further explore how the number of shots affects
+model performance across different levels of problem difficulty.
+Results and Analysis. From the ablation results of interpretable examples in
+Table 8, it can be clearly observed that the introduction of interpretability in
+contextual examples consistently yields positive improvements in the code gener-
+ation PASS@1 rate for all models compared with the non-interpretation setting,
+which verifies the effectiveness of interpretable examples in enhancing the con-
+text learning ability of LLMs for code generation tasks. Specifically, there are sig-
+nificant heterogeneous differences in the magnitude of performance improvement
+across different models: DeepSeek-V3 achieves the most remarkable lift with an
+increase of 5.72%, followed by Claude-3.5 (3.31%) and GPT-Oss-120B (3%), while
+Qwen-Coder-Plus and Qwen3-Max obtain relatively marginal gains of only 0.63%
+and 0.15% respectively. This result reveals a notable heterogeneity in model sen-
+sitivity to example interpretability: code-specialized models and general models
+with lower zero-shot baselines show significantly higher responsiveness to inter-
+pretable contexts, with their performance improved by 3% to 5.72% after adding
+interpretive reasoning. By contrast, Qwen3-Max, which already achieves a high
+zero-shot PASS@1 rate of 78.46%, only gains a marginal 0.15% improvement from
+interpretable examples, and even underperforms in the non-interpretation setting.
+This indicates that high-performance models have encoded sufficient code genera-
+tion logic in their parameterized knowledge, making simple input-output examples
+unable to provide effective guidance and even likely to introduce noise, while in-
+terpretable contexts can effectively make up for the reasoning and task adaptation
+limitations of low-baseline models.
+
+     Table 8: Effectiveness of interpretable examples on code generation task.
+
+                       Qwen3-Max        DeepSeek-V3     Qwen-Coder-Plus   GPT-Oss-120B     Claude-3.5
+ 0-shot                   78.46%           73.90%           53.46%           61.01%          50.16%
+ w/o interpretation       77.99%           72.27%           59.28%           70.12%          61.47%
+ w/ interpretation    78.14%(↑0.15%)   77.99%(↑5.72%)   59.91%(↑0.63%)    73.12%(↑3%)    64.78%(↑3.31%)
+
+
+
+
+    Table 9 further explores the impact of shot number (1–5 shot) on code genera-
+tion performance across difficulty levels, using interpretable examples as the con-
+CL4SE: Benchmarking Context Learning on Software Engineering                       21
+
+
+textual setting. The results clearly demonstrate that performance does not scale
+linearly with the number of shots; instead, it exhibits a task-dependent optimal
+point and significant cross-difficulty heterogeneity. First, across all models, 1-shot
+and 2-shot settings yield the peak performance on the overall dataset, with perfor-
+mance gradually declining as the shot number increases to 3–5 shot. DeepSeek-V3
+achieves its highest overall PASS@1 rate at 1-shot (77.99%), while GPT-Oss-120B
+is an exception, peaking at 4-shot (73.11%) with a steady upward trend. In con-
+trast, Qwen3-Max, Qwen-Coder-Plus, and Claude-3.5 all reach their maximum
+performance at 1-shot or 2-shot, followed by a noticeable drop in 3–5 shot set-
+tings, indicating that excessive demonstrations introduce redundant information
+and lead to performance degradation. Second, the effectiveness of shot number is
+strongly tied to problem difficulty.
+    On Easy problems, most models show a ceiling effect: Qwen3-Max maintains
+about 83% performance across all shots, and Qwen-Coder-Plus only marginally im-
+proves from 58.96% (0-shot) to 72.39% (5-shot). On Medium problems, 1–2 shot
+settings consistently outperform higher shots: DeepSeek-V3 (77.81% at 1-shot),
+GPT-Oss-120B (74.06% at 4-shot), and Claude-3.5 (63.59% at 1-shot) all achieve
+their best results in the low-shot range, confirming that interpretable examples are
+most impactful on practical, medium-difficulty tasks. On Hard problems, perfor-
+mance is unstable across shots with no clear optimal value: GPT-Oss-120B peaks
+at 5-shot (65.35%), while Qwen3-Max and Claude-3.5 show erratic fluctuations,
+reflecting that even interpretable few-shot learning cannot fully mitigate the com-
+plexity of hard code generation problems.
+
+
+                 Table 9: Evaluating LLMs on code generation task.
+
+         Model             0-shot   1-shot   2-shot   3-shot   4-shot   5-shot
+         Qwen3-Max         78.46%   76.73%   78.14%   75.47%   75.00%   76.10%
+         Easy (134)        83.58%   81.34%   83.58%   81.34%   83.58%   83.58%
+         Medium (401)      78.80%   76.81%   78.30%   74.56%   73.32%   76.00%
+         Hard (101)        70.30%   70.30%   70.30%   71.29%   70.30%   67.33%
+         DeepSeek-V3       73.90%   77.99%   77.04%   75.94%   75.79%   75.16%
+         Easy (134)        75.37%   79.10%   78.36%   79.85%   74.63%   76.87%
+         Medium (401)      72.32%   77.81%   77.06%   74.56%   75.56%   74.31%
+         Hard (101)        78.22%   77.23%   75.25%   76.24%   78.22%   76.24%
+         Qwen-Coder-Plus   53.46%   59.91%   59.91%   58.65%   58.96%   59.91%
+         Easy (134)        58.96%   69.40%   68.66%   69.40%   67.16%   72.39%
+         Medium (401)      51.12%   56.86%   58.10%   56.11%   56.11%   57.36%
+         Hard (101)        55.45%   59.41%   55.45%   54.46%   59.41%   53.47%
+         GPT-Oss-120B      61.01%   69.34%   71.70%   71.23%   73.11%   72.80%
+         Easy (134)        57.46%   73.88%   76.87%   78.36%   79.10%   77.61%
+         Medium (401)      64.09%   70.07%   72.32%   71.82%   74.06%   73.07%
+         Hard (101)        53.47%   60.40%   62.38%   59.41%   61.39%   65.35%
+         Claude-3.5        50.16%   64.78%   64.78%   62.89%   61.79%   61.16%
+         Easy (134)        58.96%   73.13%   73.88%   74.63%   74.63%   72.39%
+         Medium (401)      48.88%   63.59%   62.59%   59.35%   58.60%   57.86%
+         Hard (101)        43.56%   58.42%   61.39%   61.39%   57.43%   59.41%
+
+
+
+
+Answer to RQ2:
+22                                                                Haichuan Hu et al.
+
+
+1. Interpretable examples outperform non-interpretation settings for all models,
+with code-specialized and low zero-shot baseline models gaining far more signif-
+icantly.
+2. Interpretable shot number has a non-linear effect, with 1–2 shot being optimal
+for most models and excess shots causing performance degradation.
+3. Problem difficulty shapes interpretability efficacy, with medium-difficulty
+tasks as the primary beneficiaries and easy/hard tasks showing limited gains.
+4. Interpretable contexts compensate for reasoning limitations of low-baseline
+models, while high-performance models see marginal gains due to pre-encoded
+knowledge.
+
+
+5.3 RQ3: Context Learning on Code Summarization
+
+Experimental Design. RQ3 explores how project-specific context impacts LLMs’
+code summarization performance, which requires strict adherence to a project’s
+unique terminology, documentation style, and naming conventions. Using a within-
+subjects design, we leverage 8,225 code-summary pairs from 10 Python open-source
+projects (e.g., PyTorch, Transformers). For each target code snippet, demonstra-
+tion examples are strictly sourced from the same repository to ensure project-
+aligned domain knowledge and linguistic style. We evaluate performance across
+0-shot to 5-shot settings, using 15 metrics (ROUGE-1/2/L, BLEU, METEOR,
+BERTScore) to comprehensively assess lexical similarity, semantic adequacy, and
+contextual alignment of generated summaries.
+Results and Analysis. Table 10 demonstrates a clear and consistent pattern in
+how LLMs utilize project-specific context: 1-shot is the definitive optimal setting
+across all models and metrics, followed by a monotonic performance decline as the
+number of project-specific shots increases. All models achieve their peak scores at
+1-shot, with striking differences in metric improvements: Lexical metrics (ROUGE-
+1/2/L, BLEU) see dramatic surges, while semantic alignment (BERTScore) shows
+only modest gains. For instance, GPT-Oss-120B’s BLEU score jumps from 5.57%
+(0-shot) to 20.35% (1-shot) (+14.78%), and its Rouge-L F1 surges by 13.71%
+(18.96% → 32.67%), indicating that project-specific context effectively guides the
+model to adopt the target project’s unique terminology, phrasing, and documen-
+tation format. In contrast, its BERTScore F1 only increases by 2.05% (85.97% →
+88.02%), which confirms that LLMs already generate semantically accurate sum-
+maries in the 0-shot setting, project-specific context primarily optimizes format
+and linguistic consistency rather than core meaning. This aligns with the key ob-
+servation that summaries remain functionally correct without project-specific con-
+text, but lack alignment with the project’s internal documentation norms. Notably,
+performance degrades sharply and consistently as shot number exceeds 1-shot: all
+models show steady declines in ROUGE, BLEU, METEOR, and BERTScore met-
+rics from 2-shot to 5-shot. For example, GPT-Oss-120B’s Rouge-L F1 plummets
+to 20.75% at 5-shot, and Qwen3-Max’s falls to 20.85%, both dropping below their
+respective 0-shot baselines. This trend is mirrored in lexical metrics (e.g., Qwen3-
+Max’s BLEU drops from 9.75% at 1-shot to 10.46% at 5-shot, failing to retain
+initial gains) and BERTScore (e.g., Claude-3.5’s BERTScore F1 falls from 86.86%
+to 85.95%), indicating that excessive project-specific examples introduce harmful
+redundancy that erodes both linguistic alignment and semantic stability. Model
+CL4SE: Benchmarking Context Learning on Software Engineering                                                                                    23
+
+
+heterogeneity is also observed: general-purpose models (GPT-Oss-120B, Claude-
+3.5) show a more pronounced ”peak-and-decline” pattern in lexical metrics, as
+they rely heavily on the 1-shot context to adapt to project-specific formatting and
+terminology. Code-specialized models like Qwen-Coder-Plus, while also peaking at
+1-shot, exhibit more modest lexical gains (+4.19% BLEU, 7.12% → 11.31%) and
+smaller BERTScore improvements (+0.18%), suggesting they have partial built-in
+familiarity with common code documentation patterns but remain susceptible to
+noise from excessive context.
+
+
+                    Table 10: Evaluating LLMs on code summarization task.
+
+Model                      Rouge-1                     Rouge-2                     Rouge-L             Bleu    Meteor            BERTScore
+Qwen3-Max            r        p         f        r        p          f       r        p         f        s        s        p         r          f1
+0-shot            31.67%   24.52%    25.32%   10.92%    7.73%     8.20%   28.58%   21.96%    22.75%   8.09%    29.07%   86.83%    86.92%     86.80%
+1-shot            33.52%   32.14%    30.74%   18.33%   16.98%    16.66%   31.83%   30.43%    29.17%   9.75%    31.73%   88.01%    87.10%     87.49%
+2-shot            29.60%   28.57%    27.17%   15.79%   14.21%    14.13%   28.25%   27.11%    25.88%   13.65%   28.11%   87.53%    86.60%     87.01%
+3-shot            26.61%   26.19%    24.71%   13.22%   12.41%    12.21%   25.31%   24.83%    23.50%   12.08%   25.08%   87.22%    86.21%     86.66%
+4-shot            24.61%   24.34%    22.92%   11.89%   11.21%    11.10%   23.42%   23.06%    21.79%   11.05%   23.28%   86.91%    85.92%     86.36%
+5-shot            23.39%   23.49%    21.96%   11.15%   10.73%    10.53%   22.21%   22.25%    20.85%   10.46%   22.15%   86.80%    85.80%     86.24%
+DeepSeek-V3          r        p         f         r        p        f        r        p         f        s        s        p         r          f1
+0-shot            30.00%   21.96%    23.18%    9.56%    6.26%    6.82%    26.95%   19.54%    20.70%   6.68%    27.45%   86.24%    86.64%     86.37%
+1-shot            32.07%   31.69%    29.95%   17.29%   16.31%    15.91%   30.45%   29.99%    28.41%   15.40%   30.42%   88.11%    86.93%     87.45%
+2-shot            28.31%   29.38%    27.26%   15.01%   14.86%    14.38%   27.00%   27.87%    25.97%   14.23%   27.24%   87.87%    86.45%     87.10%
+3-shot            25.83%   27.39%    25.14%   13.26%   13.56%    12.96%   24.63%   26.05%    23.98%   13.03%   24.80%   87.64%    86.15%     86.84%
+4-shot            23.82%   25.39%    23.24%   12.02%   12.13%    11.72%   22.72%   24.14%    22.16%   11.78%   23.03%   87.34%    85.85%     86.54%
+5-shot            22.69%   24.41%    22.20%   11.20%   11.51%    11.02%   21.61%   23.19%    21.15%   11.06%   21.88%   87.18%    85.67%     86.37%
+Qwen-Coder-Plus      r        p         f         r        p         f       r        p         f        s        s        p         r          f1
+0-shot            25.30%   26.69%    23.82%    8.24%    8.20%    7.46%    23.20%   24.37%    21.78%   7.12%    25.88%   87.52%    86.27%     86.82%
+1-shot            27.98%   28.38%    26.33%   12.99%   12.27%    11.85%   26.43%   26.64%    24.81%   11.31%   27.34%   87.64%    86.50%     87.00%
+2-shot            27.07%   27.80%    25.71%   13.72%   12.89%    12.60%   25.81%   26.31%    24.45%   12.15%   26.17%   87.59%    86.26%     86.86%
+3-shot            24.71%   25.48%    23.45%   11.89%   11.20%    10.92%   23.58%   24.18%    22.34%   10.53%   23.63%   87.26%    85.88%     86.51%
+4-shot            22.80%   23.43%    21.56%   10.85%    9.86%     9.80%   21.77%   22.22%    20.53%   9.37%    21.81%   86.93%    85.58%     86.19%
+5-shot            21.63%   22.42%    20.51%   10.05%    9.16%     9.07%   20.65%   21.25%    19.53%   8.62%    20.79%   86.79%    85.44%     86.06%
+GPT-Oss-120B         r        p         f         r        p        f        r        p         f        s        s        p         r          f1
+0-shot            28.24%   20.10%    21.52%    7.45%    4.86%    5.33%    25.01%   17.68%    18.96%   5.57%    25.99%   85.53%    86.55%     85.97%
+1-shot            35.72%   36.07%    34.06%   21.08%   21.21%    20.42%   34.21%   34.56%    32.67%   20.35%   34.14%   88.65%    87.52%     88.02%
+2-shot            29.50%   30.08%    28.10%   15.84%   15.82%    15.28%   28.14%   28.66%    26.84%   15.24%   28.30%   87.74%    86.63%     87.13%
+3-shot            26.45%   27.31%    25.27%   13.55%   13.73%    13.15%   25.27%   26.05%    24.16%   13.17%   25.44%   87.36%    86.22%     86.73%
+4-shot            24.21%   24.77%    22.98%   11.75%   11.71%    11.35%   23.05%   23.59%    21.92%   11.35%   23.31%   86.93%    85.85%     86.34%
+5-shot            22.76%   23.60%    21.72%   10.82%   10.93%    10.52%   21.71%   22.50%    20.75%   10.47%   21.77%   86.79%    85.65%     86.16%
+Claude-3.5           r        p         f        r        p          f       r        p         f        s        s        p         r          f1
+0-shot            43.77%   17.70%    22.76%   15.63%    5.31%     6.99%   40.50%   16.17%    20.86%   6.57%    29.24%   83.55%    87.26%     85.29%
+1-shot            40.23%   27.61%    29.81%   22.23%   15.10%    16.36%   38.17%   26.27%    28.35%   15.15%   33.27%   86.47%    87.42%     86.86%
+2-shot            33.21%   28.09%    28.00%   17.61%   14.71%    14.96%   31.57%   26.74%    26.68%   14.72%   29.68%   87.01%    86.92%     86.90%
+3-shot            28.83%   25.44%    24.93%   13.98%   12.38%    12.37%   27.45%   24.25%    23.78%   12.38%   25.99%   86.68%    86.38%     86.48%
+4-shot            26.57%   23.60%    23.01%   12.39%   10.95%    11.01%   25.23%   22.43%    21.90%   11.09%   24.05%   86.37%    86.05%     86.15%
+5-shot            24.76%   22.61%    21.72%   11.26%   10.25%    10.17%   23.53%   21.51%    20.68%   10.19%   22.60%   86.23%    85.79%     85.95%
+
+
+
+
+Answer to RQ3:
+1. Project-specific context yields optimal code summarization performance at
+the 1-shot setting, with lexical metrics (ROUGE, BLEU) showing dramatic gains
+and BERTScore improving modestly.
+2. The gap between lexical and semantic metric improvements confirms that
+LLMs generate semantically correct summaries in zero-shot setting, while
+project-specific context primarily optimizes alignment with a project’s inter-
+nal documentation format and terminology.
+3. Increasing project-specific shots leads to monotonic performance degradation
+due to contextual redundancy.
+4. General-purpose models benefit more from project-specific context in lin-
+guistic alignment than code-specialized models, which show more resilience but
+smaller relative gains.
+5. The 1-shot optimal point highlights that ”less is more” when leveraging
+project-specific context, which is sufficient to align with internal norms with-
+out introducing redundant noise.
+24                                                                   Haichuan Hu et al.
+
+
+5.4 RQ4: Context Learning on Code Review
+
+
+Experimental Design. RQ4 focuses on exploring the impact of procedural decision-
+making context on LLMs’ code review judgment, which is an inherently multi-
+turn task where decisions (approve/reject) emerge through progressive discussions
+rather than single-step evaluations. We adopt a controlled within-subjects design,
+leveraging 1,916 high-quality code review samples from 32 GitHub repositories
+(covering Python, JavaScript, SQL). Each sample retains the full multi-turn con-
+versation history (reviewer comments, author responses, decision turning points)
+as procedural context, rather than only the final decision. We evaluate model
+performance across 0-shot to 5-shot settings. In each shot, the prompt includes
+complete procedural decision examples from the same repository to ensure consis-
+tency in review norms and discussion styles.
+Results and Analysis. Table 11 reveals that procedural decision-making context
+consistently enhances code review performance, with distinct trends in model be-
+havior and metric improvements that stand in sharp contrast to previous tasks.
+First, all models exhibit a steady, monotonic upward trend in core metrics (Accu-
+racy, F1) as the shot number increases from 0 to 5, with no evidence of performance
+degradation from excessive context. Qwen3-Max demonstrates the most dramatic
+growth, with Accuracy rising by 18.69% (58.19% → 76.88%) and F1-score surging
+by 22.80% (56.39% → 79.19%). DeepSeek-V3 and Claude-3.5 also show substan-
+tial gains, confirming that procedural context provides cumulative, additive value
+for decision-making tasks, where learning from more examples refines the model’s
+understanding of nuanced review criteria. Second, metric heterogeneity highlights
+how context refines the precision-recall balance. For Qwen3-Max and Claude-3.5,
+the primary gain comes from a massive increase in Recall (Qwen3-Max: 43.21% →
+70.78%; Claude-3.5: 56.02% → 66.05%), with Precision remaining stable or slightly
+improved. This indicates that procedural examples teach models to identify more
+true positive issues (flawed PRs) that they would otherwise miss in a 0-shot setting.
+DeepSeek-V3 shows a similar focus on Recall (65.41% → 90.12%), while GPT-Oss-
+120B uses the context to marginally boost Precision (64.05% → 65.93%), reducing
+its initial rate of false positives. Notably, Qwen-Coder-Plus, despite steady im-
+provement (Accuracy +12.04%), remains the lowest-performing model across all
+settings. This suggests that code specialization alone is insufficient for code review;
+the task demands understanding of social negotiation and procedural norms in col-
+laborative development, which general-purpose models (Qwen3-Max, Claude-3.5)
+adapt to more effectively with additional context. Finally, 5-shot emerges as the
+optimal setting, as the complexity of procedural decision-making requires exposure
+to a diverse set of discussion patterns and edge cases to reach peak performance.
+
+
+Answer to RQ4:
+1. Procedural decision-making context steadily improves code review perfor-
+mance up to 5-shot, with no redundancy-induced degradation.
+2. The context primarily boosts Recall (flawed PR detection) while stabilizing
+Precision, aligning with real-world review needs.
+3. General-purpose models benefit more than code-specialized ones, as context
+learning both relies on procedural reasoning and code understanding.
+CL4SE: Benchmarking Context Learning on Software Engineering                       25
+
+                   Table 11: Evaluating LLMs on code review task.
+
+ Model               Metric      0-shot   1-shot   2-shot   3-shot   4-shot   5-shot
+                     Accuracy    58.19%   64.09%   71.09%   74.06%   75.52%   76.88%
+                     Precision   81.14%   86.29%   88.98%   89.52%   89.32%   89.87%
+ Qwen3-Max           Recall      43.21%   50.21%   61.04%   65.99%   68.85%   70.78%
+                     F1          56.39%   63.48%   72.41%   75.98%   77.76%   79.19%
+                     Accuracy    65.97%   69.83%   71.56%   73.08%   73.92%   75.09%
+                     Precision   76.45%   72.39%   72.89%   73.73%   74.19%   74.93%
+ DeepSeek-V3         Recall      65.41%   83.21%   86.38%   88.06%   88.98%   90.12%
+                     F1          70.50%   77.42%   79.06%   80.26%   80.92%   81.83%
+                     Accuracy    48.80%   54.02%   56.11%   58.35%   58.40%   60.84%
+                     Precision   77.19%   82.28%   81.26%   82.48%   86.20%   83.89%
+ Qwen-Coder-Plus     Recall      44.18%   46.51%   47.61%   47.81%   48.11%   48.68%
+                     F1          56.20%   59.42%   60.05%   60.53%   61.75%   61.61%
+                     Accuracy    63.62%   64.77%   66.34%   65.60%   66.07%   66.39%
+                     Precision   64.05%   64.44%   65.56%   65.09%   65.43%   65.93%
+ GPT-Oss-120B        Recall      94.54%   96.64%   96.55%   96.30%   96.30%   95.04%
+                     F1          76.36%   77.32%   78.10%   77.68%   77.92%   77.85%
+                     Accuracy    59.53%   62.19%   65.22%   65.81%   64.29%   67.72%
+                     Precision   83.57%   83.36%   84.13%   83.39%   82.34%   85.61%
+ Claude-3.5          Recall      56.02%   57.71%   63.69%   65.59%   63.71%   66.05%
+                     F1          67.08%   68.20%   72.50%   73.43%   71.84%   74.57%
+
+
+
+5.5 RQ5: Context Learning on Patch Correctness Assessment
+
+Experimental Design. RQ5 investigates how positive & negative context im-
+pacts LLMs’ ability to assess patch correctness, which is an essential task re-
+quiring differentiation between valid patches (positive examples) and overfitting
+patches (negative examples). We adopt a controlled within-subjects design, lever-
+aging 2,274 patch samples from Defects4J v2.0 (1,105 correct patches, 1,169 over-
+fitting patches) to ensure balanced labels. The experiment tests three context
+settings: (1) 1-shot negative (only overfitting patches), (2) 1-shot positive (only
+correct patches), and (3) 2-shot mixed (one correct + one overfitting patch). We
+use the same 5 LLMs as previous RQs and evaluate performance via Accuracy,
+Precision, Recall, and F1-score, focusing on how positive/negative examples inde-
+pendently and jointly guide patch classification.
+Results and Analysis.
+    Table 12 reveals three core findings about positive & negative context. First,
+positive examples outperform negative examples alone across all models. For Qwen3-
+Max, 1-shot correct (Accuracy=79.36%, F1=76.50%) outperforms 1-shot over-
+fit (74.48%, 68.27%); similarly, DeepSeek-V3’s 1-shot correct (70.93%, 62.98%)
+surpasses 1-shot overfit (69.30%, 60.31%). This indicates that learning ”what a
+valid patch looks like” provides more direct guidance than only knowing ”what
+to avoid.” Second, the 2-shot mixed setting (correct + overfit) yields the best
+overall performance for all models. DeepSeek-V3 achieves the largest gains (Accu-
+racy=74.48%, F1=69.66%), a 12.95% F1 lift over the vanilla setting; Qwen3-Max
+(80.41%, 77.99%) and GPT-Oss-120B (76.19%, 71.98%) also reach peak perfor-
+mance in this setup. This confirms that combining positive and negative examples
+helps LLMs establish dual reference frames, thus understanding both valid patterns
+26                                                                     Haichuan Hu et al.
+
+        Table 12: Evaluating LLMs on patch correctness assessment task.
+
+ Qwen3-Max         0-shot    1-shot(Overfit)   1-shot(Correct)   2-shot(Correct+Overfit)
+ Accuracy          76.72%        74.48%            79.36%                80.41%
+ Precision         94.19%        94.41%            92.06%                92.18%
+ Recall            58.25%        53.46%            65.44%                67.58%
+ F1                71.99%        68.27%            76.50%                77.99%
+ DeepSeek-V3       Vanilla   1-shot(Overfit)   1-shot(Correct)   2-shot(Correct+Overfit)
+ Accuracy          61.53%        69.30%            70.93%                74.48%
+ Precision         92.71%        89.70%            90.95%                89.41%
+ Recall            27.20%        45.42%            48.16%                57.06%
+ F1                42.06%        60.31%            62.98%                69.66%
+ Qwen-Coder-Plus   Vanilla   1-shot(Overfit)   1-shot(Correct)   2-shot(Correct+Overfit)
+ Accuracy          54.02%        55.16%            59.95%                60.74%
+ Precision         93.57%        92.05%            96.06%                93.10%
+ Recall            11.21%        13.86%            22.93%                25.41%
+ F1                20.02%        24.09%            37.02%                39.92%
+ GPT-Oss-120B      Vanilla   1-shot(Overfit)   1-shot(Correct)   2-shot(Correct+Overfit)
+ Accuracy          68.85%        72.93%            74.82%                76.19%
+ Precision         87.20%        91.69%            89.30%                90.86%
+ Recall            46.06%        51.97%            57.88%                59.59%
+ F1                60.28%        66.34%            70.23%                71.98%
+ Claude-3.5        Vanilla   1-shot(Overfit)   1-shot(Correct)   2-shot(Correct+Overfit)
+ Accuracy          64.51%        72.11%            71.94%                74.26%
+ Precision         94.57%        94.80%            94.17%                94.23%
+ Recall            32.76%        48.33%            48.33%                53.12%
+ F1                48.67%        64.02%            63.88%                67.94%
+
+
+
+and invalid pitfalls. Third, model heterogeneity is pronounced: code-specialized
+models (Qwen-Coder-Plus) show the smallest absolute gains (F1 +19.90% from
+vanilla to 2-shot) but retain high Precision (≥ 93%), while general-purpose models
+(DeepSeek-V3, Claude-3.5) achieve larger F1 improvements by balancing Precision
+and Recall. Notably, all models maintain high Precision (≥ 89%) across settings,
+but Recall improves drastically with context, indicating that examples primarily
+help models identify more true valid/overfitting patches without sacrificing cor-
+rectness.
+
+Answer to RQ5:
+1. Positive examples alone outperform negative examples in guiding patch cor-
+rectness assessment.
+2. The 2-shot mixed setting (correct + overfit) achieves optimal performance,
+confirming complementary value of dual reference frames.
+3. Context primarily boosts Recall while preserving high Precision, with general-
+purpose models gaining more than code-specialized ones.
+
+
+
+6 Discussion
+
+While our work demonstrates the effectiveness of context learning for enhancing
+LLMs’ performance on mainstream SE tasks, several critical challenges remain
+unaddressed and warrant further investigation for real-world adoption of SE con-
+CL4SE: Benchmarking Context Learning on Software Engineering                      27
+
+
+text learning. Below we highlight two prominent challenges that pose significant
+barriers to practical deployment.
+    1). Context Learning for Low-Resource Programming Languages. Most
+existing SE context learning research focuses on high-resource languages (e.g.,
+Python) with abundant open-source code, documentation, and task-specific data.
+However, low-resource programming languages (e.g., Rust, Julia, or domain-specific
+languages like Solidity for smart contracts, Verilog for hardware design) present
+unique challenges for context learning. Due to the scarcity of high-quality contex-
+tual examples, low-resource languages lack sufficient task-specific context, which
+limits the construction of effective in-context demonstrations. Their unique lin-
+guistic and syntactic characteristics require strict alignment with language-specific
+semantics, which generic context engineering strategies cannot satisfy. Moreover,
+LLMs pre-trained on high-resource languages suffer from inherent cross-language
+transfer gaps, making it difficult to generalize context learning capabilities across
+different programming languages.This challenge is especially critical for niche in-
+dustrial domains that rely on low-resource languages, where context learning must
+adapt to specialized language constraints rather than generic SE patterns.
+    2). Dynamic and Evolving Project Contexts. SE context learning assumes
+static project contexts, where coding conventions, documentation styles, and deci-
+sion norms are fixed during data collection. However, real-world software projects
+are dynamic and evolving, posing three key challenges:
+– Context drift: Project contexts change over time, making static examples out-
+  dated or misleading.
+– Long-tail context scarcity: Emerging edge cases lack corresponding historical
+  contextual examples.
+– Context scalability: Large projects contain fragmented sub-contexts, greatly in-
+  creasing the difficulty of context construction and maintenance.
+    Above reveals a key limitation of current context learning methods: they per-
+form well on static projects but cannot adapt to the evolving nature of software
+development. Future research should explore dynamic context engineering mech-
+anisms to maintain alignment between contextual inputs and real-time project
+states.
+
+
+7 Conclusion
+
+This work addresses the lack of systematic evaluation for LLM context learning
+in software engineering by proposing CL4SE, the first dedicated context learning
+benchmark for the SE domain. We define a fine-grained taxonomy of four SE-
+specific context types and map each to a representative core SE task. We construct
+a high-quality real-world dataset with 13,000+ samples from over 30 open-source
+projects (636 code generation problems, 8,225 code summarization pairs, 1,916
+code review PRs, 2,274 patch assessment samples) and conduct extensive evalua-
+tions on five mainstream LLMs using 9 metrics to dissect the efficacy of different
+context types.
+    Extensive experiments confirm that context learning is a robust paradigm for
+SE tasks, delivering an average 24.7% performance improvement across all tasks
+with clear task-specific optimal strategies: 1–2 shot interpretable examples boost
+28                                                                Haichuan Hu et al.
+
+
+DeepSeek-V3’s code generation PASS@1 by 5.72%; 1-shot project-specific con-
+text raises GPT-Oss-120B’s code summarization BLEU by 14.78% (from 5.57%
+to 20.35%); 5-shot procedural context increases Qwen3-Max’s code review Ac-
+curacy and F1 by 18.69% and 22.80% respectively; and 2-shot mixed positive-
+negative context lifts DeepSeek-V3’s patch assessment F1 by 12.95%. General-
+purpose models benefit more from context learning than code-specialized ones in
+most decision-centric and linguistic alignment tasks.
+    We also identify key open challenges for real-world SE context learning de-
+ployment, including the scarcity of high-quality context examples for low-resource
+programming languages and the inability of static context design to adapt to the
+dynamic evolution of software projects (context drift, long-tail context scarcity,
+context scalability), as discussed in our analysis. These challenges point to criti-
+cal future research directions in dynamic context engineering and cross-language
+context transfer for low-resource SE domains.
+    In summary, CL4SE makes three core contributions: first, it establishes a stan-
+dardized evaluation framework for SE-focused context learning with a well-defined
+context taxonomy and task-context mapping; second, it releases a large-scale, rig-
+orously constructed dataset to facilitate reproducible research and model com-
+parison; third, it provides actionable empirical insights into task-specific context
+design, demonstrating that context engineering is not a one-size-fits-all solution
+and offering concrete optimal strategies for core SE workflows. Our findings enable
+researchers and practitioners to move beyond ad-hoc prompt crafting and leverage
+principled context design to fully unlock LLMs’ potential in real-world software
+development.
+
+
+Declarations
+
+Ethical approval: Not Applicable.
+Informed consent: Not Applicable.
+Author Contributions. Haichuan Hu: Conceptualization, Methodology, Writing
+- original draft, Investigation. Quanjun Zhang: Conceptualization, Writing review
+& editing, Validation. Ye Shang: Software, Data curation, Writing - review & edit-
+ing. Guoqing Xie: Software, Formal analysis, Writing - review & editing. Chun-
+rong Fang: Conceptualization, Writing review & editing, Validation. Zhenyu Chen:
+Conceptualization, Writing review & editing, Validation. Liang Xiao: Conceptual-
+ization, Writing review & editing, Validation.
+Data Availability Statement. Our dataset is publicly available at HuggingFace/-
+tomhu/codecl, and the related code is open-sourced at GitHub/Tomsawyerhu/-
+CodeCL.
+Conflict of Interest. The authors declared that they have no conflict of interest.
+Clinical Trial Number: Not Applicable.
+
+
+References
+
+Agarwal S, Ahmad L, Ai J, Altman S, Applebaum A, Arbus E, Arora RK, Bai
+  Y, Baker B, Bao H, et al. (2025) gpt-oss-120b & gpt-oss-20b model card. arXiv
+  preprint arXiv:250810925
+CL4SE: Benchmarking Context Learning on Software Engineering                   29
+
+
+Ahmed T, Pai KS, Devanbu P, Barr E (2024) Automatic semantic augmentation
+  of language model prompts (for code summarization). In: Proceedings of the
+  IEEE/ACM 46th international conference on software engineering, pp 1–13
+Akyürek E, Schuurmans D, Andreas J, Ma T, Zhou D (2022) What learning algo-
+  rithm is in-context learning? investigations with linear models. arXiv preprint
+  arXiv:221115661
+Bai J, Bai S, Chu Y, Cui Z, Dang K, Deng X, Fan Y, Ge W, Han Y, Huang F,
+  et al. (2023) Qwen technical report. arXiv preprint arXiv:230916609
+Banerjee S, Lavie A (2005) Meteor: An automatic metric for mt evaluation with im-
+  proved correlation with human judgments. In: Proceedings of the acl workshop
+  on intrinsic and extrinsic evaluation measures for machine translation and/or
+  summarization, pp 65–72
+Bouzenia I, Devanbu P, Pradel M (2024) Repairagent: An autonomous, llm-based
+  agent for program repair. arXiv preprint arXiv:240317134
+Brown T, Mann B, Ryder N, Subbiah M, Kaplan JD, Dhariwal P, Neelakantan
+  A, Shyam P, Sastry G, Askell A, et al. (2020) Language models are few-shot
+  learners. Advances in neural information processing systems 33:1877–1901
+Chen B, Zhang Z, Langrené N, Zhu S (2025) Unleashing the potential of prompt
+  engineering for large language models. Patterns 6(6)
+Chen J, Hu X, Li Z, Gao C, Xia X, Lo D (2024a) Code search is all you need?
+  improving code suggestions with code search. In: Proceedings of the IEEE/ACM
+  46th international conference on software engineering, pp 1–13
+Chen Y, Hu Z, Zhi C, Han J, Deng S, Yin J (2024b) Chatunitest: A framework
+  for llm-based test generation. In: Companion Proceedings of the 32nd ACM
+  International Conference on the Foundations of Software Engineering, pp 572–
+  576
+Cheng Y, Zhu X, Zhao H, Arora S (2026) Contextual drag: How errors in the
+  context affect llm reasoning. arXiv preprint arXiv:260204288
+Crupi G, Tufano R, Velasco A, Mastropaolo A, Poshyvanyk D, Bavota G (2025)
+  On the effectiveness of llm-as-a-judge for code generation and summarization.
+  IEEE Transactions on Software Engineering
+Dai S, Tang J, Wu J, Wang K, Zhu Y, Chen B, Hong B, Zhao Y, Fu C, Wu K,
+  et al. (2025) Onepiece: Bringing context engineering and reasoning to industrial
+  cascade ranking system. arXiv preprint arXiv:250918091
+Dong Q, Li L, Dai D, Zheng C, Ma J, Li R, Xia H, Xu J, Wu Z, Chang B, et al.
+  (2024a) A survey on in-context learning. In: Proceedings of the 2024 conference
+  on empirical methods in natural language processing, pp 1107–1128
+Dong Y, Jiang X, Jin Z, Li G (2024b) Self-collaboration code generation via chat-
+  gpt. ACM Transactions on Software Engineering and Methodology 33(7):1–38
+Dou S, Zhang M, Yin Z, Huang C, Shen Y, Wang J, Chen J, Ni Y, Ye J, Zhang
+  C, et al. (2026) Cl-bench: A benchmark for context learning. arXiv preprint
+  arXiv:260203587
+Du X, Liu M, Wang K, Wang H, Liu J, Chen Y, Feng J, Sha C, Peng X, Lou Y
+  (2023) Classeval: A manually-crafted benchmark for evaluating llms on class-
+  level code generation. arXiv preprint arXiv:230801861
+Frömmgen A, Austin J, Choy P, Ghelani N, Kharatyan L, Surita G, Khrapko
+  E, Lamblin P, Manzagol PA, Revaj M, et al. (2024) Resolving code review
+  comments with machine learning. In: Proceedings of the 46th international con-
+  ference on software engineering: software engineering in practice, pp 204–215
+30                                                               Haichuan Hu et al.
+
+
+Gao C, Chen X, Zhang G (2025) Sva-icl: Improving llm-based software vulnerabil-
+  ity assessment via in-context learning and information fusion. Information and
+  Software Technology 186:107803
+Gao S, Wen XC, Gao C, Wang W, Zhang H, Lyu MR (2023) What makes
+  good in-context demonstrations for code intelligence tasks with llms? In: 2023
+  38th IEEE/ACM International Conference on Automated Software Engineering
+  (ASE), IEEE, pp 761–773
+Geng M, Wang S, Dong D, Wang H, Li G, Jin Z, Mao X, Liao X (2024) Large
+  language models are few-shot summarizers: Multi-intent comment generation
+  via in-context learning. In: Proceedings of the 46th IEEE/ACM International
+  Conference on Software Engineering, pp 1–13
+Ghanbari A, Marcus A (2022) Patch correctness assessment in automated pro-
+  gram repair based on the impact of patches on production and test code. In:
+  Proceedings of the 31st ACM SIGSOFT International Symposium on Software
+  Testing and Analysis, pp 654–665
+Giray L (2023) Prompt engineering with chatgpt: a guide for academic writers.
+  Annals of biomedical engineering 51(12):2629–2633
+Guo Q, Cao J, Xie X, Liu S, Li X, Chen B, Peng X (2024) Exploring the potential
+  of chatgpt in automated code refinement: An empirical study. In: Proceedings
+  of the 46th IEEE/ACM International Conference on Software Engineering, pp
+  1–13
+Hamdan S, Yuret D (2025) How much do llms learn from negative examples? arXiv
+  preprint arXiv:250314391
+He J, Treude C, Lo D (2025) Llm-based multi-agent systems for software engi-
+  neering: Literature review, vision, and the road ahead. ACM Transactions on
+  Software Engineering and Methodology 34(5):1–30
+Hu H, Shang Y, Sun W, Zhang Q (2025a) Tsapr: A tree search framework for
+  automated program repair. arXiv preprint arXiv:250701827
+Hu H, Shang Y, Xu G, He C, Zhang Q (2025b) Can gpt-o1 kill all bugs? an
+  evaluation of gpt-family llms on quixbugs. In: 2025 IEEE/ACM International
+  Workshop on Automated Program Repair (APR), IEEE, pp 11–18
+Hu H, Xie X, Zhang Q (2025c) Repair-r1: Better test before repair. arXiv preprint
+  arXiv:250722853
+Hu R, Wang X, Wen XC, Zhang Z, Jiang B, Gao P, Peng C, Gao C (2025d)
+  Benchmarking llms for fine-grained code review with enriched context in prac-
+  tice. arXiv preprint arXiv:251107017
+Jiang X, Dong Y, Wang L, Fang Z, Shang Q, Li G, Jin Z, Jiao W (2024) Self-
+  planning code generation with large language models. ACM Transactions on
+  Software Engineering and Methodology 33(7):1–30
+Jimenez CE, Yang J, Wettig A, Yao S, Pei K, Press O, Narasimhan KR (2024) Swe-
+  bench: Can language models resolve real-world github issues? In: The Twelfth
+  International Conference on Learning Representations, ICLR 2024, Vienna, Aus-
+  tria, May 7-11, 2024, OpenReview.net, URL https://openreview.net/forum?id=
+  VTF8yNQM66
+Joel S, Wu J, Fard F (2024) A survey on llm-based code generation for low-
+  resource and domain-specific programming languages. ACM Transactions on
+  Software Engineering and Methodology
+Just R, Jalali D, Ernst MD (2014) Defects4j: A database of existing faults to
+  enable controlled testing studies for java programs. In: Proceedings of the 23rd
+CL4SE: Benchmarking Context Learning on Software Engineering                   31
+
+
+  International Symposium on Software Testing and Analysis, pp 437–440
+Le-Cong T, Luong DM, Le XBD, Lo D, Tran NH, Quang-Huy B, Huynh QT (2023)
+  Invalidator: Automated patch correctness assessment via semantic and syntactic
+  reasoning. IEEE Transactions on Software Engineering 49(6):3411–3429
+Li J, Tao C, Li♂ J, Li G, Jin Z, Zhang H, Fang Z, Liu F (2025) Large lan-
+  guage model-aware in-context learning for code generation. ACM Transactions
+  on Software Engineering and Methodology 34(7):1–33
+Li L, Yang L, Jiang H, Yan J, Luo T, Hua Z, Liang G, Zuo C (2022) Auger:
+  automatically generating review comments with pre-training models. In: Pro-
+  ceedings of the 30th ACM Joint European Software Engineering Conference and
+  Symposium on the Foundations of Software Engineering, pp 1009–1021
+Liang Y, Ying R, Taniguchi T, Cui Z (2025) Failures are the stepping stones to
+  success: Enhancing few-shot in-context learning by leveraging negative samples.
+  arXiv preprint arXiv:250723211
+Lin B, Wang S, Wen M, Mao X (2022) Context-aware code change embedding for
+  better patch correctness assessment. ACM Transactions on Software Engineering
+  and Methodology 31(3):1–29
+Lin CY (2004) Rouge: A package for automatic evaluation of summaries. In: Text
+  summarization branches out, pp 74–81
+Liu A, Feng B, Xue B, Wang B, Wu B, Lu C, Zhao C, Deng C, Zhang C, Ruan
+  C, et al. (2024a) Deepseek-v3 technical report. arXiv preprint arXiv:241219437
+Liu G, Zhu F, Feng R, Ma C, Wang S, Meng G (2026) Intent mismatch causes
+  llms to get lost in multi-turn conversation. arXiv preprint arXiv:260207338
+Liu K, Wang S, Koyuncu A, Kim K, Bissyandé TF, Kim D, Wu P, Klein J,
+  Mao X, Traon YL (2020) On the efficiency of test suite based program repair:
+  A systematic assessment of 16 automated repair systems for java programs.
+  In: Proceedings of the 42nd ACM/IEEE International Conference on Software
+  Engineering, pp 615–627
+Liu K, Pan Y, Xiang Y, He D, Li J, Du Y, Gao T (2025) Projecteval: A benchmark
+  for programming agents automated evaluation on project-level code generation.
+  In: Findings of the Association for Computational Linguistics: ACL 2025, pp
+  20205–20221
+Liu P, Yuan W, Fu J, Jiang Z, Hayashi H, Neubig G (2023) Pre-train, prompt,
+  and predict: A systematic survey of prompting methods in natural language
+  processing. ACM computing surveys 55(9):1–35
+Liu S, Wu J, Bao J, Wang W, Hovakimyan N, Healey CG (2024b) Towards a
+  robust retrieval-based summarization system. arXiv preprint arXiv:240319889
+Liu W, Yu A, Zan D, Shen B, Zhang W, Zhao H, Jin Z, Wang Q (2024c) Graph-
+  coder: Enhancing repository-level code completion via coarse-to-fine retrieval
+  based on code context graph. In: Proceedings of the 39th IEEE/ACM Interna-
+  tional Conference on Automated Software Engineering, pp 570–581
+Liu Y, Tao S, Meng W, Yao F, Zhao X, Yang H (2024d) Logprompt: Prompt
+  engineering towards zero-shot and interpretable log analysis. In: Proceedings
+  of the 2024 IEEE/ACM 46th international conference on software engineering:
+  Companion proceedings, pp 364–365
+Lomshakov V, Podivilov A, Savin S, Baryshnikov O, Lisevych A, Nikolenko S
+  (2024) Proconsul: Project context for code summarization with llms. In: Pro-
+  ceedings of the 2024 Conference on Empirical Methods in Natural Language
+  Processing: Industry Track, pp 866–880
+32                                                                Haichuan Hu et al.
+
+
+Luo M, Xu X, Dai Z, Pasupat P, Kazemi M, Baral C, Imbrasaite V, Zhao
+  VY (2023) Dr. icl: Demonstration-retrieved in-context learning. arXiv preprint
+  arXiv:230514128
+Madeiral F, Urli S, Maia M, Monperrus M (2019) Bears: An Extensible Java Bug
+  Benchmark for Automatic Program Repair Studies. In: Proceedings of the 26th
+  IEEE International Conference on Software Analysis, Evolution and Reengi-
+  neering (SANER ’19), URL https://arxiv.org/abs/1901.06024
+Marvin G, Hellen N, Jjingo D, Nakatumba-Nabende J (2023) Prompt engineering
+  in large language models. In: International conference on data intelligence and
+  cognitive informatics, Springer, pp 387–402
+Mathews NS, Nagappan M (2024) Test-driven development and llm-based code
+  generation. In: Proceedings of the 39th IEEE/ACM International Conference
+  on Automated Software Engineering, pp 1583–1594
+Mei L, Yao J, Ge Y, Wang Y, Bi B, Cai Y, Liu J, Li M, Li ZZ, Zhang D, et al.
+  (2025) A survey of context engineering for large language models. arXiv preprint
+  arXiv:250713334
+Nan Z, Guo Z, Liu K, Xia X (2025) Test intention guided llm-based unit test gen-
+  eration. In: 2025 IEEE/ACM 47th International Conference on Software Engi-
+  neering (ICSE), IEEE Computer Society, pp 779–779
+Oskooei AR, Yukcu S, Bozoglan MC, Aktas MS (2025) Repository-level code un-
+  derstanding by llms via hierarchical summarization: Improving code search and
+  bug localization. In: International Conference on Computational Science and Its
+  Applications, Springer, pp 88–105
+Ouyang S, Yu W, Ma K, Xiao Z, Zhang Z, Jia M, Han J, Zhang H, Yu D (2024)
+  Repograph: Enhancing ai software engineering with repository-level code graph.
+  arXiv preprint arXiv:241014684
+Papineni K, Roukos S, Ward T, Zhu WJ (2002) Bleu: a method for automatic
+  evaluation of machine translation. In: Proceedings of the 40th annual meeting
+  of the Association for Computational Linguistics, pp 311–318
+Patil A (2025) Advancing software quality: A standards-focused review of llm-
+  based assurance techniques. arXiv preprint arXiv:250513766
+Rasheed Z, Sami MA, Waseem M, Kemell KK, Wang X, Nguyen A, Systä K,
+  Abrahamsson P (2024) Ai-powered code review with llms: Early results. arXiv
+  preprint arXiv:240418496
+Rodriguez AD, Dearstyne KR, Cleland-Huang J (2023) Prompts matter: Insights
+  and strategies for prompt engineering in automated software traceability. In:
+  2023 IEEE 31st International Requirements Engineering Conference Workshops
+  (REW), IEEE, pp 455–464
+Ronanki K, Arvidsson S, Axell J (2025) Prompt engineering guidelines for using
+  large language models in requirements engineering. In: Euromicro Conference
+  on Software Engineering and Advanced Applications, Springer, pp 245–262
+Rubin O, Herzig J, Berant J (2022) Learning to retrieve prompts for in-context
+  learning. In: Proceedings of the 2022 conference of the North American chapter
+  of the association for computational linguistics: human language technologies,
+  pp 2655–2671
+Saha RK, Lyu Y, Lam W, Yoshida H, Prasad MR (2018) Bugs. jar: A large-scale,
+  diverse dataset of real-world java bugs. In: Proceedings of the 15th international
+  conference on mining software repositories, pp 10–13
+CL4SE: Benchmarking Context Learning on Software Engineering                   33
+
+
+Sahoo P, Singh AK, Saha S, Jain V, Mondal S, Chadha A (2024) A systematic
+  survey of prompt engineering in large language models: Techniques and appli-
+  cations. arXiv preprint arXiv:240207927 1
+Shao M, Ding Y, Gao C, Wang J, Zhu G (2026) Fix pattern-aware vulnerabil-
+  ity patch generation via in-context learning. ACM Transactions on Software
+  Engineering and Methodology
+Singh A, Ehtesham A, Kumar S, Khoei TT (2025) Agentic retrieval-augmented
+  generation: A survey on agentic rag. arXiv preprint arXiv:250109136
+Sukkasem P, Soomlek C, Dechsupa C (2025) Llm-based code comment summariza-
+  tion: Efficacy evaluation and challenges. In: 2025 17th International Conference
+  on Knowledge and Smart Technology (KST), IEEE, pp 335–340
+Syahputri IW, Budiardjo EK, Putra POH (2025) Unlocking the potential of the
+  prompt engineering paradigm in software engineering: A systematic literature
+  review. AI 6(9):206
+Tang X, Wang L, Liu Y, Chai L, Yang J, Li Z, Tian H, Klein J, Bissyande TF
+  (2024) In-context code-text learning for bimodal software engineering. arXiv
+  preprint arXiv:241018107
+Tian H, Liu K, Kaboré AK, Koyuncu A, Li L, Klein J, Bissyandé TF (2020)
+  Evaluating representation learning of code changes for predicting patch correct-
+  ness in program repair. In: Proceedings of the 35th IEEE/ACM International
+  Conference on Automated Software Engineering, pp 981–992
+Tian H, Li Y, Pian W, Kabore AK, Liu K, Habib A, Klein J, Bissyandé TF (2022)
+  Predicting patch correctness based on the similarity of failing test cases. ACM
+  Transactions on Software Engineering and Methodology 31(4):1–30
+Tian H, Liu K, Li Y, Kaboré AK, Koyuncu A, Habib A, Li L, Wen J, Klein
+  J, Bissyandé TF (2023) The best of both worlds: Combining learned embed-
+  dings with engineered features for accurate prediction of correct patches. ACM
+  Transactions on Software Engineering and Methodology 32(4):1–34
+Tufano R, Dabić O, Mastropaolo A, Ciniselli M, Bavota G (2024) Code review
+  automation: strengths and weaknesses of the state of the art. IEEE Transactions
+  on Software Engineering 50(2):338–353
+Wang G, Sun Z, Ye S, Gong Z, Chen Y, Zhao Y, Liang Q, Hao D (2024a) Do
+  advanced language models eliminate the need for prompt engineering in software
+  engineering? ACM Transactions on Software Engineering and Methodology
+Wang T, Zhou N, Chen Z (2024b) Enhancing computer programming education
+  with llms: A study on effective prompt engineering for python code generation.
+  arXiv preprint arXiv:240705437
+Wang Z, Feng C, Liu L, Jiao G, Ye P (2024c) The application of llms in the anal-
+  ysis and modeling of software requirements. In: 2024 IEEE 24th International
+  Conference on Software Quality, Reliability, and Security Companion (QRS-C),
+  IEEE, pp 1143–1153
+Wu Y, Wang Y, Li Y, Tao W, Yu S, Yang H, Jiang W, Li J (2025) An empirical
+  study on commit message generation using llms via in-context learning. arXiv
+  preprint arXiv:250218904
+Xia CS, Deng Y, Dunn S, Zhang L (2024) Agentless: Demystifying llm-based
+  software engineering agents. arXiv preprint arXiv:240701489
+Xiong Y, Liu X, Zeng M, Zhang L, Huang G (2018) Identifying patch correctness in
+  test-based program repair. In: Proceedings of the 40th IEEE/ACM International
+  Conference on Software Engineering, pp 789–799
+34                                                              Haichuan Hu et al.
+
+
+Xu J, Cui Z, Zhao Y, Zhang X, He S, He P, Li L, Kang Y, Lin Q, Dang Y, et al.
+  (2024) Unilog: Automatic logging via llm and in-context learning. In: Proceed-
+  ings of the 46th ieee/acm international conference on software engineering, pp
+  1–12
+Xu W, Liang Z, Mei K, Gao H, Tan J, Zhang Y (2025a) A-mem: Agentic memory
+  for llm agents. arXiv preprint arXiv:250212110
+Xu X, Mao R, Bai Q, Gu X, Li Y, Zhu L (2025b) Everything is context: Agentic
+  file system abstraction for context engineering. arXiv preprint arXiv:251205470
+Yang A, Li A, Yang B, Zhang B, Hui B, Zheng B, Yu B, Gao C, Huang C, Lv C,
+  et al. (2025a) Qwen3 technical report. arXiv preprint arXiv:250509388
+Yang Z, Wu J, Yang Z, Yu Z (2025b) Parameter-efficient fine-tuning with at-
+  tributed patch semantic graph for automated patch correctness assessment.
+  arXiv preprint arXiv:250502629
+Yun S, Lin S, Gu X, Shen B (2024) Project-specific code summarization with
+  in-context learning. Journal of Systems and Software 216:112149
+Zan D, Huang Z, Liu W, Chen H, Zhang L, Xin S, Chen L, Liu Q, Zhong
+  X, Li A, Liu S, Xiao Y, Chen L, Zhang Y, Su J, Liu T, Long R, Shen
+  K, Xiang L (2025) Multi-swe-bench: A multilingual benchmark for issue re-
+  solving. CoRR abs/2504.02605, DOI 10.48550/ARXIV.2504.02605, URL https:
+  //doi.org/10.48550/arXiv.2504.02605, 2504.02605
+Zeng Z, Shi R, Han K, Li Y, Sun K, Wang Y, Yu Z, Xie R, Ye W, Zhang S
+  (2025) Benchmarking and studying the llm-based code review. arXiv preprint
+  arXiv:250901494
+Zhang F, Chen B, Zhang Y, Keung J, Liu J, Zan D, Mao Y, Lou JG, Chen W
+  (2023a) Repocoder: Repository-level code completion through iterative retrieval
+  and generation. In: Proceedings of the 2023 Conference on Empirical Methods
+  in Natural Language Processing, pp 2471–2484
+Zhang Q, Fang C, Ma Y, Sun W, Chen Z (2023b) A survey of learning-based
+  automated program repair. ACM Transactions on Software Engineering and
+  Methodology 33(2):1–69
+Zhang Q, Hu C, Upasani S, Ma B, Hong F, Kamanuru V, Rainton J, Wu C,
+  Ji M, Li H, et al. (2025) Agentic context engineering: Evolving contexts for
+  self-improving language models. arXiv preprint arXiv:251004618
+Zhang Q, Shang Y, Hu H, Fang C, Chen Z, Xiao L (2026) Compass: Contrastive
+  learning for automated patch correctness assessment in program repair. arXiv
+  preprint arXiv:260207561
+Zhang T, Kishore V, Wu F, Weinberger KQ, Artzi Y (2019) Bertscore: Evaluating
+  text generation with bert. arXiv preprint arXiv:190409675
+Zhou X, Xu B, Kim K, Han D, Le-Cong T, He J, Le B, Lo D (2023)
+  Patchzero: Zero-shot automatic patch correctness assessment. arXiv preprint
+  arXiv:230300202
+Zhou X, Xu B, Kim K, Han D, Nguyen HH, Le-Cong T, He J, Le B, Lo D (2024)
+  Leveraging large language model for automatic patch correctness assessment.
+  IEEE Transactions on Software Engineering 50(11):2865–2883
+

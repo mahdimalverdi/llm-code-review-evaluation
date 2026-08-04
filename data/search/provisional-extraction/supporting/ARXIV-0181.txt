@@ -1,0 +1,1892 @@
+                                             CoCo-Bench: A Comprehensive Code Benchmark For Multi-task Large
+                                                              Language Model Evaluation
+                                                    Wenjing Yin1 * , Tianze Sun2 , Yijiong Yu3 , Jiawei Fang4 , Guangyao Su4 ,
+                                                    Jiancheng Wang4 , Zekun Wang5 , Wei Wang5 , Ran Chen5 , Ziyun Dai5 ,
+                                                Shuai Yuan1 , Menghang Dong1 , Peng Luo5 , Dong Cao5 , Da Lei5 , Yajun Zhang5 ,
+                                                   Hao Chen5 , Xiang Ma5 , Yong Liu5 , Weifeng Liu5 , Yuanjian Xu6 , Ji Pei5 ,
+                                                    1
+                                                      Peking University, 2 Harbin Institute of Technology, 3 Tsinghua University,
+                                                             4
+                                                               China Unicom Software Research Institute, 5 OpenCSG,
+                                                         6
+                                                           Hong Kong University of Science and Technology (Guangzhou)
+
+                                                                Abstract                             et al., 2021) focus on simple test cases readily avail-
+                                                                                                     able online, making them prone to overfitting by
+                                              Large language models (LLMs) play a crucial
+                                                                                                     models. Benchmarks such as CoderEval (Zhang
+                                              role in software engineering, excelling in tasks
+                                                                                                     et al., 2024b) and ClassEval (Du et al., 2023) tar-
+arXiv:2504.20673v1 [cs.SE] 29 Apr 2025
+
+
+
+
+                                              like code generation and maintenance. How-
+                                              ever, existing benchmarks are often narrow in          get specific LLM capabilities but lack comprehen-
+                                              scope, focusing on a specific task and lack a          sive coverage for a holistic evaluation. There is
+                                              comprehensive evaluation framework that re-            an urgent need for an objective, systematic, and
+                                              flects real-world applications. To address these       comprehensive benchmark to support the contin-
+                                              gaps, we introduce CoCo-Bench (Comprehen-              ued development of AI4SE.
+                                              sive Code Benchmark), designed to evaluate
+                                                                                                        We propose that an effective benchmark should
+                                              LLMs across four critical dimensions: code
+                                              understanding, code generation, code modifi-
+                                                                                                     align closely with real-world scenarios and evaluate
+                                              cation, and code review. These dimensions              LLMs across four key dimensions of programmer
+                                              capture essential developer needs, ensuring            capabilities: code understanding (CU, the ability to
+                                              a more systematic and representative evalua-           comprehend existing code), code generation (CG,
+                                              tion. CoCo-Bench includes multiple program-            the ability to generate code based on given con-
+                                              ming languages and varying task difficulties,          text), code modification (CM, the ability to detect
+                                              with rigorous manual review to ensure data             error and modify code), and code review (CR, the
+                                              quality and accuracy. Empirical results show
+                                                                                                     ability to assess and improve code quality). These
+                                              that CoCo-Bench aligns with existing bench-
+                                              marks while uncovering significant variations          four dimensions provide a robust framework for
+                                              in model performance, effectively highlight-           evaluating LLMs, ensuring a detailed and system-
+                                              ing strengths and weaknesses. By offering a            atic measurement of their performance in practical
+                                              holistic and objective evaluation, CoCo-Bench          development contexts.
+                                              provides valuable insights to guide future re-            To address these needs, we introduce CoCo-
+                                              search and technological advancements in code-         Bench, a Comprehensive Code Benchmark de-
+                                              oriented LLMs, establishing a reliable bench-
+                                                                                                     signed to assess LLMs across four key dimensions.
+                                              mark for the field.
+                                                                                                     It evaluates a range of programming languages and
+                                         1    Introduction                                           tasks of varying difficulty, with rigorous manual
+                                                                                                     review to ensure quality and accuracy. Unlike ex-
+                                         In recent years, the application of artificial intel-       isting benchmarks, CoCo-Bench features innova-
+                                         ligence in software engineering (AI4SE) (McDer-             tive task designs, such as reverse reasoning for CU
+                                         mott et al., 2020) has rapidly evolved, from code           and multi-level code completion for CG, offering
+                                         generation and bug detection to software testing.           a more comprehensive evaluation of model capa-
+                                         However, these advancements have exposed the                bilities. CoCo-Bench ensures task diversity and
+                                         limitations of existing code benchmarks. Many               practical alignment by including both simple and
+                                         benchmarks fail to comprehensively assess large             complex tasks. This approach prevents overfitting
+                                         language models (LLMs), often overestimating                and better reflects model performance in real-world
+                                         their true performance and leading to biased con-           development environments, providing a nuanced
+                                         clusions.                                                   framework that identifies strengths and weaknesses
+                                            As shown in Table 1, current benchmarks like             across different capability dimensions.
+                                         HumanEval (Chen et al., 2021) and MBPP (Austin                 Our empirical results demonstrate that CoCo-
+                                             * ameliayin@stu.pku.edu.cn                              Bench not only aligns well with existing bench-
+
+                                                                                                 1
+                                                                           update
+
+
+
+
+                                                 📄 code snippet                               ✅ bug-free code
+    📌 Work Scenarios                                                                                                  📌 Work Scenarios
+      Reading and Maintaining Legacy Code                                                                               Pull Request Review
+                                                                             yes
+      Bug Localization and Debugging                                                                                    Code Quality Control
+      Architecture Analysis                                                                                             Security and Performance Audits
+
+
+                                            🎯 CU (Code Understanding)                       🔍 CR (Code Review)
+    💻 How Code LLMs Can Help                                                                                          💻 How Code LLMs Can Help
+      Automatic Code Comment Generation                                                                                  Code Quality Checks
+      Code Summarization                                                                                                 Automated Review Comments
+      Code Dependency Analysis                                                                                           Security Vulnerability Detection
+                                                                        ❓ bug-free code
+
+       📌 Work Scenarios                                                                                                      📌 Work Scenarios
+         New Feature Development                                                                                                 Code Refactoring
+         API and Interface Development                                                                                           Bug Fixing
+         Boilerplate Code Creation                                                                                               Code Upgrades
+                                                                              no
+                                             🖋️ CG (Code Generation)                      🔧 CM (Code Modification)
+        💻 How Code LLMs Can Help                                                                                     💻 How Code LLMs Can Help
+          Functional Code Generation                                                                                   Automated Refactoring Suggestions
+          Code Completion                                                                                              Bug Fix Assistance
+          Code Template Generation                                                                                     Library and Framework Updates
+
+
+
+
+Figure 1: Overview of the core evaluation dimensions in CoCo-Bench. The framework assesses four critical
+capabilities of code LLMs: code understanding (CU), code generation (CG), code modification (CM), and code
+review (CR). The evaluation flow highlights the interconnected nature of these capabilities in real-world software
+development scenarios.
+
+
+marks but also reveals significant variations in
+model performances across different capability di-
+mensions. This effectively points out the strengths                                  Code Benchmarks                 CU         CG          CM              CR
+and weaknesses of various code LLMs. By offer-
+                                                                                     CoNaLA                          ✓           ✗            ✗             ✗
+ing a more holistic and objective evaluation, CoCo-
+                                                                                     Concode                         ✓           ✗            ✗             ✗
+Bench aims to guide future research, drive techno-
+                                                                                     HumanEval                       ✗           ✓            ✗             ✗
+logical advancements in the development of code-
+                                                                                     MBPP                            ✓           ✗            ✗             ✗
+oriented LLMs, and establish a reliable standard
+                                                                                     APPS                            ✓           ✗            ✗             ✗
+for the field of software engineering.
+                                                                                     PandasEval                      ✓           ✗            ✗             ✗
+                                                                                     NumpyEval                       ✓           ✗            ✗             ✗
+2   Related Work
+                                                                                     AixBench                        ✓           ✗            ✗             ✗
+Code benchmarks for LLMs have undergone                                              ClassEval                       ✓           ✗            ✗             ✗
+significant evolution recently, reflecting notable                                   CoderEval                       ✓           ✗            ✗             ✗
+advancements in the field. Early works like                                          CodeFuseEval                    ✓           ✓            ✗             ✗
+HumanEval (Chen et al., 2021), Mostly Basic                                          UltraEval                       ✗           ✓            ✗             ✗
+Programming Problems (MPBB) (Austin et al.,                                          CodeXGLUE                       ✓           ✓            ✓             ✗
+2021) and The Code/Natural Language Challenge                                        NaturalCodeBench                ✓           ✗            ✗             ✗
+(CoNaLa) (Yin et al., 2018) focused on fundamen-                                     CodeScope                       ✓           ✓            ✓             ✗
+tal CG tasks. HumanEval evaluated models’ ability                                    Mercury                         ✓           ✗            ✗             ✗
+to generate Python functions using real-world tasks,                                 ENAMEL                          ✓           ✗            ✗             ✗
+while MPBB included 974 tasks aimed at entry-                                        CoCo-Bench                      ✓           ✓            ✓             ✓
+level programmers, assessing CG from complex
+textual descriptions.                                                           Table 1: Task coverage across various code benchmarks.
+   Most code benchmarks primarily concentrate                                   ✓ indicates coverage of certain type of task, while ✗
+on tasks related to CG. APPS (Hendrycks et al.,                                 indicates no coverage.
+2021) challenges models to generate Python code
+from natural language, simulating real-world de-
+
+                                                                            2
+veloper tasks. CoderEval (Zhang et al., 2024b) ex-          clarity and precision in assessment. Figure 2 shows
+panded evaluations by focusing on non-standalone            some demonstrations.
+functions commonly found in open-source projects,
+providing a platform for assessing functional cor-
+rectness. ClassEval (Du et al., 2023) introduced a          3.1   Code Understanding (CU)
+benchmark for class-level CG, addressing gaps in            CU is formalized as a bidirectional inference prob-
+existing evaluations by focusing on more complex            lem. Let C denote the set of all possible code
+tasks. Concode (Iyer et al., 2018) targets generating       snippets, I represent the set of all possible input
+Java class member functions from English docu-              parameters, and O denote the set of all possible
+mentation, addressing challenges in class member            outputs. The CU task comprises two functions:
+                                                                                          −1
+function generation. CodeXGLUE (Lu et al., 2021)            fCU : C × I → O and fCU           : C × O → P(I).
+and CodeEditorBench (Guo et al., 2024) advance              Here, fCU (C, I) = O predicts the output O given
+research in code understanding and editing, evalu-          the code snippet C and input parameters I, and
+                                                              −1
+ating tasks like debugging and requirement switch-          fCU   (C, O) = I ′ deduces the set of possible input
+ing.                                                        parameters I ′ ⊆ I that could produce the output
+   As task complexity increased, new benchmarks             O when executed with code C.
+emerged to cover a broader range of scenarios.                  Formally, for a given code snippet C ∈ C, input
+DyPyBench (Bouzenia et al., 2024) is the first com-         I ∈ I, and output O ∈ O, fCU (C, I) = O if and
+                                                                                                    −1
+prehensive benchmark for dynamic program anal-              only if execute(C, I) = O, and fCU         (C, O) =
+                                                                ′                      ′
+                                                            {I ∈ I | execute(C, I ) = O}.
+ysis of Python projects. SWE-BENCH (Jimenez
+et al., 2024) evaluates models’ ability to generate             CU emphasizes the model’s deep understand-
+patches that pass real tests by linking GitHub is-          ing of code logic and its ability to perform
+sues with merged pull requests. CRUXEval (Gu                both forward and reverse inferences. To ensure
+et al., 2024) tests models on practical coding tasks        wide applicability, the collected code snippets
+using 800 different Python functions, while De-             span multiple technical domains, including ar-
+bugbench (Tian et al., 2024) focuses on assess-             tificial intelligence and machine learning, data
+ing debugging capabilities, reflecting the need             processing and analysis, web development, and
+for more complex evaluations beyond CG. Live-               database management. For example, in web de-
+CodeBench (Jain et al., 2024) adopts a dynamic ap-          velopment and data processing, we utilize key
+proach by continuously sourcing new programming             tools such as PyTorch (Paszke et al., 2019),
+challenges from competitive platforms to evalu-             TensorFlow (Abadi et al., 2016), Keras (Chol-
+ate models’ real-world capabilities, particularly in        let, 2015), Scikit-learn (Pedregosa et al., 2018),
+code self-repair and test output prediction. Code-          NumPy (Harris et al., 2020), Pandas (McKinney,
+Mind (Liu et al., 2024) introduces dimensions like          2010), and Matplotlib (Hunter, 2007).
+independent execution reasoning and specification               Specifically, the CU task consists of two sub-
+reasoning to assess models’ performance in com-             tasks: predicting the code output (CUF ) and de-
+plex tasks beyond simple CG.                                ducing the code input (CUR ). For instance, given
+   Multi-task benchmarks have also gained im-               the function def add(a, b): return a + b
+portance. CodeFuseEval (Di et al., 2024) com-               and inputs (3, 5), the model should accurately pre-
+bines the standards of HumanEval-x and MPBB,                dict the result 8. Conversely, based on the output
+introducing multi-task scenarios like code comple-          8, the model should deduce potential inputs such
+tion and cross-language translation. UltraEval (He          as {(3, 5), (4, 4), (6, 2)}. By assessing the model’s
+et al., 2024) provides a lightweight, comprehensive         accuracy in both CUF and CUR , we can compre-
+framework to assess LLMs across various tasks,              hensively measure its understanding of code logic.
+offering a unified evaluation platform.
+                                                            3.2   Code Generation (CG)
+3   Task Definition                                         CG is defined as the transformation of natural lan-
+                                                            guage descriptions into executable code. Let D
+In CoCo-Bench, we define four primary tasks to              represent the set of all possible natural language de-
+comprehensively evaluate the capabilities of LLMs           scriptions, and C denote the set of all possible code
+in software engineering. Each task is formally              snippets. The CG task is represented by the func-
+defined using mathematical notation to provide              tion fCG : D → C, where fCG (D) = C generates
+
+                                                        3
+                                                                                                                                                                                                                                                                                   The review points out several critical concerns: performance
+                    actual outputs generated by the LLM. This sample passes when the
+                                                                                                                                                                                                                                                                                   inefficiencies, severe security risks associated with the use of eval()
+                    expected output matches the actual output.
+                                                                                                                                                                                                                                                                                   function on user inputs, non-standard naming convention for the
+                                                                                                                                                                                                                                                                                   variable temp value, and the absence of logical errors. Such detailed
+                                                                                                            This task focuses on generating specific lines of code within a Python                                                                                                 evaluations are essential for improving software quality and security.
+                                                                                                            function designed to process a 2D Numpy array. The provided
+                                                                                                                                                                                         Key word Detection: np.matrix
+                                                                                                            incomplete code includes placeholders marked ”TODO”, where the
+                                                                                                            code needs to be completed. The expected output shows what needs
+                                                                                                                                                                                          The task demonstrates the transition from using numpy.matrix, which
+                                                                                                            to be filled in to achieve the desired functionality.
+                                                                                                                                                                                          is deprecated, to the recommended numpy.array for matrix
+                                                                                                                                                                                          operations. The expected output is used to ensure that the updated
+                                                                                                                                                                                          code produces the correct results, and the test cases validate the
+                                                                                                                                                                                          success of the modification. Key word detection, such as np.matrix, is
+                                                                                                                                                                                          used to check the necessary code changes.
+
+
+
+
+                                          Task 1: Code Understanding                                                                                                                                                                           Task 2: Code Generation
+
+      Description:                                                                                                                                                                                    Description:
+          PyTorch function to manipulate and process a tensor. The function performs slicing to select specific elements, applies different activation functions                                          Incomplete Python function that processes a 2D numpy array by applying conditional filters, sorting rows based on specific conditions, and performing
+      (ReLU and Tanh) to different slices, then multiplies these results element-wise and returns the final tensor.                                                                                   selective transformations. The main function relies on a helper function, which needs to be completed to perform these operations.
+
+                                                                                                                                                                                                      Code:                                                                                        Expected Output:
+      Code:
+
+
+
+
+                                                                                               This code snippet is about PyTorch application which is aimed at
+                                                                                               slicing tensors and applying activation functions (ReLU and Tanh) to
+                                                                                               different segments. The function then performs an element-wise
+                                                                                               multiplication of the activated segments to produce the final output
+                                                                                               tensor. The input tensor is provided, along with the expected and
+                                                                                               actual outputs generated by the LLM. This sample passes when the
+                                                                                               expected output matches the actual output.
+
+
+                                                                                                                                                                                                      Test Cases:         OR
+                                                                                                                                                                                                                                                                                         This task focuses on generating specific lines of code within a Python
+                                                                                                                                                                                                                                                                                         function designed to process a 2D Numpy array. The provided incomplete
+                                                                                                                                                                                                                                                                                         code includes placeholders marked ”TODO”, where the code needs to be
+      Input: "[1, -2, 3, -4, 5, -6]"                                                                                                                                                                                                                                                     completed. The expected output shows what needs to be filled in to achieve
+                                                          LLM Output: "[0, 0, 0, -0.7616, 5, 0]"             LLM Output: "[0, 0, 0, -0.7616, 5, 0]"                                                                                                                                      the desired functionality.
+      Expect Output: "[0, 0, 0, -0.7616, 5, 0]"
+
+
+
+
+                                             Task 3: Code Modification                                                                                                                                                                                Task 4: Code Review
+
+      Description:                                                                                                                                                                                  Description:
+         A function to demonstrate the transition from using the deprecated numpy.matrix to the recommended numpy.array for matrix operations.                                                         Review of a Python code snippet for syntax errors, logical errors, performance issues, and security vulnerabilities.
+
+      Details:
+          The numpy.matrix class is deprecated due to its limitations and inconsistencies with numpy.ndarray. The updated method uses numpy.array which is                                          Code:                                                                   Expected Output:
+      more versatile and consistent for all types of array manipulations, including matrix operations.
+                                                                                                                                                                                                                                                                                   Performance Issues:                               Logical errors and others:
+      Code:                                                                             Expected Output:
+
+                                                                                                                                                                                                                                                                                                                                           None
+
+
+
+
+                                                                                                                                                                                                                                                                                   Irregular naming:                                 Security issues:
+
+
+
+
+      Test Cases:           OR
+                                                                                                   The task demonstrates the transition from using numpy.matrix,
+                                                                                                   which is deprecated, to the recommended numpy.array for matrix
+                                                                                                                                                                                                      The review points out several critical concerns: performance inefficiencies, severe security risks associated with the use of eval() function on user inputs, non-
+                                                                                                   operations. The expected output is used to ensure that the
+                                                                                                                                                                                                      standard naming convention for the variable temp value, and the absence of logical errors. Such detailed evaluations are essential for improving software
+                                                                                                   updated code produces the correct results, and the test cases
+                                                                                                                                                                                                      quality and security.
+                                                                                                   validate the success of the modification. Key word detection, such
+                                                                                                   as np.matrix, is used to check the necessary code changes.
+      Key word Detection: np.matrix
+
+
+
+
+Figure 2: Illustration of the four primary tasks in CoCo-Bench—Code Understanding (CU), Code Generation (CG),
+Code Modification (CM), and Code Review (CR)—each defined to evaluate the capabilities of large language
+models (LLMs) in software engineering.
+
+
+the code snippet C corresponding to the natural lan-                                                                                                                                      meets the requirements R.
+guage description D. Formally, for a given descrip-                                                                                                                                          This task is crucial for maintaining software re-
+tion D ∈ D, C = fCG (D) such that execute(C)                                                                                                                                              liability and adapting to evolving needs. Our sam-
+performs the task described by D.                                                                                                                                                         ples include code modification, where the model
+   This function enables programmers to quickly                                                                                                                                           updates code based on error messages, and API
+translate ideas into code and allows non-technical                                                                                                                                        updates, where the model revises code to reflect the
+individuals to contribute to software development.                                                                                                                                        latest API changes. These scenarios test whether
+By automating routine programming tasks, CG re-                                                                                                                                           code LLMs can enhance software reliability and
+duces human errors, improves code quality and                                                                                                                                             keep applications up-to-date with the latest techno-
+consistency, and accelerates the product iteration                                                                                                                                        logical advancements.
+cycle. We design both function-level CG tasks and
+sentence-level CG tasks to test the models’ capabil-                                                                                                                                      3.4                  Code Review (CR)
+ities.
+                                                                                                                                                                                          CR is structured as a multi-label classification prob-
+                                                                                                                                                                                          lem, where each code snippet is evaluated across
+3.3   Code Modification (CM)
+                                                                                                                                                                                          several criteria. Let C represent the set of all possi-
+CM involves altering existing code to meet spe-                                                                                                                                           ble code snippets and E denote the set of evaluation
+cific requirements or to improve its functionality.                                                                                                                                       criteria. The CR task is defined by the function
+Let Cold represent the set of original code snippets,                                                                                                                                     fCR : C → P(E), where fCR (C) = E ′ assigns a
+R denote the set of all possible modification re-                                                                                                                                         subset of evaluation criteria E ′ ⊆ E that the code
+quests or requirements, and Cnew denote the set of                                                                                                                                        snippet C satisfies or violates. Formally, for a
+modified code snippets. The CM task is defined                                                                                                                                            given code snippet C ∈ C, E ′ = fCR (C) where
+by the function fCM : Cold × R → Cnew , where                                                                                                                                             E ′ = {e ∈ E | C exhibits characteristic e}.
+fCM (Cold , R) = Cnew generates the modified code                                                                                                                                             The key areas of evaluation include security is-
+snippet Cnew that satisfies the modification request                                                                                                                                      sues, performance problems, adherence to naming
+R. Formally, for given Cold ∈ Cold and R ∈ R,                                                                                                                                             conventions, and logical errors. Specifically, se-
+Cnew = fCM (Cold , R) such that execute(Cnew )                                                                                                                                            curity issues involve vulnerabilities such as SQL
+
+                                                                                                                                                                                     4
+injections, buffer overflows, and insecure data han-         models’ ability to follow complex directives and
+dling. Performance problems pertain to code seg-             perform specialized tasks. The enhanced perfor-
+ments that may lead to inefficiency, including un-           mance of larger instruction-tuned models further
+necessary computations, suboptimal algorithms,               suggests that combining scale with targeted fine-
+and resource-heavy operations. Adherence to nam-             tuning yields synergistic benefits, enabling models
+ing conventions means the compliance with es-                to achieve higher levels of proficiency in intricate
+tablished coding standards and naming practices,             code-related tasks.
+which enhance code readability and maintainability.
+Logical errors involve flaws that might cause in-            4.2   Correlation Analysis
+correct execution, such as infinite loops, improper          Correlation between tasks: We visualize the
+condition checks, and erroneous data manipulation.           Spearman correlation heatmap among the tasks in
+                                                             Figure 3, which provides further insight into the
+4     Analysis                                               interdependencies between different code-related
+In this section, we first analyze the overall scores         tasks. Notably, a strong correlation is observed
+of all the LLMs. Then, in Section 4.2, we examine            between CUF and CG (0.94), as well as between
+the correlations between different sub-tasks and             CUR and CG (0.84). These high correlation val-
+datasets. In Section 4.3, we analyze the impact of           ues indicate that proficiency in code understand-
+context length on model inference. In Section 4.4,           ing (CU) significantly enhances a model’s abil-
+we focus on the impact of decoding strategies on             ity to generate (CG) code effectively. This inter-
+the models, primarily including top-k, top-p, and            connectedness suggests that improvements in one
+Max New Tokens.                                              task—such as CU—can lead to better performance
+                                                             in related tasks like CG. It highlights the integrated
+4.1    Comprehensive Performance Evaluation                  nature of these tasks in real-world applications,
+                                                             where advances in one area may catalyze progress
+We present the leaderboard results in Table 2, in
+                                                             in others, ultimately fostering more versatile and
+which the empirical results reveal that DeepSeek-
+                                                             capable code models.
+Coder-V2-Instruct and ChatGPT-4.0 outperform
+other leading LLMs across various code-related
+                                                                                                                   1.0
+tasks. This superior performance primarily stems
+                                                                     CUF    1.00    0.72    0.94    0.32    0.45
+                                                                                                                   0.9
+from the scaling up of model parameters and the
+volume of data used during their pre-training pro-                                                                 0.8
+                                                                     CUR    0.72    1.00    0.84    0.26    0.29
+cesses.                                                                                                            0.7
+
+   Model scaling plays a pivotal role in enhancing                   CG     0.94    0.84    1.00    0.36    0.29   0.6
+
+performance. Larger models, such as DeepSeek-                                                                      0.5
+                                                                     CM     0.32    0.26    0.36    1.00    0.40
+Coder-V2-Instruct, consistently outperform smaller                                                                 0.4
+
+models like DeepSeek-Coder-1.3b and DeepSeek-                         CR    0.45    0.29    0.29    0.40    1.00   0.3
+
+Coder-6.7b. This scaling trend is not uniformly                                                                    0.2
+                                                                           F
+
+
+
+                                                                                   R
+
+
+
+                                                                                           CG
+
+
+
+                                                                                                   CM
+
+
+
+                                                                                                           CR
+                                                                           CU
+
+
+
+                                                                                   CU
+
+
+
+
+observed across all model families, suggesting
+that factors such as training data diversity and
+fine-tuning strategies play critical roles in maxi-          Figure 3: The correlation between each two of the five
+mizing the benefits of larger model architectures.           tasks (CUF , CUR , CG, CM, CR) on CoCo-Bench.
+For instance, while DeepSeek-Coder-33b-instruct
+achieves significant performance gains, similar                 However, the relatively lower correlation be-
+scaling within the CodeLlama series does not yield           tween CU and CR indicates that CR involves ad-
+comparable improvements, pointing to potential in-           ditional competencies beyond mere code compre-
+efficiencies or bottlenecks in their respective train-       hension, such as assessing code quality, efficiency,
+ing paradigms.                                               and adherence to best practices. We also observe
+   The superiority of instruction-tuned models over          a relatively low correlation between CG and CM
+their base counterparts is consistently observed             (0.36), suggesting that the performance in CG does
+across both CoCo-Bench and HumanEval bench-                  not necessarily contribute to CM. This distinction
+marks. This trend underscores the critical im-               underscores the necessity for models to possess not
+portance of instruction fine-tuning in enhancing             only a deep understanding of code but also the capa-
+
+                                                         5
+                                                                                                                         CU
+                   Model                                                                                                                                 CG                                  CM                      CR                              CoCo-Score
+                                                                                                          CUF                    CUR
+                   CodeLlama-7b-base                                                                     12.93                   3.33                   11.45                            30.00                   39.39                                     16.87
+                   CodeLlama-7b-instruct                                                                 9.92                    5.17                   16.41                            15.00                   25.71                                     12.94
+                   CodeLlama-13b-base                                                                    19.01                   4.17                   19.23                            20.00                   32.26                                     16.67
+                   CodeLlama-13b-instruct                                                                13.45                   6.78                   18.60                            25.00                   31.43                                     17.14
+                   CodeLlama-34b-base                                                                    15.83                   6.67                   21.71                            15.00                   20.00                                     14.50
+                   CodeLlama-34b-instruct                                                                14.88                   4.24                   19.08                            20.00                   29.41                                     15.48
+                   DeepSeek-Coder-1.3b-base                                                              14.88                    3.31                  15.27                            20.00                   31.43                                     14.84
+                   Deepseek-Coder-1.3b-instruct                                                          15.13                    5.98                  19.85                            20.00                   25.71                                     15.62
+                   DeepSeek-Coder-6.7b-base                                                              26.05                    5.08                  25.78                            25.00                   28.57                                     19.68
+                   Deepseek-Coder-6.7b-instruct                                                          35.65                   11.93                  46.92                            44.44                   28.12                                     30.62
+                   DeepSeek-Coder-33b-base                                                               21.37                    8.40                  23.81                            35.00                   32.35                                     21.91
+                   Deepseek-Coder-33b-instruct                                                           33.88                   10.74                  39.53                            50.00                   37.14                                     31.05
+                   ChatGPT4                                                                              53.72                   15.70                  44.27                            15.00                   45.71                                     32.06
+                   DeepSeek-R1-Distill-Qwen-7B                                                           57.02                   9.09                   35.88                            20.00                   34.29                                     28.26
+                   o1-mini                                                                               66.12                   9.09                   55.73                            45.00                   45.71                                     39.60
+
+Table 2: Leaderboard of model performance comparison on CoCo-Bench, with the first-place models highlighted
+in shadow , the second-place models in bold, and the third-place models underlined. The table compares the
+performance across different tasks: CU, CG, CM, and CR for five major model series: DeepSeek-Coder,
+CodeLlama, R1, GPT and o1. CUF and CUR are two kinds of sub-tasks of CU. The metric CoCo-Score (see C)
+provides an aggregated evaluation of model capabilities.
+
+
+bility to evaluate and improve it critically, reflecting                                                                              manEval. The positive correlation between CoCo-
+the multifaceted nature of software engineering.                                                                                      Bench and HumanEval scores indicates that foun-
+                                                                                                                                      dational capabilities are consistent across bench-
+                                                   CG pass@1 vs. HumanEval@1                                                          marks. Moreover, the analysis reveals that increas-
+              50
+                    Model Series
+                       CodeLlama
+                                                                                                  deepseek-coder-6.7b-instruct
+                                                                                                                    ChatGPT4
+                                                                                                                                      ing model size generally correlates with enhanced
+              45       deepseek
+                       ChatGPT4                                                                                                       performance, particularly within the DeepSeek-
+              40                                                                                   deepseek-coder-33b-instruct
+                                                                                                                                      Coder series.
+              35
+  CG pass@1
+
+
+
+
+              30                                                                                                                                           CodeLlama-7b Accuracy                            CodeLlama-13b Accuracy                             CodeLlama-34b Accuracy
+                                                   deepseek-coder-6.7b-base                                                                      0.40                          CodeLlama-7b Base                                CodeLlama-13b Base                               CodeLlama-34b Base
+                                                                                                                                                                               CodeLlama-7b Instruct                            CodeLlama-13b Instruct                           CodeLlama-34b Instruct
+              25                                                deepseek-coder-33b-base                                                          0.35                          CodeLlama-7b Base                                CodeLlama-13b Base                               CodeLlama-34b Base
+                                                                                                                                                 0.30                          CodeLlama-7b Instruct                            CodeLlama-13b Instruct                           CodeLlama-34b Instruct
+
+                       CodeLlama-13b-base          CodeLlama-34b-base                                                                            0.25
+                                                                                                                                      Accuracy
+
+
+
+
+              20                        CodeLlama-34b-Instruct-hf                 deepseek-coder-1.3b-instruct                                   0.20
+                                       CodeLlama-13b-instruct                                                                                    0.15
+                       CodeLlama-7b-instruct
+              15        deepseek-coder-1.3b-base                                                                                                 0.10
+                                                                                                                                                 0.05
+                     CodeLlama-7b-base                                                                                                           0.00
+              10
+                                                                                                                                                   94 -947
+                                                                                                                                                    34 4
+                                                                                                                                                    22 2
+                                                                                                                                                    09 9
+                                                                                                                                                    97 7
+                                                                                                                                                    84 4
+                                                                                                                                                    71 1
+                                                                                                                                                    59 9
+                                                                                                                                                    46 6
+                                                                                                                                                    34 4
+                                                                                                                                                    21 1
+                                                                                                                                                           09
+
+
+
+                                                                                                                                                                                                         94 -947
+                                                                                                                                                                                                          34 4
+                                                                                                                                                                                                          22 2
+                                                                                                                                                                                                          09 9
+                                                                                                                                                                                                          97 7
+                                                                                                                                                                                                          84 4
+                                                                                                                                                                                                          71 1
+                                                                                                                                                                                                          59 9
+                                                                                                                                                                                                          46 6
+                                                                                                                                                                                                          34 4
+                                                                                                                                                                                                          21 1
+                                                                                                                                                                                                                 09
+
+
+
+                                                                                                                                                                                                                                                           94 -947
+                                                                                                                                                                                                                                                            34 4
+                                                                                                                                                                                                                                                            22 2
+                                                                                                                                                                                                                                                            09 9
+                                                                                                                                                                                                                                                            97 7
+                                                                                                                                                                                                                                                            84 4
+                                                                                                                                                                                                                                                            71 1
+                                                                                                                                                                                                                                                            59 9
+                                                                                                                                                                                                                                                            46 6
+                                                                                                                                                                                                                                                            34 4
+                                                                                                                                                                                                                                                            21 1
+                                                                                                                                                                                                                                                                   09
+                                                                                                                                                  14 -143
+                                                                                                                                                  19 -192
+                                                                                                                                                  24 -240
+                                                                                                                                                  28 -289
+                                                                                                                                                  33 -338
+                                                                                                                                                  38 -387
+                                                                                                                                                  43 -435
+                                                                                                                                                  48 -484
+                                                                                                                                                  53 -533
+                                                                                                                                                  58 -582
+
+
+
+
+                                                                                                                                                                                                        14 -143
+                                                                                                                                                                                                        19 -192
+                                                                                                                                                                                                        24 -240
+                                                                                                                                                                                                        28 -289
+                                                                                                                                                                                                        33 -338
+                                                                                                                                                                                                        38 -387
+                                                                                                                                                                                                        43 -435
+                                                                                                                                                                                                        48 -484
+                                                                                                                                                                                                        53 -533
+                                                                                                                                                                                                        58 -582
+
+
+
+
+                                                                                                                                                                                                                                                          14 -143
+                                                                                                                                                                                                                                                          19 -192
+                                                                                                                                                                                                                                                          24 -240
+                                                                                                                                                                                                                                                          28 -289
+                                                                                                                                                                                                                                                          33 -338
+                                                                                                                                                                                                                                                          38 -387
+                                                                                                                                                                                                                                                          43 -435
+                                                                                                                                                                                                                                                          48 -484
+                                                                                                                                                                                                                                                          53 -533
+                                                                                                                                                                                                                                                          58 -582
+
+
+
+
+                               40                  50               60                    70                     80
+                                                                                                                                                       -63
+
+
+
+
+                                                                                                                                                                                                             -63
+
+
+
+
+                                                                                                                                                                                                                                                               -63
+                                                                                                                                                       0
+
+
+
+
+                                                                                                                                                                                                             0
+
+
+
+
+                                                                                                                                                                                                                                                               0
+                                                                                                                                                    46
+                                                                                                                                                     7
+
+
+
+
+                                                                                                                                                                                                          46
+                                                                                                                                                                                                           7
+
+
+
+
+                                                                                                                                                                                                                                                            46
+                                                                                                                                                                                                                                                             7
+
+
+
+
+                                                              HumanEval@1                                                                                  Token Count Range (Bucket)                        Token Count Range (Bucket)                        Token Count Range (Bucket)
+                                                                                                                                                        deepseek-coder-1.3b Accuracy                      deepseek-coder-6.7b Accuracy                       deepseek-coder-33b Accuracy
+                                                                                                                                                 0.40                    deepseek-coder-1.3b Base                          deepseek-coder-6.7b Base                          deepseek-coder-33b Base
+                                                                                                                                                                         deepseek-coder-1.3b Instruct                      deepseek-coder-6.7b Instruct                      deepseek-coder-33b Instruct
+                                                                                                                                                 0.35                    deepseek-coder-1.3b Base                          deepseek-coder-6.7b Base                          deepseek-coder-33b Base
+                                                                                                                                                 0.30                    deepseek-coder-1.3b Instruct                      deepseek-coder-6.7b Instruct                      deepseek-coder-33b Instruct
+
+                                                                                                                                                 0.25
+Figure 4: Comparative analysis of model performance
+                                                                                                                                      Accuracy
+
+
+
+
+                                                                                                                                                 0.20
+                                                                                                                                                 0.15
+on CoCo-Bench and HumanEval benchmarks: This                                                                                                     0.10
+                                                                                                                                                 0.05
+
+figure illustrates the relationship between model per-                                                                                           0.00
+                                                                                                                                                   94 -947
+                                                                                                                                                    34 4
+                                                                                                                                                    22 2
+                                                                                                                                                    09 9
+                                                                                                                                                    97 7
+                                                                                                                                                    84 4
+                                                                                                                                                    71 1
+                                                                                                                                                    59 9
+                                                                                                                                                    46 6
+                                                                                                                                                    34 4
+                                                                                                                                                    21 1
+                                                                                                                                                           09
+
+
+
+                                                                                                                                                                                                         94 -947
+                                                                                                                                                                                                          34 4
+                                                                                                                                                                                                          22 2
+                                                                                                                                                                                                          09 9
+                                                                                                                                                                                                          97 7
+                                                                                                                                                                                                          84 4
+                                                                                                                                                                                                          71 1
+                                                                                                                                                                                                          59 9
+                                                                                                                                                                                                          46 6
+                                                                                                                                                                                                          34 4
+                                                                                                                                                                                                          21 1
+                                                                                                                                                                                                                 09
+
+
+
+                                                                                                                                                                                                                                                           94 -947
+                                                                                                                                                                                                                                                            34 4
+                                                                                                                                                                                                                                                            22 2
+                                                                                                                                                                                                                                                            09 9
+                                                                                                                                                                                                                                                            97 7
+                                                                                                                                                                                                                                                            84 4
+                                                                                                                                                                                                                                                            71 1
+                                                                                                                                                                                                                                                            59 9
+                                                                                                                                                                                                                                                            46 6
+                                                                                                                                                                                                                                                            34 4
+                                                                                                                                                                                                                                                            21 1
+                                                                                                                                                                                                                                                                   09
+                                                                                                                                                  14 -143
+                                                                                                                                                  19 -192
+                                                                                                                                                  24 -240
+                                                                                                                                                  28 -289
+                                                                                                                                                  33 -338
+                                                                                                                                                  38 -387
+                                                                                                                                                  43 -435
+                                                                                                                                                  48 -484
+                                                                                                                                                  53 -533
+                                                                                                                                                  58 -582
+
+
+
+
+                                                                                                                                                                                                        14 -143
+                                                                                                                                                                                                        19 -192
+                                                                                                                                                                                                        24 -240
+                                                                                                                                                                                                        28 -289
+                                                                                                                                                                                                        33 -338
+                                                                                                                                                                                                        38 -387
+                                                                                                                                                                                                        43 -435
+                                                                                                                                                                                                        48 -484
+                                                                                                                                                                                                        53 -533
+                                                                                                                                                                                                        58 -582
+
+
+
+
+                                                                                                                                                                                                                                                          14 -143
+                                                                                                                                                                                                                                                          19 -192
+                                                                                                                                                                                                                                                          24 -240
+                                                                                                                                                                                                                                                          28 -289
+                                                                                                                                                                                                                                                          33 -338
+                                                                                                                                                                                                                                                          38 -387
+                                                                                                                                                                                                                                                          43 -435
+                                                                                                                                                                                                                                                          48 -484
+                                                                                                                                                                                                                                                          53 -533
+                                                                                                                                                                                                                                                          58 -582
+                                                                                                                                                       -63
+
+
+
+
+                                                                                                                                                                                                             -63
+
+
+
+
+                                                                                                                                                                                                                                                               -63
+                                                                                                                                                       0
+
+
+
+
+                                                                                                                                                                                                             0
+
+
+
+
+                                                                                                                                                                                                                                                               0
+                                                                                                                                                    46
+                                                                                                                                                     7
+
+
+
+
+                                                                                                                                                                                                          46
+                                                                                                                                                                                                           7
+
+
+
+
+                                                                                                                                                                                                                                                            46
+                                                                                                                                                                                                                                                             7
+
+
+
+
+formance on the CoCo-Bench (CG pass@1) and Hu-                                                                                                             Token Count Range (Bucket)                        Token Count Range (Bucket)                        Token Count Range (Bucket)
+
+
+manEval (HumanEval@1) benchmarks. The dashed
+trend line and shaded area indicate the general correla-                                                                              Figure 5: Performance differences between instruct and
+tion between performance on the two benchmarks.                                                                                       base versions of the same models on CoCo-Bench
+
+
+Correlation between datasets: Figure 3 and Fig-                                                                                       4.3               Context Length and Model Performance
+ure 4 collectively demonstrate that CoCo-Bench                                                                                        Figure 5 and Figure 8 illustrate how model accu-
+provides a more stringent and discriminative eval-                                                                                    racy varies across different token count ranges of
+uation compared to simpler benchmarks like Hu-                                                                                        input. All models, regardless of size and type, face
+
+                                                                                                                                  6
+                               Task: CG (Base)                                             Task: CM (Base)                                             Task: CR (Base)                                            Task: CUF (Base)                                           Task: CUR (Base)
+           0.5
+
+
+           0.4
+
+
+           0.3
+Accuracy
+
+
+
+
+           0.2
+
+
+           0.1
+
+
+           0.0
+             0.75 & 10 0.80 & 20 0.85 & 30 0.90 & 40 0.95 & 50           0.75 & 10 0.80 & 20 0.85 & 30 0.90 & 40 0.95 & 50           0.75 & 10 0.80 & 20 0.85 & 30 0.90 & 40 0.95 & 50           0.75 & 10 0.80 & 20 0.85 & 30 0.90 & 40 0.95 & 50           0.75 & 10 0.80 & 20 0.85 & 30 0.90 & 40 0.95 & 50
+                                top_p & top_k                                               top_p & top_k                                               top_p & top_k                                               top_p & top_k                                               top_p & top_k
+
+                                CodeLlama-13b-base                        CodeLlama-34b-base                         CodeLlama-7b-base                       deepseek-coder-1.3b-base                           deepseek-coder-33b-base                          deepseek-coder-6.7b-base
+
+                             Task: CG (Instruct)                                         Task: CM (Instruct)                                          Task: CR (Instruct)                                        Task: CUF (Instruct)                                        Task: CUR (Instruct)
+           0.6
+
+           0.5
+
+           0.4
+Accuracy
+
+
+
+
+           0.3
+
+           0.2
+
+           0.1
+
+           0.0
+             0.75 & 10   0.80 & 20   0.85 & 30   0.90 & 40   0.95 & 50   0.75 & 10   0.80 & 20   0.85 & 30   0.90 & 40   0.95 & 50   0.75 & 10   0.80 & 20   0.85 & 30   0.90 & 40   0.95 & 50   0.75 & 10   0.80 & 20   0.85 & 30   0.90 & 40   0.95 & 50   0.75 & 10   0.80 & 20   0.85 & 30   0.90 & 40   0.95 & 50
+                                 top_p & top_k                                               top_p & top_k                                               top_p & top_k                                               top_p & top_k                                               top_p & top_k
+
+                               CodeLlama-13b-instruct                    CodeLlama-34b-instruct                     CodeLlama-7b-instruct                    deepseek-coder-1.3b-instruct                       deepseek-coder-33b-instruct                      deepseek-coder-6.7b-instruct
+
+
+
+                                                 Figure 6: Performance differences under various top_p and top_k configurations
+
+
+challenges in maintaining attention across longer                                                                                                                   ing empirical conclusion:
+contexts due to the quadratic cost of self-attention
+                                                                                                                                                                    Conclusion 1. The sensitivity to top-p and top-k
+in transformers. Instruction tuning likely helps
+                                                                                                                                                                    parameters varies across different tasks. Structured
+focus attention on task-relevant segments of the
+                                                                                                                                                                    tasks, such as CU, tend to benefit from more deter-
+input, mitigating some of this drop in performance
+                                                                                                                                                                    ministic outputs, while open-ended tasks, such as
+for instruction models.
+                                                                                                                                                                    CM and CG, demand greater creativity and diver-
+                                                                                                                                                                    sity.
+4.4                  Decoding Strategies
+                                                                                                                                                                       Instruction models consistently outperform base
+Top-p and Top-k: As is illustrated in Figure 6,                                                                                                                     models in code-related tasks. We believe this is due
+top-p and top-k sensitivity varies by task. Struc-                                                                                                                  to the exposure of instruction models to examples
+tured tasks like CU tasks benefit from deterministic                                                                                                                with task-specific instructions during training, en-
+outputs since code has stricter correctness require-                                                                                                                abling them to better understand and follow coding
+ments. A narrower token distribution (lower top-p                                                                                                                   guidelines and requirements. As a result, we can
+and top-k) is often sufficient for accurate results.                                                                                                                derive the following empirical conclusion:
+In contrast, open-ended tasks like CM and CG re-
+                                                                                                                                                                    Conclusion 2. Instruction-tuned models excel in
+quire creativity and diversity from LLMs, as there
+                                                                                                                                                                    code-related tasks due to their close alignment with
+are multiple plausible ways to modify or improve
+                                                                                                                                                                    task-specific coding objectives, which significantly
+code. It’s worth mentioning that LLMs are more
+                                                                                                                                                                    enhances both performance and robustness across
+sensitive to top-p and top-k variance as they gen-
+                                                                                                                                                                    various decoding configurations.
+erate a wider range of plausible token predictions
+due to their richer token distribution and greater                                                                                                                     Medium token ranges align well with the pre-
+expressive power. When using high top-p and top-                                                                                                                    training datasets and tokenization schemes for most
+k for inference, the outputs of LLMs can become                                                                                                                     models. Shorter tokens (e.g., 460–1191) may lead
+overly diverse or less coherent, potentially intro-                                                                                                                 to sparse representation, while longer tokens may
+ducing syntactic errors or irrelevant code snippets.                                                                                                                overload the model’s capacity. It’s also noted how
+Smaller models, by contrast, have less expressive                                                                                                                   scaling laws reconcile with the outcome. Larger
+token distributions, making them inherently more                                                                                                                    models are inherently better at capturing long-
+deterministic and less impacted by high top-p and                                                                                                                   range dependencies due to their larger parameter
+top-k settings, thereby maintaining code correct-                                                                                                                   space and richer latent representations. Smaller
+ness more effectively. So, we can draw the follow-                                                                                                                  models lack the capacity to encode such complexity
+
+                                                                                                                                                             7
+                                                  Task: CG (Base)                                                                   Task: CM (Base)                                                                                Task: CR (Base)                                   Task: CUF (Base)                                    Task: CUR (Base)
+                       0.4
+
+                       0.3
+            Accuracy
+
+
+
+
+                                                                                                        Accuracy
+
+
+
+
+                                                                                                                                                                                        Accuracy
+
+
+
+
+                                                                                                                                                                                                                                                                   Accuracy
+
+
+
+
+                                                                                                                                                                                                                                                                                                                       Accuracy
+                       0.2
+
+                       0.1
+
+                       0.0
+                                  6
+
+                                                   2
+
+                                                                   24
+
+                                                                                      48
+
+
+
+
+                                                                                                                        6
+
+                                                                                                                                     2
+
+                                                                                                                                                   24
+
+                                                                                                                                                                   48
+
+
+
+
+                                                                                                                                                                                                             6
+
+                                                                                                                                                                                                                                    2
+
+                                                                                                                                                                                                                                              24
+
+                                                                                                                                                                                                                                                        48
+
+
+
+
+                                                                                                                                                                                                                                                                               6
+
+                                                                                                                                                                                                                                                                                       2
+
+                                                                                                                                                                                                                                                                                                24
+
+                                                                                                                                                                                                                                                                                                           48
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                   6
+
+                                                                                                                                                                                                                                                                                                                                           2
+
+                                                                                                                                                                                                                                                                                                                                                    24
+
+                                                                                                                                                                                                                                                                                                                                                               48
+                                 25
+
+                                                 51
+
+
+
+
+                                                                                                                        25
+
+                                                                                                                                   51
+
+
+
+
+                                                                                                                                                                                                        25
+
+                                                                                                                                                                                                                                  51
+
+
+
+
+                                                                                                                                                                                                                                                                              25
+
+                                                                                                                                                                                                                                                                                     51
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                  25
+
+                                                                                                                                                                                                                                                                                                                                         51
+                                                                  10
+
+                                                                                     20
+
+
+
+
+                                                                                                                                                  10
+
+                                                                                                                                                                 20
+
+
+
+
+                                                                                                                                                                                                                                            10
+
+                                                                                                                                                                                                                                                        20
+
+
+
+
+                                                                                                                                                                                                                                                                                              10
+
+                                                                                                                                                                                                                                                                                                           20
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                                  10
+
+                                                                                                                                                                                                                                                                                                                                                               20
+                                                 max_new_tokens                                                                     max_new_tokens                                                                                max_new_tokens                                     max_new_tokens                                      max_new_tokens
+
+                                                                                                            CodeLlama-13b-hf                                         CodeLlama-7b-hf                                                                     deepseek-coder-33b-base                           Average
+                                                                                                            CodeLlama-34b-hf                                         deepseek-coder-1.3b-base                                                            deepseek-coder-6.7b-base
+
+                                                 Task: CG (Instruct)                                                               Task: CM (Instruct)                                                                            Task: CR (Instruct)                               Task: CUF (Instruct)                                Task: CUR (Instruct)
+                      0.5
+
+                      0.4
+           Accuracy
+
+
+
+
+                                                                                                     Accuracy
+
+
+
+
+                                                                                                                                                                                     Accuracy
+
+
+
+
+                                                                                                                                                                                                                                                                Accuracy
+
+
+
+
+                                                                                                                                                                                                                                                                                                                    Accuracy
+                      0.3
+
+                      0.2
+
+                      0.1
+
+                      0.0
+                                   6
+
+
+                                                   2
+
+
+                                                                    24
+
+
+                                                                                        48
+
+
+
+
+                                                                                                                     6
+
+
+                                                                                                                                     2
+
+
+                                                                                                                                                    24
+
+
+                                                                                                                                                                   48
+
+
+
+
+                                                                                                                                                                                                      6
+
+
+                                                                                                                                                                                                                                    2
+
+
+                                                                                                                                                                                                                                              24
+
+
+                                                                                                                                                                                                                                                          48
+
+
+
+
+                                                                                                                                                                                                                                                                                6
+
+
+                                                                                                                                                                                                                                                                                      2
+
+
+                                                                                                                                                                                                                                                                                                24
+
+
+                                                                                                                                                                                                                                                                                                             48
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                    6
+
+
+                                                                                                                                                                                                                                                                                                                                          2
+
+
+                                                                                                                                                                                                                                                                                                                                                    24
+
+
+                                                                                                                                                                                                                                                                                                                                                                 48
+                                 25
+
+
+                                                 51
+
+
+
+
+                                                                                                                   25
+
+
+                                                                                                                                   51
+
+
+
+
+                                                                                                                                                                                                    25
+
+
+                                                                                                                                                                                                                                  51
+
+
+
+
+                                                                                                                                                                                                                                                                              25
+
+
+                                                                                                                                                                                                                                                                                    51
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                  25
+
+
+                                                                                                                                                                                                                                                                                                                                        51
+                                                                  10
+
+
+                                                                                      20
+
+
+
+
+                                                                                                                                                  10
+
+
+                                                                                                                                                                 20
+
+
+
+
+                                                                                                                                                                                                                                            10
+
+
+                                                                                                                                                                                                                                                        20
+
+
+
+
+                                                                                                                                                                                                                                                                                              10
+
+
+                                                                                                                                                                                                                                                                                                           20
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                                  10
+
+
+                                                                                                                                                                                                                                                                                                                                                               20
+                                                 max_new_tokens                                                                    max_new_tokens                                                                                 max_new_tokens                                     max_new_tokens                                      max_new_tokens
+
+                                                                                               CodeLlama-13b-Instruct-hf                                                   CodeLlama-7b-Instruct-hf                                                          deepseek-coder-33b-instruct                          Average
+                                                                                               CodeLlama-34b-Instruct-hf                                                   deepseek-coder-1.3b-instruct                                                      deepseek-coder-6.7b-instruct
+
+
+                                                                    Figure 7: Performance differences under various max_new_tokens Configurations
+
+
+effectively. This leads us to the following empirical                                                                                                                                                                                       Based on this, the following empirical conclusion
+conclusion:                                                                                                                                                                                                                                 can be drawn:
+Conclusion 3. LLMs encounter challenges with
+longer code contexts, but instruction tuning helps                                                                                                                                                                                          Conclusion 4. Increasing max new tokens im-
+maintain performance by focusing on relevant code                                                                                                                                                                                           proves performance in code tasks that require ex-
+segments. Larger models handle long-range depen-                                                                                                                                                                                            tended and coherent outputs, particularly bene-
+dencies in code more effectively than smaller ones.                                                                                                                                                                                         fiting larger and instruction-tuned models by en-
+                                                                                                                                                                                                                                            abling them to manage more complex code struc-
+                                                     Base Model Accuracy                                                                           Instruct Model Accuracy
+                                                                                                                                                                                                                                            tures and dependencies.
+                                                                                             CodeLlama-13b-base                                                                                    CodeLlama-13b-instruct
+                                                                                             CodeLlama-34b-base                                                                                    CodeLlama-34b-instruct
+                                                                                             CodeLlama-7b-base                                                                                     CodeLlama-7b-instruct
+                                                                                             deepseek-coder-1.3b-base                                                                              deepseek-coder-1.3b-instruct
+           0.30                                                                              deepseek-coder-33b-base                                                                               deepseek-coder-33b-instruct
+                                                                                             deepseek-coder-6.7b-base                                                                              deepseek-coder-6.7b-instruct
+                                                                                             CodeLlama-13b-base                                                                                    CodeLlama-13b-instruct
+                                                                                             CodeLlama-34b-base                                                                                    CodeLlama-34b-instruct
+                                                                                             CodeLlama-7b-base                                                                                     CodeLlama-7b-instruct
+           0.25                                                                              deepseek-coder-1.3b-base                                                                              deepseek-coder-1.3b-instruct
+                                                                                             deepseek-coder-33b-base                                                                               deepseek-coder-33b-instruct
+                                                                                             deepseek-coder-6.7b-base                                                                              deepseek-coder-6.7b-instruct
+
+           0.20
+
+
+                                                                                                                                                                                                                                            5           Limitations and Future Work
+Accuracy
+
+
+
+
+           0.15
+
+
+           0.10
+
+
+           0.05
+
+
+           0.00
+                                                                                                                                                                                                                                            While CoCo-Bench provides an effective and com-
+                            29
+
+
+
+
+                                            9
+
+
+
+
+                                                             9
+
+
+
+
+                                                                                 9
+
+
+
+
+                                                                                                  9
+
+
+
+
+                                                                                                                              29
+
+
+
+
+                                                                                                                                             9
+
+
+
+
+                                                                                                                                                            9
+
+
+
+
+                                                                                                                                                                                9
+
+
+
+
+                                                                                                                                                                                                          9
+                                            79
+
+
+
+
+                                                             96
+
+
+
+
+                                                                                 13
+
+
+
+
+                                                                                                  30
+
+
+
+
+                                                                                                                                             79
+
+
+
+
+                                                                                                                                                            96
+
+
+
+
+                                                                                                                                                                                13
+
+
+
+
+                                                                                                                                                                                                        30
+                           6
+
+
+
+
+                                                                                                                             6
+                       0-1
+
+
+
+
+                                          -2
+
+
+
+
+                                                            -3
+
+
+
+
+                                                                                -5
+
+
+
+
+                                                                                                -6
+
+
+
+
+                                                                                                                         0-1
+
+
+
+
+                                                                                                                                            -2
+
+
+
+
+                                                                                                                                                           -3
+
+
+
+
+                                                                                                                                                                               -5
+
+
+
+
+                                                                                                                                                                                                        -6
+                                       29
+
+
+
+
+                                                         99
+
+
+
+
+                                                                             69
+
+
+
+
+                                                                                             39
+
+
+
+
+                                                                                                                                         29
+
+
+
+
+                                                                                                                                                        99
+
+
+
+
+                                                                                                                                                                            69
+
+
+
+
+                                                                                                                                                                                                     39
+                       46
+
+
+
+
+                                                                                                                         46
+                                       16
+
+
+
+
+                                                        27
+
+
+
+
+                                                                            39
+
+
+
+
+                                                                                             51
+
+
+
+
+                                                                                                                                        16
+
+
+
+
+                                                                                                                                                       27
+
+
+
+
+                                                                                                                                                                           39
+
+
+
+
+                                                                                                                                                                                                   51
+
+
+
+
+                                                    Token Count Range (Bucket)                                                                     Token Count Range (Bucket)
+
+
+                                                                                                                                                                                                                                            prehensive evaluation framework for LLMs in
+Figure 8: Performance differences between different                                                                                                                                                                                         code-related tasks, there are areas for expansion.
+models of the same type on CoCo-Bench                                                                                                                                                                                                       Currently, the benchmark lacks multimodal tasks
+                                                                                                                                                                                                                                            that require models to integrate code with other
+   Max New Tokens: Figure 7 shows that higher                                                                                                                                                                                               data types, such as images or natural language,
+max new tokens directly correlates with better ac-                                                                                                                                                                                          which are becoming increasingly relevant in mod-
+curacy in tasks requiring coherent and extended                                                                                                                                                                                             ern development environments. Recognizing this
+outputs (e.g., CG and CU). It allows the model to                                                                                                                                                                                           gap, we plan to introduce multimodal tasks in the
+generate longer sequences, potentially capturing                                                                                                                                                                                            future, allowing us to evaluate models on more
+more context and completing more complex out-                                                                                                                                                                                               complex projects and providing a more holistic as-
+puts. Some tasks like CM benefit less due to their                                                                                                                                                                                          sessment of LLMs’ capabilities. To ensure CoCo-
+inherent requirements, where longer sequences add                                                                                                                                                                                           Bench remains at the cutting edge of LLM eval-
+minimal value. Comparably, larger models and                                                                                                                                                                                                uation, we will regularly update the benchmark
+instruction-tuned models are better equipped to uti-                                                                                                                                                                                        by incorporating new programming languages and
+lize extended token generation due to their ability to                                                                                                                                                                                      adapting to evolving development practices.
+manage more extensive contexts and dependencies.
+
+                                                                                                                                                                                                                                      8
+References                                                     Xunjin Zheng, Hailian Zhou, Lifu Zhu, and Xiany-
+                                                               ing Zhu. 2024. Codefuse-13b: A pretrained multi-
+Martín Abadi, Ashish Agarwal, Paul Barham, Eugene              lingual code large language model. In Proceedings
+ Brevdo, Zhifeng Chen, Craig Citro, Greg S. Cor-               of the 46th International Conference on Software En-
+ rado, Andy Davis, Jeffrey Dean, Matthieu Devin,               gineering: Software Engineering in Practice, ICSE-
+ Sanjay Ghemawat, Ian Goodfellow, Andrew Harp,                 SEIP ’24. ACM.
+ Geoffrey Irving, Michael Isard, Yangqing Jia, Rafal
+ Jozefowicz, Lukasz Kaiser, Manjunath Kudlur, Josh           Mingzhe Du, Anh Tuan Luu, Bin Ji, Qian Liu, and
+ Levenberg, Dan Mane, Rajat Monga, Sherry Moore,               See-Kiong Ng. 2024. Mercury: A code efficiency
+ Derek Murray, Chris Olah, Mike Schuster, Jonathon             benchmark for code large language models. Preprint,
+ Shlens, Benoit Steiner, Ilya Sutskever, Kunal Talwar,         arXiv:2402.07844.
+ Paul Tucker, Vincent Vanhoucke, Vijay Vasudevan,
+ Fernanda Viegas, Oriol Vinyals, Pete Warden, Martin         Xueying Du, Mingwei Liu, Kaixin Wang, Hanlin Wang,
+ Wattenberg, Martin Wicke, Yuan Yu, and Xiaoqiang              Junwei Liu, Yixuan Chen, Jiayi Feng, Chaofeng
+ Zheng. 2016. Tensorflow: Large-scale machine learn-           Sha, Xin Peng, and Yiling Lou. 2023. Classe-
+ ing on heterogeneous distributed systems. Preprint,           val: A manually-crafted benchmark for evaluat-
+ arXiv:1603.04467.                                             ing llms on class-level code generation. Preprint,
+                                                               arXiv:2308.01861.
+Open AI. 2024. Learning to reason with llms.
+                                                             Alex Gu, Baptiste Rozière, Hugh Leather, Armando
+Jacob Austin, Augustus Odena, Maxwell Nye, Maarten             Solar-Lezama, Gabriel Synnaeve, and Sida I. Wang.
+   Bosma, Henryk Michalewski, David Dohan, Ellen               2024. Cruxeval: A benchmark for code rea-
+   Jiang, Carrie Cai, Michael Terry, Quoc Le, and              soning, understanding and execution. Preprint,
+   Charles Sutton. 2021. Program synthesis with large          arXiv:2401.03065.
+   language models. Preprint, arXiv:2108.07732.
+                                                             Jiawei Guo, Ziming Li, Xueling Liu, Kaijing Ma,
+Islem Bouzenia, Bajaj Piyush Krishan, and Michael               Tianyu Zheng, Zhouliang Yu, Ding Pan, Yizhi LI,
+   Pradel. 2024. Dypybench: A benchmark of exe-                 Ruibo Liu, Yue Wang, Shuyue Guo, Xingwei Qu,
+   cutable python software. Proceedings of the ACM on           Xiang Yue, Ge Zhang, Wenhu Chen, and Jie Fu.
+   Software Engineering, 1(FSE):338–358.                        2024. Codeeditorbench: Evaluating code edit-
+                                                                ing capability of large language models. Preprint,
+Mark Chen, Jerry Tworek, Heewoo Jun, Qiming                     arXiv:2404.03543.
+ Yuan, Henrique Ponde de Oliveira Pinto, Jared Ka-
+ plan, Harri Edwards, Yuri Burda, Nicholas Joseph,           Yiyang Hao, Ge Li, Yongqiang Liu, Xiaowei Miao,
+ Greg Brockman, Alex Ray, Raul Puri, Gretchen                  He Zong, Siyuan Jiang, Yang Liu, and He Wei. 2022.
+ Krueger, Michael Petrov, Heidy Khlaaf, Girish Sas-            Aixbench: A code generation benchmark dataset.
+ try, Pamela Mishkin, Brooke Chan, Scott Gray,                 Preprint, arXiv:2206.13179.
+ Nick Ryder, Mikhail Pavlov, Alethea Power, Lukasz
+ Kaiser, Mohammad Bavarian, Clemens Winter,                  Charles R Harris, K Jarrod Millman, Stéfan J Van
+ Philippe Tillet, Felipe Petroski Such, Dave Cum-              Der Walt, Ralf Gommers, Pauli Virtanen, David Cour-
+ mings, Matthias Plappert, Fotios Chantzis, Eliza-             napeau, Eric Wieser, Julian Taylor, Sebastian Berg,
+ beth Barnes, Ariel Herbert-Voss, William Hebgen               Nathaniel J Smith, et al. 2020. Array programming
+ Guss, Alex Nichol, Alex Paino, Nikolas Tezak, Jie             with numpy. Nature, 585(7825):357–362.
+ Tang, Igor Babuschkin, Suchir Balaji, Shantanu Jain,
+ William Saunders, Christopher Hesse, Andrew N.              Chaoqun He, Renjie Luo, Shengding Hu, Yuanqian
+ Carr, Jan Leike, Josh Achiam, Vedant Misra, Evan              Zhao, Jie Zhou, Hanghao Wu, Jiajie Zhang, Xu Han,
+ Morikawa, Alec Radford, Matthew Knight, Miles                 Zhiyuan Liu, and Maosong Sun. 2024. Ultraeval: A
+ Brundage, Mira Murati, Katie Mayer, Peter Welinder,           lightweight platform for flexible and comprehensive
+ Bob McGrew, Dario Amodei, Sam McCandlish, Ilya                evaluation for llms. Preprint, arXiv:2404.07584.
+ Sutskever, and Wojciech Zaremba. 2021. Evaluat-
+ ing large language models trained on code. Preprint,        Dan Hendrycks, Steven Basart, Saurav Kadavath, Man-
+ arXiv:2107.03374.                                             tas Mazeika, Akul Arora, Ethan Guo, Collin Burns,
+                                                               Samir Puranik, Horace He, Dawn Song, and Jacob
+François Chollet. 2015. keras. https://github.com/             Steinhardt. 2021. Measuring coding challenge com-
+  fchollet/keras.                                              petence with apps. Preprint, arXiv:2105.09938.
+
+Peng Di, Jianguo Li, Hang Yu, Wei Jiang, Wenting             J. D. Hunter. 2007. Matplotlib: A 2d graphics environ-
+  Cai, Yang Cao, Chaoyu Chen, Dajun Chen, Hongwei               ment. Computing in Science & Engineering, 9(3):90–
+  Chen, Liang Chen, Gang Fan, Jie Gong, Zi Gong,                95.
+  Wen Hu, Tingting Guo, Zhichao Lei, Ting Li, Zheng
+  Li, Ming Liang, Cong Liao, Bingchang Liu, Jiachen          Srinivasan Iyer, Ioannis Konstas, Alvin Cheung,
+  Liu, Zhiwei Liu, Shaojun Lu, Min Shen, Guangpei               and Luke Zettlemoyer. 2018.       Mapping lan-
+  Wang, Huan Wang, Zhi Wang, Zhaogui Xu, Jiawei                 guage to code in programmatic context. Preprint,
+  Yang, Qing Ye, Gehao Zhang, Yu Zhang, Zelin Zhao,             arXiv:1808.09588.
+
+
+                                                         9
+Naman Jain, King Han, Alex Gu, Wen-Ding Li, Fanjia               Runchu Tian, Yining Ye, Yujia Qin, Xin Cong, Yankai
+  Yan, Tianjun Zhang, Sida Wang, Armando Solar-                    Lin, Yinxu Pan, Yesai Wu, Haotian Hui, Weichuan
+  Lezama, Koushik Sen, and Ion Stoica. 2024. Live-                 Liu, Zhiyuan Liu, and Maosong Sun. 2024. De-
+  codebench: Holistic and contamination free evalu-                bugbench: Evaluating debugging capability of large
+  ation of large language models for code. Preprint,               language models. Preprint, arXiv:2401.04621.
+  arXiv:2403.07974.
+                                                                 Weixiang Yan, Haitian Liu, Yunkun Wang, Yunzhe Li,
+Carlos E. Jimenez, John Yang, Alexander Wettig,                   Qian Chen, Wen Wang, Tingyu Lin, Weishan Zhao,
+  Shunyu Yao, Kexin Pei, Ofir Press, and Karthik                  Li Zhu, Hari Sundaram, and Shuiguang Deng. 2024.
+  Narasimhan. 2024. Swe-bench: Can language mod-                  Codescope: An execution-based multilingual mul-
+  els resolve real-world github issues? Preprint,                 titask multidimensional benchmark for evaluating
+  arXiv:2310.06770.                                               llms on code understanding and generation. Preprint,
+                                                                  arXiv:2311.08588.
+Changshu Liu, Shizhuo Dylan Zhang, Ali Reza
+  Ibrahimzada, and Reyhaneh Jabbarvand. 2024. Code-              Pengcheng Yin, Bowen Deng, Edgar Chen, Bogdan
+  mind: A framework to challenge large language mod-               Vasilescu, and Graham Neubig. 2018. Learning to
+  els for code reasoning. Preprint, arXiv:2402.09664.              mine aligned code and natural language pairs from
+                                                                   stack overflow. Preprint, arXiv:1805.08949.
+Shuai Lu, Daya Guo, Shuo Ren, Junjie Huang, Alexey
+  Svyatkovskiy, Ambrosio Blanco, Colin Clement,                  Daoguang Zan, Bei Chen, Dejian Yang, Zeqi Lin,
+  Dawn Drain, Daxin Jiang, Duyu Tang, Ge Li, Li-                   Minsu Kim, Bei Guan, Yongji Wang, Weizhu Chen,
+  dong Zhou, Linjun Shou, Long Zhou, Michele Tu-                   and Jian-Guang Lou. 2022. Cert: Continual pre-
+  fano, Ming Gong, Ming Zhou, Nan Duan, Neel Sun-                  training on sketches for library-oriented code genera-
+  daresan, Shao Kun Deng, Shengyu Fu, and Shujie                   tion. Preprint, arXiv:2206.06888.
+  Liu. 2021. Codexglue: A machine learning bench-
+  mark dataset for code understanding and generation.            Shudan Zhang, Hanlin Zhao, Xiao Liu, Qinkai Zheng,
+  Preprint, arXiv:2102.04664.                                      Zehan Qi, Xiaotao Gu, Xiaohan Zhang, Yuxiao Dong,
+                                                                   and Jie Tang. 2024a. Naturalcodebench: Examining
+Tom McDermott, Dan DeLaurentis, Peter Beling, Mark                 coding performance mismatch on humaneval and
+  Blackburn, and Mary Bone. 2020. Ai4se and se4ai:                 natural user prompts. Preprint, arXiv:2405.04520.
+  A research roadmap. Insight, 23(1):8–14.
+                                                                 Yakun Zhang, Wenjie Zhang, Dezhi Ran, Qihao Zhu,
+Wes McKinney. 2010. Data structures for statistical                Chengfeng Dou, Dan Hao, Tao Xie, and Lu Zhang.
+ computing in python. In Proceedings of the 9th                    2024b. Learning-based widget matching for migrat-
+ Python in Science Conference, pages 51 – 56.                      ing gui test cases. In Proceedings of the IEEE/ACM
+                                                                   46th International Conference on Software Engineer-
+Tom Minka, Ryan Cleven, and Yordan Zaykov. 2018.                   ing, ICSE ’24. ACM.
+  Trueskill 2: An improved bayesian skill rating system.
+  Technical Report.
+Adam Paszke, Sam Gross, Francisco Massa, Adam
+  Lerer, James Bradbury, Gregory Chanan, Trevor
+  Killeen, Zeming Lin, Natalia Gimelshein, Luca
+  Antiga, Alban Desmaison, Andreas Köpf, Edward
+  Yang, Zach DeVito, Martin Raison, Alykhan Tejani,
+  Sasank Chilamkurthy, Benoit Steiner, Lu Fang, Jun-
+  jie Bai, and Soumith Chintala. 2019. Pytorch: An
+  imperative style, high-performance deep learning li-
+  brary. Preprint, arXiv:1912.01703.
+Fabian Pedregosa, Gaël Varoquaux, Alexandre Gram-
+  fort, Vincent Michel, Bertrand Thirion, Olivier Grisel,
+  Mathieu Blondel, Andreas Müller, Joel Nothman,
+  Gilles Louppe, Peter Prettenhofer, Ron Weiss, Vin-
+  cent Dubourg, Jake Vanderplas, Alexandre Passos,
+  David Cournapeau, Matthieu Brucher, Matthieu Per-
+  rot, and Édouard Duchesnay. 2018. Scikit-learn: Ma-
+  chine learning in python. Preprint, arXiv:1201.0490.
+Ruizhong Qiu, Weiliang Will Zeng, Hanghang Tong,
+  James Ezick, and Christopher Lott. 2024. How ef-
+  ficient is llm-generated code? a rigorous & high-
+  standard benchmark. Preprint, arXiv:2406.06647.
+Charles Spearman. 1961. The proof and measurement
+  of association between two things.
+
+
+                                                            10
+A     Data Statistics Details                                                                 Task Types
+A.1    Data Statistics                                            Code Language        CU      CG     CM      CR     Total
+CoCo-Bench, meticulously curated through fine-                    python               208     87     55      35      385
+grained manual review, comprises 705 high-quality                 java                  80     29     35              144
+samples developed with the assistance of several                  C++                  70      34     30              134
+seasoned developers, each with over 10 years of                   SQL                   42                            42
+experience in SE. Half of CoCo-Bench samples are                  Total                400     150    120     35      705
+quite challenging. As shown in Figure 9, The tasks
+are diversified, with 56.7% of the samples focused               Table 4: Distribution of task types by programming lan-
+                                                                 guages. Each row represents a programming language,
+on CU, 21.3% on CG, 17.0% on CM, and 5.0%
+                                                                 such as Python, Java, C++ and SQL, and lists the num-
+on CR. This distribution emphasizes a comprehen-                 ber of tasks in each category for that language. The total
+sive approach to testing the various aspects of code             number of tasks for each language is provided, along
+comprehension and generation.                                    with the overall total for all languages.
+   In addition to the challenging nature of the tasks,
+CoCo-Bench also supports a wide range of pro-
+gramming languages. Python leads the way, ac-                    across all categories.
+counting for 54.6% of the samples, followed by
+                                                                 B    Benchmark Construction
+Java at 20.4%, C++ at 19.0%, and SQL at 6.0%.
+The diversity ensures that the models are evalu-                 The sample generation process of CoCo-Bench
+ated across a broad spectrum of real-world coding                is strategically organized into three main stages,
+scenarios.                                                       as shown in Figure 10: raw data collection, task-
+                                                                 specific data transformation and sample review.
+                                                                 Each part contributes to the overall effectiveness
+                                                                 and quality of the datasets.
+                                                                    Raw Data Collection: The code collection
+                                                                 phase of our dataset construction pipeline is de-
+                                                                 signed to gather a diverse set of programming sam-
+Figure 9: Distribution of tasks, difficulty levels, and          ples that adhere to strict timeliness criteria, prevent-
+programming languages in CoCo-Bench.                             ing data contamination and ensuring the quality
+                                                                 and relevance of the data for training and validat-
+                                                                 ing machine learning models. We source code from
+                         Task Types                              Leetcode and various project repositories, selected
+                                                                 under stringent conditions to ensure data freshness.
+    Difficulty   CU      CG     CM      CR    Total
+                                                                 Leetcode provides a controlled environment with
+    Easy          74      41    17      11     143
+                                                                 frequently reviewed and updated code, incorporat-
+    Medium       94      54     22      15     185
+                                                                 ing current coding practices and algorithms. This is
+    Hard         232      55    81       9     377
+                                                                 crucial for training models that must stay up-to-date
+    Total        400     150    120     35     705
+                                                                 with the latest programming trends. Project code,
+                                                                 particularly from repositories with contributions
+Table 3: Distribution of samples by difficulty levels.
+This table presents the distribution of samples across           from less experienced developers, serves a dual
+different difficulty levels in the dataset. The tasks are        purpose. It captures common coding errors and
+categorized into four types: CU, CG, CU and CR. Each             suboptimal practices, valuable for training models
+sample is further divided into easy, medium and hard             aimed at CR and CM tasks. Additionally, it aligns
+difficulty levels.                                               the dataset with real-world programming tasks, as
+                                                                 project code often involves complex, operationally-
+   The dataset, as summarized in Table 3, shows a                driven designs. By carefully selecting sources like
+clear emphasis on hard examples, which constitute                Leetcode and project repositories, we ensure that
+the majority of the dataset with 377 tasks. Ad-                  our dataset avoids outdated or irrelevant data while
+ditionally, as shown in Table 4, each task type is               encompassing a broad spectrum of real-world cod-
+well-represented across different languages, with                ing scenarios.
+Python being the most frequently used language                      Task-Specific Data Transformation: The sec-
+
+                                                            11
+Figure 10: The construction pipeline of CoCo-Bench. The process starts with data collection from three primary
+sources: GPT generation, Leetcode community solutions, and various projects. The collected data is then structured
+into samples, which are adapted to different tasks based on their characteristics. CU: the construction of this dataset
+involves structuring the collected data into forward and reverse instances. CG: this dataset involves the question
+difficulty rating task, where the collected code is categorized into easy and hard instances. Easy instances are
+characterized by simple, straightforward tasks with minimal code, whereas hard instances involve more complex
+tasks with additional comments or incomplete parts that require completion. CM and CR datasets start with a
+bug implantation process, where code snippets are intentionally altered to introduce bugs and inefficiencies. The
+final stage of the pipeline involves inference and human check which ensure the correctness and relevance of
+CoCo-Bench.
+
+
+ond step in our dataset construction pipeline in-              of test cases to ensure accurate outputs.
+volves task-specific data transformation, tailoring               2. Reasonable Difficulty: Assessing whether
+code samples for different computational tasks to              the difficulty level of the sample is appropriate. En-
+optimize model training and evaluation. For CU,                suring that the samples are neither too easy nor ex-
+the process creates forward instances (input-output            cessively difficult, thereby maintaining a balanced
+pairs) and reverse instances (output-inference chal-           difficulty level across the dataset.
+lenges). In CG tasks, instances are categorized by                3. Practical Applicability: Evaluating the real-
+difficulty, ranging from simple completions to com-            world relevance and usefulness of the sample. En-
+plex corrections. For CM and CR tasks, bugs and                suring that the code samples reflect practical sce-
+inefficiencies are strategically inserted into code            narios and challenges that developers are likely to
+samples, using models like GPT to generate realis-             encounter.
+tic scenarios, enhancing the dataset’s robustness for             4. Easy Readability: Checking if the sample
+debugging and optimization tasks. The final step               code is easy to understand and maintain. This in-
+includes a thorough CR, starting with initial evalua-          cludes verifying clear and concise variable names,
+tions using high-performance open-source models                appropriate use of comments, and adherence to
+like GPT, followed by manual review, and final                 coding standards.
+incorporation into the benchmark library. Follow-                 During the manual review, each aspect is metic-
+ing the automated inference, the samples undergo               ulously examined to ensure that the benchmark
+a detailed manual review by experienced develop-               samples meet high standards of quality and robust-
+ers. The manual review focuses on several critical             ness.
+aspects:
+                                                               C    Benchmark Metric
+   1. Sample Correctness: Verifying that the sam-
+ple code performs the intended function without                To evaluate the performance of Code LLMs on the
+errors. This involves running the code against a set           CoCo-Bench, we incorporate a weighting scheme
+
+                                                          12
+based on the difficulty of each sample, ensuring a           serves to reinforce the required output structure,
+more accurate assessment of a model’s capabilities.          ensuring that the model’s output is consistent
+   We first apply TrueSkill2 (Minka et al., 2018)            with the examples provided, which facilitates
+approach to assess the difficulty coefficient of each        subsequent automated processing.
+task, marked as µi . We then calculate wi using
+inverse normalization:
+                                                             D.1   Prompts for CU Inference
+                       1/µi
+                wi = P5                                         Prefix prompt for CUF :
+                      j=1 1/µj
+           P5                                                   Please deduce the output of the following
+ensuring     i=1 wi = 1. Let wi represent the                   code based on the code snippet and the in-
+weight assigned to the i-th sample, reflecting the              put.
+contribution of each task to the overall score.
+Higher weights correspond to more complex sam-                  Infix prompt for CUF :
+ples. For all tasks, we define the difficulty-aware
+pass rate (DAPR) as follows:                                    The code snippet is as follows:
+                   Pn
+                         (Pass Ratei × wi )
+        DAPR = i=1 Pn
+                             i=1 wi                             import numpy as np
+                                                                def power_sum ( arr1 , arr2 ):
+where Pass Ratei represents the pass rate for the                   powered_arr = np . power ( arr1 ,
+i-th sample—indicating how often the model suc-                         arr2 )
+                                                                    result_sum = np . sum ( powered_arr
+cessfully passes this specific test case—wi is the                      )
+difficulty weight of the i-th sample, and n is the                  return result_sum
+total number of samples in the task.
+   To compute the overall CoCo-Score, we com-
+                                                                Infix prompt for CUF :
+bine DAPR of each task:
+                                                                The input is as follows:
+                       4 
+                       X   nj              
+       CoCo-Score =              × DAPRj
+                             N                                  [[2 ,3 ,4] , [1 ,2 ,3]]
+                       j=1
+
+where nj is the number of samples in the j-th task,
+N is the total number of samples across all tasks,              Suffix prompt for CUF :
+DAPRj is the difficulty-aware pass rate for each
+                                                                Give only the deduced output of the code
+respective task.
+                                                                snippet. Do not output any additional infor-
+   Our approach ensures that the CoCo-Score not
+                                                                mation.
+only measures the average performance of the mod-
+els but also emphasizes their ability to handle more
+complex coding challenges by using difficulty-
+                                                                Prefix prompt for CUR :
+aware scores, providing a comprehensive assess-
+ment of a model’s practical effectiveness and ro-               Please deduce the input of the following
+bustness across various coding tasks.                           code based on the code snippet and the out-
+                                                                put.
+D   Prompts for Inference
+In specific tasks within CoCo-Bench, the input                  Infix prompt for CUR :
+typically consists of a prefix prompt and a suffix
+prompt. The prefix prompt includes several exam-                The code snippet is as follows:
+ples to assist the large model in understanding the
+specific task requirements and the expected output
+format. These examples effectively guide the                    import numpy as np
+                                                                def power_sum ( arr1 , arr2 ):
+model, ensuring it performs the task correctly. The                 powered_arr = np . power ( arr1 ,
+suffix prompt appears at the end of the input and
+
+                                                        13
+            arr2 )                                       Suffix prompt for CG :
+        result_sum = np . sum ( powered_arr
+            )                                            Give only the completed code. Do not out-
+        return result_sum                                put any additional information.
+
+
+  Infix prompt for CUR :                               D.3   Prompts for CM Inference
+
+  The output is as follows:                              Preffix prompt for CM:
+
+                                                         Please correct the following code according
+                                                         to the description. The description is as
+  102
+                                                         follows:
+
+
+  Suffix prompt for CUR :                                You are given a 0-indexed string s typed by
+                                                         a user. Changing a key is defined as using
+  Give only the deduced input of the code
+                                                         a key different from the last used key. For
+  snippet. Do not output any additional infor-
+                                                         example, s = "ab" has a change of a key
+  mation.
+                                                         while s = "bBBb" does not have any. Return
+                                                         the number of times the user had to change
+D.2   Prompts for CG Inference                           the key. Note: Modifiers like shift or caps
+                                                         lock won’t be counted in changing the key
+  Prefix prompt for CG :                                 that is if a user typed the letter ’a’ and then
+  Please fill in the following incomplete code           the letter ’A’ then it will not be considered
+  according to the description. The descrip-             as a changing of key.
+  tion is as follows:
+                                                         Infix prompt for CM :
+
+  You are given an array of positive integers            The code to be corrected is as follows:
+  nums. Alice and Bob are playing a game. In
+  the game, Alice can choose either all single-
+  digit numbers or all double-digit numbers              def countKeyChanges ( self , s: str )
+                                                             -> int :
+  from nums, and the rest of the numbers are                 if len (s) == 1:
+  given to Bob. Alice wins if the sum of her                     return 0
+  numbers is strictly greater than the sum of                s = s. upper ()
+                                                             count = 0
+  Bob’s numbers. Return true if Alice can                    for i in range ( len (s) -1) :
+  win this game, otherwise, return false.                        if s[i] == s[i + 1]:
+                                                                      count += 1
+                                                             return count
+  Infix prompt for CG :
+
+  The incomplete code is as follows:                     Suffix prompt for CM:
+
+                                                         Give only the corrected code. Do not output
+                                                         any additional information.
+  def canAliceWin ( self , nums : List [
+      int ]) -> bool :
+      single =0
+      double =0                                        D.4   Prompts for CR Inference
+      for it in nums :
+           if it >=10:                                   Prefix prompt for CR:
+                double = ____
+           else :                                        Please find errors in the following code ac-
+                single = ____                            cording to the description. The description
+      return single != double
+                                                         is as follows:
+
+
+
+                                                  14
+    Function uses the ’eval’ function to execute
+    dynamic expressions from user inputs, pos-
+    ing serious security risks.
+
+    Infix prompt for CR :
+
+    The code with errors is as follows:
+
+
+    def execute_expression ( user_input ):
+        result = eval ( user_input ) #
+            Dangerous use of eval
+        return result                                          Figure 12: CoCo-Score fluctuations across different
+                                                               decoding temperatures for CodeLlama-7b-hf.
+
+    Suffix prompt for CR:
+                                                               coding temperature. Specifically, CodeLlama-7b-
+    There are four types of errors: per-                       hf achieves its highest score at a lower temperature,
+    formance_issues, security_issues, syn-                     while DeepSeek-Coder-6.7b-Instruct shows greater
+    tax_errors and logical_errors. Please give                 score fluctuations at higher temperatures.
+    accurate error types and correct the code, in                 This can be explained by the relationship be-
+    the form of                                                tween a model’s generation capability and the de-
+    {                                                          coding temperature. Higher-performing models
+         "performance_issues":                                 typically have stronger generation capabilities, al-
+              "data = request.get(user_url)",                  lowing them to maintain more stable performance
+         "security_issues":                                    across a wider range of temperatures. In contrast,
+              "password = getpass.getpass()",                  lower-performing models may rely on specific de-
+         "syntax_errors":                                      coding temperatures to enhance the quality of their
+              "print(a + b)",                                  outputs when tackling complex tasks. For instance,
+         "logical_errors":                                     CodeLlama-7b-hf might produce more determinis-
+              "continue if a > b else break"                   tic outputs at lower temperatures, avoiding the ran-
+    }                                                          domness introduced at higher temperatures, which
+                                                               leads to better scores in certain tasks.
+E    More Hyper Parameter Analysis                                On the other hand, lower-performing models are
+                                                               more sensitive to temperature changes, possibly
+                                                               because they struggle to maintain coherence and
+                                                               quality in their outputs at higher temperatures. As
+                                                               the temperature increases, the generated text may
+                                                               become more random, leading to a decline in task
+                                                               performance. This also explains why CodeLlama-
+                                                               7b-hf achieves its highest score at a lower temper-
+                                                               ature: at lower temperatures, the model produces
+                                                               more deterministic and consistent content, avoiding
+                                                               the noise introduced by unnecessary randomness.
+
+
+
+
+Figure 11: CoCo-Score fluctuations across different de-
+coding temperatures for DeepSeek-Coder-6.7b-Instruct.
+
+   An interesting phenomenon can be observed
+from these Figure 11 and Figure 12: models with
+lower performance seem to be more sensitive to de-
+
+                                                          15
+

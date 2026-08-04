@@ -1,0 +1,748 @@
+     Characterizing the Usefulness of Code Review Comments in
+     Scientific Software for Software Quality and Scientific Rigor
+                                  Sharif Ahmed                                                            Nasir U. Eisty
+                       University of Central Arkansas                                               University of Tennessee
+                             Conway, AR, USA                                                         Knoxville, TN, USA
+                             sahmed@uca.edu                                                            neisty@utk.edu
+
+ABSTRACT                                                                        1    INTRODUCTION
+Context: Innovation thrives on scientific software, with useful                 Modern Code Review (MCR), online asynchronous tool-based source
+code review feedback enhancing its correctness and impact. How-                 code inspection technique, is crucial despite its significant time
+ever, unlike general-purpose commercial and open-source software,               costs [13]. According to Bosu et al. [7], developers spend at least a
+the usefulness of code review feedback (CR comment) in scientific               tenth of their time engaging in peer code review activities in both
+software remains largely unstudied. Objective: This paper aims                  industry and open-source development. Given its essential role, the
+to characterize the usefulness of CR comment in scientific open-                code review process is beneficial in enhancing overall team effi-
+source software (Sci-OSS), leveraging existing research on useful               ciency and project quality. The core of the MCR process lies in the
+CR comment. Method: To achieve this objective, we mine successful               CR comments [13].1 CR comments are different from source-code
+Sci-OSS from GitHub, analyze their CR comments with usefulness-                 comments and commit messages that are written by code-authors
+related features, and compare the findings from prior research on               instead of code-reviewers. The effectiveness of the code review pro-
+general-purpose commercial and open-source CR comments. Re-                     cess is heavily dependent on the usefulness of these CR comments.
+sults: The investigation on the usefulness of CR comments in Sci-               Usefulness of CR comments also emerged in Kononenko et al. [18]’s
+OSS confirms many characteristics that prior research identified                empirical study on the Mozilla code review process. Despite their
+in general-purpose software. For example, subjective or negative                importance, empirical findings from Bosu et al. [8] reveal that more
+CR comments remain not useful for the Sci-OSS. We also find CR                  than 1 out of 3 CR comments at Microsoft are not useful.
+comments which receive negative emoji reactions have a very small                          Given enough eyeballs, all bugs are shallow
+correlation with not useful comments, whereas the positive emo-                            —Linus Torvalds [28]
+jis show mixed correlations. Importantly, 6-33% CR comments in
+                                                                                This well-known quote captures the core idea behind open source
+Sci-OSS are not useful in our mined repositories. Conclusions:
+                                                                                software (OSS): when many people can view, test, and improve code,
+Our investigation into Sci-OSS extends findings from CR comments’
+                                                                                problems are more likely to be found and fixed quickly. OSS relies
+usefulness research on general-purpose software, benefiting devel-
+                                                                                on collaboration, transparency, and community involvement to
+opers, scientists, and researchers in the Sci-OSS community.
+                                                                                ensure software quality. While many open source tools are built for
+CCS CONCEPTS                                                                    general use, such as web browsers, operating systems, or develop-
+                                                                                ment frameworks, some are created specifically to support scientific
+• Software and its engineering ! Open source model; • Infor-                    research. These are known as scientific open-source software (Sci-
+mation systems ! Open source software.                                          OSS). They help researchers analyze data, run experiments, and test
+                                                                                new ideas. Although both types of software are open and collabora-
+KEYWORDS                                                                        tive, they serve different goals, follow different development prac-
+Scientific Software, Open Source Software, Code Review Comment,                 tices, and are used by different communities. Moreover, different
+Usefulness, Software Quality                                                    people, groups, and organizations write and maintain the Sci-OSS.
+ACM Reference Format:                                                           These people may have different expertise, backgrounds, and prac-
+Sharif Ahmed and Nasir U. Eisty. 2026. Characterizing the Usefulness            tices. However, researchers have investigated the usefulness of code
+of Code Review Comments in Scientific Software for Software Quality             review feedback or code review comments (CR comments), identi-
+and Scientific Rigor . In Proceedings of The Platform for Advanced Scientific   fied factors to classify usefulness of CR comments [8, 31]. We also
+Computing Conference (PASC 2026). ACM, New York, NY, USA, 12 pages.             featurized, predicted, compared and contrasted the usefulness of CR
+https://doi.org/XXXXXXX.XXXXXXX
+                                                                                comments between commercial and open-source general software
+                                                                                in our previous study [3].
+                                                                                   Similar to general software, code review is crucial in Sci-OSS be-
+                                                                                cause it helps ensure the accuracy, reliability, and trustworthiness of
+                                                                                computational results, which are fundamental to scientific progress
+                                                                                [16]. Given that Sci-OSS often involves complex algorithms and
+                                                                                data analysis, peer review of code allows developers to identify and
+                                                                                correct errors, improve readability, and enhance maintainability.
+PASC 2026, June 29 – July 1, 2026, Bern, Switzerland
+                                                                                This collaborative process not only reduces the likelihood of bugs
+2026. ACM ISBN 978-1-4503-XXXX-X/18/06
+https://doi.org/XXXXXXX.XXXXXXX                                                 1“CR comments” and “Code Review Comments” are interchangeably used in this paper
+PASC 2026, June 29 – July 1, 2026, Bern, Switzerland                                                               Sharif Ahmed and Nasir U. Eisty
+
+
+and inaccuracies in scientific outputs but also promotes knowledge      Microsoft, where seven developers labeled them as useful, some-
+sharing among developers. As a result, implementing systematic          what useful, or not useful. For their usefulness prediction model,
+peer code review practices contributes to producing high-quality        somewhat useful comments were grouped with useful ones. A CR
+Sci-OSS that can be trusted by the scientific community and sup-        comment was considered useful if it led to a code change within
+ports reproducible and robust scientific outcomes.                      1–10 lines of the comment. They found that changes one line away
+    To the best of our knowledge, none of the prior research has        minimized both false positives and false negatives. This definition
+framed the usefulness of CR comments in Sci-OSS. This observa-          was later adopted [24, 27] or adapted [31] in three datasets.
+tion motivates us to look into Sci-OSS, leveraging state-of-the-art
+techniques for identifying and analyzing CR comments. This paper
+aims to investigate the usefulness of CR comments in Sci-OSS.           2.2    Classifying Usefulness
+It complements our previous work [3] and other existing research
+                                                                        Initially, Pangsakulyanont et al. [25] employed the Vector Space
+conducted in commercial and open-source CR comments [24, 27].
+                                                                        Model with cosine similarity measure between the commit message
+Analyzing the state-of-the-art estimated usefulness of CR comments
+                                                                        and the CR comment on a code-change to classify usefulness. Subse-
+in Sci-OSS via feature analysis and eXplainable AI (XAI) can inform
+                                                                        quently, Bosu et al. [8] identified the factors of useful CR comments
+us what makes a CR comment useful in Sci-OSS.
+                                                                        through an empirical study at Microsoft. To generate features for
+    The outcome of the proposed work is based on addressing the
+                                                                        their usefulness classifier, they utilized textual properties of CR
+following research questions:
+                                                                        comments and attributes of review activities. Kononenko et al. [19]
+      • To the best of our knowledge, there is no dataset or experi-    introduced factors, such as code author and reviewer experience,
+        ment on usefulness of CR comments in Sci-OSS. So, we ask        that impact the quality of code reviews. Rahman et al. [27] collected
+        first research question, RQ1: How useful are the Sci-OSS CR     CR comments from commercial projects and developed a model to
+        comments when evaluated with state-of-the-art usefulness        predict their usefulness. Their approach involved using textual prop-
+        prediction models?                                              erties of the CR comments and features related to the developers’
+      • We have found studies that characterize and describe use-       experience. However, unlike Bosu et al. [8], they did not incorporate
+        fulness of CR comments in general software [3, 8, 31]. To       any features related to the code review activities. In 2018, Efstathiou
+        describe the CR comments in Sci-OSS leveraging usefulness       and Spinellis [14] proposed measuring usefulness using linguistic
+        research we ask our second research question, RQ2: How          semantics to address this issue. Concurrently, Meyers et al. [24]
+        do the characteristics of CR comments in Sci-OSS differ from    used several linguistic features to classify CR comments. Hasan
+        those of useful CR comments in commercial and open-source?      et al. [17] developed an in-house web-based application to reward
+      • Our recent work [3] observed bipolarity of usefulness charac-   reviewers for their useful feedback. They did not consider any lin-
+        teristics in CR comments from different environment. There-     guistic features from Meyers et al. [24]. However, they extended
+        fore we pose our third research question, RQ3: Do CR com-       the existing features by incorporating features related to code re-
+        ments in Sci-OSS projects vary in characteristics across dif-   view activities. Furthermore, they presented several features for
+        ferent scientific domains?                                      predicting the usefulness of CR comments from the literature and
+      • Our other work [2] found emoji-features help predicting         their work, but these features are limited to their model.
+        usefulness of CR comments better, thus we explore our last         For the feature-based usefulness prediction task, Rahman et al.
+        research question, RQ4: How are emojis perceived in CR          [27] utilized the Mann-Whitney Wilcoxon test to identify differences
+        comments within Sci-OSS?                                        in features between useful and non-useful CR comments, and Co-
+                                                                        hen’s D as an effect-size measure. In contrast, Hasan et al. [17] used
+   The rest of the paper is organized as follows. Section 2 provides
+                                                                        the Pearson Correlation measure to interpret their input features.
+background and a brief overview of the literature. Section 3 de-
+                                                                        Turzo and Bosu [31] employed the Chi-Square test to check the
+tails the methodology for answering our research questions, RQ
+                                                                        relationship between respondents’ demographics and responses.
+1-4. Section 4 reports and discusses our experiment results. Sec-
+                                                                        Recently, we [3] analyzed the features by combining feature anal-
+tion 5 reviews the threats to the validity of our work, and Section 6
+                                                                        yses from prior works [17, 27]. In that work, our comprehensive
+concludes.
+                                                                        feature analyses on cross-datasets uncovered a bipolarity between
+                                                                        datasets of CR comments from two different environments.
+2     BACKGROUND AND RELATED WORK
+This section provides background and a concise review of the rele-
+vant literature.                                                        2.3    Emojis and Usefulness
+                                                                        Emojis and emoticons serve as non-verbal cues and convey emo-
+2.1     Usefulness Definition                                           tive or instructive messages to developers. In one of our previous
+In 2014, Pangsakulyanont et al. [25] proposed a definition for CR       studies [2], we explored the utility of CR comments by examining
+comments, classifying them as either useful or useless based on         the sentiments and semantics of emojis within these comments
+how closely the reviewer’s comment matched the author’s commit          using existing datasets DA⌘ ,D22 , and D>3 . In that paper, emoji-
+message for a specific code change. If it was not possible to clearly   aware models outperform the emoji-unaware models. Therefore,
+determine the usefulness of a comment, it was labeled as undeter-       overseen emojis in CR comments emerged as an important aspect
+mined. The following year, Bosu et al. [8] studied CR comments at       of CR comments’ usefulness prediction task.
+Characterizing the Usefulness of Code Review Comments in Scientific Software for Software Quality and Scientific Rigor PASC 2026, June 29 – July 1, 2026, Bern, Switzerland
+
+
+2.4      General CR comments                                                             male, mostly male, female, mostly female, androgynous, or unknown.
+In another of our previous works [1], we identified three available                      After determining the guessed gender, they transformed “mostly
+datasets of useful CR comments from general software. We briefly                         male” and “mostly female” into male and female respectively, and
+describe them below.                                                                     unpredicted genders into the “unknown” category.
+      • DA⌘ , 2017: This dataset [27] comprises 1,481 CR comments,                          Normalized Data. Ahmed et al. [4] observed the GitHub users’
+        collected through the GitHub API from four commercial                            location data and found that a specific location had multiple values
+        projects of an unspecified company. The authors of the article                   for example ‘US’, ‘USA’, ‘U.S.’, or ‘United States’. Additionally, some
+        manually annotated each CR comment as either useful or                           GitHub users shared city names without their country names, for
+        non-useful, based on the usefulness heuristic of the Microsoft                   example, ‘London’ instead of ‘London, United Kingdom.’ To unify
+        study [8].                                                                       the geo-location of the developers, they used GeoPy [20], an open-
+      • D22 , 2018: This dataset [24] has 3,794 CR comments from                         source geocoding python client, to obtain a full address from the
+        Google Chromium Project. The authors used the RESTful API                        OpenStreetMap Nominatim geocoder. Lastly, for maximum cover-
+        to obtain accessible CR comments on Rietveld (code review                        age, they took only the country name from the obtained address as
+        tool used in Google Chromium Project) from 2008 to 2016.                         location data for every developer who publicly shared their location
+        Next, they automatically identified acted-upon CR comments                       information at the time of our GitHub data mining.
+        by considering Rietveld’s “Done” click feature. Though their                        We derive usefulness-related features from literature [3, 8, 24, 27]
+        annotation principle is similar to the DA⌘ [27], it was labeled                  to characterize the usefulness of these SciOSS CR comments and
+        as acted-upon (i.e., useful) and not-(known to be)-acted upon                    contribute DB28 (as detailed in Section 3).
+        CR comments.
+      • D>3 , 2023: This dataset [31] contains 2,654 CR comments                         3     METHODOLOGY
+        from OpenDev’s Nova OSS project. The authors used the                            Here, we outline our proposed methodology to answer our research
+        Gerrit Miner tool for mining CR comments from 2011 to                            questions, RQ1-4, introduced in Section 1. Figure 1 shows the
+        2022 and manually annotated CR comments with useful and                          proposed approach for this research objective. As our focus is on
+        not-useful labels.                                                               the scientific projects, we first select the relevant projects. Next, we
+In this paper, we use all three general-purpose commercial and                           collect the data from selected projects. We then answer our research
+open-source CR comment datasets (DA⌘ ,D22 ,& D>3 ) to compare                            questions through our feature and XAI analyses. We detail each
+our CR comments derived from SciOSS, DB28 .                                              phase below.
+
+2.5      SciOSS CR comments
+The U.S. Department of Energy2 (DoE) sponsored CASS3 fosters
+collaboration among diverse Software Stewardship Organizations
+(SSOs), each responsible for advancing parts of the Sci-OSS ecosys-
+tem (e.g., math libraries, data tools). Ahmed et al. [4] explored the
+scientific open-source software (e.g., math libraries, data tools) and
+mined 10 projects that are open and active on GitHub. In the process
+of project selection, authors excluded the projects that are mirrored
+on GitHub from social coding or other platforms.
+   Next, authors mined the GitHub data using GitHub REST API.
+Their dataset contain other information in addition to CR comments,
+such as, pull request number, line number, author association, user                      Figure 1: Overview of Our Methodology to Answer RQs 1-4
+type, and GitHub emoji reactions (                               ). We
+name these additional data related to the mined CR comments as
+metadata throughout this paper.                                                          3.1     DB28 Dataset Curation
+   To make our work self-contained, we provide brief overview
+                                                                                         We adopt CR comments from SciOSS [4], compute usefulness-related
+of approximated and normalized metadata [4], which we use to
+                                                                                         hand-crafted features from these CR comments, and answer our
+answer one of our research questions.
+                                                                                         research questions RQ1-4.
+   Approximated Data. GitHub user profiles do not have specific
+                                                                                         3.1.1 Feature Data Computation. After collecting the data, we com-
+attributes for the developer’s gender, but gender diversity has been
+                                                                                         pute the feature values using existing tools and artifacts from our
+studied and found to be an important metric for community engage-
+                                                                                         prior work and related research[1–3, 8, 24, 27]. With the obtained
+ment and software sustainability. Ahmed et al. [4] employed an
+                                                                                         data, we compile a dataset for our experiments and contribute it to
+open-source gender-guessing technique [12] that is able to predict
+                                                                                         future research. Importantly, as we are interested in studying the
+gender nearly 98% of the time correctly [29]. The tool is able to
+                                                                                         usefulness of scientific CR comments and we have state-of-the-art
+predict a person’s gender from their name using the categories
+                                                                                         usefulness predictors, we plan to obtain the predictor-based anno-
+2 http://science.energy.gov                                                              tation of our derived scientific CR comments. This will facilitate us
+3 www.cass.community                                                                     to characterize the scientific CR comments.
+PASC 2026, June 29 – July 1, 2026, Bern, Switzerland                                                                Sharif Ahmed and Nasir U. Eisty
+
+
+3.1.2 Prediction-based Usefulness Annotation. This paper aims to          analysis evaluates whether the correlation between features and
+investigate scientific CR comments within the context of code re-         usefulness statistically differs from one dataset to another.
+view feedback usefulness and characterize scientific CR comments
+                                                                              • Compute Pearson correlation of all the features to the pre-
+leveraging features and analyses applied for understanding the
+                                                                                dicted usefulness labels for all datasets.
+CR comments. As we have a state-of-the-art usefulness predictor
+                                                                              • Take feature correlations on our dataset versus feature cor-
+from our previous work [3], we plan to obtain a predictor-based
+                                                                                relations on each of the existing datasets and perform the
+annotation of our derived Sci-OSS CR comments. This paper shows
+                                                                                Wilcoxon signed-rank test [32] followed by Cohen’s D [10]
+OpenAI’s GPT-4o as the best-performing model to predict the use-
+                                                                                effect size measure.
+fulness of code review comments. As GPT-4o is not free and our
+derived code reviews are many (164,708 CR comments) compared              We have noticed the bipolarity of two open-source datasets in our
+to their adopted datasets (<4,000 CR comments), we will need to           prior work’s empirical results [3]. This answer from the Sci-OSS
+pay for the fine-tuning process and then for predicting our scien-        will inform us if the Sci-OSS has similar polarity or not.
+tific code review text. To achieve this, we choose the second-best
+performing model from our paper [3], which is free of cost and               C. For cross-dataset eXplainable AI (XAI) analysis, we adopt
+demands less computational time. Finally, we use the usefulness pre-      the recent XAI analyses on CR comment-usefulness datasets [3].
+diction model [3] to predict the usefulness of our derived Sci-OSS        This approach provide explanation of a dataset when trained on an
+CR comments.                                                              explainer AI model. To this end we take following steps.
+                                                                              • We consider robust SHapley Additive exPlanation frame-
+3.2     Answering Research Questions                                            work [22] to train one of the dataset on a linear explainer
+We leverage the experiments from prior research [2, 3, 17, 27] to               model and get explanation while predicting another dataset.
+answer the research questions for scientific CR comments.                     • Train the selected explainer model with our curated DB28
+                                                                                dataset and check explanation from predicting usefulness of
+3.2.1 RQ1: How useful are the Sci-OSS CR comments when evalu-                   existing datasets (DA⌘ , D22 , D>3 ) and vice versa.
+ated with state-of-the-art usefulness prediction models? To answer            • The obtained SHapely values will provide what contributed
+this question, we check the distributions of predicted usefulness of            in explainer model to predict a CR comment useful or not-
+CR comments from our compiled dataset, DB28 . For better insight,               useful.
+we plot the aggregated usefulness ratio of the individual projects            • The XAI findings from scientific CR commentsof DB28 will
+within DB28 over the years.                                                     complement the findings of general purpose CR comments
+                                                                                from commercial DA⌘ and open-source D22 and D>3 datasets.
+3.2.2 RQ2: How do the characteristics of CR comments in Sci-OSS
+differ from those of useful CR comments in commercial and open-           3.2.3 RQ3: Do CR comments in Sci-OSS projects in Sci-OSS projects
+source? Conducting feature and XAI analyses from prior CR com-            vary in characteristics across different scientific domains? To answer
+ments analyses [3, 27] on Sci-OSS projects can describe the CR            this RQ, we select our derived CR comments in DB28 that come
+comments in Sci-OSS. Thus, we perform the existing experiments            from similar and different scientific domains, such as applied math,
+with our newly obtained scientific CR comments.                           programming systems, machine learning. Next, we compare their
+   A. For within-dataset feature analyses, we follow the follow-          usefulness and usefulness-feature values using statistical tests fol-
+ing process.                                                              lowing our experiment setup for cross-dataset analysis in RQ2
+                                                                          (Section 3.2.2). Here, we compare the projects within DB28 only.
+      • We adopt around fifty textual features from our previous
+                                                                             As our dataset has additional metadata from the Sci-OSS reposi-
+        works [2, 3], which includes prior works [1, 8, 17, 24], in our
+                                                                          tories (Sec 2.5), we compare and contrast these metadata in terms
+        experiment.
+                                                                          of CR comment usefulness (Sec 3.1.2). Here, we conduct statistical-
+      • Next, we preprocess and calculate all the feature values of
+                                                                          tests for feature data (described in Section 3.2.2) on these metadata.
+        our DB28 CR comments using our previous implementations
+                                                                          We also consider Pearson correlation (X) between these numeric
+        and details [2, 3].
+                                                                          metadata of CR comments and usefulness CR comments. Since some
+      • With the computed feature values for each CR comment, we
+                                                                          of these metadata are categorical, we consider Chi-Square (j 2 ) [26]
+        determine whether each of the individual features can dis-
+                                                                          instead of Mann-Whitney U and Cramér’s + [11] instead of Co-
+        tinguish auto-annotated usefulness. To this end, we employ
+                                                                          hen’s D and Pearson correlation. Answers to this will provide an
+        existing statistical measures, the Mann-Whitney U test [23]
+                                                                          additional snapshot of the selected Sci-OSS projects.
+        and Cohen’s D [10], that were used for inspecting usefulness-
+        related feature analysis [3, 27].                                 3.2.4 RQ4: How are emojis perceived in CR comments within Sci-
+      • We compare and contrast the statistical findings from our         OSS?. We examine the emoji sentiments and emoji semantics within
+        scientific CR comments with findings from general-purpose         our derived Sci-OSS CR comments. CR comment-usefulness liter-
+        commercial and open-source CR comments.                           ature informs us that emoji semantics are perceived differently
+                                                                          in useful CR commentsfor general purpose open and commercial
+   B. For cross-dataset feature analyses, we adhere to the follow-
+                                                                          software [2].
+ing steps, similar to our previous study [3]. While our within-dataset
+feature analysis describes the individual feature’s ability to distin-        • We examine which emojis are used in scientific CR comments
+guish usefulness within a single dataset, the cross-dataset feature             comparing the literature.
+Characterizing the Usefulness of Code Review Comments in Scientific Software for Software Quality and Scientific Rigor PASC 2026, June 29 – July 1, 2026, Bern, Switzerland
+
+
+      • Next, we preprocess, extract, and normalize emoticons, emoji-                       Figure 2 shows the yearly aggregated ratio of useful comments
+        expressions, and Unicode emojis to a single format, Unicode                      of the scientific projects. Most of the projects had 70-80% useful CR
+        emojis.                                                                          comments. The project P5 has only one datapoint in the figure with
+      • With unified emojis, we obtain emoji sentiment features and                      100% useful CR comments. After looking into this, we find that this
+        emoji semantic embeddings using Novak’s general senti-                           project has only 19 CR comments and all of them are from the year
+        ment [21], Ahmed & Eisty’s code review sentiments [2], and                       2023. For P8, the useful comments ratio in year 2021 is the lowest,
+        emoji2vec pre-trained language model [15].                                       50% useful from only 10 CR comments. However, it has 80% useful
+      • We then check the features’ correlation to usefulness in                         CR comments in the following years, 2023 with 32,205 CR comments
+        emoji-containing CR comments in DB28 .                                           and 2024 with 71,150 CR comments.
+      • Finally, we contrast the emoji not-aware CR comment-semantics
+        (fastText [6]) and emoji aware CR comment-semantics (fast-
+        Text [6]+emoji2vec [15]) for predicting the usefulness of CR
+                                                                                         4.2     RQ2: Useful CR comments: General vs
+        comments. We maintain the existing stratified 10-fold cross-                             Sci-OSS
+        validation setup for this evaluation [2]. Since our dataset                      4.2.1 Features. Table 1 shows statistical properties of scientific CR
+        has prediction-based annotation, we limit our analysis for                       comments from our DB28 along with all three existing usefulness
+        prediction-evaluation to DB28 . We additionally employ a sta-                    labeled CR comments-datasets, DA⌘ , D22 , and D>3 , from general
+        tistical paired comparison between the DB28 ’s annotated use-                    software. Ahmed & Eisty discovered a bipolarity between D22 and
+        fulness and emoji-(non)-aware models’ CR comment-usefulness                      D>3 , so we were curious about DB28 ’s stance, and we find that
+        predictions. For this measure, we consider Wilcoxon’s Signed                     DB28 is statistically closer to D22 . Overall, we see that CR comments
+        Rank test [32] with a threshold of p-value< 0.05, followed                       from Sci-OSS has a stronger association with usefulness for code
+        by Cohen’s D [9] effect-size measure.                                            review sentiment, cr_senti, [5] and association with not-usefulness
+   This research question will extend our knowledge by adding                            for stop-word-ratio, is confirmatory? than general open-source and
+insights for emojis within the context of the Sci-OSS code review                        commercial software.
+feedback.
+                                                                                         4.2.2 Datasets. Table 2 shows that all the projects are signifi-
+4     RESULTS AND DISCUSSIONS                                                            cantly different from each other, with Wilcoxon’s signed rank p-
+                                                                                         value<0.05, except for DB28 -DA⌘ . The Cohen’s D effect-size is also
+This section provides the experimental results corresponding to the
+                                                                                         shows DB28 strongly varies with D>3 , similar to DA⌘ and D22 .
+procedures described in Section 3 and offers analysis of findings.
+
+                                                                                         4.2.3 eXplainable AI. Figure 3 shows the words that contributed to
+                                                                                         predicting usefulness of CR comments from scientific DB28 to gen-
+                                                                                         eral DA⌘ , D22 , and D>3 , and vice versa. This extends the findings
+                                                                                         from the recent XAI findings [3]. In our XAI analysis, we find that
+                                                                                         our XAI analysis confirms prior works regarding the contributions
+                                                                                         of the words line, we, you, good, should, test, etc. We also don’t notice
+                                                                                         the docstring, API, instance, method, case words that had contributed
+                                                                                         to XAI analysis across general software in prior work [3]. Therefore,
+                                                                                         CR comments that specify the source-code line, avoid subjective
+                                                                                         feedback, and talk about testing are also helpful in Sci-OSS.
+                                                                                            Following the excerpting of prior works [3, 30], we explore DB28
+                                                                                         comments labeled as useful and present a few excerpts below.
+
+                                                                                               • ‘check history of this line’
+                                                                                               • ‘This is not the focus of this PR. but the
+ Here, y-axis shows yearly aggregated ratio (0–1.0) of useful CR
+                                                                                                 indentation of this line is confusing.’
+        comments across 10 SciOSS projects (2014-2024)
+                                                                                               • ‘nit: trivial braces can be omitted’
+ Figure 2: Useful-CR Comments in Scientific Software, DB28                                     • ‘Presumably this line will change depending on the
+                                                                                                 Fortran compiler used. Users will just have to be
+                                                                                                 aware of that.’
+                                                                                               • ‘Yep, there should be a `xxxx.c` which needs the
+4.1     RQ1: Usefulness of CR comments in Sci-OSS                                                cuda header instead’
+We find 79% of our derived 164,708 CR Comments in DB28 are use-                                • ‘ Use xxxx_error_w_msg instead.’
+ful with our prediction based useful annotation described in Sec-                              • ‘@xx @xx I'd avoid including `.hpp` in a `.h` but
+tion 3.1.2. The project-wise ratio of not-useful CR comments in DB28                             instead include in `.c` that needs CUDA’
+ranges from 6% to 33%. This mirrors the findings of a study con-                               • ‘acknowledged.’
+ducted a decade ago at Microsoft [8], which reported 34.5% of CR                               • ‘unresolving, @xx should take another look here and
+comments were not-useful.                                                                        acknowledge the solution explicitly’
+PASC 2026, June 29 – July 1, 2026, Bern, Switzerland                                                                   Sharif Ahmed and Nasir U. Eisty
+
+
+               Table 1: Statistical Properties of Features in DB28 CR comments, Comparing DA⌘ , D22 , and D>3 from [3]
+
+                                        Here, effect-sizes denoted by ⇤ are statistically significant (p-value<0.05)
+                                                                   effect-sizep-value         Pearson Correlation(X)
+                                   Dataset!                  DB28      DA⌘    D22 D>3         DB28 DA⌘ D22 D>3
+                                  tone                      0.03⇤      0.05 0.17⇤ 0.46⇤       0.01 -0.03 0.07 -0.17
+                                  distress                  0.01 ⇤     0.01 0.11⇤ 0.23⇤       0.00 0.00 0.04 -0.09
+                                  empathy                   0.01⇤      0.01 0.11⇤ 0.23⇤       0.00 0.00 0.04 -0.09
+                                  is_toxic                   0.01      0.06   0.02 0.19⇤      0.00 -0.03 0.01 -0.07
+                                  gratitude                     0      0.01 0.24⇤ 0.15⇤       0.00 -0.01 -0.10 -0.06
+                                  cr_senti                  0.29⇤ 0.12⇤ 0.19⇤          0.09   0.12 0.06 0.08 -0.04
+                                  kw_refact_xerox           0.15⇤      0.04 0.17⇤      0.09   0.06 0.02 0.07 -0.04
+                                  num_propernouns           0.01⇤      0.09   0.02     0.05   0.00 -0.04 0.01 -0.02
+                                  num_interjections             0      0.04   0.07     0.04   0.00 0.02 -0.03 -0.01
+                                  polarity                  0.27⇤      0.04 0.25⇤      0.03 -0.11 -0.02 -0.10 -0.01
+                                  kw_msoft_u                0.21⇤      0.07 0.38⇤         0   0.09 0.03 0.16 0.00
+                                  num_exclamation           0.01⇤      0.01   0.02     0.01   0.01 -0.01 -0.01 0.00
+                                  is_confirmatory           0.22⇤      0.04   0.07     0.02   0.09 0.02 -0.03 0.01
+                                  question_ratio            0.19⇤      0.2⇤ 0.51⇤      0.03 -0.08 -0.10 -0.21 0.01
+                                  kw_satd_potdar            0.02⇤      0.06   0.1⇤     0.04   0.01 -0.03 0.04 0.02
+                                  implicature               0.09⇤      0.01 0.06⇤      0.06 -0.04 0.00 -0.02 0.02
+                                  kw_msoft_nu               0.21⇤      0.1⇤ 0.26⇤      0.06 -0.09 -0.05 -0.10 0.02
+                                  code_word_ratio            0.2 ⇤    0.15⇤ 0.23⇤ 0.06⇤       0.08 0.07 0.10 0.02
+                                  politeness                0.14⇤      0.12 0.19⇤ 0.06⇤ -0.06 -0.06 -0.08 0.02
+                                  num_Qmark                 0.12⇤ 0.18⇤ 0.52⇤          0.1⇤ -0.05 -0.09 -0.21 0.04
+                                  rd_text                   0.21 ⇤     0.08 0.19 ⇤    0.14⇤ -0.08 -0.04 -0.08 0.06
+                                  kw_refact_problem          0.01      0.09   0.09 0.16⇤ -0.01 0.05 0.03 0.06
+                                  avg_chars                  0.2⇤ 0.11⇤ 0.16⇤ 0.16⇤           0.08 0.05 0.07 0.06
+                                  formality                  0.1⇤      0.01 0.15⇤ 0.18⇤       0.04 0.00 0.06 0.07
+                                  subjectivity              0.36⇤ 0.15⇤ 0.38⇤ 0.18⇤ -0.15 -0.07 -0.15 0.07
+                                  has_out_snippet           0.04⇤      0.02 0.09⇤      0.2⇤   0.02 -0.01 -0.04 0.08
+                                  kw_secdev                 0.12⇤      0.01 0.31⇤ 0.24⇤ -0.05 -0.01 -0.13 0.09
+                                  avg_punct                  0.1⇤ 0.12⇤       0.04 0.25⇤      0.04 0.06 0.02 0.10
+                                  num_sent                  0.21 ⇤     0.02 0.46⇤ 0.25⇤ -0.09 0.01 -0.19 0.10
+                                  stop_word_ratio           0.37⇤      0.02 0.24⇤ 0.26⇤ -0.15 -0.01 -0.10 0.10
+                                  num_tentative             0.17⇤      0.08 0.23⇤ 0.27⇤ -0.07 -0.04 -0.10 0.10
+                                  informativeness           0.06⇤      0.02   0.07 0.28⇤      0.02 0.01 0.03 0.11
+                                  programming_words          0.02 0.02    ⇤   0.12 0.31⇤      0.01 -0.01 -0.05 0.12
+                                  num_adverb                0.27⇤      0.01 0.39⇤ 0.32⇤ -0.11 -0.01 -0.16 0.12
+                                  num_adj                   0.13⇤ 0.16⇤ 0.36⇤ 0.33⇤ -0.05 -0.08 -0.15 0.12
+                                  num_nouns                 0.06⇤      0.07 0.39⇤ 0.35⇤ -0.02 -0.04 -0.16 0.13
+                                  num_determinants          0.26 ⇤     0.09 0.43⇤ 0.37⇤ -0.11 -0.04 -0.17 0.14
+                                  num_chars                 0.11 ⇤     0.03 0.46⇤ 0.39⇤ -0.05 -0.02 -0.18 0.15
+                                  num_words                  0.2⇤      0.07   0.5⇤ 0.39⇤ -0.08 -0.03 -0.20 0.15
+                                  avg_stopwords             0.29 ⇤      0.1 0.38⇤      0.4⇤ -0.12 -0.05 -0.15 0.15
+                                  kw_refact_solution        0.19 ⇤     0.01 0.41 ⇤    0.41⇤ -0.08 0.00 -0.17 0.16
+                                  num_verb                  0.16 ⇤     0.03 0.38 ⇤    0.41⇤ -0.07 0.02 -0.15 0.16
+                                  avg_words                 0.11⇤      0.08 0.32⇤ 0.44⇤ -0.04 -0.04 -0.13 0.17
+Characterizing the Usefulness of Code Review Comments in Scientific Software for Software Quality and Scientific Rigor PASC 2026, June 29 – July 1, 2026, Bern, Switzerland
+
+
+Table 2: Comparisons among Features’ Correlations to the                                 4.3     RQ3: Useful CR comments in Different
+Usefulness                                                                                       Scientific Domains
+     Here, ⇤ indicates statistically significant (p-value<0.05)                          We report analysis from both features’ data, computed from the CR
+                                                                                         comment, and the metadata, derived from the GitHub repository
+                                      Cohen’s D effect-size
+                                                                                         attributes associated with CR comments, from our compiled DB28 .
+                                   D22     D>3      DA⌘      DB28
+                                                                                         Metadata. Table 3 shows the statistical relationship of CR com-
+                          D22               1.28     0.64     0.51                       ment-metadata in terms of distinguishing our prediction based
+            p-value      D>3         *               1.08     1.28                       useful/not-useful annotations. The column ‘all’ indicates the entire
+                          DA⌘        *        *               0.24                       dataset DB28 and P1-10 are ten GitHub SciOSS projects. Though cat-
+                                                                                         egorical author association and country metadata could distinguish
+                         DB28        *        *        -                                 usefulness for individual projects with small effect sizes, overall,
+                                                                                         they could not distinguish for the entire dataset, DB28 . On the other
+                                                                                         hand, approximated gender metadata shows a very small but con-
+                                                                                         sistent association with CR comment-usefulness across machine
+                                                                                         learning, applied mathematics, and programming systems projects,
+                                                                                         P1-10. In Table 3, we also notice non-categorical metadata start line
+                                                                                         moderately correlates with not-useful, whereas line, position with
+                                                                                         useful CR comments. The emoji reactions           show a small corre-
+                                                                                         lation in P1 and P7. We also notice that emoji reactions:         ,   ,
+                                                                                             , and    in P8 can statistically distinguish the usefulness of CR
+                                                                                         comments. Conversely,        only in P10 can statistically distinguish
+                                                                                         the usefulness.
+                                                                                            As we find a small but consistent correlation for gender, country,
+                                                                                         and author association, developers should be inclusive during code
+                                                                                         review activities regardless of other participants’ origin, identity,
+                                                                                         and association.
+                                                                                         Feature-data. Even if the DB28 shows small correlation in Table 1,
+                                                                                         the individual projects show medium correlation to many features
+                                                                                         in Table 4. We find negative correlations for subjectivity, polarity,
+                                                                                         and politeness features and positive correlations for CR-sentiment,
+                                                                                         formality, informativeness, and codeword ratio in P1. The rest of
+                                                                                         the projects (P2-10) are with similar or lower correlations. While
+                                                                                         looking at the type of anonymous projects in DB28 , we find ma-
+                                                                                         chine learning related Sci-OSS (P1) is showing stronger feature
+                                                                                         relations with usefulness than the rest of the applied mathematics
+                                                                                         (P2-4) and programming systems (P5-10) projects. Since machine
+                                                                                         learning and deep learning subfields are more widely used by open-
+                                                                                         source developers, P1 might have a similar feature association to
+                                                                                         general-purpose CR comment(D22 -DA⌘ ). Additionally, we find in
+                                                                                         Table 4 that only P7 shows a small correlation with not-useful CR
+                                                                                         comment for features like refactoring problem keyword density, tone,
+                                                                                         and gratitude. This intrigues us to compare P7 versus P1-6;8-10
+                                                                                         repositories. We find P7 is older than other projects; so, we suspect
+                                                                                         that the people, community, and culture are different than our other
+                                                                                         selected projects.
+
+                                                                                         4.4 RQ4: Emojis and Usefulness in Scientific CR
+Figure 3: Interpreting Scientific and General CR comments                                    comments
+using XAI                                                                                In our derived dataset DB28 , we find only 1,269 from 164,708 Sci-
+                                                                                         OSS CR comments that contain emojis. The < 1% presence of emojis
+                                                                                         within CR comments in DB28 is much lower than emojis in DA⌘ (2%),
+                                                                                         D22 (3%), and D>3 (2.5%). Though the presence of emojis in DB28 is
+   The excerpts above from DB28 have similar instructions or mes-                        fewer than general, Table 5 shows diverse emojis in CR comments
+sages that are also useful in general CR comments, such as refactor-                     from SciOSS. We find emojis in DB28 mostly overlapping with the
+ing, suggestions, and nitpicking [3].                                                    emojis found in CR comments from commercial and open-source
+PASC 2026, June 29 – July 1, 2026, Bern, Switzerland                                                                                                   Sharif Ahmed and Nasir U. Eisty
+
+
+             Table 3: CR comment-Usefulness vs CR comment-GitHub-Metadata for Various Scientific Software in DB28
+
+                                         Here, effect-sizes denoted by ⇤ are statistically significant (p-value<0.05)
+ # Metadata (Categorical)                      effect-sizep-value ! Cramér’s + Chi Square (j 2 )                                                Cramér’s +
+       DB28 -Projects!          P1     P10    P2    P3     P4     P5 P6         P7        P8        P9       all    P1     P10    P2     P3     P4     P6     P7     P8     P9     all
+ author_association             .08⇤   .02    .03⇤ 0⇤      .03⇤ 0     .01⇤ .05            .03⇤      .01⇤     .01     .08    .02    .03    .00    .03    .01    .05    .03    .01   .01
+ country                        .08⇤   .07⇤   .09   0 ⇤    .01 ⇤  0   .06 ⇤     0 ⇤       .06⇤      .03⇤     .06     .08    .07    .09    .00    .01    .06           .06    .03   .06
+ gender                         .08⇤   .03⇤   .06⇤ .03⇤ .03⇤ 0        .02⇤ .13⇤ .02⇤                .05⇤     .02⇤    .08    .03    .06    .03    .03    .02   .13     .02    .05   .02
+ project                        0⇤     0⇤     0⇤    0      0⇤     0   0⇤        0         0⇤        0⇤       .05⇤                                                                  .05
+ side                           0⇤     .03⇤   .02⇤ .05     .01⇤ 0     .04⇤ 0⇤             .04⇤      .02⇤     .03⇤   .00    .03    .02    .05    .01     .04   .00    .04    .02    .03
+ start_side                     0      0⇤     .02   .28⇤ .03⇤ 0       .07       0         .06⇤      .02⇤     .05⇤          .00    .02    .28    .03     .07          .06    .02    .05
+
+ # Metadata (Numeric)                          effect-sizep-value ! Cohen’s DMann-Whitney U                                                     Pearson (d)
+       DB28 -Projects!          P1     P10    P2     P3    P4         P6       P7      P8           P9       all    P1     P10    P2     P3     P4     P6     P7     P8     P9     all
+ line                           .62    .03    .03    .07   .06    0   .04      .88     .03⇤         .03      .03     .14    .01   -.01    .03   -.03    .02    .31    .01   -.01    .01
+ original_line                  .56    .01    .02    .02   .08⇤ 0     .01      .15     .01          .02      .02    -.14    .01   -.01   -.01   -.04    .00    .07    .00    .01    .01
+ original_position              .1     .05⇤   .05⇤ .11⇤ .02       0   .03⇤ .21         0⇤           .08⇤     .01⇤    .03    .02    .02   -.05   -.01    .01   -.09    .00    .03    .00
+ original_start_line            0      .12    .07    .94   .1⇤    0   .01      0       .01⇤         .09      .03            .05    .03   -.37   -.04   -.01    .27    .00    .04    .01
+ position                       .63    .04    .01⇤ .12     .04    0   .06⇤ .48         .02⇤         .1⇤      .01⇤    .15    .02    .01   -.06   -.02    .03    .18    .01    .04    .01
+ pr_num                         .17    .01    .04⇤ .06     .02    0   .01      .04     0            .01      .09⇤   -.04    .01   -.02    .03   -.01    .00   -.02    .00    .00    .04
+ react_+1                       .4     .02    .01    0     .03    0   .03      .17     .04⇤         .06⇤     .04⇤    .10   -.01   -.01    .00    .01    .01    .07    .02    .03    .02
+ react_-1                       0      .08⇤   0      0     0      0   .01      0       .01          .01      .01⇤          -.03                         .00          -.01    .00    .00
+ react_confused                 0      .05    .01    0     .01    0   .02      0       .02⇤         .01      .02⇤          -.02    .01           .00   -.01          -.01    .00   -.01
+ react_eyes                     0      .03    .02    0     .02    0   .01      0       .03⇤         0        .02⇤           .01   -.01          -.01    .00          -.01          -.01
+ react_heart                    0      .01    .03    0     0      0   .01      0       .03⇤         .01      .02⇤           .01    .01                  .01          -.01   .00    -.01
+ react_hooray                   0      .03    .02    0     .05    0   .01      0       0            .02      0             -.01    .01          -.02    .00           .00   .01     .00
+ react_laugh                    0      0      .02    .04   0      0   .02      0       .01          .01      .01            .00    .01   .02     .00    .01           .00   .01     .00
+ react_rocket                   0      .01    .01    0     .02    0   .02      0       0            0        0              .01    .01          -.01   -.01           .00           .00
+ react_total_count              .4     .03    0      0     .02    0   .02      .17     .03⇤         .07⇤     .03⇤   .10    -.01    .00    .00    .01    .01   .07     .01   .03     .01
+ start_line                     0      .11    .05    .99   .09    0   .1       0       .03          .05      .03            .05   -.02   -.39   -.04    .04           .01   .02     .01
+
+
+general software. Interestingly, we did not find any customized                                    prediction with semantics and 10-fold cross-validation. Since DB28
+GitHub emojis,       or , from 164,708 Sci-OSS CR comments. How-                                   comprises 10 prominent SciOSS, we also infer that emojis are used
+ever, we see a few new emojis with sparse presence, such as - (4)                                  and perceived differently within these 10 SciOSS projects. To verify
+    (3) (2) (2) (1) (1) (1) (1) (1) (1).                                                           our inference, we look up the emojis in DB28 2 and their associated
+    Table 6 shows the metadata and features’ correlation with use-                                 automated usefulness labels (Section 3.1.2). We present 10 SciOSS
+fulness of CR comments on the entire dataset DB28 and emoji-                                       projects of DB28 , the emojis in the CR comments, and their associated
+containing CR comments in DB28 , denoted by DB28 2 . The notable                                   usefulness labels in Table 7. Within DB28 -projects P1-10, we see
+differences in correlation we see for metadata are country, start side,                            that P1 and P5 do not have emoji-containing CR comments. We
+and start line, and for features are polarity, subjectivity, stop word ra-                         also notice that most emojis belong to both useful and not-useful
+tio, and emoji sentiment. Among these metadata and features, we see                                classes. For cross projects, we also find different distributions of
+that only the start line has the most contrasting difference. There-                               emojis. Thus, the models learned different representations of the
+fore, emoji-containing CR comments in DB28 are slightly different.                                 same emojis when emoji embedding was aggregated with text
+Next, we look into the semantic similarity or difference between                                   embedding.
+DB28 and DB28 2 .                                                                                     Though the emojis in SciOSS have a sparser presence and show
+                                                                                                   variation in usage within and across our selected SciOSS reposito-
+                                                                                                   ries, emoji reactions on code-reviewers’ CR comments also correlate
+   Table 8 shows stratified 10-fold cross-validation CR comment-                                   with usefulness. So, the code-author should meaningfully react
+usefulness prediction performance with emoji-containing CR com-                                    with emojis, and the code-reviewer should conscientiously perceive
+ments in DB28 , DB28 2 . Though emoji semantics helped in predict-                                 emoji reactions to their feedback.
+ing the usefulness of CR comments better in general software [2],
+Table 8 shows that emoji-semantics-aware models could not predict                                  4.5 Practical Implications
+usefulness better than emoji-semantics-non-aware models. With
+                                                                                                   Our analysis offer the following implication for code-reviewers and
+our additional statistical measure, we find that all approaches re-
+                                                                                                   code-authors of Sci-OSS.
+ject the Wilcoxon signed-rank null hypothesis. That is, the paired
+samples of the original and predicted usefulnesses are significantly                                       • Our findings confirm prior findings [3] on general software.
+different. Also, the Cohen’s D effect sizes resemble the results from                                        Therefore, code-reviewers in Sci-OSS should compose posi-
+traditional classification metrics.                                                                          tive, respectful, and objective CR comments as well. They also
+   Ahmed & Eisty also found that emoji semantics performed poorly                                            need to specify source-code lines while providing feedback.
+when DA⌘ 2 , D22 2 , and D>3 2 were unified for usefulness                                                 • Since developers pay more attention to emojis than text
+                                                                                                             and they carry instructions and emotions, emojis should be
+Characterizing the Usefulness of Code Review Comments in Scientific Software for Software Quality and Scientific Rigor PASC 2026, June 29 – July 1, 2026, Bern, Switzerland
+
+
+                                            Table 4: Statistical Properties of Features in DB28 CR comments
+
+                                       Here, effect-sizes denoted by ⇤ are statistically significant (p-value<0.05)
+                                                       effect-sizep-value                                                 Pearson Correlation(X)
+    DB28 -Projects!          P1      P10     P2     P3     P4     P6     P7     P8     P9     all    P1     P10    P2      P3    P4   P6    P7       P8     P9       all
+   tone                      .24     .04⇤    .04    .02    .03    .13⇤ .33      .08⇤   .03    .03⇤   -.06    .02   -.02    -.01 .01 -.05 -.13         .03   -.01      .01
+   distress                  .07     .04⇤    .03    .05    .01    .07    .13    .01⇤   0⇤     .01⇤   -.02    .02   -.01     .02 .00 -.03 -.05         .00    .00      .00
+   empathy                   .07     .04⇤    .03    .05    .01    .07    .13    .01⇤   0⇤     .01⇤   -.02    .02   -.01     .02 .00 -.03 -.05         .00    .00      .00
+   is_toxic                  .14     .02     .04    .03    .03    .02    0      .01    .02    .01     .03   -.01   -.02     .01 .01 -.01              .00    .01      .00
+   gratitude                 .1      .02     .06⇤   .1⇤    .02    .03    .18    .02⇤   .03    0       .02   -.01   -.03    -.05 .01 -.01 -.07         .01   -.01      .00
+   cr_senti                  1.29⇤   .26⇤    .22⇤   .3⇤    .25⇤ .36⇤ .03        .31⇤   .15⇤   .29⇤    .30    .11    .10     .14 .11 .15 -.01          .13    .06      .12
+   kw_refact_xerox           .36     .19⇤    .15⇤   .19⇤ .12⇤ .15⇤ .19          .15⇤   .21⇤   .15⇤    .09    .08    .06     .09 .05 .06 .08           .06    .09      .06
+   num_propernouns           0       .04     .01    .11⇤ .02      .02    0      .01⇤   .01    .01⇤          -.02    .01    -.05 -.01 .01              .00    .00      .00
+   num_interjections         0       .03     .03    .11⇤ .01      .01    0      0      0      0             -.01    .01    -.05 .00 .00               .00    .00      .00
+   polarity                  1.27⇤   .27⇤    .3⇤    .27⇤ .22⇤ .33⇤ .4           .25⇤   .36⇤   .27⇤   -.30   -.11   -.13    -.13 -.10 -.14 -.16       -.10   -.15     -.11
+   kw_msoft_u                .23     .26⇤    .21⇤   .18⇤ .15⇤ .18⇤ .34          .21⇤   .24⇤   .21⇤    .06    .11    .09     .08 .07 .08 .14           .08    .10      .09
+   num_exclamation           .2      .05⇤    .05⇤   .13⇤ .02      .03    .17    .02⇤   0      .01⇤    .05    .02   -.02    -.06 .01 .01 -.07          .01    .00      .01
+   is_confirmatory           .33     .18⇤    .21⇤   .19⇤ .12⇤ .17⇤ .17          .24⇤   .24⇤   .22⇤    .08    .07    .09     .09 .05 .07 .07           .10    .10      .09
+   question_ratio            .24     .26⇤    .15⇤   .14⇤ .2⇤      .21⇤ .1       .21⇤   .06⇤   .19⇤   -.06   -.11   -.06    -.06 -.09 -.09 .04        -.08   -.02     -.08
+   kw_satd_potdar            .35     .04     .05⇤   0      .04    .04⇤ .19      .01    .07⇤   .02⇤    .09    .02    .02     .00 -.02 .02 .08          .00    .03      .01
+   implicature               .19     0       .02    .06    .11⇤ .04      .17    .13⇤   .05    .09⇤   -.05    .00    .01    -.03 -.05 -.01 -.07       -.05   -.02     -.04
+   kw_msoft_nu               .2      .18⇤    .16⇤   .27⇤ .1⇤      .29⇤ .09      .21⇤   .17⇤   .21⇤    .05   -.08   -.07    -.13 -.05 -.12 .04        -.08   -.07     -.09
+   code_word_ratio           .55     .16     .13⇤   .16⇤ .19⇤ .27⇤ .05          .19⇤   .16⇤   .2⇤     .13    .07    .06     .08 .08 .11 .02           .08    .07      .08
+   politeness                1.07    .15⇤    .23⇤   .18⇤ .16⇤ .13⇤ .14          .12⇤   .26⇤   .14⇤   -.25   -.06   -.10    -.09 -.07 -.05 -.06       -.05   -.11     -.06
+   num_Qmark                 .87⇤    .26⇤    .11⇤   .15⇤ .17⇤ .22⇤ .15          .11⇤   .08⇤   .12⇤   -.21   -.11   -.05    -.07 -.07 -.09 .06        -.04   -.03     -.05
+   rd_text                   .8⇤     .2⇤     .21⇤   .29⇤ .2⇤      .31⇤ .28      .19⇤   .14⇤   .21⇤   -.19   -.08   -.09    -.13 -.09 -.13 -.11       -.07   -.06     -.08
+   kw_refact_problem         .34     .04     .13⇤   .01    .01    .07    .45⇤   0      .05⇤   .01     .08    .02   -.05     .00 .00 -.03 -.18         .00    .02     -.01
+   avg_chars                 .83⇤    .19⇤    .19⇤   .27⇤ .19⇤ .27⇤ .3           .2⇤    .13⇤   .2⇤     .20    .08    .08     .13 .08 .11 .12           .08    .06      .08
+   formality                 .88     .09⇤    .13⇤   .16⇤ .09⇤ .15⇤ .19          .07⇤   .17⇤   .1⇤     .21    .04    .06     .07 .04 .06 .08           .03    .07      .04
+   subjectivity              1.5⇤    .34⇤    .31⇤   .25⇤ .34⇤ .35⇤ .47⇤         .38⇤   .3⇤    .36⇤   -.34   -.14   -.13    -.12 -.15 -.14 -.19       -.15   -.13     -.15
+   has_out_snippet           .06     .04     0      .1⇤    .02    .22⇤ .09      .02⇤   .04    .04⇤   -.01   -.02    .00     .05 -.01 .09 -.04         .01    .02      .02
+   kw_secdev                 .05     .16⇤    .03    .03    .03⇤ .05⇤ .1         .16⇤   .03    .12⇤    .01   -.07   -.01    -.02 -.01 -.02 -.04       -.06   -.01     -.05
+   avg_punct                 .37     .07     .08⇤   .24⇤ .11⇤ .16⇤ .17          .1⇤    .08    .1⇤     .09    .03    .03     .11 .05 .07 .07           .04    .04      .04
+   num_sent                  .16     .28⇤    .12⇤   .16⇤ .23⇤ .18⇤ .05          .23⇤   .13⇤   .21⇤   -.04   -.11   -.05    -.07 -.10 -.07 -.02       -.09   -.06     -.09
+   stop_word_ratio           .51     .32⇤    .24⇤   .16⇤ .32⇤ .42⇤ .19          .4⇤    .23⇤   .37⇤   -.12   -.13   -.10    -.07 -.14 -.17 -.08       -.16   -.09     -.15
+   num_tentative             .18     .18⇤    .06⇤   .07    .1⇤    .06⇤ .01      .22⇤   .11⇤   .17⇤    .04   -.08   -.03    -.03 -.05 -.02 -.01       -.09   -.05     -.07
+   informativeness           .7      .04     .14⇤   .1⇤    .04    .13⇤ .05      .01    .17⇤   .06⇤    .17    .02    .06     .04 .02 .05 .02           .01    .07      .02
+   programming_words         .22     .03⇤    .03    .08    .05    .1⇤    .09    0⇤     .08⇤   .02     .05   -.01    .01     .04 .02 .04 .04           .00    .03      .01
+   num_adverb                .4      .28⇤    .12⇤   .09⇤ .18⇤ .25⇤ .09          .32⇤   .12⇤   .27⇤   -.10   -.11   -.05    -.04 -.08 -.10 -.04       -.13   -.05     -.11
+   num_adj                   .08     .21⇤    .06⇤   .15⇤ .08⇤ .04⇤ .02          .16⇤   .11⇤   .13⇤    .02   -.09   -.03    -.07 -.03 -.02 -.01       -.06   -.04     -.05
+   num_nouns                 .39     .15⇤    .02    .05    .02⇤ .06⇤ .06        .09⇤   .02⇤   .06⇤    .09   -.06    .01     .02 -.01 .02 .03         -.04   -.01     -.02
+   num_determinants          .19     .29⇤    .12⇤   .12⇤ .23⇤ .2⇤        .11    .31⇤   .12⇤   .26⇤    .05   -.12   -.05    -.06 -.10 -.08 -.05       -.12   -.05     -.11
+   num_chars                 .21     .21⇤    .01⇤   .02    .04⇤ .01⇤ .03        .16⇤   .05⇤   .11⇤    .05   -.09   -.01    -.01 -.02 .01 .01         -.06   -.02     -.05
+   num_words                 .05     .27⇤    .06⇤   .09⇤ .14⇤ .11⇤ 0            .25⇤   .1⇤    .2⇤     .01   -.11   -.03    -.04 -.06 -.04 .00        -.10   -.04     -.08
+   avg_stopwords             .07     .28⇤    .15⇤   .08    .19⇤ .28⇤ .14        .35⇤   .14⇤   .29⇤   -.02   -.12   -.06    -.04 -.08 -.12 -.06       -.14   -.06     -.12
+   kw_refact_solution        .33     .26⇤    .05⇤   .03    .16⇤ .16⇤ .02        .22⇤   .06⇤   .19⇤    .08   -.11   -.02    -.01 -.07 -.07 -.01       -.09   -.03     -.08
+   num_verb                  .27     .2⇤     .01    .01    .13⇤ .06⇤ .03        .21⇤   .04    .16⇤   -.07   -.08    .00    -.01 -.06 -.03 -.01       -.09   -.02     -.07
+   avg_words                 .11     .16⇤    .03⇤   .02    .01⇤ .02⇤ .02        .16⇤   .02⇤   .11⇤    .03   -.07   -.01    -.01 .00 -.01 -.01        -.06   -.01     -.04
+
+                                                              Table 5: Emojis in CR Comments
+
+                     Here, numbers inside the parentheses following the emojis denote the appearance of the emojis
+       Dataset                   Emojis in the Dataset
+       DA⌘ [27] (1,481)             (18), (9), (3), (2), (1), (1), (1), (1), (1), (1),                   (1), (1)
+       D22 [24] (3,794)             (54), (6), (3), (2), (1), (1), (1).
+       D>3 [31] (2,654)             (38), (8), (3), (2), (3)
+
+        DB28 [Ours] (164,708)                 (290) (257) (210) (85) (79) (66) (62) (47) (43) (28) (23) (19)                                                  (17)
+                                              (15)  (12)  (9)  (8) (8) (6) (5) (5)  (4) (4)  (3)  (3) (3) (3)                                                  (3)
+                                              (2) (2) (2) (1) (1) (1) (1) (1) (1) (1) (1) (1)
+PASC 2026, June 29 – July 1, 2026, Bern, Switzerland                                                                                             Sharif Ahmed and Nasir U. Eisty
+
+
+                                                 Table 6: Metadata and Features’ Correlation in DB28 2
+
+
+
+          Metadata                    DB28     DB28 2          Features                   DB28     DB28 2                                         DB28        DB28 2
+          author_association            .01          .05       tone                         .01          .05       programming_words                .01             -.02
+          country                       .06          .19       distress                     .00          .00       num_adverb                      -.11             -.13
+          gender                        .02          .09       empathy                      .00          .00       num_adj                         -.05             -.03
+          project                       .05          .04       is_toxic                     .00          .00       num_nouns                       -.02             -.03
+          side                          .03          .03       gratitude                    .00          .00       num_determinants                -.11             -.11
+          start_side                    .05          .13       cr_senti                     .12          .08       num_chars                       -.05             -.05
+          line                           .01       -.01        kw_refact_xerox              .06          .03       num_words                       -.08             -.08
+          original_line                 .01          .01       num_propernouns              .00         -.02       emo_senti                       -.01            .034
+          original_position              .00         .02       num_interjections            .00          .03       avg_stopwords                   -.12             -.16
+          original_start_line            .01         .06       polarity                    -.11         -.17       kw_refact_solution              -.08             -.08
+          position                       .01         .00       kw_msoft_u                   .09          .05       num_verb                        -.07             -.08
+          pr_num                         .04         .00       num_exclamation              .01          .01       avg_words                       -.04             -.04
+          react_+1                       .02         .03       is_confirmatory              .09          .06       subjectivity                    -.15             -.20
+          react_-1                       .00                   question_ratio              -.08         -.01       has_out_snippet                  .02             -.03
+          react_confused               -.01                    kw_satd_potdar               .01         -.06       kw_secdev                       -.05             -.08
+          react_eyes                   -.01            -.02    implicature                 -.04         -.02       avg_punct                        .04              .04
+          react_heart                  -.01            -.05    kw_msoft_nu                 -.09          .02       num_sent                        -.09             -.09
+          react_hooray                   .00           -.02    code_word_ratio              .08          .02       stop_word_ratio                 -.15             -.19
+          react_laugh                    .00            .05    politeness                  -.06         -.09       num_tentative                   -.07             -.06
+          react_rocket                   .00            .04    num_Qmark                   -.05          .00       informativeness                  .02              .05
+          react_total_count              .01            .04    rd_text                     -.08          .05       avg_chars                        .08              .03
+          start_line                     .01           -.17    kw_refact_problem           -.01          .03       formality                        .04              .09
+
+                                                  Table 7: Emoji Presence in CR comments within DB28
+
+                          Here, numbers inside the parentheses following the emojis denote the appearance of the emojis
+         DB28       Emojis in Useful CR comments                                                  Emojis in Not-useful CR comments
+         P2           (39)    (30)     (13)    (13)  (6)  (3)  (3)  (2)  (2) (1)                    (26) (5) (3) (2) (2) (2)                     (1)    (1)     (1)
+                      (1) (1) (1) (1) (1)
+         P3           (1)                                                                           (1)
+         P4           (6)   (4)    (2)     (2)   (2)  (1)  (1)  (1)  (1) (1) (1)                    (3)    (2)     (2)     (1)    (1)    (1)    (1)    (1)
+                      (1) (1) (1)
+         P6           (39)    (33)     (22)    (17)  (9)  (5)  (5)  (3)  (2) (2)                    (13)    (13)     (6)    (6)    (2)    (1)   (1)    (1)     (1)    (1)
+                      (1) (1) (1) (1) (1) (1) (1)
+         P8           (113) (107) (73) (52) (34) (28) (26) (22) (14)                                (37)    (36) (26) (16) (13) (11) (10)                      (9)    (7)
+                      (10) (7) (7) (6) (5) (4) (3) (2) (2) (2) (1)                                  (5)    (3) (3) (3) (2) (2) (1) (1)                         (1)    (1)
+                      (1) (1) (1) (1) (1)                                                           (1)    (1) (1)
+         P9           (58) (6) (5) (5) (4) (3) (3) (2) (2) (1) (1)                                  (17)    (3) (3) (3) (1) (1) (1) (1)
+                      (1) (1) (1) (1) (1) (1)
+         P10          (22) (17) (8) (5) (4) (3) (2) (2) (2) (2) (1)                                 (9)    (6)     (5)     (4)    (2)    (1)    (1)    (1)     (1)    (1)
+                      (1) (1) (1) (1) (1)
+
+                      Table 8: Emoji-Semantics in Identifying Usefulness of CR comments from Scientific Software
+
+                              10-fold Stratified Cross-validation Performance of models with emojis and without emojis.
+                                                                     P    R      1  M     A    D?
+                                                         DB28 2 (text)        .76   .99    .86     .22     .76     .64⇤
+                                                         DB28 2 (emoji)       .74   .98    .84     -.02    .73     .73⇤
+                                                        DB28 2 (text+emoji)   .75   .99    .85     .13     .75     .69⇤
+                        Here, P: Precision, R: Recall, A: Accuracy, 1 : 1 -scores, M: Matthews correlation coefficient (MCC),
+                                     D? : Cohen’s D effect sizeWilcoxon signed-rank p-value , and ⇤ : p-value < 0.05
+Characterizing the Usefulness of Code Review Comments in Scientific Software for Software Quality and Scientific Rigor PASC 2026, June 29 – July 1, 2026, Bern, Switzerland
+
+
+       carefully used similar to words [2]. For emoji-containing CR                      and XAI feature analyses confirm findings from prior research on
+       comments in scientific software, we find more association                         general-purpose software. With our additional derived metadata,
+       with usefulness, so it reinforces significance of emoji usage.                    we analyzed their association with the usefulness of code review
+       Thus, code-authors should meaningfully react with emojis.                         feedback. These findings will benefit developers, leaders, scientists,
+       Also, code-reviewers should perceive emoji reactions on their                     and researchers in both general and Sci-OSS communities. In the
+       feedback conscientiously.                                                         future, we plan to conduct an empirical study on the usefulness CR
+                                                                                         comments focusing scientific open source software code authors
+5     THREATS TO VALIDITY                                                                and code reviewers.
+Our experiment setup leverages the existing theories, datasets, ex-
+periments, and approaches for identifying and analyzing useful CR                        7    DATA AVAILABILITY
+comments. However, we discuss the potential threats to the validity                      We have shared our code and dataset, including feature values
+of our work.                                                                             computed in our experiments at
+                                                                                           https://github.com/sharif509/SciOSS-CRCs-artifact
+5.1    External Validity
+The generalizability of our findings is a threat to external valid-                      REFERENCES
+ity. Our experiment data are from a small set of Sci-OSSs from                            [1] Sharif Ahmed and Nasir U Eisty. 2023. Exploring the Advances in Identifying
+                                                                                              Useful Code Review Comments. In 2023 ACM/IEEE International Symposium on
+applied mathematics, programming systems, and machine learning                                Empirical Software Engineering and Measurement (ESEM). IEEE, 1–7.
+domains. We expect our findings to apply to Sci-OSS broadly; how-                         [2] Sharif Ahmed and Nasir U Eisty. 2024. Understanding Emojis :) in Useful Code
+ever, there remains a threat to external validity for projects from                           Review Comments. In Proceedings of the Third ACM/IEEE International Workshop
+                                                                                              on NL-Based Software Engineering (Lisbon, Portugal) (NLBSE ’24). Association
+other domains.                                                                                for Computing Machinery, New York, NY, USA, 81–84. https://doi.org/10.1145/
+                                                                                              3643787.3648035
+5.2    Internal Validity                                                                  [3] Sharif Ahmed and Nasir U Eisty. 2025. Hold On! Is My Feedback Useful? Evalu-
+                                                                                              ating the Usefulness of Code Review Comments. Empirical Software Engineering
+First, model computed metrics in our work are trained from differ-                            30, 3 (2025), 70. https://doi.org/10.1007/s10664-025-10617-1
+                                                                                          [4] Sharif Ahmed, Addi Malviya Thakur, Gregory R Watson, and Nasir U Eisty. 2025.
+ent sources; thus, they may carry implicit biases that we are not                             Uncovering Scientific Software Sustainability through Community Engagement
+aware of since the data was collected by other researchers. Sec-                              and Software Quality Metrics. arXiv preprint arXiv:2511.07851 (2025).
+ond, our approximated gender values are unknown for meaningless                           [5] Toufique Ahmed, Amiangshu Bosu, Anindya Iqbal, and Shahram Rahimi. 2017.
+                                                                                              SentiCR: a customized sentiment analysis tool for code review interactions. In
+or encrypted names, and normalized location values are missing                                2017 32nd IEEE/ACM International Conference on Automated Software Engineering
+for GitHub profiles sharing improper information. Our findings                                (ASE). IEEE, 106–111.
+regarding gender or location could have been different if these data                      [6] Piotr Bojanowski, Edouard Grave, Armand Joulin, and Tomas Mikolov. 2017. En-
+                                                                                              riching Word Vectors with Subword Information. Transactions of the Association
+points had been available directly from the GitHub profiles. Third,                           for Computational Linguistics 5 (2017), 135–146. https://doi.org/10.1162/tacl_a_
+Developers may communicate through alternative channels (e.g.,                                00051
+                                                                                          [7] Amiangshu Bosu, Jeffrey C Carver, Christian Bird, Jonathan Orbeck, and Christo-
+email, Discord, Slack), which may not be captured in CR comments.                             pher Chockley. 2016. Process aspects and social dynamics of contemporary
+However, our work evaluates the usefulness of CR comments based                               code review: Insights from open source development and industrial practice at
+exclusively on their textual content, rather than the complete com-                           microsoft. IEEE Transactions on Software Engineering 43, 1 (2016), 56–75.
+                                                                                          [8] Amiangshu Bosu, Michaela Greiler, and Christian Bird. 2015. Characteristics of
+munication process. Therefore, this does not constitute a significant                         useful code reviews: An empirical study at microsoft. In 2015 IEEE/ACM 12th
+threat to internal validity of our findings.                                                  Working Conference on Mining Software Repositories. IEEE, 146–156.
+                                                                                          [9] Jason Cohen. 2010. Modern code review. Making Software: What Really Works,
+                                                                                              and Why We Believe It (2010), 329–336.
+5.3    Conclusion Validity                                                               [10] Jacob Cohen. 2013. Statistical power analysis for the behavioral sciences. Academic
+To conclude our findings accurately, we carefully designed our ex-                            press.
+                                                                                         [11] Harald Cramér. 1999. Mathematical methods of statistics. Vol. 9. Princeton
+periments. We compared feature values of our prediction-based                                 university press.
+useful CR comments with existing datasets. Since the state-of-the-                       [12] Arcos David. 2024. gender-guesser. https://pypi.org/project/gender-guesser.
+                                                                                              Accessed: 2024-11-08.
+art prediction model we used for annotation is not from handcrafted                      [13] Nicole Davila and Ingrid Nunes. 2021. A systematic literature review and tax-
+feature-based model, analyzing the features for comparison does                               onomy of modern code review. Journal of Systems and Software 177 (2021),
+not impose any threats. In our statistical analysis, we have consid-                          110951.
+                                                                                         [14] Vasiliki Efstathiou and Diomidis Spinellis. 2018. Code review comments: lan-
+ered suitable statistical tests for numeric and categorical metadata/                         guage matters. In Proceedings of the 40th International Conference on Software
+features so that our findings do not violate the underlying normality                         Engineering: New Ideas and Emerging Results. 69–72.
+and independence assumptions.                                                            [15] Ben Eisner, Tim Rocktäschel, Isabelle Augenstein, Matko Bošnjak, and Sebastian
+                                                                                              Riedel. 2016. emoji2vec: Learning Emoji Representations from their Description.
+                                                                                              In Proceedings of the Fourth International Workshop on Natural Language Processing
+6     CONCLUSIONS                                                                             for Social Media. Association for Computational Linguistics, Austin, TX, USA,
+                                                                                              48–54. https://doi.org/10.18653/v1/W16-6208
+Researchers have analyzed, characterized, and identified the use-                        [16] Nasir U Eisty and Jeffrey C Carver. 2022. Developers perception of peer code
+fulness of CR comments in non-scientific closed and open-source                               review in research software development. Empirical Software Engineering 27
+                                                                                              (2022), 1–26.
+software projects. In this paper, we investigate the CR comments                         [17] Masum Hasan, Anindya Iqbal, Mohammad Rafid Ul Islam, AJM Rahman, and
+in scientific open-source software to describe the distinctive na-                            Amiangshu Bosu. 2021. Using a balanced scorecard to identify opportunities to
+ture of scientific CR comments. We leveraged existing usefulness-                             improve code review effectiveness: an industrial experience report. Empirical
+                                                                                              Software Engineering 26, 6 (2021), 1–34.
+annotated CR comment datasets, the best-performing usefulness                            [18] Oleksii Kononenko, Olga Baysal, and Michael W Godfrey. 2016. Code review
+prediction model, and feature analysis techniques. Our statistical                            quality: How developers see it. In Proceedings of the 38th international conference
+PASC 2026, June 29 – July 1, 2026, Bern, Switzerland                                                                                            Sharif Ahmed and Nasir U. Eisty
+
+
+     on software engineering. 1028–1038.                                                  [26] Karl Pearson. 1900. X. On the criterion that a given system of deviations from
+[19] Oleksii Kononenko, Olga Baysal, Latifa Guerrouj, Yaxin Cao, and Michael W                 the probable in the case of a correlated system of variables is such that it can
+     Godfrey. 2015. Investigating code review quality: Do people and participation             be reasonably supposed to have arisen from random sampling. The London,
+     matter?. In 2015 IEEE international conference on software maintenance and evolu-         Edinburgh, and Dublin Philosophical Magazine and Journal of Science 50, 302
+     tion (ICSME). IEEE, 111–120.                                                              (1900), 157–175.
+[20] Esmukov Kostya. 2023. geopy. https://pypi.org/project/geopy/. Accessed:              [27] Mohammad Masudur Rahman, Chanchal K Roy, and Raula G Kula. 2017. Predict-
+     2024-11-08.                                                                               ing usefulness of code review comments using textual features and developer
+[21] Petra Kralj Novak, Jasmina Smailović, Borut Sluban, and Igor Mozetič. 2015.               experience. In 2017 IEEE/ACM 14th International Conference on Mining Software
+     Sentiment of emojis. PloS one 10, 12 (2015), e0144296.                                    Repositories (MSR). IEEE, 215–226.
+[22] Scott M Lundberg and Su-In Lee. 2017. A Unified Approach to Interpreting Model       [28] Eric Raymond. 1999. The cathedral and the bazaar. Knowledge, Technology &
+     Predictions. In Advances in Neural Information Processing Systems 30, I. Guyon,           Policy 12, 3 (1999), 23–49.
+     U. V. Luxburg, S. Bengio, H. Wallach, R. Fergus, S. Vishwanathan, and R. Garnett     [29] Lucía Santamaría and Helena Mihaljević. 2018. Comparison and benchmark of
+     (Eds.). Curran Associates, Inc., 4765–4774.                                               name-to-gender inference services. PeerJ Computer Science 4 (2018), e156.
+[23] Henry B Mann and Donald R Whitney. 1947. On a test of whether one of                 [30] Daniel Schneider, Scott Spurlock, and Megan Squire. 2016. Differentiating com-
+     two random variables is stochastically larger than the other. The annals of               munication styles of leaders on the linux kernel mailing list. In Proceedings of the
+     mathematical statistics (1947), 50–60.                                                    12th International Symposium on Open Collaboration. 1–10.
+[24] Benjamin S Meyers, Nuthan Munaiah, Emily Prud’hommeaux, Andrew Meneely,              [31] Asif Kamal Turzo and Amiangshu Bosu. 2023. What Makes a Code Review
+     Josephine Wolff, Cecilia Ovesdotter Alm, and Pradeep Murukannaiah. 2018. A                Useful to OpenDev Developers? An Empirical Investigation. Empirical Software
+     dataset for identifying actionable feedback in collaborative software development.        Engineering (2023). Just Accepted.
+     In Proceedings of the 56th Annual Meeting of the Association for Computational       [32] Frank Wilcoxon, SK Katti, et al. 1970. Critical values and probability levels for
+     Linguistics (Volume 2: Short Papers). 126–131.                                            the Wilcoxon rank sum test and the Wilcoxon signed rank test. Selected tables in
+[25] Thai Pangsakulyanont, Patanamon Thongtanunam, Daniel Port, and Hajimu                     mathematical statistics 1 (1970), 171–259.
+     Iida. 2014. Assessing MCR discussion usefulness using semantic similarity. In
+     6th International Workshop on Empirical Software Engineering in Practice. IEEE,      Received TBD; revised TBD; accepted TBD
+     49–54.
+

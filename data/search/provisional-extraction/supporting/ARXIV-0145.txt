@@ -1,0 +1,795 @@
+                                            How Small Transformation Expose the Weakness of Semantic
+                                                              Similarity Measures
+                                                   Serge Lionel NIKIEMA∗                            Albérick Euraste Djiré∗                 Abdoul Aziz BONKOUNGOU
+                                                    University of Luxembourg                         University of Luxembourg                    University of Luxembourg
+                                                    Luxembourg, Luxembourg                           Luxembourg, Luxembourg                      Luxembourg, Luxembourg
+                                                      lionel.nikiema@uni.lu                            euraste.djire@uni.lu                     abdoul.bonkoungou@uni.lu
+
+                                            Micheline Bénédicte Moumoula                                 Jordan Samhi                            Abdoul Kader Kaboré
+                                                   University of Luxembourg                          University of Luxembourg                    University of Luxembourg
+                                                   Luxembourg, Luxembourg                            Luxembourg, Luxembourg                     Luxembourg, Luxembourg
+                                                  micheline.moumoula@uni.lu                            jordan.samhi@uni.lu                      abdoulkader.kabore@uni.lu
+arXiv:2509.09714v1 [cs.CL] 8 Sep 2025
+
+
+
+
+                                                                                         Jacques Klein                  Tegawendé F. Bissyandé
+                                                                                 University of Luxembourg                 University of Luxembourg
+                                                                                 Luxembourg, Luxembourg                  Luxembourg, Luxembourg
+                                                                                   jacques.klein@uni.lu                 tegawende.bissyande@uni.lu
+
+                                        ABSTRACT                                                                     false positives [22]. These documented failures compromise fun-
+                                        This research examines how well different methods measure seman-             damental software engineering tasks—from code search engines
+                                        tic similarity, which is important for various software engineering          returning incorrect results to security tools missing critical vulner-
+                                        applications like code search, API recommendations, automated                abilities.
+                                        code reviews, and refactoring tools. While large language models                Evaluation studies report precision varying from 6% to 100% and
+                                        are increasingly used for these similarity assessments, questions            recall from 4% to 90% for identical code pairs [34], while cross-
+                                        remain about whether they truly understand semantic relationships            language similarity detection achieves only 28% average preci-
+                                        or just recognize surface patterns.                                          sion [26]. Code2vec embeddings perform 49.4% worse than simple
+                                           The study tested 18 different similarity measurement approaches,          TF-IDF features for authorship identification [21]. Yet developers
+                                        including word-based methods, embedding techniques, LLM-based                continue using these flawed metrics because they lack systematic
+                                        systems, and structure-aware algorithms. The researchers created             evidence for choosing alternatives.
+                                        a systematic testing framework that applies controlled changes to               The core puzzle is not why metrics fail, but where they fail.
+                                        text and code to see how well each method handles different types            When CodeBERT embeddings produce poor similarity assessments,
+                                        of semantic relationships.                                                   is the limitation in the vector representation itself or in how we
+                                           The results showed significant problems with commonly used                measure distances between vectors? This fundamental uncertainty
+                                        metrics. Some embedding-based methods incorrectly identified se-             has blocked principled improvements for years, with researchers
+                                        mantic opposites as similar up to 99.9% of the time, while certain           defaulting to cosine similarity without empirical justification.
+                                        transformer-based approaches sometimes rated opposite meanings                  Current evaluation practices obscure these distinctions through
+                                        as more similar than synonymous ones. The study found that em-               systematic limitations. Evaluation datasets emphasize functional
+                                        bedding methods’ poor performance often came from how they                   equivalence while neglecting other semantic relationships [35].
+                                        calculate distances rather than problems with the underlying rep-            Comparative studies conflate representation quality with distance
+                                        resentations—using Euclidean distance instead of cosine similarity           computation, making it impossible to isolate failure sources. Ag-
+                                        improved results by 24-66%. LLM-based approaches performed bet-              gregate performance metrics hide systematic failure patterns that
+                                        ter at distinguishing semantic differences, producing low similarity         could guide principled metric selection [49].
+                                        scores (0.00-0.29) for genuinely different meanings compared to em-             Large language models offer a potential breakthrough. Our
+                                        bedding methods that incorrectly assigned high scores (0.82-0.99)            results show LLMs correctly identify semantic differences (0.00-0.29
+                                        to dissimilar content.                                                       similarity scores) where traditional embeddings catastrophically fail
+                                                                                                                     (0.82-0.99 scores). Yet without diagnostic evaluation frameworks,
+                                                                                                                     we cannot determine whether LLMs genuinely capture semantic
+                                        1    INTRODUCTION                                                            relationships or memorize benchmark patterns.
+                                        Code similarity metrics are failing at an alarming scale. Published             We bridge these gaps through the first systematic diagnostic eval-
+                                        evaluations reveal false positive rates reaching 97.9% for traditional       uation framework for similarity metrics across natural language
+                                        diff-based approaches [2], while modern embedding methods show               and code. Our controlled transformation protocols generate pre-
+                                        96.6% precision loss compared to simple baselines [21]. The Big-             cise taxonomies of semantic relationships—7 categories for natural
+                                        CloneBench evaluation found that 86% of semantic clone pairs were            language, 5 for code—enabling rigorous isolation of metric failure
+                                                                                                                     modes.
+                                        ∗ Both authors contributed equally to this research.
+
+                                                                                                                 1
+                                                                                                                         NIKIEMA, DJIRE et al.
+
+
+   Our findings overturn conventional wisdom about embedding- embeddings captures semantic relationships) has been recently
+based approaches. Simply switching from cosine to Euclidean             challenged by Steck et al. [41], who demonstrate that embedding-
+distance improves performance by 24-66% on identical embeddings.        based similarity can yield “arbitrary and therefore meaningless
+This discovery opens new research directions: rather than build-        similarities” depending on regularization choices during training.
+ing ever-larger models, we can achieve substantial improvements
+through principled distance metric selection.
+   Through systematic evaluation of 18 similarity metrics across
+                                                                        3 EXPERIMENTAL SETUP
+5,068 validated pairs, we establish definitive guidance for metric      Our study focuses on systematically evaluating the ability of simi-
+selection. Our diagnostic framework reveals that metric failures        larity metrics to capture diverse semantic relationships across both
+follow predictable patterns: lexical approaches excel at syntactic      natural language and source code. We investigate a broad spectrum
+variation but fail on semantic equivalence; embedding methods           of 18 metrics, spanning lexical, embedding-based, LLM-based, and
+capture broad semantic similarity but conflate opposition with          structure-aware approaches, and assess them on controlled datasets
+independence; LLMs demonstrate superior semantic discrimination.        specifically designed to surface strengths and failure modes. By com-
+   In summary, we make the following contributions:                     bining carefully crafted transformation protocols with fine-grained
+      • Diagnostic Evaluation Framework: We develop con-                diagnostic analysis, we aim to disentangle representational limi-
+         trolled transformation protocols generating 7 natural lan-     tations from distance computation effects and provide actionable
+         guage and 5 code semantic relationship categories, creat-      insights for metric selection. This section outlines our experimental
+         ing the first benchmark designed to isolate specific failure   setup to achieve the aforementioned goals.
+         modes.
+      • Distance Metric Breakthrough: We show that embed-               3.1 Research Questions
+         ding limitations stem from distance computation—Euclidean
+                                                                        This study is guided by three research questions (RQs):
+         distance improves performance by 24-66% over cosine sim-
+         ilarity on identical representations.                          • RQ1: How do traditional, embedding-based, and LLM-based
+      • Catastrophic Failure Documentation: We identify sys-               similarity metrics perform across controlled semantic trans-
+         tematic metric failures including 99.9% false positive rates      formation categories? This question establishes the empirical
+         in opposition detection, enabling practitioners to avoid crit-    foundation by systematically evaluating metric performance
+         ical pitfalls.                                                    across our semantic taxonomy, identifying which metrics sys-
+      • Evidence-Based Selection Framework: We establish                   tematically fail on specific semantic phenomena.
+         when LLM-based approaches provide genuine improve-             • RQ2: To what degree are embedding limitations attribut-
+         ment (0.00-0.29 similarity for opposites) versus when sim-        able to vector representations versus cosine similarity con-
+         pler metrics suffice.                                             straints? This isolates whether poor embedding performance
+   These contributions provide the systematic evaluation infras-           stems from model representational capacity or distance metric
+tructure needed to move beyond performance rankings toward                 appropriateness, testing whether alternative distance measures
+understanding why metrics succeed or fail, enabling development            reveal superior semantic relationships from identical vector rep-
+of more reliable similarity assessment tools.                              resentations.
+                                                                        • RQ3: Can LLM-based evaluation provide more robust se-
+                                                                           mantic understanding, and what consistency trade-offs
+2 THE SEMANTIC SIMILARITY CHALLENGE
+                                                                           emerge? This evaluates whether recent advances in large lan-
+The core challenge in similarity assessment lies in distinguishing         guage models offer genuine improvements in semantic reasoning
+syntactic similarity from semantic equivalence. In natural language,       while examining reliability implications for systematic evalua-
+semantically equivalent expressions can exhibit vastly different           tion frameworks.
+surface forms (“sort the list” vs. “arrange items in order”), while
+syntactically similar texts may express contradictory meanings
+(“enable security”vs. “disable security”). Similarly, in software engi- 3.2 Datasets Construction
+neering, the canonical clone taxonomy [35] distinguishes between        To systematically evaluate semantic similarity metrics across di-
+Type-I through Type-III clones (varying degrees of syntactic sim-       verse relationship types, we construct comprehensive benchmarks
+ilarity) and Type-IV clones (semantic equivalence with syntactic        spanning both natural language and source code domains.
+differences), with the latter representing the most challenging de-
+tection scenario.                                                       3.2.1 Code Dataset Construction. For our code dataset, we col-
+   Existing similarity metrics span four primary categories: ① lexi-    lected source code from two sources:
+cal approaches that analyze surface-level token patterns (e.g., TF-
+IDF [43], BLEU [31], ROUGE [24]); ② embedding-based methods                  (1) Rosetta dataset [27]: which contains 1.329 computational
+that leverage learned vector representations (e.g., BERTScore [52],              tasks implemented across 973 programming languages.
+CodeBERT [13]); ③ structural approaches specific to code (e.g.,                  For this study, we selected tasks that include implementa-
+AST similarity [40], CFG analysis); and ④ emerging LLM-based                     tions in at least two of the most popular languages (Java,
+evaluation paradigms [53]. However, the fundamental assumption                   JavaScript, Python, or C) which resulted in a subset of 1091
+underlying most similarity computation (i.e., cosine similarity of               computational tasks. We call this dataset CRosetta .
+                                                                     2
+How Small Transformation Expose the Weakness of Semantic Similarity Measures
+
+
+    (2) APPS Dataset [16]: which is a data set consisting of 10.000                            low-complexity implementation and the other a high-
+        coding problems collected from different open-access cod-                              complexity version. Formally, defined as: S5code = {(𝑐𝑖 , 𝑐 𝑗 ) |
+        ing websites with their associated test case and ground-                               𝑐𝑖 ≡ 𝑐 𝑗 , CC(𝑐𝑖 ) ≪ CC(𝑐 𝑗 )}.
+        truth solutions written by humans. As all of these solutions                           This subset was built using CAPPS by filtering samples
+        are not valid, we used different scenarios proposed by the                             that present at least 2 valid solutions that passed their
+        different set of solutions to build the different subset of our                        associated test suite. For each set of valid solutions, we
+        code collection. We call this dataset CAPPS .                                          ranked them by cyclomatic complexity and formed pairs
+Our code dataset is then defined as: Cbase = CRosetta ∪ CAPPS .                                consisting of the low-complexity and high-complexity
+Systematic Semantic Transformation Framework. We apply                                         versions as mentioned.
+controlled transformations𝑇 : CAPPS → Ctransformed to each element                    In summary, our partitioning strategy organizes the corpus into
+of CAPPS , producing multiple transformed datasets, each designed                  five well-defined semantic subsets, each designed to isolate specific
+to reflect a specific type of semantic relationship. In the following,             combinations of functional and syntactic similarity.
+we detail the two categories of transformations:
+                                                                                   3.2.2 Text Dataset Construction. For the natural language evalu-
+❶ Semantic-Preserving Transformations: For each 𝑐 ∈ CAPPS
+                                                                                   ation, we construct a benchmark based on the CONALA dataset
+  that passed the associated suite test, we apply surface-level
+                                                                                   (DCONALA ), which contains 2299 pairs of natural language descrip-
+  modifications that preserve functionality, including variable
+                                                                                   tions and corresponding code snippets collected from Stack Over-
+  and function renaming, code formatting changes and dead code
+                                                                                   flow (in our study we only keep the natural language).
+  insertion. Any transformed sample 𝑇preserve (𝑐), is resubmitted
+                                                                                   Semantic Transformations To systematically probe the behavior of
+  to the associated test suit to assess the preservation of the
+                                                                                   similarity metrics, we apply five controlled linguistic transforma-
+  semantic. This dataset is called 𝑇preserve .
+                                                                                   tions (using the NL-Augmenter tool[44]) to each sample, targeting
+❷ Semantic-Altering Transformations: For each 𝑐 ∈ Cbase ,
+                                                                                   distinct semantic or syntactic phenomena. Below, we detail each
+  that passed the associated suite test, we introduce semantic
+                                                                                   transformation, the nature of the semantic relationship it intro-
+  changes by mutating arithmetic operators (+ ↔ −, × ↔ /),
+                                                                                   duces, and the resulting transformed datasets:
+  comparison operators (>↔≤, ==↔≠), logical operators (∧ ↔
+  ∨), and control flow structures. The transformed sample𝑇alter (𝑐)                ❶ Synonym Substitution: Starting from the CONALA dataset
+  intentionally alters the original behavior (𝑐 . 𝑇alter (𝑐)). To as-                DCONALA with 2299 natural language samples, we apply syn-
+  sess this alteration, each transformed sample 𝑇alter (𝑐) is resub-                 onym substitution to each 𝑑 ∈ DCONALA , replacing words with
+  mitted to the associated suite test to confirm the alteration of                   their synonyms while preserving meaning (𝑑 ≡ 𝑇synonym (𝑑)).
+  the initial behavior. This dataset is called 𝑇alter .                              This dataset is called 𝑇synonym .
+                                                                                   ❷ Negation Insertion/Removal: For each 𝑑 ∈ DCONALA , we
+Code Dataset Taxonomy. We partition our corpus previously
+                                                                                     apply controlled negation insertion or removal to alter the log-
+described into five distinct semantic categories:
+                                                                                     ical structure of the text, introducing semantically meaningful
+Subset 1: The first subset consists of 561 pairs from CAPPS where                    shifts (𝑑 . 𝑇negation (𝑑)). This dataset is called 𝑇negation .
+          one sample is obtained by applying a semantic-preserving                 ❸ Antonym Substitution: For each 𝑑 ∈ DCONALA , we replace
+          transformation to the other, meaning they are function-                    selected words with their antonyms to create text with opposing
+          ally equivalent and exhibit high syntactic similarity. For-                meaning (𝑑 . 𝑇antonym (𝑑)). This dataset is called 𝑇antonym .
+          mally, defined as:                                                       ❹ Word Reordering: For each 𝑑 ∈ DCONALA , we reorder words
+          S1code = (𝑐𝑖 , 𝑐 𝑗 ) | 𝑐 𝑗 = 𝑇preserve (𝑐𝑖 ), 𝑐𝑖 ≡ 𝑐 𝑗 .                   or phrases to produce syntactically varied but semantically
+Subset 2: The second subset consists of 561 pairs from CAPPS where                   equivalent pieces of texts (𝑑 . 𝑇reordering (𝑑)). This dataset is
+          one sample is obtained by applying a semantic-altering                     called 𝑇reordering .
+          transformation to the other, meaning they are syntacti-                  ❺ Translation: For each 𝑑 ∈ DCONALA , we translate phrases
+          cally similar but differ in functionality. Formally, defined               from English to French to produce syntactically varied but
+          as: S2code = (𝑐𝑖 , 𝑐 𝑗 ) | 𝑐 𝑗 = 𝑇alter (𝑐𝑖 ), 𝑐𝑖 . 𝑐 𝑗 .                  semantically equivalent pieces of texts (𝑑 . 𝑇translate (𝑑)). This
+Subset 3: The third subset consists of pairs of 561 valid solutions                  dataset is called 𝑇translate .
+          (that passed their associated test suite) but coming from
+          different CAPPS coding problems. Thus, we obtain pairs                     After applying all four transformations, we retain only the 1563
+          of samples that are semantically and syntactically differ-               samples for which all transformations succeeded without tool fail-
+          ent. Formally, defined as:                                               ures.
+          S3code = (𝑐𝑖 , 𝑐 𝑗 ) | 𝑐𝑖 , 𝑐 𝑗 ∈ Cbase, 𝑐𝑖 . 𝑐 𝑗 .                      Text Dataset Taxonomy. We partition our natural language cor-
+Subset 4: The fourth subset consists of 1091 cross-language pairs                  pus into six distinct semantic relationship categories:
+          solving the same problem while using idiomatic con-                      Subset 1: This subset consists of paraphrase pairs drawn from
+          structs, maintaining functional equivalence but differing                          the synonym substitution dataset, maintaining identical
+          significantly in syntax from CRosetta . Formally, defined                          semantic content despite surface variation. Formally,
+          as: S4code = {(𝑐𝑖 , 𝑐 𝑗 ) | 𝑐 𝑗 = 𝑇cross (𝑐𝑖 ), 𝑐𝑖 ≡ 𝑐 𝑗 }                         defined as: S1text = (𝑑𝑖 , 𝑑 𝑗 ) | 𝑑 𝑗 = 𝑇synonym (𝑑𝑖 ), 𝑑𝑖 ≡ 𝑑 𝑗 .
+Subset 5: The fifth subset consists of 342 pairs of code where                     Subset 2: This subset consists of semantically unrelated pairs, sam-
+          both samples implement the same functionality but dif-                             pled from distinct entries in DCONALA with no shared
+          fer in cyclomatic complexity, with one representing a                              meaning. Formally, defined as:
+                                                                               3
+                                                                                                                                      NIKIEMA, DJIRE et al.
+
+
+          S2text = {(𝑑𝑖 , 𝑑 𝑗 ) | 𝑑𝑖 , 𝑑 𝑗 ∈ DCONALA, 𝑑𝑖 . 𝑑 𝑗 }.                    code implementations, we employ different automatic evaluation
+Subset 3: This subset consists of pairs with semantic opposition,                    metrics. Our evaluation framework encompasses four distinct cat-
+          constructed using the negation transformation. Formally,                   egories: ① Lexical/N-gram Metrics that analyze surface-level
+          defined as: S3text = (𝑑𝑖 , 𝑑 𝑗 ) | 𝑑 𝑗 = 𝑇negation (𝑑𝑖 ), 𝑑𝑖 . 𝑑 𝑗 .       token patterns; ② Embedding-based Metrics that leverage dense
+          S4text = {(𝑑𝑖 , 𝑑 𝑗 ) | 𝑑 𝑗 = 𝑇synonym (𝑑𝑖 ), 𝑑𝑖 ≡ 𝑑 𝑗 }.                  vector representations; ③ LLM-based Metrics that utilize large lan-
+Subset 4: This subset contains pairs generated via antonym sub-                      guage models for contextual assessment; and ④ Structure-aware
+          stitution, producing meaning reversal. Formally, defined                   Code Metrics that capture syntactic and behavioral properties
+          as: S4text = (𝑑𝑖 , 𝑑 𝑗 ) | 𝑑 𝑗 = 𝑇antonym (𝑑𝑖 ), 𝑑𝑖 . 𝑑 𝑗 .                specific to source code. We give an overview of each category in
+Subset 5: This subset consists of pairs created through word re-                     the following.
+          ordering, preserving semantic equivalence but altering
+          syntactic structure. Formally, defined as:                                 3.3.1 Lexical/N-gram Metrics. Lexical metrics operate on surface-
+          S5text = (𝑑𝑖 , 𝑑 𝑗 ) | 𝑑 𝑗 = 𝑇reordering (𝑑𝑖 ), 𝑑𝑖 . 𝑑 𝑗 .                 level textual patterns without considering semantic context or
+Subset 6: This subset contains semantically equivalent multilin-                     meaning preservation. In our study, we have considered the follow-
+          gual pairs, drawn from cross-language examples. For-                       ing metrics:
+          mally, defined as:                                                         TF-IDF with Cosine Similarity [37] represents each input as a
+          S6text = (𝑑𝑖 , 𝑑 𝑗 ) | 𝑑 𝑗 = 𝑇translate (𝑑𝑖 ), 𝑑𝑖 ≡ 𝑑 𝑗                    sparse vector weighted by term frequency and inverse document
+                                                                                     frequency.
+   In summary, our partitioning strategy organizes the natural                       BLEU [31] measures similarity between generated and reference
+language corpus into seven well-defined semantic subsets, each                       texts by counting overlapping word sequences (n-grams), producing
+designed to isolate specific combinations of semantic meaning and                    a score from 0 to 1 where higher scores indicate greater similarity.
+linguistic variation.                                                                ROUGE-L [24] measures similarity based on the longest common
+3.2.3 Quality Assurance and Validation. Ensuring the accuracy and                    subsequence, emphasizing structural similarity and word ordering.
+reliability of our datasets is critical for meaningful metric evaluation.            METEOR [1] performs sophisticated word alignment using exact
+We combine automated validation for code datasets with human                         matches, stemming, and synonyms from WordNet with a fragmen-
+annotation for natural language pairs to rigorously verify semantic                  tation penalty.
+relationships.                                                                       3.3.2 Embedding-based Metrics. Embedding-based metrics repre-
+Code datasets. We implement an automated validation pipeline                         sent text or code in continuous vector spaces designed to capture
+to ensure syntactic correctness, preserve intended semantics, and                    semantic properties, but their effectiveness depends on the qual-
+verify behavioral changes introduced by transformations:                             ity of the learned representations and the appropriateness of the
+      (1) Syntactic Validation: Automated parsing ensures that                       distance function used for comparison. In our study, we have con-
+          all transformed code samples are syntactically valid and                   sidered the following metrics:
+          compile without errors.                                                    BERTScore [51] computes token-level semantic similarity using
+      (2) Semantic Validation: For semantic-preserving transfor-                     BERT contextual embeddings with precision/recall based on maxi-
+          mations, we execute predefined test cases to confirm func-                 mum cosine similarity alignments.
+          tional equivalence between the original and transformed                    Sentence-BERT [32] encodes sentences into fixed-size dense vec-
+          samples (𝑐𝑖 ≡ 𝑐 𝑗 ).                                                       tors. We employ two variants: all-MiniLM-L6-v2 [46] (lightweight,
+      (3) Behavioral Verification: For semantic-altering transfor-                   efficient) and all-mpnet-base-v2 [39] (high-performance, trained
+          mations, we perform input-output testing to ensure that                    on 1B+ sentence pairs).
+          applied changes result in the expected behavioral differ-                  Universal Sentence Encoder [3] transforms sentences into 512-
+          ences (𝑐𝑖 . 𝑐 𝑗 ).                                                         dimensional embeddings using Deep Averaging Networks or Trans-
+Natural Language datasets. We establish ground truth semantic                        former architectures with multi-task training.
+relationships through human annotation. To this end, we manually                     Code-Specific Models: CodeBERT [13] (pre-trained on 6.4M code-
+annotate a representative sample of pairs from each of the seven                     comment pairs), GraphCodeBERT [14] (enhanced with data flow
+semantic subsets, assigning a semantic similarity score between 0                    graphs and AST), and CodeT5 [48] (encoder-decoder for code un-
+(completely unrelated) and 4 (semantically equivalent). Specifically,                derstanding tasks).
+we sampled 163 pairs per subset, with a 95% confidence level and a                   3.3.3 LLM-based Metrics. LLM-based metrics leverage large lan-
+10% margin of error level.                                                           guage models to assess similarity through contextualized, learned
+    Eventually, our ground-truth to assess existing sematic similarity               representations, and enable nuanced semantic comparisons but
+metrics is composed of two parts: ❶ a code dataset of 561 samples                    potentially introducing variability from model biases or prompt
+curated automatically via test cases; and ❷ a text dataset of 1141                   sensitivity. In our study, we have considered the following metrics:
+(i.e., 163 samples for each of the 7 subsets described in the previous               BLEURT [38] fine-tunes BERT on synthetic data with human qual-
+section) samples manually curated.                                                   ity ratings, learning to predict human judgments of semantic simi-
+                                                                                     larity.
+3.3     Evaluation Metrics                                                           OpenAI text-embedding-3-large [30] generates high-dimensional
+To comprehensively evaluate semantic similarity and opposition                       representations (up to 3072 dimensions) designed for sophisticated
+relationships across both natural language descriptions and source                   semantic relationships through contrastive learning.
+                                                                                 4
+How Small Transformation Expose the Weakness of Semantic Similarity Measures
+
+
+LLM-as-a-Judge: We employ multiple state-of-the-art models [11,                    4.1    Experiment 1: Comprehensive Metric
+53] including GPT-4o [29] and DeepSeek-V3 [9] and Claude-sonnet-                          Evaluation Across Semantic Categories
+3.5[18] . Models receive structured prompts requesting:
+                                                                                   Goal. In this experiment, we aim to establish the baseline perfor-
+                                                                                   mance and characterize the sensitivity of traditional, embedding-
+      (1) Quantitative similarity ratings (0–1 scale),
+                                                                                   based, and LLM-based similarity metrics when faced with controlled
+      (2) Categorical classification (equivalent/similar/opposed/un-
+                                                                                   semantic transformations in both code and natural language. This
+          related),
+                                                                                   provides crucial empirical evidence of how well these metrics cap-
+      (3) Explicit reasoning justification.
+                                                                                   ture diverse semantic relationships.
+                                                                                   Experiment. We evaluate all metrics listed in Table 1 across
+3.3.4 Structure-aware Code Metrics. Structure-aware metrics in-                    our systematically constructed datasets S𝑖code and S 𝑗text where 𝑖 ∈
+corporate syntactic or structural information (e.g., abstract syntax               {1, 2, 3, 4, 5} and 𝑗 ∈ {1, 2, 3, 4, 5, 6, 7}. Each metric produces similar-
+trees, control flow graphs) to assess similarity, which captures re-               ity scores 𝑠 ∈ [0, 1] for pair (𝑥𝑖 , 𝑥 𝑗 ) where higher scores indicate
+lationships beyond surface tokens but often remaining limited to                   greater perceived similarity.
+structural correspondence without deep semantic understanding.                        where e𝑖 and e 𝑗 represent the embedding vectors for inputs 𝑥𝑖
+In our study, we have considered the following metrics:                            and 𝑥 𝑗 .
+AST Similarity [12] compares abstract syntax trees using tree edit                    For LLM-based evaluation, we employ a standardized prompts
+distance.                                                                          template that we prensented in open-science repository.
+CFG Similarity [4] analyzes control flow graphs using graph iso-                      Each subset is evaluated independently to isolate metric perfor-
+morphism algorithms to identify structural correspondences be-                     mance on specific semantic phenomena, enabling identification
+tween execution flows.                                                             of systematic failures in detecting semantic preservation versus
+CodeBLEU [33] extends BLEU for code evaluation by incorporat-                      alteration.
+ing programming-specific features like abstract syntax trees and                   Results. Code Domain Analysis. Table 1 presents the similarity
+data flow, measuring both surface-level token similarity and deeper                scores for our five defined code semantic categories. For an ideal
+structural/semantic correctness of generated code.                                 metric, scores should be high (typically ≥ 0.8) for equivalent cate-
+                                                                                   gories (S1code , S4code , S5code ), and low (typically ≤ 0.3) for semanti-
+3.3.5 Distance Metrics for Embedding Evaluation. To investigate                    cally different categories (S2code , S3code ).
+whether limitations in embedding-based similarity assessment stem                     Embedding models demonstrate catastrophic failure in distin-
+from the restrictive use of cosine similarity, we evaluate embeddings              guishing semantic opposition. CodeBERT yields a score of 1.00 for
+using six distance measures [5]:                                                   semantic opposition (S2code ), where ≤ 0.3 was expected, leading
+                                                                                   to almost 100% false positive rate. GraphCodeBERT shows only
+       • Cosine Similarity (standard baseline),                                    marginal improvement with a score of 0.98 for S2code , indicating
+       • Euclidean Distance (preserving magnitude),                                profound "semantic blindness."
+       • Jaccard Similarity (set-based overlap),                                      In stark contrast, LLM-based approaches like GPT-4o and DeepSeek-
+       • Pearson Correlation (linear relationship strength),                       V3 exhibit stronger ability to detect semantic differences, achieving
+       • Dot Product (preserving direction and magnitude),                         near-perfect discrimination for completely different code semantics
+       • Angular Distance (normalized angular separation).                         (S3code scores of 0.00). For challenging edge cases involving minimal
+                                                                                   syntactic changes leading to major semantic shifts (S2code ), LLMs
+    This multi-metric approach tests key hypotheses:                               produce moderate scores (0.62-0.78), representing appropriate un-
+                                                                                   certainty—a nuanced behavior absent in embedding models. Struc-
+      (1) Different metrics show varying sensitivity to semantic re-
+                                                                                   tural metrics like AST Similarity perform well on exact matches but
+          lationship categories,
+                                                                                   struggle with abstract semantic equivalence, while CFG Similarity
+      (2) Magnitude-preserving metrics outperform normalized met-
+                                                                                   shows reasonable performance across some categories but struggles
+          rics for detecting semantic opposition,
+                                                                                   with semantic opposition.
+      (3) Optimal metrics differ between code and natural language
+                                                                                      Text Domain Analysis. Table 2 presents the similarity scores for
+          embeddings.
+                                                                                   the text domain across seven semantic categories. Expected high
+                                                                                   similarity scores are for S1text (synonyms) and S5text (cross-language
+3.4     Procedure                                                                  equivalence), while low scores are expected for S2text (negation),
+                                                                                   S3text (antonym), S4text (shuffle), and S6text (unrelated content).
+For each sample in both the text and code datasets, we compute
+                                                                                      Embedding models consistently fail to distinguish semantic dif-
+similarity scores using all 18 evaluated metrics.
+                                                                                   ferences. BERTScore shows catastrophic failure across all semantic
+                                                                                   difference types, assigning high similarity scores for negation (0.95),
+4     EMPIRICAL RESULTS                                                            antonym (0.95), shuffled content (0.88), and unrelated content (0.82).
+Our empirical evaluation employs three complementary experi-                       All transformer-based embeddings show alarmingly high false pos-
+ments designed to systematically assess semantic similarity metrics                itive rates, averaging 96.2% ± 1.8% across the semantic difference
+across diverse transformation types and identify the sources of
+metric limitations in code and text understanding.
+                                                                               5
+                                                                                                                                                      NIKIEMA, DJIRE et al.
+
+
+categories (S2text , S3text , S4text , S6text ). A Mann-Whitney U test con-                        [Answer to RQ-1] ☛ Traditional and embedding metrics system-
+firms their complete inability to distinguish semantic differences                                 atically fail at semantic difference detection (95-100% false positive
+from equivalence (𝑈 = 0.0, 𝑝 < 0.001).                                                             rates), while LLM-based approaches achieve superior discrimination
+   In contrast, LLM-based judges like GPT-4o and DeepSeek-V3                                       with 89-97% improvement and large effect sizes (Cohen’s d = 3.42).
+demonstrate significantly improved capabilities in detecting seman-
+tic differences. GPT-4o achieves markedly low scores (0.07-0.29) for                              4.2    Experiment 2: Embedding Vector Space
+negation, antonym, and shuffled/unrelated content, representing                                          Analysis with Alternative Distance Metrics
+substantial improvements over embedding-based and traditional
+metrics. DeepSeek-V3 also shows strong performance in distin-                                     Goal. In this experiment, we aim to isolate whether poor embedding-
+guishing negation and antonyms, though its score for unrelated                                    based similarity performance originates from inadequate vector
+content (S6text ) is notably higher than GPT-4o’s.                                                representations or from limitations inherent in similarity compu-
+                                                                                                  tation. By doing so, we seek to distinguish between the model’s
+                                                                                                  fundamental representational capacity and the appropriateness of
+ Metric                                        S1       S4      S5      S2       S3     𝐹1        the chosen distance metric for semantic assessment.
+ AST Similarity                               1.00     0.22    0.99    0.22     0.21   0.61       Experiment. Using identical pre-trained embedding models from
+ CFG Similarity                               1.00    0.95     0.91   0.90∗    0.89    0.94
+ CodeBERT Embed. + Cosine Similarity          1.00    0.99∗    0.98   1.00∗    0.97∗   0.99       Experiment 1, we generate vector representations e𝑖 , e 𝑗 for all eval-
+ GraphCodeBERT Embed. + Cosine Similarity     0.98    0.91     0.82   0.98∗    0.77∗   0.89       uation pairs and compute similarity using seven distinct distance
+ OpenAI Embed.                                0.82     0.70    0.54   0.87∗     0.22   0.63
+ GPT-4o                                       0.97    0.79     0.63    0.62    0.00    0.60
+                                                                                                  metrics:
+ DeepSeek-V3                                  0.97    0.88     0.71   0.78∗    0.00    0.67
+                                                                                                        • Angular Measures: Cosine Similarity and Angular Dis-
+ Note: Bold indicates problematic high similarity for semantically                                        tance
+    different categories. ∗ denotes catastrophic failure (>0.7 for                                      • Magnitude-Sensitive Measures: Euclidean Distance and
+                             opposition).                                                                 Dot Product
+          Table 1: Code Semantic Similarity Results                                                     • Statistical Measures: Pearson Correlation and Jaccard
+                                                                                                          Similarity
+                                                                                                  For each embedding model 𝐸 and distance metric 𝐷𝑘 , we evaluate:
+
+                                                                                                   Performance𝐸,𝐷𝑘 = Correlation(Gold Standard, 𝐷𝑘 (𝐸 (𝑥𝑖 ), 𝐸 (𝑥 𝑗 )))
+     Finding 1                                                                                                                                                       (1)
+                                                                                                      This systematic comparison isolates whether embedding limi-
+     Embedding models demonstrate systematic semantic dif-                                        tations stem from vector representation quality or distance com-
+     ference blindness with CodeBERT achieving 99.9% false                                        putation methodology, providing crucial insights for improving
+     positive rates and BERTScore scoring semantic opposites                                      semantic similarity assessment in software engineering applica-
+     higher than synonyms. LLM-based evaluation achieves                                          tions.
+     superior discrimination with GPT-4o correctly identify-                                      Results. To isolate whether embedding failures stem from inad-
+     ing differences (0.00-0.29) compared to embedding failures                                   equate vector representations or limitations in cosine similarity
+     (0.82-0.99). Traditional metrics assign high similarity to                                   computation, we evaluate identical pre-trained embeddings using
+     negated content due to lexical overlap optimization.                                         seven distance metrics across semantic categories where embed-
+     ☛ Current embedding-based similarity metrics fundamen-                                       dings demonstrated failure in Experiment 1.
+     tally misclassify semantic relationships in software engi-                                       Code Domain Analysis. Table 3
+     neering applications, while LLM-based approaches provide                                         presents distance metric performance on CodeBERT and Graph-
+     reliable semantic understanding for code and text evalua-                                    CodeBERT embeddings across semantic categories where cosine
+     tion tasks.                                                                                  similarity failed (S2code , S3code ).
+                                                                                                      Euclidean distance achieves dramatic performance improvements
+                                                                                                  over cosine similarity on identical embedding vectors. CodeBERT
+                                                                                                  shows 24-66% improvement on semantic difference detection, with
+ Metric                              S1      S2        S3       S4     S5       S6     Acc.       S3code improving from catastrophic failure (0.966) to acceptable per-
+ TF-IDF                             0.37   0.77∗     0.65∗    1.00∗   0.13     0.04    0.49
+ BLEU                               0.44   0.79∗     0.71∗    0.84∗   0.13     0.08    0.50
+                                                                                                  formance (0.331). GraphCodeBERT demonstrates even larger gains
+ ROUGE-L                            0.09   0.64∗      0.34     0.00   0.00     0.00    0.18       of 37-72%, achieving 0.212 for cross-problem differences compared
+ METEOR                             0.44   0.90∗     0.68∗    0.54∗   0.24     0.04    0.47       to 0.765 with cosine similarity.
+ BERTScore                          0.92   0.95∗     0.95∗    0.88∗   0.85    0.82∗    0.90
+ all-MiniLM-L12-v2 + cosine         0.86   0.90∗     0.79∗    0.83∗   0.67     0.04    0.68           Statistical analysis confirms these improvements are highly sig-
+ all-mpnet-base-v2 + cosine         0.83   0.88∗     0.77∗    0.81∗   0.65     0.03    0.66       nificant: Mann-Whitney U tests comparing Euclidean vs. cosine
+ text-embed-3-large + cosine        0.79   0.78∗     0.72∗    0.79∗   0.80     0.07    0.66
+ Universal Sentence Enc. + cosine   0.80   0.89∗     0.84∗    0.83∗   0.78     0.17    0.72
+                                                                                                  performance yield 𝑈 = 23.5, 𝑝 < 0.001 for CodeBERT and 𝑈 = 18.0,
+ BLEURT                             0.55   0.64∗     0.59∗    0.79∗   0.01     0.00    0.43       𝑝 < 0.001 for GraphCodeBERT, with large effect sizes (𝑟 = 0.82 and
+ GPT-4o                             0.72    0.29      0.25     0.07   0.62     0.27    0.37       𝑟 = 0.89 respectively).
+ DeepSeek-V3                        0.87    0.23      0.35     0.16   0.83    0.46∗    0.48
+                                                                                                      Text Domain Analysis. Table 4 presents distance metric evaluation
+             Table 2: Text Semantic Similarity Results                                            across text embedding models for semantic opposition categories
+                                                                                                  (S2text , S3text , S4text ).
+                                                                                              6
+How Small Transformation Expose the Weakness of Semantic Similarity Measures
+
+
+   Model + Metric         S1   S4     S2     S3                    Improvement             inadvertently remove magnitude information relevant to semantic
+                         CodeBERT Embeddings
+   Cosine Similarity    0.998 0.992 0.999∗ 0.966∗                         0%
+                                                                                           understanding in code embeddings. Text embeddings show more
+   Euclidean Distance   0.688 0.595 0.758   0.331                       24-66%             limited sensitivity to distance metric choice, indicating that rep-
+   Dot Product          0.998 0.992 0.999∗ 0.966∗                         0%               resentation quality remains a contributing factor beyond metric
+   Jaccard Similarity   0.965 0.933 0.972∗ 0.860∗                        2-11%             selection.
+   Pearson Correlation 0.998 0.992 0.999∗ 0.966∗                          0%
+                                                                                              Distance Metric Performance Ranking:
+   Angular Distance     0.980 0.885 0.987∗ 0.924∗                        1-4%
+                      GraphCodeBERT Embeddings                                                   (1) Jaccard Similarity: Best performance with 20-25% im-
+   Cosine Similarity    0.976 0.911 0.982∗ 0.765∗                        3-5%                        provement over cosine
+   Euclidean Distance   0.531 0.458 0.615   0.212                       37-72%                   (2) Pearson Correlation: Moderate improvements (15-20%)
+   Dot Product          0.976 0.911 0.982∗ 0.765∗                         0%
+   Jaccard Similarity   0.891 0.806 0.914∗  0.632                        7-17%                       but insufficient for practical use
+   Pearson Correlation 0.976 0.911 0.982∗ 0.765∗                          0%                     (3) Angular Distance: Minimal improvement, similar to co-
+   Angular Distance     0.934 0.808 0.953∗ 0.779∗                        3-5%                        sine baseline
+Note: ∗ indicates problematic high similarity for semantic differences.                          (4) Euclidean Distance = Dot Product: Identical performance,
+          Bold values show acceptable performance (≤0.8).                                            negligible gains (0-3%)
+  Table 3: Code Embedding Distance Metric Comparison                                             (5) Cosine Similarity: Baseline performance
+
+                                                                                                 Finding 2
+     Model + Metric              S2 (Antonym) S3 (Negation)      S4 (Shuffle)   Avg
+                             Cosine Similarity (Baseline)                                        Euclidean distance substantially improves code embedding
+     all-mpnet-base-v2               0.77∗           0.88∗          0.81∗       0.82
+     all-MiniLM-L6-v2                0.79∗           0.90∗          0.83∗       0.84             performance with CodeBERT showing 24-66% improve-
+     text-embedding-3-large          0.72 ∗          0.78∗          0.79∗       0.76             ment and GraphCodeBERT demonstrating 37-72% gains
+     Universal Sentence Encoder      0.84∗           0.89∗          0.83∗       0.85
+                                  Euclidean Distance
+                                                                                                 over cosine similarity. Text embeddings show limited sen-
+     all-mpnet-base-v2               0.79∗           0.88∗          0.82∗       0.83             sitivity to distance metric choice, maintaining problematic
+     all-MiniLM-L6-v2                0.81∗           0.93∗          0.86∗       0.87             scores >0.6 with best alternative (Jaccard) achieving 20-25%
+     text-embedding-3-large          0.74∗           0.78∗          0.80∗       0.77
+     Universal Sentence Encoder      0.85∗           0.90∗          0.83∗       0.86             improvement. Magnitude preservation proves important
+                                     Dot Product                                                 for code semantic understanding.
+     all-mpnet-base-v2               0.79∗           0.88∗          0.82∗       0.83
+     all-MiniLM-L6-v2                0.81∗           0.93∗          0.86∗       0.87             ☛ Distance metric selection significantly influences code
+     text-embedding-3-large          0.74 ∗
+                                          ∗
+                                                     0.78∗          0.80∗       0.77             embedding performance, with Euclidean distance demon-
+     Universal Sentence Encoder      0.85            0.90∗          0.83∗       0.86
+                                   Angular Distance
+                                                                                                 strating substantial improvements over cosine similarity,
+     all-mpnet-base-v2               0.80∗           0.85∗          0.81∗       0.82             while text domain semantic difference detection remains
+     all-MiniLM-L6-v2                0.82∗           0.89∗          0.84∗       0.85             challenging across all tested metrics.
+     text-embedding-3-large          0.77∗           0.79∗          0.79∗       0.78
+     Universal Sentence Encoder      0.83∗           0.86∗          0.82∗       0.84
+                                 Pearson Correlation
+     all-mpnet-base-v2               0.68∗           0.74∗          0.68∗       0.70          Practical Implications: Our findings suggest that embedding-
+     all-MiniLM-L6-v2                0.70∗           0.80∗          0.72∗       0.74       based similarity assessment could benefit from distance metric
+     text-embedding-3-large           0.63           0.65∗          0.66∗       0.65
+     Universal Sentence Encoder      0.71 ∗          0.77∗          0.69∗       0.72       evaluation beyond the commonly-used cosine similarity. For code
+                         Jaccard Similarity (Best Alternative)                             similarity applications, Euclidean distance demonstrates potential
+     all-mpnet-base-v2                0.63           0.68∗           0.63       0.65
+     all-MiniLM-L6-v2                0.65∗           0.74∗          0.67∗       0.69       for improving CodeBERT and GraphCodeBERT performance with
+     text-embedding-3-large           0.59            0.61           0.61       0.60       minimal implementation overhead.
+     Universal Sentence Encoder      0.67∗           0.70∗          0.64∗       0.67
+                                                                                              Key Implications: (1) SE tools using embedding-based sim-
+Table 4: Text Embedding Distance Metric Results (Opposition                                ilarity may benefit from evaluating alternative distance metrics
+Categories)                                                                                alongside cosine similarity, (2) comprehensive embedding evalu-
+                                                                                           ations should consider multiple distance metrics to fully assess
+                                                                                           model capabilities, and (3) text domain semantic opposition de-
+                                                                                           tection remains challenging across distance metrics, suggesting
+   Systematic evaluation of six distance metrics across text embed-
+                                                                                           opportunities for advances in representation learning approaches.
+dings demonstrates consistent limitations in semantic difference
+detection. Euclidean distance and dot product yield identical re-                           [Answer to RQ-2] ☛ Code domain limitations are primarily
+sults (as expected for normalized embeddings), providing negligible                         distance metric issues (Euclidean distance improves CodeBERT by
+improvements (0-3%) over cosine similarity. Angular distance per-                           24-66%), while text domain limitations stem from fundamental
+forms similarly to cosine, confirming that normalization variants                           representation quality that persists across all distance metrics (best
+offer minimal benefit. Pearson correlation achieves moderate im-                            improvement only 20-25%).
+provements (15-20%) but maintains problematic scores above 0.6.
+Only Jaccard similarity provides meaningful improvement (20-25%),
+yet all metrics remain above acceptable thresholds for most cate-
+                                                                                           4.3     Experiment 3: Prompt Engineering Impact
+gories.                                                                                            on LLM-based Evaluation
+   The substantial code domain improvements with Euclidean dis-                            Goal. To determine whether LLM performance variations in seman-
+tance suggest that cosine similarity’s vector normalization may                            tic similarity assessment stem from prompt design limitations rather
+                                                                                       7
+                                                                                                                                               NIKIEMA, DJIRE et al.
+
+
+than fundamental model capabilities, thereby isolating prompt sen-                         Text Domain Analysis. Table 6 presents text semantic evalua-
+sitivity from inherent semantic understanding capacity.                                 tion across prompting strategies, focusing on semantic difference
+Experiment.                                                                             categories where traditional metrics failed.
+   We systematically compare three established prompting strate-
+gies applied to three leading LLM models across identical evalua-                          Model + Prompt      S3     S2     S4  S5      S1     S6     Avg Diff
+tion pairs: GPT-4o and Claude Sonnet 3.5 (representing state-of-                                                          GPT-4o
+the-art commercial models) and DeepSeek-V3 (representing high-                             Simple Prompt       0.30   0.29 0.17 0.71    0.79    0.00     0.19
+performance open-source alternatives). This selection ensures com-                         Few-Shot            0.28   0.13 0.40 0.86    0.85    0.12     0.27
+                                                                                           Chain-of-Thought    0.42   0.35 0.42 0.98    0.97    0.09     0.40
+prehensive coverage of current LLM paradigms and deployment
+                                                                                                                          Claude
+scenarios in software engineering practice:                                                Simple Prompt       0.41   0.24 0.17 0.99    0.89    0.12     0.27
+   Simple prompt Strategy (𝑃meta ): The structured prompt from                             Few-Shot            0.48   0.14 0.40 0.95    0.90    0.11     0.34
+Experiment 1 providing explicit evaluation criteria and scoring                            Chain-of-Thought    0.53   0.39 0.37 0.96    0.92    0.20     0.43
+guidelines.                                                                                                           DeepSeek-V3
+   Few-shot Strategy (𝑃 few ): Demonstration-based prompting in-                           Simple Prompt       0.33   0.22 0.14 0.90    0.88    0.11     0.23
+                                                                                           Few-Shot            0.42   0.16 0.43 0.92    0.88    0.10     0.34
+cluding 6 representative examples from each semantic category
+                                                                                           Chain-of-Thought    0.40   0.28 0.34 0.97    0.90    0.09     0.34
+with gold-standard scores, followed by the target evaluation pair.                      Note: Avg Diff represents average performance on semantic difference
+   Chain-of-Thought Strategy (𝑃cot ): Prompting that explicitly                           categories (S2 , S3 , S4 , S6 ). Lower scores indicate better difference
+requests step-by-step reasoning: “Analyze the semantic relationship                                                        detection.
+step by step: (1) identify key concepts, (2) compare meanings, (3) assess               Table 6: LLM Prompt Strategy Performance on Text Seman-
+logical relationships, (4) provide final similarity score.”                             tics
+   For each prompting strategy 𝑃𝑘 and model 𝑀, we compute:
+                  Score𝑃𝑘 ,𝑀 (𝑥𝑖 , 𝑥 𝑗 ) = 𝑀 (𝑃𝑘 (𝑥𝑖 , 𝑥 𝑗 ))                 (2)
+   This enables systematic analysis of prompt-induced performance                          Simple prompting achieves superior semantic difference detec-
+variations while controlling for model architecture and training                        tion across models, with GPT-4o and DeepSeek-V3 achieving av-
+differences.                                                                            erage difference scores of 0.19 and 0.23 respectively. Few-shot and
+Results.                                                                                chain-of-thought prompting show degraded difference detection
+   To isolate whether LLM performance variations stem from prompt                       (0.27-0.43) while improving performance on equivalence categories.
+design limitations rather than fundamental model capabilities, we                          Analysis reveals systematic trade-offs:
+systematically evaluate three prompting strategies across GPT-4o,                            • Simple Prompts: Optimal difference detection, moderate
+Claude, and DeepSeek-V3 using identical evaluation pairs from                                  consistency
+Experiments 1-2.                                                                             • Few-Shot Prompts: Highest consistency (𝛼 = 0.84-0.89),
+   Code Domain Analysis. Table 5 presents LLM performance across                               balanced performance
+prompting strategies for code semantic evaluation.                                           • Chain-of-Thought: Enhanced reasoning, reduced differ-
+                                                                                               ence sensitivity
+     Model + Prompt       S1     S4     S2            S3        Consistency
+                                GPT-4o                                                     Model Performance Patterns: GPT-4o demonstrates supe-
+     Simple Prompt       0.972 0.793 0.633          0.000          0.82                 rior semantic difference detection with minimal prompt sensitivity.
+     Few-Shot            0.962 0.805 0.664          0.099          0.89                 Claude shows greater prompt dependency with performance varia-
+     Chain-of-Thought    0.963 0.769 0.652          0.000          0.85                 tions (0.14-0.53 range). DeepSeek-V3 achieves competitive perfor-
+                                Claude
+                                                                                        mance with simple prompts.
+     Simple Prompt       0.986 0.906 0.804          0.006          0.78
+     Few-Shot            0.953 0.775 0.647          0.112          0.84
+     Chain-of-Thought    0.975 0.837 0.767          0.040          0.81                     Finding 3
+                              DeepSeek-V3
+     Simple Prompt       0.972 0.879 0.713          0.001          0.79                     Simple prompts achieve optimal semantic difference detec-
+     Few-Shot            0.949 0.868 0.695          0.010          0.88                     tion with GPT-4o and DeepSeek-V3 reaching 0.19-0.23 av-
+     Chain-of-Thought    0.984 0.831 0.768          0.093          0.83                     erage scores compared to few-shot (0.27-0.34) and chain-of-
+Table 5: LLM Prompt Strategy Performance on Code Seman-                                     thought (0.34-0.43). Few-shot prompting provides highest
+tics                                                                                        consistency (𝛼 = 0.84-0.89) while maintaining competitive
+                                                                                            accuracy. Model-specific sensitivity varies with GPT-4o
+                                                                                            showing minimal variation and Claude exhibiting greater
+   Few-shot prompting demonstrates the highest consistency across                           prompt dependency.
+all models (𝛼 = 0.84-0.89), while simple prompts achieve optimal                            ☛ LLM-based semantic evaluation requires task-specific
+semantic difference detection for S3code with GPT-4o and DeepSeek-                          prompt optimization—simple prompts maximize accu-
+V3 reaching near-perfect discrimination (0.000-0.001). Statistical                          racy for semantic difference detection while few-shot ap-
+analysis using Mann-Whitney U tests reveals significant differences                         proaches provide optimal consistency for production de-
+between prompting strategies: Few-shot vs. Simple (𝑈 = 34.5, 𝑝 <                            ployment.
+0.01).
+                                                                                    8
+How Small Transformation Expose the Weakness of Semantic Similarity Measures
+
+
+   Key Implications: (1) LLM-based semantic evaluation requires                        Finding 3
+task-specific prompt optimization rather than universal strategies,
+(2) consistency requirements may necessitate different approaches                      LLMs maintain stable performance across temperature
+than accuracy optimization, and (3) simple prompts provide optimal                     ranges with coefficient of variation below 8%. Higher tem-
+performance for semantic difference detection in SE applications.                      peratures occasionally outperform deterministic settings,
+                                                                                       with DeepSeek-V3 achieving better detection at tempera-
+4.4    Experiment 4: Temperature Sensitivity                                           ture 1.0 (0.27) than 0.0 (0.30). Mann-Whitney U tests con-
+       Analysis for LLM-based Semantic                                                 firm model architecture impacts performance more than
+                                                                                       temperature selection.
+       Evaluation
+                                                                                       ☛ Temperature selection has minimal impact on LLM se-
+Goal. To determine optimal temperature settings for LLM-based se-                      mantic evaluation performance—all tested ranges (0.0-1.0)
+mantic similarity assessment in software engineering applications                      provide acceptable results, eliminating the need for precise
+and quantify performance stability across output randomness levels.                    temperature optimization in production software engineer-
+This addresses a critical deployment consideration: how tempera-                       ing applications.
+ture parameter selection affects reliability of LLM-based similarity
+tools in production environments where consistent performance is
+essential.                                                                            Key Implications: (1) Temperature selection shows minimal
+Experiment. We systematically evaluate temperature sensitivity                     impact on semantic evaluation performance with coefficient of
+using GPT-4o, Claude Sonnet 3.5, and DeepSeek-V3 with few-shot                     variation below 8% across all models, (2) all temperature ranges (0.0-
+prompting (optimal strategy from Experiment 3). Following es-                      1.0) provide acceptable performance for production deployment,
+tablished guidance [17, 28, 45], we select five temperature values                 and (3) model architecture selection impacts performance more
+representing distinct behavioral regimes:                                          than temperature optimization.
+      • 0.0: Fully deterministic, maximum consistency
+      • 0.3: Conservative, low randomness                                           [Answer to RQ-3] ☛ LLMs demonstrate substantially more robust
+      • 0.5: Balanced creativity and coherence                                      semantic understanding (8.7% vs 76-100% false positive rates) with
+      • 0.7: Increased diversity while maintaining coherence                        manageable consistency trade-offs through prompt optimization,
+      • 1.0: High variability threshold                                             while remaining stable across temperature ranges (coefficient of
+For each model-temperature combination, we evaluate performance                     variation <8%).
+across all semantic subsets using few-shot prompting with six ex-
+amples per category. Each evaluation pair is assessed once per
+temperature to quantify temperature impact on semantic discrimi-                   5   CONTRIBUTIONS
+nation performance.                                                                This work provides concrete contributions to the software engi-
+   Performance Metrics: (1) Semantic discrimination accuracy,                      neering community addressing fundamental challenges in code
+(2) output consistency across repeated evaluations, (3) category-                  similarity assessment and automated tool evaluation.
+specific stability.                                                                   Systematic Evaluation Framework for Code Similarity Met-
+Results. To determine optimal temperature settings and quantify                    rics. We introduce the first comprehensive diagnostic framework
+performance stability, we evaluate GPT-4o, Claude Sonnet 3.5, and                  for evaluating similarity metrics across controlled semantic rela-
+DeepSeek-V3 using few-shot prompting across temperatures [0.0,                     tionships in code and text. Our methodology enables practitioners
+0.3, 0.5, 0.7, 1.0].                                                               to select appropriate similarity approaches based on specific use
+   Code Domain Analysis.                                                           cases rather than aggregate performance.
+   All models show coefficient of variation below 4% across temper-                   Empirical Evidence for Distance Metric Selection. Our anal-
+ature settings. GPT-4o and DeepSeek-V3 maintain identical scores                   ysis reveals that Euclidean distance substantially improves Code-
+(0.00) for cross-problem differences across all temperatures. Edge                 BERT performance (24-66% improvement) and GraphCodeBERT
+case performance shows minimal variation: GPT-4o (6.3% range),                     performance (37-72% improvement) over cosine similarity for se-
+Claude (2.7% range), DeepSeek-V3 (1.4% range).                                     mantic difference detection. This provides actionable guidance for
+   Text Domain Analysis.                                                           improving existing embedding-based code similarity tools with
+   Text evaluation shows coefficient of variation below 8% for all                 minimal implementation overhead.
+models. DeepSeek-V3 achieves better negation detection at temper-                     Validated Benchmark for Semantic Code and Text Rela-
+ature 1.0 (0.27) compared to 0.0 (0.30). GPT-4o shows improvement                  tionships. We release a rigorously validated dataset of code pairs
+for semanctically different but syntactically similar detection from               across five semantic categories with automated test case valida-
+0.40 to 0.38 across temperature range. The results for both code and               tion and seven semantic categories for programming-related text.
+text are available in anonymous repository.                                        This benchmark enables systematic evaluation of code similarity
+   Statistical Analysis: Mann-Whitney U tests comparing temper-                    approaches for semantic understanding.
+ature 0.0 vs 1.0 performance show no significant differences within                   LLM-Based Evaluation Protocols. Our systematic analysis
+models: GPT-4o (𝑈 = 42.5, 𝑝 = 0.34), DeepSeek-V3 (𝑈 = 38.0,                        of temperature settings, prompt strategies, and model consistency
+𝑝 = 0.28), Claude (𝑈 = 45.5, 𝑝 = 0.42). Between-model differences                  provides concrete protocols for integrating LLM-based evaluation
+exceed temperature effects across all comparisons.                                 into software engineering research, addressing reliability concerns
+                                                                               9
+                                                                                                                               NIKIEMA, DJIRE et al.
+
+
+while enabling more nuanced semantic assessment than traditional            NiCad [8] and Deckard [19] achieved high precision on syntactic
+metrics.                                                                    clones but fundamentally cannot address Type-IV detection due to
+                                                                            their reliance on structural pattern matching rather than semantic
+6     THREATS TO VALIDITY                                                   understanding.
+We systematically address validity threats following established               In NLP, distributional similarity approaches [37] established the
+software engineering research protocols with evidence-based miti-           foundation for modern metrics, yet surface-level pattern matching
+gation strategies.                                                          cannot distinguish semantic preservation from semantic opposition
+   Data Contamination and Leakage Prevention. Our evalu-                    when high lexical overlap exists.
+ation datasets (Rosetta Code, CONALA, APPS) may overlap with
+LLM training corpora, potentially inflating performance through
+memorization. We mitigate this through systematic data transforma-          7.2    Traditional Metrics: Algorithmic Failures in
+tion using NL-Augmenter [10], generating semantically equivalent                   Semantic Divergence
+but syntactically novel evaluation pairs. Each transformation under-        Traditional similarity metrics exhibit systematic algorithmic fail-
+goes manual validation to verify semantic preservation/alteration           ures when confronted with semantic divergence. BLEU [31] com-
+and syntactic correctness.                                                  putes precision based on token overlap, making it unable to distin-
+   Statistical Rigor and Sample Size Adequacy. We calculate                 guish between “sort the list” and “do not sort the list” which share
+sample sizes using established confidence interval methodology [42]         66% token overlap yet express semantic opposition.
+to ensure 95% confidence with 10% margin of error. Our evaluation              Juergens et al. [20] show that established clone detection tools
+uses 163 pairs per semantic category for text (7 categories) and 561        detected syntactic similarity in less than 16% of 70 functionally
+pairs per category for code (5 categories).                                 similar code pairs, with zero instances of complete file similarity for
+   Metric Selection Bias. To prevent cherry-picking, we eval-               semantically equivalent but syntactically distinct implementations.
+uate seven distance measures representing diverse mathematical              Saini et al. [36] demonstrate these failures are systematic across 30
+approaches—angular, magnitude-sensitive, and statistical—grounded           code similarity analyzers.
+in comprehensive surveys [6].
+   Semantic Transformation Validity. We implement multi-
+layer validation combining automated verification with human
+assessment. Semantic-preserving transformations undergo test case           7.3    Embedding-Based Approaches: Persistent
+execution to confirm functional equivalence, while semantic-altering               Semantic Blindness
+transformations receive input-output testing.                               Neural embedding approaches promised semantic understanding
+   LLM Evaluation Consistency. We control temperature variabil-             yet demonstrate persistent limitations. CodeBERT [13], despite
+ity through empirically validated ranges:𝑇 = 0.0-0.3 for consistency        training on 6.4 million code-comment pairs, systematically fails
+and 𝑇 = 0.7-1.0 for diversity [50]. We evaluate across three model          on Type-IV clone detection where high syntactic similarity masks
+families (GPT-4o, DeepSeek-V3, Claude Sonnet 3.5) with systematic           semantic differences. The limitation stems from transformer atten-
+prompt variations [7]. External Validity and Generalizability.              tion mechanisms that excel at capturing local syntactic patterns
+Our semantic-focused evaluation prioritizes depth over breadth              but struggle with logical negation and semantic opposition.
+following controlled experimental design principles. We acknowl-               BERTScore [52] assigns high similarity scores to semantically op-
+edge scope limitations while providing comprehensive protocols              posed sentences when lexical overlap is high. GraphCodeBERT [15]
+for reproducibility and validation across different domains.                incorporated structural information through data flow graphs, but
+                                                                            Martinez-Gil [25] demonstrates its interpretability mechanisms
+7     RELATED WORK                                                          focus on syntactic features rather than semantic reasoning.
+The assessment of semantic similarity spans both natural language              Wang et al. [47] provide systematic evidence that sophisticated
+processing and software engineering domains. Our work builds                embedding models achieve high performance on functionally equiv-
+upon four primary research streams: ① foundational similarity               alent code but fail catastrophically when evaluating semantically
+approaches and their theoretical limitations, ② traditional metrics         divergent implementations.
+and documented failures in semantic divergence, ③ embedding-
+based approaches and their persistent challenges, and ④ emerging
+LLM-based evaluation paradigms.                                             7.4    LLM-Based Evaluation: Semantic Reasoning
+                                                                                   with Reliability Challenges
+7.1    Foundational Approaches and Theoretical                              Large language models demonstrate superior semantic reasoning
+       Limitations                                                          capabilities while introducing reliability concerns. Wang et al. [47]
+Early similarity assessment in software engineering emerged from            show that GPT-based approaches significantly outperform tradi-
+clone detection research. Roy and Cordy [35] established the canoni-        tional metrics in Type-IV clone detection, particularly in capturing
+cal four-type clone taxonomy, where Type-I through Type-III clones          semantic divergence. However, Krumdick et al. [23] reveal that
+exhibit increasing syntactic variation while preserving semantics,          LLM-as-a-Judge paradigms produce unstable evaluations without
+and Type-IV clones represent semantically equivalent but syn-               human grounding, particularly when subtle semantic distinctions
+tactically distinct implementations. Traditional approaches like            are involved.
+                                                                       10
+How Small Transformation Expose the Weakness of Semantic Similarity Measures
+
+
+7.5     Critical Research Gap                                                                  [7] Zheng Chen, Jan Philip Wahle, Terry Ruas, Yang Xu, and Bela Gipp. 2024. Para-
+                                                                                                   phrase Types Elicit Prompt Engineering Capabilities. In Proceedings of the 2024
+Our analysis reveals a fundamental gap: traditional metrics exhibit                                Conference on Empirical Methods in Natural Language Processing. 11004–11033.
+documented failure rates exceeding 84% in semantic divergence sce-                                 https://aclanthology.org/2024.emnlp-main.617/
+                                                                                               [8] James R Cordy and Chanchal K Roy. 2011. The NiCad clone detector. In 2011
+narios [20], embedding approaches provide marginal improvement,                                    IEEE 19th International Conference on Program Comprehension. 219–220.
+and LLMs show promise but lack systematic evaluation frame-                                    [9] DeepSeek. 2024. DeepSeek-V3: Scaling Open-source Language Models with
+works. No existing framework systematically evaluates similarity                                   Mixture-of-Experts. https://github.com/deepseek-ai/DeepSeek-V3.
+                                                                                              [10] Kaustubh Dhole et al. 2021. NL-Augmenter: A Framework for Task-Sensitive
+metrics across both text and code domains specifically for semantic                                Natural Language Augmentation. arXiv preprint arXiv:2104.08692 (2021).
+divergence detection. Our work addresses this gap through compre-                             [11] Yann Dubois, Rohan Taori, Caglar Gulcehre, Jerry Zhang, Andreas Glaese, Noam
+hensive evaluation across equivalent, unrelated, and semantically                                  Nisan, et al. 2024. AlpacaFarm: A Simulation Framework for Methods that Learn
+                                                                                                   from Human Feedback. arXiv preprint arXiv:2310.01377 (2024).
+opposed relationships.                                                                        [12] Jean-Rémy Falleri, Floréal Morandat, Xavier Blanc, Matias Martinez, and Martin
+                                                                                                   Monperrus. 2014. Fine-grained and accurate source code differencing. In Pro-
+                                                                                                   ceedings of the 29th ACM/IEEE international conference on Automated software
+8     CONCLUSION                                                                                   engineering. 313–324.
+                                                                                              [13] Zhangyin Feng, Daya Guo, Duyu Tang, Nan Duan, Xiaocheng Yan, James Feng,
+This study reveals fundamental limitations in widely-used similarity                               and Bing Qin. 2020. CodeBERT: A pre-trained model for programming and
+metrics for semantic evaluation across both code and text domains.                                 natural languages. In Proceedings of the 2020 Conference on Empirical Methods in
+                                                                                                   Natural Language Processing (EMNLP). 1536–1547.
+Through systematic evaluation of 18 metrics across controlled se-                             [14] Daya Guo, Shuo Ren, Shuai Lu, Zhangyin Feng, Duyu Tang, Nan Duan, Ming
+mantic transformations, we demonstrate that embedding-based                                        Gong, Linjun Shou, Daxin Jiang, and Ming Zhou. 2020. GraphCodeBERT: Pre-
+approaches exhibit catastrophic semantic blindness, with Code-                                     training code representations with data flow. arXiv preprint arXiv:2009.08366
+                                                                                                   (2020).
+BERT achieving 99.9% false positive rates and BERTScore scoring                               [15] Daya Guo, Shuai Ren, Shuo Lu, Zhangyin Feng, Duyu Tang, Shujie Liu, Long
+semantic opposites higher than synonyms.                                                           Zhou, Nan Duan, Jian Yao, and Bing Qin. 2021. GraphCodeBERT: Pre-training
+                                                                                                   code representations with data flow. In International Conference on Learning
+    Our key findings show that metric failures follow predictable                                  Representations.
+patterns. Traditional metrics fail due to lexical overlap optimization,                       [16] Dan Hendrycks, Steven Basart, Saurav Kadavath, Mantas Mazeika, Akul Arora,
+while embedding models systematically misclassify semantic rela-                                   Ethan Guo, Collin Burns, Samir Puranik, Horace He, Dawn Song, et al. 2021. Mea-
+                                                                                                   suring coding challenge competence with apps. arXiv preprint arXiv:2105.09938
+tionships despite sophisticated training. However, distance metric                                 (2021).
+selection significantly impacts performance: Euclidean distance                               [17] Ari Holtzman, Jan Buys, Li Du, Maxwell Forbes, and Yejin Choi. 2020. The Curi-
+improves CodeBERT by 24-66% and GraphCodeBERT by 37-72%                                            ous Case of Neural Text Degeneration. In International Conference on Learning
+                                                                                                   Representations (ICLR). https://arxiv.org/abs/1904.09751
+over cosine similarity for semantic difference detection.                                     [18] Siyuan Hu, Mingyu Ouyang, Difei Gao, and Mike Zheng Shou. 2024. The Dawn
+    LLM-based evaluation demonstrates superior semantic discrim-                                   of GUI Agent: A Preliminary Case Study with Claude 3.5 Computer Use. arXiv
+                                                                                                   preprint arXiv:2411.10323 (2024). https://arxiv.org/abs/2411.10323
+ination, with GPT-4o correctly identifying semantic differences                               [19] Lingxiao Jiang, Ghassan Misherghi, Zhendong Su, and Stephane Glondu. 2007.
+(0.00-0.29 scores) compared to embedding failures (0.82-0.99 scores).                              DECKARD: Scalable and accurate tree-based detection of code clones. In 29th
+Simple prompts achieve optimal performance, while temperature                                      International Conference on Software Engineering (ICSE’07). 96–105.
+                                                                                              [20] Elmar Juergens, Florian Deissenboeck, Benjamin Hummel, and Stefan Wagner.
+settings show minimal impact on evaluation consistency.                                            2015. How are functionally similar code clones different?. In IEEE International
+    These findings transform similarity metric selection from intu-                                Conference on Software Maintenance and Evolution (ICSME).
+itive guessing to evidence-based decision making. Our systematic                              [21] Minghui Kang, Lingming Zhang, and Sarfraz Khurshid. 2019. Assessing the
+                                                                                                   semantic similarity of source code in the presence of syntax errors. In Proceed-
+evaluation framework, validated benchmark, and empirical dis-                                      ings of the 28th ACM SIGSOFT International Symposium on Software Testing and
+tance metric evidence provide concrete guidance for practitioners                                  Analysis. 310–320.
+                                                                                              [22] Jens Krinke and Chaiyong Ragkhitwetsagul. 2024. How the Misuse of a Dataset
+developing code similarity tools, enabling selection of appropriate                                Harmed Semantic Clone Detection. arXiv preprint arXiv:2505.04311 (2024).
+approaches based on specific semantic requirements rather than                                [23] Michael Krumdick, Charles Lovering, Varshini Reddy, Seth Ebner, and Chris
+aggregate performance rankings.                                                                    Tanner. 2025. No Free Labels: Limitations of LLM-as-a-Judge Without Human
+                                                                                                   Grounding. arXiv preprint arXiv:2503.05061 (2025).
+                                                                                              [24] Chin-Yew Lin. 2004. ROUGE: A package for automatic evaluation of summaries.
+                                                                                                   In Text summarization branches out. 74–81.
+REFERENCES                                                                                    [25] Jorge Martinez-Gil. 2024. Augmenting the Interpretability of GraphCodeBERT
+ [1] Satanjeev Banerjee and Alon Lavie. 2005. METEOR: An automatic metric for                      for Code Similarity Tasks. arXiv preprint arXiv:2410.05275 (2024).
+     MT evaluation with improved correlation with human judgments. In Proceedings             [26] George Mathew and Kathryn T Stolee. 2021. Cross-language code search using
+     of the ACL workshop on intrinsic and extrinsic evaluation measures for machine                static and dynamic analyses. arXiv preprint arXiv:2106.09173 (2021).
+     translation and/or summarization. 65–72.                                                 [27] Sebastian Nanz and Carlo A Furia. 2015. A comparative study of programming
+ [2] Stefan Bellon, Rainer Koschke, Giuliano Antoniol, Jens Krinke, and Ettore Merlo.              languages in rosetta code. In 2015 IEEE/ACM 37th IEEE International Conference
+     2007. Comparison and evaluation of clone detection tools. IEEE Transactions on                on Software Engineering, Vol. 1. IEEE, 778–788.
+     Software Engineering 33, 9 (2007), 577–591.                                              [28] OpenAI. 2023. How should I set the temperature parameter? https://platform.o
+ [3] Daniel Cer, Yinfei Yang, Sheng-yi Kong, Nan Hua, Nicole Limtiaco, Rhomni                      penai.com/docs/faq/how-should-i-set-the-temperature-parameter Accessed:
+     St. John, Noah Constant, Mario Guajardo-Cespedes, Steve Yuan, Chris Tar, et al.               2025-07-18.
+     2018. Universal Sentence Encoder. In Proceedings of the 2018 Conference on               [29] OpenAI. 2024. GPT-4o Technical Report. https://openai.com/index/gpt-4o.
+     Empirical Methods in Natural Language Processing: System Demonstrations. 169–            [30] OpenAI. 2024. OpenAI text-embedding-3-large model. https://platform.openai.
+     174.                                                                                          com/docs/guides/embeddings.
+ [4] Stefano Cesare and Yang Xiang. 2010. Control flow graph similarity for malware           [31] Kishore Papineni, Salim Roukos, Todd Ward, and Wei-Jing Zhu. 2002. BLEU: a
+     detection. In 2010 IEEE 10th International Conference on Computer and Information             method for automatic evaluation of machine translation. In Proceedings of the
+     Technology. IEEE, 778–783.                                                                    40th annual meeting of the Association for Computational Linguistics. 311–318.
+ [5] Sung-Hyuk Cha. 2007. Comprehensive survey on distance/similarity measures                [32] Nils Reimers and Iryna Gurevych. 2019. Sentence-BERT: Sentence Embeddings
+     between probability density functions. International Journal of Mathematical                  using Siamese BERT-Networks. In Proceedings of the 2019 Conference on Empirical
+     Models and Methods in Applied Sciences 1, 4 (2007), 300–307.                                  Methods in Natural Language Processing. 3982–3992.
+ [6] Sung-Hyuk Cha. 2007. Comprehensive survey on distance/similarity measures                [33] Shuo Ren, Daya Guo, Shuai Lu, Long Zhou, Shujie Liu, Duyu Tang, Neel Sundare-
+     between probability density functions. International Journal of Mathematical                  san, Ming Zhou, Ambrosio Blanco, and Shuai Ma. 2020. CodeBLEU: a Method for
+     Models and Methods in Applied Sciences 1, 4 (2007), 300–307.                                  Automatic Evaluation of Code Synthesis. arXiv preprint arXiv:2009.10297 (2020).
+                                                                                         11
+                                                                                                                                                             NIKIEMA, DJIRE et al.
+
+
+[34] Chanchal Kumar Roy. 2009. Detection and analysis of near-miss software clones.                 Augmenter/tree/main. Accessed: 2025-07-18.
+     Ph. D. Dissertation. Queen’s University.                                                  [45] Patrick von Platen. 2020. How to generate text: using different decoding methods
+[35] Chanchal K Roy and James R Cordy. 2007. A survey on software clone detection                   for language generation with Transformers. https://huggingface.co/blog/how-
+     research. In Technical Report 541, Queen’s School of Computing.                                to-generate Accessed: 2025-07-18.
+[36] Vaibhav Saini, Jeffrey Svajlenko, Chanchal K Roy, and Cristina V Lopes. 2018. A           [46] Wenhui Wang, Furu Wei, Li Dong, Hangbo Bao, Nan Yang, and Ming Zhou.
+     comparison of code similarity analysers. Empirical Software Engineering 23, 4                  2020. MiniLM: Deep self-attention distillation for task-agnostic compression of
+     (2018).                                                                                        pre-trained transformers. arXiv preprint arXiv:2002.10957 (2020).
+[37] Gerard Salton and Christopher Buckley. 1988. Term-weighting approaches in                 [47] Wei Wang, Li Zhang, and Mark Chen. 2025. Exploring the Boundaries Between
+     automatic text retrieval. Information processing & management 24, 5 (1988),                    LLM Code Clone Detection and Code Similarity Assessment on Human and
+     513–523.                                                                                       AI-Generated Code. Big Data and Cognitive Computing 9, 2 (2025), 41.
+[38] Thibault Sellam, Dipanjan Das, and Ankur P Parikh. 2020. BLEURT: Learning                 [48] Yue Wang, Zhiyang Kan, Yao Lin, Shijin Liu, Lidong Li, Long Zhou, Muhao Chen,
+     Robust Metrics for Text Generation. arXiv preprint arXiv:2004.04696 (2020).                    Ming Zhou, and Duyu Tang. 2021. CodeT5: Identifier-aware unified pre-trained
+[39] Kaitao Song, Xu Tan, Tao Qin, Jianfeng Lu, and Tie-Yan Liu. 2020. MPNet:                       encoder-decoder models for code understanding and generation. arXiv preprint
+     Masked and permuted pre-training for language understanding. arXiv preprint                    arXiv:2109.00859 (2021).
+     arXiv:2004.09297 (2020).                                                                  [49] Morteza Zakeri-Nasrabadi, Saeed Parsa, Mohammad Ramezani, Chanchal Roy,
+[40] Yewei Song, Cedric Lothritz, Xunzhu Tang, Tegawendé Bissyandé, and Jacques                     and Masoud Ekhtiarzadeh. 2023. A systematic literature review on source code
+     Klein. 2024. Revisiting Code Similarity Evaluation with Abstract Syntax Tree                   similarity measurement and clone detection: techniques, applications, and chal-
+     Edit Distance. In Proceedings of the 62nd Annual Meeting of the Association for                lenges. arXiv preprint arXiv:2306.16171 (2023).
+     Computational Linguistics (Volume 2: Short Papers), Lun-Wei Ku, Andre Martins,            [50] Tianyi Zhang et al. 2024. Exploring the Impact of Temperature on Large Language
+     and Vivek Srikumar (Eds.). Association for Computational Linguistics, Bangkok,                 Models: Hot or Cold? arXiv preprint arXiv:2506.07295 (2024).
+     Thailand, 38–46. https://doi.org/10.18653/v1/2024.acl-short.3                             [51] Tianyi Zhang, Varsha Kishore, Felix Wu, Kilian Q Weinberger, and Yoav Artzi.
+[41] Harald Steck, Chaitanya Ekanadham, and Nathan Kallus. 2024. Is Cosine-                         2019. BERTScore: Evaluating Text Generation with BERT. arXiv preprint
+     Similarity of Embeddings Really About Similarity?. In Companion Proceedings                    arXiv:1904.09675 (2019).
+     of the ACM Web Conference 2024 (WWW ’24). https://arxiv.org/abs/2403.05440                [52] Tianyi Zhang, Varsha Kishore, Felix Wu, Kilian Q Weinberger, and Yoav Artzi.
+     arXiv preprint arXiv:2403.05440.                                                               2020. BERTScore: Evaluating text generation with BERT. In International Confer-
+[42] SurveyMonkey. 2024. Sample Size Calculator. https://www.surveymonkey.com                       ence on Learning Representations.
+     /mp/sample-size-calculator/. Accessed: 2025-07-18.                                        [53] Siyu Zheng, Haotian Liu, Xiang Lin, Yizhong Du, Skyler Zhang, Zhirui Liu, Xiang
+[43] Sandeep Tata and Jignesh M Patel. 2007. Estimating the selectivity of tf-idf based             Li, Xiao Liu, Yizhou Zhang, Yujia Ma, et al. 2023. Judging LLM-as-a-judge with
+     cosine similarity predicates. ACM Sigmod Record 36, 2 (2007), 7–12.                            MT-Bench and Chatbot Arena. arXiv preprint arXiv:2306.05685 (2023).
+[44] GEM Benchmark Team. 2021. NL-Augmenter: A Framework for Task-Sensitive
+     Natural Language Augmentation. https://github.com/GEM-benchmark/NL-
+
+
+
+
+                                                                                          12
+

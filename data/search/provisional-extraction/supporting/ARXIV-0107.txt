@@ -1,0 +1,514 @@
+                                               LLM-Based Repair of C++ Implicit Data Loss
+                                               Compiler Warnings: An Industrial Case Study
+                                                           Chansong You                          Hyun Deok Choi                           Jingun Hong
+                                                          SAP Labs Korea                          SAP Labs Korea                         SAP Labs Korea
+                                                         Seoul, South Korea                     Seoul, South Korea                     Seoul, South Korea
+                                                       chansong.you@sap.com                   hyun.deok.choi@sap.com                  jingun.hong@sap.com
+
+
+
+                                            Abstract—This paper presents a method to automatically fix      ment a fix that resolves the issue while maintaining the code’s
+                                         implicit data loss warnings in large C++ projects using Large      intended functionality.
+arXiv:2601.14936v1 [cs.SE] 21 Jan 2026
+
+
+
+
+                                         Language Models (LLMs). Our approach uses the Language
+                                                                                                               Recent advancements in APR have been significantly driven
+                                         Server Protocol (LSP) to gather context, Tree-sitter to extract
+                                         relevant code, and LLMs to make decisions and generate fixes.      by the application of LLMs [4]. LLM-based APR leverages
+                                         The method evaluates the necessity of range checks concerning      AI models trained on vast amounts of code and natural
+                                         performance implications and generates appropriate fixes. We       language data, demonstrating remarkable ability to understand
+                                         tested this method in a large C++ project, resulting in a 92.73%   and generate code. These models offer numerous advantages,
+                                         acceptance rate of the fixes by human developers during the
+                                                                                                            including better understanding of code context, learning from
+                                         code review. Our LLM-generated fixes reduced the number of
+                                         warning fix changes that introduced additional instructions due    diverse bug-fixing patterns, and adaptability to specific warn-
+                                         to range checks and exception handling by 39.09% compared          ing types or coding standards [5].
+                                         to a baseline fix strategy. This result was 13.56% behind the         In our study, we leverage LLMs to automatically resolve
+                                         optimal solutions created by human developers. These findings      C++ compiler warnings, focusing particularly on implicit data
+                                         demonstrate that our LLM-based approach can reduce the
+                                         manual effort to address compiler warnings while maintaining
+                                                                                                            loss warnings. We implement an approach utilizing Language
+                                         code quality and performance in a real-world scenario. Our         Server Protocol (LSP) features to efficiently provide relevant
+                                         automated approach shows promise for integration into existing     type information to the LLM, and employ tree-sitter to extract
+                                         development workflows, potentially improving code maintenance      relevant function blocks. And our main contribution is the
+                                         practices in complex C++ software projects.                        introduction of a decision-making mechanism to determine
+                                            Index Terms—automated program repair, large language            the necessity of additional range checks for each fix, crucial
+                                         model, compiler warning
+                                                                                                            for preventing performance overhead in performance-sensitive
+                                                                                                            projects. To ensure the quality and efficiency of generated
+                                                               I. I NTRODUCTION                             fixes, we employ the self-consistency method [6]. Our method,
+                                                                                                            tested on 135 implicit data loss warnings, achieved an accep-
+                                            Large-scale C++ projects often accumulate numerous com-         tance rate of 92.73% among human developers. Additionally,
+                                         piler warnings over time, presenting significant challenges for    our approach reduced the number of warning fix changes
+                                         development teams. Among these, implicit data loss warnings        that introduced additional instructions by 39.09% compared
+                                         are particularly prevalent due to C++’s strong typing and          to a baseline fix strategy, while the difference between our
+                                         complex type system [1]. These warnings occur when a value         approach and optimal solutions by human developers was
+                                         is assigned or passed to a variable of a smaller or less           13.56%. These results suggest that our method can help
+                                         precise type, potentially leading to unexpected behavior or data   address compiler warnings while considering performance
+                                         corruption.                                                        implications in large-scale C++ projects.
+                                            Managing these warnings effectively is crucial for main-
+                                         taining code quality and preventing potential runtime issues.                            II. BACKGROUND
+                                         However, addressing them manually can be time-consuming
+                                         and error-prone, especially in large codebases. As projects        A. Compiler Warnings in C++
+                                         grow in size and complexity, the number of warnings can be-           Compiler warnings in C++ serve as crucial indicators of
+                                         come overwhelming, leading developers to sometimes ignore          potential issues in code that, while not preventing compilation,
+                                         them [2].                                                          may lead to unexpected behavior or vulnerabilities during
+                                            Automated Program Repair (APR) emerges as a promising           runtime. These warnings are particularly important in C++ due
+                                         solution to address these challenges. APR aims to automat-         to the language’s complex type system and powerful features
+                                         ically fix software bugs without direct human intervention,        that can sometimes lead to subtle errors.
+                                         aligning well with typical software development practices [3].        Implicit data loss warnings, a common type of compiler
+                                         In the context of compiler warnings, an APR system could           warning in C++, occur when a value is assigned or passed to
+                                         analyze the warning, understand the code context, and imple-       a variable of a smaller or less precise type. For example:
+                                                                                    C. Automated Program Repair
+                                                                                       APR is a field in software engineering that aims to automati-
+                      11%
+                                                                                    cally fix software bugs without direct human intervention. The
+                            8%            deprecated-declarations
+           39%                            implicit-int-conversion
+                                                                                    primary goal of APR is to reduce the time and effort required
+                             12%          missing-noreturn                          for software maintenance, which constitutes a significant por-
+                                          deprecated-copy-with-user-provided-dtor   tion of software development costs [3].
+                                          others
+                                                                                       Traditional APR techniques typically follow a general work-
+                     30%
+                                                                                    flow [4]:
+                                                                                        1) Fault localization: Identifying the likely location of the
+                                                                                           bug in the code.
+                                                                                        2) Patch generation: Creating potential patches or modifi-
+             Fig. 1. Compiler Warning Distribution in SAP HANA                             cations to address the bug.
+                                                                                        3) Patch validation: Testing the generated fixes to ensure
+                                                                                           they resolve the issue without introducing new problems.
+1   long long bigNumber = 1000000000000LL;                                             When applying APR to compiler warnings, particularly in
+2   int smallerNumber = bigNumber; // Implicit data loss
+        warning
+                                                                                    C++, the process is often more straightforward than fixing
+                                                                                    runtime bugs. Compiler warnings present several advantages
+       Such warnings are prevalent due to C++’s strong typing and                   for automated repair:
+    implicit conversion rules. They are often triggered in scenarios                • The location of the issue is precisely identified by the com-
+    involving numeric type conversions, function parameter pass-                      piler, eliminating the need for complex fault localization.
+    ing, and return value assignments. [1]                                          • Warnings typically include a description of the problem,
+       The management of these warnings in large-scale projects                       often suggesting the type of fix required.
+    presents significant challenges. As codebases grow, the number                  • The nature of the fix is usually well-defined and localized,
+    of warnings can accumulate, potentially leading developers                        often involving simple transformations or additions to the
+    to ignore them [2] - a situation similar to what is known                         code.
+    as ”alarm fatigue” in other contexts. This phenomenon can                       • Validation can be done immediately at compile-time, allow-
+    result in important warnings being overlooked, potentially                        ing for quick iteration and verification of fixes.
+    compromising code quality and system reliability.                                 For instance, in the case of implicit data loss warnings, fixes
+                                                                                    might involve explicit type casting, adjusting variable types, or
+    B. Compiler Warnings in Large-Scale C++ Projects                                adding range checks. These modifications are generally more
+       As depicted in Figure 1, SAP HANA’s compiler warn-                           predictable and less likely to introduce new bugs compared
+    ings (measured in August 2024) show two main types                              to fixes for complex runtime issues. Despite the relative
+    of issues: deprecated-declarations (39%) and implicit-int-                      simplicity, applying APR to C++ compiler warnings still
+    conversion (30%), making up about 70% of all warnings.                          requires consideration of the language’s type system, potential
+    While deprecated-declarations warnings represent the largest                    performance implications, and the broader context of the code.
+    share, addressing them often requires extensive architectural                   However, the defined nature of compiler warnings makes them
+    changes and updated interface guidelines, making automated                      amenable to automated repair techniques.
+    fixes challenging. Our focus is on implicit data loss warnings,
+    a category of compiler warnings that includes implicit-int-                     D. Large Language Models in APR
+    conversion warnings.                                                               In recent years, the application of LLMs in APR has
+       The remaining warnings are distributed among missing-                        seen a dramatic rise, marking a significant shift in software
+    noreturn (12%), deprecated-copy-with-user-provided-dtor                         engineering practices. The trend began to gain momentum in
+    (8%), and other miscellaneous warnings (11%). The high                          2020, with a substantial increase in publications leveraging
+    prevalence of implicit-int-conversion warnings (30%)                            LLMs for bug-fixing tasks. By 2023, the field saw a surge to
+    highlights the significance of addressing implicit data loss                    65 papers, indicating growing interest and rapid advancements
+    warnings in large C++ codebases. These warnings - typically                     in this area. Projections suggest this trend will continue, with
+    confined to specific variable assignments or function calls -                   estimates of over 90 relevant publications expected by the
+    present localized fix patterns that are particularly suitable for               end of 2024. The majority of these studies focus on devel-
+    automated analysis and repair using LLM-based approaches.                       oping novel repair techniques or methodologies, while others
+    While our work focuses on implicit-int-conversion as                            conduct empirical analyses, create benchmarks, or explore
+    a concrete example, our solution approach targets the                           practitioner perspectives through surveys. This rapid growth
+    broader category of implicit data loss warnings, providing a                    shows the potential of LLMs to improve APR, offering new
+    comprehensive strategy for handling various types of implicit                   approaches to long-standing challenges in software mainte-
+    type conversion issues in C++.                                                  nance and quality assurance. [4]
+   A notable application of LLMs in APR has been in ad-               To address the potential cost of including entire function
+dressing static warnings, particularly those generated by code     body implementations within the LLM’s limited context, we
+analysis tools. Pioneering work in this area includes TFix [7],    introduce an additional step. Instead of providing the full
+which reformulated program repair as a text-to-text task using     function body as context, we query the LLM to analyze and
+T5-based models. Subsequent approaches like InferFix [8] and       explain the function’s return value range. We prompt the LLM
+RAP-Gen [9] have built upon this foundation, incorporating         with the function signature and implementation, asking it to
+retrieval-augmented generation techniques to enhance repair        describe the possible range of return values. This approach
+capabilities. More recent developments, such as CORE [10]          provides crucial information about function behavior while
+and FDSP [11], have leveraged advanced models like ChatGPT         reducing the amount of context needed. The return value range
+and GPT-4 to not only generate fixes but also to rank and refine   information is then included in the context provided to the
+them, particularly focusing on code quality issues and security    LLM for generating fixes, helping to determine the necessity
+vulnerabilities. These advancements demonstrate the growing        of range checks and assess the potential for data loss in type
+sophistication of LLM-based approaches in handling a wide          conversions.
+range of static code issues, from general coding errors to
+specific security concerns, marking a significant step forward     C. Patch Generation
+in automated code improvement and maintenance.                        Our patch generation process leverages the self-consistency
+                                                                   method introduced by Wang et al. [6] to make robust decisions
+                    III. M ETHODOLOGY
+                                                                   about implementing range checks and generating appropriate
+   As described in Figure 2, our approach to addressing            fixes.
+implicit data loss warnings in large-scale C++ projects involves      1) Range Check Determination: To determine whether an
+several key components: context search, context extraction,        additional range check is necessary, we employ the self-
+patch generation and validation. This section details each of      consistency approach. This step is important, especially in
+these components and explains how they work together to            performance-sensitive parts of the program where constant
+create an effective LLM-driven repair system.                      overhead might be problematic. The process works as follows:
+A. Context Search                                                    1) We prompt the language model with chain-of-thought
+                                                                         prompting, asking whether a range check is necessary
+   The first step in our methodology is gathering relevant
+                                                                         for the given code conversion.
+context to inform the LLM for generating accurate and ef-
+                                                                     2) Instead of greedily decoding a single optimal reasoning
+fective warning fix patches. To achieve this, we leverage the
+                                                                         path, we sample multiple (e.g., 11) diverse reasoning
+capabilities of the LSP [12], a standardized communication
+                                                                         paths from the language model’s decoder. Each reasoning
+protocol between development tools and language-specific
+                                                                         path might lead to a different conclusion about the
+analysis servers. Specifically, we use clangd [13], an LSP
+                                                                         necessity of a range check.
+implementation for C/C++, as our LSP server.
+                                                                     3) We then marginalize out the sampled reasoning paths to
+   Our context search methodology primarily utilizes two key
+                                                                         find the most consistent answer. Specifically, we take a
+LSP features:
+                                                                         majority vote over the final decisions (implement range
+• Go-to-definition: This request allows us to resolve the
+                                                                         check or not) from all sampled paths.
+   definition location of symbols at specific text document po-
+                                                                      Here’s an example of the prompt structure used for each
+   sitions. It provides access to type declarations and function
+                                                                   sampled reasoning path:
+   definitions associated with the identifiers involved in the
+   warning.                                                           [System]
+• Hover: This feature supplies concise summaries of types             You are an expert C++ developer working on a
+   and identifiers, offering additional context without the need          highly performance-sensitive project.
+                                                                          Avoid unnecessary operations, even if they
+   to navigate to full definitions.                                        seem harmless.
+   We apply these LSP features to all identifiers present in the
+                                                                      [Code]
+line where a compiler warning occurs. Furthermore, if the vari-       long long bigNumber = getSomeValue();
+able triggering the warning has been used in preceding lines,         int smallerNumber = bigNumber; // Implicit
+we extend our context search to include related identifiers’              data loss warning
+definition locations.                                                 [Type Information]
+                                                                      bigNumber: long long (64-bit signed integer)
+B. Context Extraction                                                 smallerNumber: int (32-bit signed integer)
+   After gathering relevant context using the LSP, we employ
+                                                                      [Function Signature and Analysis]
+Tree-sitter [14] for precise code extraction. Using the location      int getSomeValue()
+information obtained from clangd, we extract the specific func-       Analysis: The function always returns a value
+tion or method containing the warning. Tree-sitter generates              between 0 and 9 due to the modulo
+                                                                          operation (% 10) applied to the return
+a syntax tree for this extracted code segment, allowing us to             value.
+efficiently navigate and extract relevant parts of the code.
+               Context Search                                      Patch Generation                                   Patch Validation
+
+   LSP (clangd)
+   - hover: all dependent symbols                            LLM                               XN               LSP (clangd)
+                                                             - Range check determination                        - Get diagnostics
+   - go-to-definition: all dependent functions
+
+
+
+                                                                         Voting                                 LLM
+                                                                                                                - Generate fix
+            Context Extraction
+
+                                                             LLM                                                Patch Injection
+   Language Parser (tree-sitter)
+                                                             - Final patch generation                           - Apply generated patch
+   - Extract function implementation
+
+
+                                                             Patch Injection
+     LLM
+                                                             - Apply generated patch
+     - Function return value analysis
+
+                                                                                                                     Commit and Push
+
+
+
+
+                                             Fig. 2. System Architecture for Automated Warning Fix Generation
+
+
+
+   [Human]                                                                       guide the LLM to choose between two options:
+   Do we need a range check to resolve this
+       compiler warning?
+                                                                                   1) Use static_cast for explicit type conversion.
+                                                                                   2) Modify the type itself, such as using the auto keyword
+   Think step-by-step:                                                                 when applicable, allowing for type inference which can
+   1. Analyze types and value ranges
+   2. Assess correctness concerns
+                                                                                       prevent implicit conversions.
+   3. Evaluate performance implications                                             The LLM selects the most appropriate option based on the
+   4. Come up with an answer of the question with                                specific context of the warning and the surrounding code.
+        reasoning behind
+                                                                                 Then, we instruct the LLM to generate its output in a git-
+   [Assistant]                                                                   diff-like format, where removed lines start with - and added
+   1. Types and ranges:                                                          lines start with +. For example:
+      - bigNumber (long long): 0-9 (from
+       getSomeValue)                                                         1 - long long bigNumber = getSomeValue();
+      - smallerNumber (int): can represent 0-9                               2 + auto bigNumber = getSomeValue();
+                                                                             3   int smallerNumber = bigNumber;
+   2. Correctness:
+      - No data loss risk (0-9 fits in int)                                         We introduce a git-diff-like format for the LLM’s output to
+                                                                                 focus on generating only the necessary changes, rather than
+   3. Performance:
+      - Range check would add unnecessary                                        the entire source code. This approach is particularly beneficial
+       overhead                                                                  for long function blocks and helps address the limitation of
+                                                                                 output token limits in current LLM systems. And this output
+   4. Recommendation:
+      No range check needed. Reasoning:                                          gets processed to apply the changes to the source file where the
+      - getSomeValue guarantees 0-9 range                                        warning was located, allowing us to resolve compiler warnings
+      - int can represent all possible values                                    by modifying only the relevant parts of the code.
+      - Check would add overhead without benefits
+                                                                                    In this example, the LLM has chosen to use auto for
+                                                                                 type inference of bigNumber, as the exact type returned by
+   This self-consistency approach allows us to leverage multi-                   getSomeValue() is known to be int with values in the
+ple reasoning paths, reducing the variance of decision-making                    range 0-9. This change allows the compiler to deduce the
+results. It helps mitigate the impact of any single flawed                       correct type (int) based on the return value of getSomeValue
+reasoning path and focuses on the consistency among multiple                     (). As a result, there is no remaining implicit conversion
+generated solutions.                                                             when assigning to smallerNumber, as both variables are now
+   2) Final Patch Generation: Based on the range check                           of type int. This approach effectively resolves the initial
+decision from the self-consistency approach, we generate the                     warning without introducing any unnecessary runtime checks
+final patch. In our example, the decision was that a range check                 or explicit casts. It maintains both correctness and performance
+is unnecessary due to the guaranteed small range of values                       in this performance-sensitive context while simplifying the
+returned by the getSomeValue() function. In such cases, we                       code by using type inference.
+       It’s worth noting that in cases where a range check is           original warning is no longer present, the process returns
+    deemed necessary (which wasn’t the case in our example), we         success. Otherwise, a new fix is generated based on the current
+    would instruct the LLM to use a custom type casting utility         diagnostics, applied, and the iteration counter is incremented.
+    function that can be implemented as below. This function            The final patch not only resolves the original warning, but also
+    would incorporate range check and exception throwing, pro-          maintains the overall integrity of the code.
+    viding a general solution to handle potential data loss scenarios
+    in more complex cases.                                                             IV. E XPERIMENTAL R ESULTS
+1 template<typename To, typename From>                                     To evaluate the effectiveness of our LLM-driven approach
+2 To safe_int_cast(From value) {                                        in fixing implicit data loss warnings, we conducted experi-
+3     if (value > std::numeric_limits<To>::max() ||                     ments on a large-scale software project, SAP HANA. This
+4         value < std::numeric_limits<To>::min()) {
+5         throw std::runtime_error();                                   project is substantial in size, comprising approximately 36M
+6     }                                                                 lines of code (LoC) [15]. For our study, we focused on a
+7     return static_cast<To>(value);                                    performance-sensitive component of the software that con-
+8 }
+                                                                        tained 135 implicit-int-conversion warnings. And, to resolve
+                                                                        all these warnings, 110 patches were required as one fix patch
+    D. Patch Validation
+                                                                        may remove multiple warnings in several cases.
+    Algorithm 1 Iterative Patch Validation and Correction               A. Range Check Decision Making
+     1: procedure                     VALIDATE A ND C ORRECT-              Before evaluating the final generated patches, we first fo-
+        PATCH(originalW arning, maxIterations)                          cused on measuring the accuracy of the initial range check
+     2:    patch ← GenerateInitialPatch(originalW arning)               decision-making, as this fundamental determination directly
+     3:    ApplyPatch(patch)                                            governs the correctness of the entire fix. This methodological
+     4:    iterations ← 0                                               choice was motivated by our observation that, given a correct
+     5:    while iterations < maxIterations do                          decision about range check necessity, the subsequent patch
+     6:        diagnostics ← RunClangdDiagnostics()                     generation showed consistent correctness due to the relatively
+     7:        if diagnostics is empty then                             straightforward nature of implementing these fixes in C++.
+     8:            return SUCCESS                                          The experiment utilized four state-of-the-art LLMs: GPT-4
+     9:        else                                                     Turbo (2024-04-09), GPT-4o (2024-05-13), Claude-3 Opus,
+    10:            newF ix ← GenerateFix(diagnostics)                   and Gemini-1.5 Pro. For each model, we tested two tem-
+    11:            ApplyPatch(newF ix)                                  perature settings (0.0 and 0.7) to evaluate the impact of
+    12:            iterations ← iterations + 1                          sampling randomness on decision quality. We provided 110
+    13:        end if                                                   code snippets with the total 135 implicit data loss warnings,
+    14:    end while                                                    and each code snippet was presented to the LLMs as a self-
+    15:    return FAILURE                                               contained unit requiring analysis and a decision about range
+    16: end procedure
+                                                                        check necessity. For evaluation, we tested the self-consistency
+                                                                        sampling technique, varying the number of samples from
+       After generating and applying a patch, we employ a vali-         1 to 25 in incremental steps of 2. For each sample size
+    dation step to ensure the effectiveness of the fix and to catch     configuration, we repeated the experiment five times to account
+    any new issues that might have been introduced. This process        for potential variability in model responses.
+    leverages the LSP, specifically clangd’s run-time diagnostics          The experimental results demonstrate notable variations in
+    capabilities.                                                       performance across different LLM models and temperature
+       Once a patch is applied, we use clangd to analyze the modi-      settings for identifying necessary range checks in C++ im-
+    fied code. This allows us to verify whether the original implicit   plicit data loss warnings. Figure 3 illustrates the performance
+    data loss warning has been resolved. However, the patch may         patterns across varying numbers of samples (1-25) for both
+    sometimes introduce new warnings or even compilation errors.        temperature settings (0.0 and 0.7). GPT-4 based models (GPT-
+    For instance, an LLM-generated static_cast to a custom              4 Turbo and GPT-4o) consistently outperformed other models,
+    type might raise a compilation error due to missing namespace       achieving a correct decision count of 95 across different
+    qualifications.                                                     sample sizes. Particularly, GPT-4 Turbo with temperature 0.7
+       In cases where new issues are detected, we use the detailed      reached optimal performance at relatively small sample sizes,
+    diagnostic information provided by clangd. This information         achieving maximum average count of 102 with just 9 samples.
+    is fed back to the LLM, initiating an iterative process, as         This early convergence suggests efficient decision-making ca-
+    described in Algorithm 1. It generates and applies an initial       pability with minimal self-consistency sampling requirements.
+    patch, then enters a loop that continues until either the              The higher temperature setting (0.7) generally yielded supe-
+    maximum number of iterations is reached or a successful             rior results compared to temperature 0.0 across most models.
+    fix is found. In each iteration, clangd diagnostics are run on      This performance difference was most pronounced in the
+    the modified code. If no diagnostics are reported and the           GPT-4 Turbo model, where temperature 0.7 showed both
+                                                                                   LLM Performance with Temperature 0.0
+                                105
+
+                                100
+Correct Range Check Decisions
+
+
+
+                                95
+
+                                90
+
+                                85
+
+                                80
+
+                                75
+
+                                70
+                                      1        3         5          7          9          11        13        15          17       19         21         23           25
+                                                                                            Number of Samples
+                                                                                                                                                         gpt-4-turbo-2024-04-09
+                                                                                                                                                         gpt-4o-2024-05-13
+                                                                                                                                                         claude-3-opus
+                                                                                   LLM Performance with Temperature 0.7                                  gemini-1.5-pro
+
+                                105
+Correct Range Check Decisions
+
+
+
+
+                                100
+
+                                95
+
+                                90
+
+                                85
+
+                                80
+
+                                75
+
+                                70
+                                      1        3         5          7          9          11        13        15          17       19         21         23           25
+                                                                                            Number of Samples
+
+
+                                          Fig. 3. Number of correct range check decisions with various LLMs and number of samples used for self-consistency
+
+
+
+higher median scores and more stable performance across                                             pling for this specific task.
+different sample sizes. This observation suggests that increased
+sampling diversity in the reasoning paths, facilitated by higher                                    B. Fix Acceptance Rate
+temperature settings, may contribute to more robust decision-
+                                                                                                       Based on our previous analysis of range check decision
+making in identifying necessary range checks.
+                                                                                                    accuracy, we selected GPT-4 Turbo with temperature 0.7 and
+   In contrast, Claude-3 Opus and Gemini-1.5 Pro showed                                             13 samples for self-consistency as our optimal configuration
+relatively consistent but lower performance levels, with correct                                    for generating warning fixes. This configuration achieved
+decision counts ranging between 70 and 85. These models                                             the most stable and accurate range check decisions while
+demonstrated less sensitivity to temperature variations, main-                                      maintaining reasonable computational efficiency. As shown in
+taining similar performance patterns across both settings.                                          Figure 4, using this configuration, we generated fixes for 110
+   The results also indicate that increasing the number of sam-                                     code snippets containing 135 implicit-int-conversion warnings.
+ples beyond 9-11 provided diminishing returns for most mod-                                         Our approach achieved a 92.73% acceptance rate, with 102
+els, particularly for the GPT-4 variants. This finding suggests                                     fixes being accepted through a rigorous code review process.
+an optimal trade-off point between computational resource                                           The review was conducted by experienced developers familiar
+utilization and accuracy improvement in self-consistency sam-                                       with the project’s codebase and performance requirements,
+                                                                                  predict, thus resulting in the lowest number of changes with
+                                                                                  overhead (59).
+                       3 5
+                                                                                                 V. D ISCUSSION AND C ONCLUSION
+                                                Accepted (92.7%)                     Our LLM-driven approach for fixing implicit data loss
+                                                Rejected - Style Issues (4.5%)    warnings in large-scale C++ projects demonstrated promising
+                                                Rejected - Intended Loss (2.7%)
+                                                                                  results, achieving a 92.73% acceptance rate among human
+                 102                                                              developers and reducing warning fix changes with additional
+                                                                                  instructions by 39.09% compared to the baseline strategy.
+                                                                                  This performance was close to optimal solutions developed by
+                                                                                  human experts, highlighting our method’s potential to main-
+                                                                                  tain high-performance standards while effectively addressing
+  Fig. 4. Acceptance and rejection rate of LLM generated warning fixes            warnings in critical code sections.
+                                                                                     However, our analysis also revealed several limitations of
+                                                                                  our approach, highlighting areas for future improvement:
+who evaluated each fix for correctness, style compliance, and                        • Design-level changes: Our system faced challenges in
+performance implications.                                                               situations where the optimal fix involved modifying func-
+   The rejected fixes fell into two distinct categories. Five                           tion signatures or other high-level design elements. Such
+fixes (4.5%) were rejected because human reviewers preferred                            changes require a comprehensive understanding of the
+more architectural-level solutions, such as modifying function                          entire codebase and potential cascading effects, which
+argument types or broader refactoring, rather than the local                            current LLMs struggle to achieve.
+range-check fixes proposed by the LLM. While the LLM’s                               • C++ macro-generated code: The LSP doesn’t provide
+fixes were technically correct, reviewers identified opportuni-                         accurate context for macro-generated code, limiting our
+ties for more comprehensive improvements at the design level.                           system’s effectiveness in these scenarios. This led us to
+The remaining three fixes (2.7%) were rejected because they                             exclude such cases from our experiment, indicating a
+attempted to add range checks for cases where data loss was                             need for improved handling of macro-expanded code in
+intentional in the original code design.                                                future iterations.
+   The high acceptance rate of 92.73% demonstrates that                              • Intended data loss: In some instances, developers inten-
+our approach, particularly the focus on accurate range check                            tionally allow implicit type casting that results in data
+decisions before fix generation, effectively produces fixes that                        loss for specific purposes (e.g., generating ID values).
+not only resolve the warnings but also maintain the project’s                           Our current approach lacks the capability to identify and
+code quality standards. The analysis of rejected fixes reveals                          preserve these intentional data loss scenarios, highlighting
+an interesting insight: while LLMs can effectively generate                             the need for more nuanced understanding of code intent.
+correct local fixes, human developers might sometimes prefer                         The results suggest that LLM-driven solutions can con-
+more comprehensive refactoring opportunities that require                         tribute significantly to addressing compiler warnings in large-
+broader system knowledge and design context.                                      scale C++ projects, balancing automation with code quality
+                                                                                  and performance maintenance. While our approach shows
+C. Performance Impact
+                                                                                  promise in automating warning resolution, it also highlights
+   Given the performance-sensitive nature of the selected com-                    the ongoing role of human expertise in software maintenance,
+ponent, we conducted an analysis of the performance impact                        especially for complex scenarios requiring deep contextual
+of our fixes. We used a baseline fix strategy, which involves                     understanding. Future work should focus on refining these
+a type cast utility function containing both a range check and                    techniques to better handle complex code contexts and inte-
+exception-raising mechanism, as our point of comparison. Our                      grate software design principles, potentially leading to more
+goal was to measure the number of warning fix patches that                        efficient software maintenance practices in large C++ projects.
+introduced additional instructions by our LLM-generated fixes
+compared to this baseline approach, as well as to the optimal                                                   R EFERENCES
+solution implemented by human developers.                                          [1] B. Stroustrup, The C++ programming language, 4th ed. Addison-
+   The baseline approach introduces the highest number of fix                          Wesley, 2013.
+                                                                                   [2] B. Johnson, Y. Song, E. Murphy-Hill, and R. Bowdidge, “Why don’t
+patches that contain additional instructions (110) due to the                          software developers use static analysis tools to find bugs?” in 2013 35th
+comprehensive type cast utility function with range checks                             International Conference on Software Engineering (ICSE), 2013, pp.
+and exception handling. Our LLM-generated fixes vary, with                             672–681.
+                                                                                   [3] L. Gazzola, D. Micucci, and L. Mariani, “Automatic software repair:
+some scenarios adding zero instructions by using static_cast                           A survey,” IEEE Trans. Softw. Eng., vol. 45, no. 1, p. 34–67, jan 2019.
+or modifying types directly when no range check is needed,                             [Online]. Available: https://doi.org/10.1109/TSE.2017.2755013
+resulting in 67 changes with additional instructions. The                          [4] Q. Zhang, C. Fang, Y. Xie, Y. Ma, W. Sun, Y. Yang, and
+                                                                                       Z. Chen, “A systematic literature review on large language models
+optimal solution, created by human developers, often includes                          for automated program repair,” 2024. [Online]. Available: https:
+interface-level modifications that are difficult for the LLM to                        //arxiv.org/abs/2405.01466
+ [5] C. S. Xia, Y. Wei, and L. Zhang, “Automated program repair
+     in the era of large pre-trained language models,” in Proceedings
+     of the 45th International Conference on Software Engineering, ser.
+     ICSE ’23. IEEE Press, 2023, p. 1482–1494. [Online]. Available:
+     https://doi.org/10.1109/ICSE48619.2023.00129
+ [6] X. Wang, J. Wei, D. Schuurmans, Q. V. Le, E. H. Chi, S. Narang,
+     A. Chowdhery, and D. Zhou, “Self-consistency improves chain of
+     thought reasoning in language models,” in The Eleventh International
+     Conference on Learning Representations, 2023. [Online]. Available:
+     https://openreview.net/forum?id=1PL1NIMMrw
+ [7] B. Berabi, J. He, V. Raychev, and M. Vechev, “Tfix: Learning to fix
+     coding errors with a text-to-text transformer,” in Proceedings of the
+     38th International Conference on Machine Learning, ser. Proceedings
+     of Machine Learning Research, M. Meila and T. Zhang, Eds., vol.
+     139. PMLR, 18–24 Jul 2021, pp. 780–791. [Online]. Available:
+     https://proceedings.mlr.press/v139/berabi21a.html
+ [8] M. Jin, S. Shahriar, M. Tufano, X. Shi, S. Lu, N. Sundaresan,
+     and A. Svyatkovskiy, “Inferfix: End-to-end program repair with
+     llms,” in Proceedings of the 31st ACM Joint European Software
+     Engineering Conference and Symposium on the Foundations of
+     Software Engineering, ser. ESEC/FSE 2023. New York, NY, USA:
+     Association for Computing Machinery, 2023, p. 1646–1656. [Online].
+     Available: https://doi.org/10.1145/3611643.3613892
+ [9] W. Wang, Y. Wang, S. Joty, and S. C. Hoi, “Rap-gen: Retrieval-
+     augmented patch generation with codet5 for automatic program
+     repair,” in Proceedings of the 31st ACM Joint European Software
+     Engineering Conference and Symposium on the Foundations of Software
+     Engineering, ser. ESEC/FSE 2023. New York, NY, USA: Association
+     for Computing Machinery, 2023, p. 146–158. [Online]. Available:
+     https://doi.org/10.1145/3611643.3616256
+[10] N. Wadhwa, J. Pradhan, A. Sonwane, S. P. Sahu, N. Natarajan,
+     A. Kanade, S. Parthasarathy, and S. Rajamani, “Frustrated
+     with code quality issues? llms can help!” September
+     2023. [Online]. Available: https://www.microsoft.com/en-us/research/
+     publication/frustrated-with-code-quality-issues-llms-can-help/
+[11] K. Alrashedy and A. Aljasser, “Can llms patch security issues?” 2024.
+     [Online]. Available: https://arxiv.org/abs/2312.00024
+[12] Microsoft, “Language Server Protocol Specification,” https://microsoft.
+     github.io/language-server-protocol/specifications/lsp/3.17/specification/,
+     2022.
+[13] L. Project, “Clangd,” https://clangd.llvm.org/, 2023.
+[14] M. Brunsfeld and contributors, “Tree-sitter,” https://tree-sitter.github.io/
+     tree-sitter/, 2023.
+[15] T. Bach, A. Andrzejak, C. Seo, C. Bierstedt, C. Lemke, D. Rit-
+     ter, D. Hwang, E. Sheshi, F. Schabernack, F. Renkes, G. Gaumnitz,
+     J. Martens, L. Hömke, M. Felderer, M. Rudolf, N. Jambigi, N. May,
+     R. Joy, R. Scheja, and W. Lehner, “Testing very large database man-
+     agement systems: The case of sap hana,” Datenbank-Spektrum, Nov.
+     2022.
+

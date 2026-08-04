@@ -1,0 +1,1210 @@
+                                                              ProjDevBench: Benchmarking AI Coding Agents on
+                                                                      End-to-End Project Development
+
+
+                                          Pengrui Lu * 1 2 3 Shiqi Zhang * 2 Yunzhong Hou * 4 Lyumanshan Ye 2 Chaoyi Huang 2 Zixi Chen 2 Ji Zeng 2
+                                                                 Hantao Jiang 2 Pengfei Liu 2 3 Yiwei Wang 1 Ming-Hsuan Yang 1
+
+
+                                                                  Abstract                                                  Input                                    Output
+
+
+                                                                                                                  Existing Codebase                         Code Snippet / Patch
+
+                                             Recent coding agents can generate complete code-                                                              diff --git a/src/
+
+arXiv:2602.01655v2 [cs.AI] 9 Feb 2026
+
+
+
+
+                                                                                                                  repo/
+
+                                             bases from simple prompts, yet existing evalu-                       ├── src/                                 @@ -15,4 +15,6 @@
+
+                                                                                                                  │ ├── main.cpp             SWE-bench     + void new_function() {
+
+                                             ations focus on issue-level bug fixing and lag                       │ └── utils.cpp                          +     init_data();
+
+                                                                                                                  ├── include/                             +     process();
+
+                                             behind end-to-end development. We introduce                          └── CMakeLists.txt
+                                                                                                                                                           + }
+
+                                                                                                                                                           - void old_function() {
+
+                                             P ROJ D EV B ENCH, an end-to-end benchmark that                               Issue                           -     legacy_code();
+
+                                                                                                                                            Coding Agent
+                                             provides project requirements to coding agents                                                                - }
+                                                                                                                  Fix data leak in ......
+
+                                             and evaluates the resulting repositories. Combin-
+                                                                                                                  Task Requirement                          Complete Repository
+                                             ing Online Judge (OJ) testing with LLM-assisted
+                                             code review, the benchmark evaluates agents on                       Implement a bookstore                      CMakeLists.txt
+                                                                                                                                                             src/
+                                                                                                                  management system
+                                             (1) system architecture design, (2) functional cor-                  that provides book
+                                                                                                                                                             ├── main.cpp
+                                                                                                                                                             ├── manager.cpp
+                                             rectness, and (3) iterative solution refinement. We                  search and purchase       E2E-DevBench     └── database.cpp
+                                                                                                                                                (Ours)
+
+                                             curate 20 programming problems across 8 cate-                        services......                             include/
+
+
+                                             gories, covering both concept-oriented tasks and
+                                             real-world application scenarios, and evaluate six                 Figure 1. Task comparison. Unlike benchmarks where coding
+                                             coding agents built on different LLM backends.                     agents modify code snippets from pre-existing codebases based
+                                                                                                                on issues or pull requests, our benchmark evaluates end-to-end
+                                             Our evaluation reports an overall acceptance rate                  repository construction directly from project-level requirements.
+                                             of 27.38%: agents handle basic functionality and
+                                             data structures but struggle with complex sys-
+                                                                                                                ing complete, runnable software at the project level. Given
+                                             tem design, time complexity optimization, and re-
+                                                                                                                only an initial natural language specification, a coding agent
+                                             source management. Our benchmark is available
+                                                                                                                is expected to autonomously determine the project struc-
+                                             at this https://github.com/zsworld6/projdevbench.
+                                                                                                                ture, create and organize multiple source files, configure
+                                                                                                                dependencies, and ultimately deliver a fully functional sys-
+                                                                                                                tem (Figure 1 bottom). This setting emphasizes end-to-end
+                                        1. Introduction
+                                                                                                                project construction, where success depends not only on
+                                        Recent progress in large language models has enabled cod-               local code correctness but also on maintaining consistency
+                                        ing agents to participate in software development workflows             across files, making coherent system-level design decisions,
+                                        that extend beyond generating individual functions or files.            and ensuring the final system is fully executable.
+                                        This allows both developers and users with no prior coding
+                                                                                                                Despite this shift towards end-to-end project construction,
+                                        knowledge alike to provide high-level project requirements
+                                                                                                                most existing benchmarks for coding agents still focus on
+                                        and rely on a coding agent to implement the majority of the
+                                                                                                                a smaller scale: HumanEval (Chen et al., 2021) and MBPP
+                                        system—a workflow sometimes referred to as vibe coding.
+                                                                                                                (Austin et al., 2021) evaluate function-level code generation,
+                                        These workflows point to a growing expectation that coding              while SWE-bench (Jimenez et al., 2024) and others study
+                                        agents should be capable of constructing and even execut-               issue resolving in existing codebases (Figure 1 top). These
+                                           *
+                                                                                                                benchmarks test an agent’s ability to understand or modify
+                                             Equal contribution 1 University of California, Merced,             existing code to a certain extent, yet, they cannot reflect the
+                                        CA, USA 2 Shanghai Jiao Tong University, Shanghai, China
+                                        3
+                                          Shanghai Innovation Institute, Shanghai, China 4 Beijing Insti-       competency of coding agents on end-to-end development
+                                        tute of Technology, Beijing, China. Correspondence to: Ming-            tasks, which aim to construct complete projects from high-
+                                        Hsuan Yang <mhyang@ucmerced.edu>, Yiwei Wang <yiwei-                    level specifications.
+                                        wang2@ucmerced.edu>, Pengfei Liu <pengfei@sjtu.edu.cn>.
+                                                                                                                To address this gap, we propose ProjDevBench, a bench-
+                                        Preprint. February 10, 2026.                                            mark designed to evaluate coding agents on end-to-end
+
+                                                                                                            1
+                     ProjDevBench: Benchmarking AI Coding Agents on End-to-End Project Development
+
+Table 1. Comparison with existing coding benchmarks. From Scratch: whether including tasks that require building a project without
+initial code or templates. Output: the granularity of expected submission. E2E Exec.: whether the benchmark requires building and
+running the complete system. Diag. Feedback: whether execution provides fine-grained diagnostic signals (e.g., error types, partial
+credit) beyond binary pass/fail. Code Review: specification-level compliance beyond testing.
+
+         Benchmark                 From Scratch          Output            E2E Exec.    Diag. Feedback    Code Review
+         HumanEval / MBPP                ✗              Function               ✗               ✗                ✗
+         APPS / CodeContests             ✗             Single-file             ✗               ✗                ✗
+         RepoBench                       ✗            Repo (Partial)           ✗               ✗                ✗
+         SWE-bench                       ✗                Patch                ✗               ✗                ✗
+         DevEval                         ✓             Repository              ✗               ✗                ✗
+         E2EDevBench                     ✓             Repository              ✓               ✗                ✓
+         InnovatorBench                  ✗          Research Artifacts         ✓               ✗                ✗
+         NL2Repo-Bench                   ✓             Repository              ✓               ✗                ✗
+         ProjDevBench (Ours)             ✓              Repository             ✓               ✓                ✓
+
+project construction. In terms of requirements or input              best overall performance (77.85%), with performance gaps
+to the coding agents, ProjDevBench includes tasks where              widening on from-scratch construction tasks; GPT-5 gener-
+agents receive only simple high-level instructions without           ally excels at execution score while Sonnet-4.5 (Anthropic,
+any initial codebase, in contrast to existing benchmarks that        2025b) shows stronger code review and specification com-
+provide complete repository structures (Jimenez et al., 2024;        pliance; (2) Agents struggle with multiple critical aspects:
+Liu et al., 2024) or staged reference materials (Li et al.,          specification alignment, edge case handling, time complex-
+2024) alongside requirements. In terms of expected outputs           ity optimization, and resource management, with 42% of
+from the coding agents, instead of single-file updates (Chen         failures attributed to wrong answers and 14% to time limits;
+et al., 2021; Austin et al., 2021) or atomic fixes (Jimenez          (3) Extended interaction indicates difficulty and correlates
+et al., 2024), agents are required to generate full software         negatively with performance, suggesting agents struggle to
+repositories that can be executed in practice. We show a             convert prolonged debugging into progress.
+detailed comparison between ProjDevBench and existing
+                                                                     The contributions of our work are as follows:
+benchmarks in Table 1.
+We employ two complementary metrics to evaluate com-                     • We introduce ProjDevBench, a benchmark for evaluat-
+plete repositories generated by agents. First, we assess                   ing coding agents on end-to-end project construction,
+functional correctness through automated execution on an                   which includes autonomous design, build configura-
+Online Judge (OJ) platform, which compiles, runs, and                      tion, and strict performance constraints.
+tests submissions against comprehensive test suites, and
+finally provides detailed diagnostics on failure modes. Sec-             • We establish a dual evaluation protocol combining On-
+ond, since OJ evaluation alone cannot detect rule violations               line Judge (OJ) for execution-based correctness assess-
+or cheating solutions, we introduce a code review mecha-                   ment with LLM-assisted code review for rule violations
+nism that combines rule-based Python scripts for explicit                  and cheating solutions detection.
+constraint violations (e.g., forbidden library usage) with
+                                                                         • We provide comprehensive empirical analysis on 6
+LLM-based review for subtler compliance issues.
+                                                                           coding agents across 6 LLM backends, revealing sys-
+A diverse set of tasks drawn from realistic programming                    tematic failure modes in specification alignment, edge
+scenarios is included in our ProjDevBench, enabling sys-                   case handling, complexity optimization, resource man-
+tematic evaluation of coding agents on their ability to plan,              agement, and multi-turn interaction patterns.
+implement, and integrate components at the project level,
+effectively pushing the frontier of autonomous software de-
+velopment. Specifically, we curate 20 problems across 8              2. Related Work
+categories from coding concepts to real-world applications.
+These tasks demand extended interaction, with agents aver-           AI Coding Agents. Modern coding agents span a spec-
+aging 138 interaction turns and 4.81M tokens per problem             trum of autonomy and integration modes. IDE-integrated
+in our experiments.                                                  assistants such as GitHub Copilot (GitHub, 2021) and
+                                                                     Cursor (Cursor, 2023) provide real-time code sugges-
+Our evaluation on six coding agents built on different LLM           tions within development environments, with newer ver-
+backends reveals several key findings: (1) Model perfor-             sions incorporating increasing agent capabilities for multi-
+mance varies significantly across tasks and models: Codex            file editing and contextual understanding. Autonomous
+(OpenAI, 2025) with GPT-5 (Singh et al., 2025) achieves the          frameworks such as OpenHands (Wang et al., 2025) and
+
+                                                                2
+                              ProjDevBench: Benchmarking AI Coding Agents on End-to-End Project Development
+
+
+                  Input                      Generate/ Update Repo                                 Agent iteratively   Online Judge                Code Review
+    Task
+                                                                                                        refine
+
+  Implement a bookstore management
+                                                                       l
+                                             11 files changed +2026 -25 ines c ange  h   d                                                                   -
+                                                                                                                                                       Rule based check      s
+
+                                                                                                                       Verdict
+                                                                                                      from Error                                   ✓repo contains build artifacts
+
+  system that provides book search and
+                                             1st Try                  2nd Try
+  purchase services...
+
+
+                                                                                                                                                   ✗ use forbidden libraries
+
+                                                                                                                       Accepted
+                                              main.cpp
+                    main.cpp
+
+                                                                                                                                                   ...
+    Constraints
+                                              AccountManager.cpp
+          LogSystem.cpp 
+
+                                                                                                                       Wrong Answer                              -
+                                                                                                                                                       Agent based revie      w
+
+  Implementation methods similar to
+                                              AccountManager.h
+            LogSystem.h
+
+                                                                                                                                                   ✗ code uses FS-as-DB pattern
+
+                                                                                                                       Compile Error
+  filesystem as database are prohibited...                                                                                                         ✗ main data is kept in memory
+
+                                              BookManager.cpp 
+            BookManager.cpp 
+                                                       ...
+                                                                                                                       Time Limit Exceeded
+                                              test.cpp
+                    test.cpp
+
+                                                                                                    Agent Submit
+                                          20%
+
+                                              ......
+                      ......
+                                     ...                   80%
+                                                                                                                                                      Final Weighted Score
+              Coding Agent
+
+
+
+                                                          Figure 2. Overview of the benchmark pipeline.
+
+CodeAgent (Zhang et al., 2024a) can independently oper-                                             fixing in existing codebases, and RepoBench (Liu et al.,
+ate terminal tools, manage file systems, and execute multi-                                         2024), which focuses on code completion within existing
+step workflows. Recent research has explored specialized                                            repositories. Moreover, most existing benchmarks adopt
+agent-computer interfaces for software engineering (Yang                                            single-shot evaluation, where a model generates code in one
+et al., 2024), simpler non-agentic approaches (Xia et al.,                                          pass without iterative refinement.
+2024), and autonomous program improvement (Zhang et al.,
+                                                                                                    Recent work has begun exploring end-to-end evaluation. De-
+2024b). While these agents increasingly enable vibe cod-
+                                                                                                    vEval (Li et al., 2024) decomposes development into staged
+ing, their ability to handle complex system-level decisions,
+                                                                                                    tasks with reference inputs such as UML diagrams pro-
+build configurations, and from-scratch project construction
+                                                                                                    vided at each phase, but does not require fully autonomous
+remains under-explored in structured evaluations.
+                                                                                                    construction. E2EDevBench (Zeng et al., 2025) evaluates
+                                                                                                    agents on software development with hybrid test-case and
+Evolution of AI-Assisted SE Tasks. Software engineer-                                               LLM-based verification, focusing on PyPI package develop-
+ing tasks for LLMs have shifted in granularity. Initial re-                                         ment. NL2Repo-Bench (Ding et al., 2025) evaluates long-
+search focused on function-level synthesis and repository-                                          horizon repository generation from natural-language require-
+level completion (Zhang et al., 2023; Liu et al., 2024),                                            ments, where agents must produce fully installable Python
+where models fill in missing logic within a predefined con-                                         libraries validated against upstream pytest suites. Innova-
+text. More recently, the focus has moved to software main-                                          torBench (Wu et al., 2025) assesses agents on ML research
+tenance, such as bug fixing in SWE-bench (Jimenez et al.,                                           automation with provided templates and scaffolds. However,
+2024), which requires generating patches for existing code.                                         these benchmarks primarily provide binary pass/fail feed-
+Agent frameworks have been enhanced through reasoning-                                              back and focus on narrow domains, limiting their ability to
+acting paradigms (Yao et al., 2023), executable code actions                                        capture diverse real-world software engineering challenges,
+(Wang et al., 2024), and iterative self-refinement (Madaan                                          including build system configuration, strict resource con-
+et al., 2023). However, end-to-end project construction re-                                         straints, and complex system-level design.
+mains a distinct challenge. Unlike maintenance, it requires
+agents to autonomously design directory structures, man-
+                                                                                                    3. ProjDevBench
+age inter-file dependencies, configure build systems (e.g.,
+CMake) without a pre-existing template, and autonomously                                            As shown in Figure 2, we design an end-to-end benchmark
+run the project for testing. Crucially, such tasks demand                                           pipeline for coding agents, where an agent is given task
+extended agent-environment interaction—iterative cycles                                             descriptions and constraints in natural language, and is re-
+of code generation, execution, and refinement—that single-                                          quired to autonomously construct and iteratively refine a
+shot or limited-turn evaluations cannot capture.                                                    complete code repository. Each submission is evaluated
+                                                                                                    through execution on an Online Judge, together with rule-
+Code Generation Benchmarks. Existing benchmarks pri-                                                based and LLM-based code review, and all evaluation sig-
+marily target specific stages of the development cycle but                                          nals are aggregated into a final weighted score.
+fall short of evaluating holistic project construction. Early
+benchmarks like HumanEval (Chen et al., 2021) and MBPP                                              3.1. Task Definition and Scope
+(Austin et al., 2021) are limited to single-function snippets.                                      Model input. For each task, the agent is provided with
+Competition-level benchmarks such as APPS (Hendrycks                                                a problem specification written in natural language. The
+et al., 2021) and CodeContests (Li et al., 2022) evaluate                                           specification describes the expected functionality, input and
+algorithmic problem-solving but remain single-file tasks.                                           output formats, constraints, and submission requirements.
+Repository-level benchmarks are often patch-based, such                                             For tasks in the project-completion setting, a partial code-
+as SWE-bench (Jimenez et al., 2024), which evaluates bug
+
+                                                                                               3
+                     ProjDevBench: Benchmarking AI Coding Agents on End-to-End Project Development
+
+                   Initial Collection                  Scope Filter                            Quality Filter
+                   CS education                        Project-level                           Clear Specifications
+                   OJ platform
+                        Multi-file implementation               Comprehensive test suites
+                   Course assignments
+                 Build system (CMake)                    No shortcut solutions
+                   ~2800 problems                      ~100 problems                           20 problems
+
+                                             Figure 3. Problem collection and filtering.
+
+
+base is provided as part of the input, representing an in-
+complete project that must be completed; for tasks in the
+project-creation setting, no initial codebase is provided, and                         15.0% 10.0%
+                                                                                                                       Algorithm
+the agent is required to implement the entire project from                                        10.0%                Data Structure
+                                                                                                                       Assembly
+scratch based solely on the specification.                                                                             Management
+                                                                                   25.0%             15.0%
+While our primary focus is on evaluating an agent’s abil-                                                              Game
+ity to construct complete software projects from scratch,                                    15.0%   5.0%
+                                                                                                                       Interpreter
+we include both settings to enable controlled comparisons                             5.0%                             Storage
+between project creation and project completion under a uni-                                                           Optimization
+fied project-level evaluation objective; for analysis purposes,             Concept (9)         Application (11)
+tasks in the project-completion and project-creation settings
+are categorized as Easy and Hard subsets, respectively.                Figure 4. Distribution of ProjDevBench tasks across 8 categories.
+
+
+Model output. The primary output of an agent is a soft-                Stage III: Quality-based filtering. We further select prob-
+ware project rather than a code fragment. For most tasks,              lems with clear specifications, comprehensive test suites
+this output takes the form of a Git repository containing              covering both functionality and edge cases, and non-trivial
+multiple source files, a valid build configuration (e.g., a            difficulty as reflected by historical submission outcomes.
+CMakeLists.txt), and an executable that can be com-                    Problems with test vulnerabilities or shortcut solutions are
+piled and run successfully. Thus, correctness depends not              removed, yielding the final set of 20 problems.
+only on implementing the required logic, but also on pro-              Through this process, we obtain 20 problems covering a
+ducing a coherent and buildable project that satisfies all             range of realistic software development scenarios, including
+task requirements. In fact, human reference solutions are              data structures, interpreters, management systems, and stor-
+non-trivial, typically consisting of multiple interacting files,       age components. Domain experts then reformulate the orig-
+with an average of around ten source files per project.                inal problem statements into standardized task descriptions
+                                                                       suitable for agent evaluation. Detailed task-level statistics
+3.2. Problem Collection                                                and problem attributes are provided in Table 5, with the
+We curate problems for ProjDevBench using a three-stage                distribution of task categories summarized in Figure 4.
+pipeline designed to emphasize end-to-end software con-
+struction rather than isolated algorithmic tasks.                      3.3. Evaluation Protocol
+                                                                       ProjDevBench adopts a dual evaluation protocol that distin-
+Stage I: Initial collection. We collect approximately                  guishes between hard functional correctness and compliance
+2,800 candidate problems from a large-scale Online Judge               at the rule level and specification level.
+platform used in undergraduate computer science education.
+This platform hosts both traditional algorithmic problems              Execution-based evaluation. All submissions are evalu-
+similar to competitive programming and course assignments              ated using comprehensive test suites on the Online Judge
+that require building complete, multi-file software systems.           platform. Test cases verify end-to-end executability, func-
+                                                                       tional correctness, edge-case handling, and compliance with
+Stage II: Scope-based filtering. We retain problems that               problem-specific time and memory limits. Each submission
+involve project-level development, such as multi-file im-              receives an Execution Score computed as a weighted sum
+plementations, explicit module organization, build system              of passed test cases, where individual test points may carry
+configuration (e.g., CMakeLists.txt), reusable abstrac-                different score weights reflecting their relative importance
+tions, or stateful multi-command interfaces. Purely algo-              or difficulty. In contrast to binary pass/fail evaluation in
+rithmic or single-function tasks are excluded, reducing the            prior work (Zeng et al., 2025), the Online Judge provides
+candidate set to approximately 100 problems.                           fine-grained verdict-level failure signals—including com-
+
+                                                                   4
+                    ProjDevBench: Benchmarking AI Coding Agents on End-to-End Project Development
+
+pile errors, runtime errors, time limit exceeded, memory              4.2. Main Results
+limit exceeded, and wrong answer verdicts—that enable
+                                                                      Table 2 presents the execution, code review, and final
+systematic diagnosis of agent failure modes and support
+                                                                      weighted scores for each configuration. Our results answer
+iterative debugging, as demonstrated in Section 5.
+                                                                      the following three key questions.
+
+                                                                      Which agent framework achieves the best overall
+Code review. In addition to OJ testing, ProjDevBench per-
+                                                                      performance? Codex paired with GPT-5 achieves the
+forms code review to assess whether a submission genuinely
+                                                                      highest final weighted score of 77.85, outperforming
+follows the problem specification. This evaluation focuses
+                                                                      Augment+GPT-5 at 72.35, Cursor+GPT-5 at 71.85, and
+on criteria that cannot be reliably captured by test cases, in-
+                                                                      Claude Code+Sonnet-4.5 at 68.87. This advantage stems
+cluding violations of explicit problem rules (e.g., forbidden
+                                                                      primarily from its coding capabilities, where Codex+GPT-5
+libraries), hack-based or adversarial solutions, and imple-
+                                                                      reaches 76.73 execution score compared to Augment+GPT-
+mentations that exploit weaknesses in the test suite rather
+                                                                      5’s 72.13. The difference becomes more pronounced
+than adhering to the intended constraints. Each submission
+                                                                      on hard problems requiring from-scratch construction,
+receives a Code Review score reflecting its compliance with
+                                                                      where Codex+GPT-5 maintains 69.22 execution score ver-
+these requirements. We employ an LLM-based code review
+                                                                      sus Augment+GPT-5’s 57.22 and Cursor+GPT-5’s 67.80.
+approach to judge such specification-level compliance.
+                                                                      Notably, Cursor+Gemini-3-Pro-Preview achieves 75.32,
+                                                                      demonstrating competitive performance. Both Cursor and
+                                                                      Augment demonstrate stable performance across different
+Final scoring. The final score is computed as a weighted              base models, with all their tested configurations achieving
+combination of the OJ score and the Code Review score,                final scores above 70, suggesting their framework design
+with functional correctness accounting for the majority of            is relatively stable regardless of the underlying language
+the weight. This design prioritizes producing correct and ex-         model choice.
+ecutable solutions while penalizing submissions that violate
+essential requirements or problem constraints.
+                                                                      How do different base models affect agent performance?
+                                                                      Model selection exhibits notable interactions with agent
+4. Experiments                                                        framework design. For execution scores, GPT-5 gener-
+                                                                      ally outperforms Sonnet-4.5 across most frameworks, with
+4.1. Experimental Setup
+                                                                      the gap varying by framework. In Codex, GPT-5 achieves
+Agents and Models. We evaluate six coding agents via                  76.73 versus Sonnet-4.5’s 57.52, while in Augment, GPT-5
+their command-line interfaces: Cursor (Cursor, 2023),                 reaches 72.13 compared to Sonnet-4.5’s 66.06. Gemini-
+GitHub Copilot (GitHub, 2021), Claude Code (Anthropic,                3-Pro-Preview shows mixed results in execution score: it
+2025a), Augment (Augment, 2022), Codex CLI (OpenAI,                   achieves 72.52 in Cursor (comparable to GPT-5’s 69.26) but
+2025), and Gemini CLI (Google, 2025). We test agents                  only 53.53 in GitHub Copilot. The pattern differs for code
+with frontier models GPT-5 (Singh et al., 2025), Claude               review compliance: In Claude Code, Sonnet-4.5 achieves
+Sonnet 4.5 (Anthropic, 2025b), and Gemini 3 Pro Preview               the highest code review score of 89.31, exceeding GPT-5’s
+(Google DeepMind, 2025). GPT-5 and Sonnet-4.5 are eval-               84.03, while Augment+Sonnet-4.5 scores 86.28 compared
+uated across five agents, while Gemini 3 Pro is evaluated             to Augment+GPT-5’s 73.26. Within the Claude Code frame-
+on Cursor, Copilot, and Gemini CLI. For Claude Code, we               work, we also evaluate three open-source models, which
+additionally evaluate open-source models GLM-4.6 (GLM                 achieve final scores of 52.77, 50.33, and 57.95 respectively.
+et al., 2024), Kimi-k2-0905-Preview (Team et al., 2025),              GLM-4.6 achieves the highest final score at 57.95, slightly
+and DeepSeek-V3.2-Exp (Liu et al., 2025).                             surpassing GPT-5 at 57.34, while Kimi-k2-0905-Preview
+                                                                      and DeepSeek-V3.2-Exp lag notably behind at 52.77 and
+                                                                      50.33. All open-source models remain behind Sonnet-4.5’s
+Implementation details. For each agent-model configu-                 68.87 final score, indicating a performance gap between
+ration, we run a single evaluation pass on every problem in           open-source and the strongest closed-source models.
+the benchmark. Each run is constrained by the maximum
+number of submissions allowed per problem (ranging from               How does problem difficulty affect agent robustness?
+2 to 18 depending on problem complexity), rather than a               The transition from easy problems with partial codebases
+fixed time budget. All agents are evaluated using the same            to hard problems requiring from-scratch construction re-
+prompts and problem specifications to ensure fair compar-             veals differences in framework robustness. Codex+GPT-5
+ison. The final score weighs execution correctness at 80%             maintains relatively stable execution performance, declining
+and code review compliance at 20%.                                    from 79.24 on easy problems to 69.22 on hard. Cursor+GPT-
+
+                                                                  5
+                      ProjDevBench: Benchmarking AI Coding Agents on End-to-End Project Development
+
+              Table 2. Performance on ProjDevBench (“Exec.”: Execution; “CR”: Code Review; “Final”: Weighted Score)
+
+                                                            Easy (E)                      Hard (H)                   Overall
+     Agent               Model
+                                                    Exec.     CR          Final   Exec.     CR       Final   Exec.    CR       Final
+                         GPT-5                      77.10    76.00        76.88   57.22    65.03     58.78   72.13    73.26    72.35
+     Augment
+                         Sonnet-4.5                 69.14    92.56        73.83   56.81    67.43     58.93   66.06    86.28    70.10
+                         GPT-5                      79.24    82.11        79.81   69.22    82.90     71.95   76.73    82.31    77.85
+     Codex
+                         Sonnet-4.5                 66.07    68.22        66.50   31.88    83.23     42.15   57.52    71.98    60.41
+     Gemini CLI          Gemini-3-Pro-Preview       74.57    80.33        75.72   35.53    94.20     47.26   64.81    83.80    68.61
+                         GPT-5                      69.74    80.56        71.90   67.80    87.27     71.69   69.26    82.23    71.85
+     Cursor              Sonnet-4.5                 71.12    85.67        74.03   60.17    66.47     61.43   68.39    80.87    70.88
+                         Gemini-3-Pro-Preview       72.87    88.67        76.03   71.47    80.03     73.18   72.52    86.51    75.32
+                         GPT-5                      59.79    71.11        62.06   55.20    82.90     60.74   58.64    74.06    61.73
+     GitHub Copilot      Sonnet-4.5                 71.10    87.89        74.46   36.63    80.23     45.35   62.48    85.97    67.18
+                         Gemini-3-Pro-Preview       59.22    58.11        59.00   36.44    75.67     44.29   53.53    62.50    55.32
+                         DeepSeek-V3.2-Exp          50.05    60.78        52.20   35.23    82.77     44.74   46.34    66.28    50.33
+                         GLM-4.6                    56.25    80.89        61.18   39.22    84.37     48.25   52.00    81.76    57.95
+     Claude Code         GPT-5                      50.69    84.33        57.42   50.59    83.13     57.10   50.67    84.03    57.34
+                         Kimi-k2-0905-Preview       53.49    65.89        55.97   35.56    73.67     43.18   49.00    67.83    52.77
+                         Sonnet-4.5                 66.85    92.89        72.06   54.47    78.57     59.29   63.76    89.31    68.87
+
+Table 3. Distribution of submission status types across all agents.       Specification misalignment. Agents frequently fail due
+                                                                          to misalignment between their understanding of problem
+       Status Type                  Count     Percentage
+                                                                          specifications and actual requirements, evidenced by Wrong
+       Accepted                       484       27.38%                    Answer and Compile Error submissions. Functional incom-
+       Wrong Answer                   740       41.86%                    pleteness appears when agents generate syntactically cor-
+       Time Limit Exceeded            246       13.91%                    rect frameworks but omit critical business logic—in Train
+       Runtime Error                  124        7.01%                    Ticket Management, all agents omitted the seat management
+       Compile Error                   80        4.52%
+       Memory Leak                    62        3.51%                     system despite implementing user management and train
+       Memory Limit Exceeded           24        1.36%                    querying. Similarly, in Minesweeper, agents accessed only
+       Others                          8        0.45%                     3,789 of 3,825 safe blocks, indicating incomplete implemen-
+                                                                          tation rather than logical errors. Structural misunderstand-
+                                                                          ing manifests when agents fail to distinguish development
+5 demonstrates similar stability with a drop from 69.74 to                from submission contexts: in int2048, agents included test
+67.80. In contrast, GitHub Copilot+Sonnet-4.5 shows sub-                  code with main() functions, causing redefinition errors.
+stantial degradation, decreasing from 71.10 to 36.63, while               Algorithmic understanding deviations also occur, as in Mini-
+Gemini CLI drops sharply from 74.57 to 35.53. Code review                 Aidiv-N where agents implemented Softmax by summing
+scores exhibit varied patterns: Cursor+GPT-5 increases from               entire matrices rather than row-wise, resulting in 0.02 accu-
+80.56 to 87.27, and Codex+Sonnet-4.5 rises from 68.22 to                  racy despite runnable code.
+83.23, suggesting that specification compliance issues may
+manifest differently when agents modify existing codebases
+                                                                          Edge case handling deficiencies. Agents demonstrate sys-
+compared to constructing projects from scratch, potentially
+                                                                          tematic weaknesses in boundary condition handling, leading
+due to the complexity of understanding and integrating with
+                                                                          to both Wrong Answer and Runtime Error failures. Book-
+pre-existing code structures and architectural decisions.
+                                                                          store Hidden Test Points saw all agents fail, indicating strug-
+                                                                          gles with edge cases like empty strings, file I/O exceptions,
+5. Analysis and Discussion                                                and nested scenarios. Runtime safety failures manifest at
+                                                                          the test case level, with numerous Segmentation Faults and
+5.1. Where End-to-End Coding Agents Fail
+                                                                          Aborted errors caused by null pointer dereferences and ar-
+Table 3 summarizes submission outcomes across all agents.                 ray bounds violations. In map implementation, Red-Black
+Only 27.38% of submissions were accepted, with the ma-                    Tree implementations lacked proper null checks in rotation
+jority failing due to wrong answers (41.86%) or time limit                functions, while ICPC Management System had many test
+violations (13.91%). Rather than analyzing these statuses                 cases resulting in Aborted errors from uninitialized variables.
+in isolation, we group them into higher-level failure modes               Detail processing errors also appear: in Bookstore, agents
+based on their underlying causes, as discussed below.                     used substring matching instead of exact keyword matching,
+
+                                                                      6
+                    ProjDevBench: Benchmarking AI Coding Agents on End-to-End Project Development
+
+causing “math” to incorrectly match “mathematics”.                    5.2. Insights from Code Review
+                                                                      Beyond execution outcomes, Code Review exposes agent
+Time complexity analysis deficiencies. Agents exhibit                 behaviors related to version control, build configuration,
+systematic weaknesses in time complexity reasoning, re-               and specification compliance that are invisible to execution-
+sulting in a substantial number of Time Limit Exceeded                based evaluation. These findings highlight limitations in
+submissions despite functionally correct implementations.             agents’ understanding of software development as a struc-
+In the ICPC Management System, agents re-sorted all teams             tured workflow rather than a pure code generation task.
+after each unfreeze operation, yielding an O(K × N log N )
+solution, whereas the correct approach exploits the locality          Misunderstanding of version control workflow. Agents
+of ranking changes to achieve O(K log N ) using ordered               frequently fail to treat version control as an essential part
+data structures. This failure reflects an inability to identify       of task completion. In multiple cases, agents modified code
+and leverage problem-specific structural properties.                  locally and created commits but did not push changes to the
+More broadly, agents favor familiar but suboptimal patterns:          remote repository, resulting in incomplete submissions visi-
+they recompute global orderings instead of performing in-             ble only through local git history. This indicates that agents
+cremental updates, and frequently use map where key order-            implicitly assume code writing alone constitutes task com-
+ing is unnecessary, incurring O(log N ) overhead instead of           pletion, overlooking the requirement that progress must be
+O(1) average-case lookups with unordered map. Simi-                   explicitly recorded and submitted through version control.
+lar inefficiencies appear in I/O handling, where unbuffered
+reads or excessive small writes further exacerbate perfor-            Specification compliance failures. Code Review reveals
+mance issues. Together, these behaviors indicate that com-            systematic failures to adhere to explicit submission specifi-
+plexity analysis and performance optimization are not sys-            cations in a subset of cases. Agents sometimes misconfigure
+tematically integrated into agents’ reasoning processes.              build systems, producing executables with incorrect names
+                                                                      or including build artifacts in submissions. Coding stan-
+                                                                      dards are occasionally violated, such as using prohibited
+Resource management limitations. Agents exhibit sig-
+                                                                      standard library headers or forbidden language constructs
+nificant limitations in managing computational resources,
+                                                                      like using namespace std. Required files are some-
+particularly exception safety and algorithmic efficiency,
+                                                                      times omitted, and protected templates are modified despite
+leading to Memory Leak, Runtime Error, and Time Limit
+                                                                      explicit restrictions. They reveal a pattern where agents treat
+Exceeded failures. Exception safety failures cause most
+                                                                      specification requirements as secondary to functional cor-
+memory leaks: in BASIC Interpreter, 25 submission cases
+                                                                      rectness, failing to recognize that complete task fulfillment
+occurred when std::stoi() threw exceptions after al-
+                                                                      requires strict adherence to all stated constraints, not just
+locating lhs and rhs expressions, which were not re-
+                                                                      those that affect execution outcomes.
+leased. Agents handle explicit error paths but fail to ac-
+count for exceptions during normal operation, preferring              Overall, our Code Review analysis reveals systematic as-
+manual new/delete over RAII patterns. Memory man-                     pects of software development that are not captured by
+agement errors in Runtime Errors further illustrate limita-           execution-based evaluation. Therefore, it serves as a comple-
+tions: Mini-Aidiv-N had 21 submission cases from invalid              mentary evaluation signal that surfaces important limitations
+matrix pointer access despite assertion checks, indicating            beyond execution-level correctness.
+incomplete defensive programming.
+                                                                      5.3. Interaction Length and Performance.
+Code engineering capability gaps. Agents demonstrate                  ProjDevBench tasks involve extended multi-turn
+systematic gaps in advanced C++ concepts and code organi-             agent–environment interaction, with agents averag-
+zation, leading to Compile Errors and Runtime Errors. Tem-            ing 138 interaction turns and 4.81M tokens per problem.
+plate programming limitations appear in list implementation,          The most complex tasks require up to two hours to
+where agents assumed template types would have default                complete. To analyze how interaction behavior relates to
+constructors, directly storing T data despite README                  task difficulty and performance, we conduct an analysis
+warnings, causing failures with types providing only param-           based on execution logs from Claude Code and five models.
+eterized constructors. Namespace and header management                For each problem, we aggregate interaction statistics
+issues appear where agents failed to properly merge files ac-         across models, including the number of interaction turns,
+cording to submission requirements. Code structure misun-             total token consumption, and the final task score. In
+derstanding is reflected in Redefinition Errors where agents          addition, we compute two static code-level complexity
+included test code in submission files, treating development          measures from human reference solutions: the number of
+and submission contexts as equivalent.                                relevant files and the net number of modified lines. Table 6
+
+                                                                  7
+                     ProjDevBench: Benchmarking AI Coding Agents on End-to-End Project Development
+
+reports per-problem statistics, and Table 4 summarizes the                               Readability Assessment                                         Rule Verification
+                                                                                            (Continuous 0-1)                                               (Binary 0/1)
+corresponding Spearman rank correlations.                                                   Pearson r=0.709                                         Accuracy=85.2%, =0.710
+                                                                                   1.0         Perfect Agreement
+
+
+
+
+                                                                                                                              Human Majority Vote
+                                                                                               Regression (r=0.709)                                       TN         FP
+       Table 4. Spearman Correlations among Variables.                             0.8                                                                  44.4%       14.8%
+
+
+
+
+                                                                                                                                          Fail (0)
+                                                                                                                                                      Agreement Disagreement
+
+
+
+
+                                                                       LLM Score
+                                                                                   0.6
+  Variable Pair                 Spearman ρ        p-value
+                                                                                   0.4
+  Tokens vs. Score                 −0.734          0.0002                                                                                                 FN          TP
+                                                                                   0.2                                                                   0.0%       40.7%
+
+
+
+
+                                                                                                                                          Pass (1)
+  Turns vs. Score                  −0.668          0.0013                                                                                            Disagreement Agreement
+  Net Lines vs. Score              −0.341          0.1415                          0.0
+  File Count vs. Score             −0.322          0.1665                                0.0   0.2   0.4   0.6    0.8   1.0                            Fail (0)    Pass (1)
+                                                                                           Human Average Score                                           LLM Judgment
+  File Count vs. Turns              0.413         0.0706
+  Net Lines vs. Turns               0.309         0.1848                Figure 5. Human verification of LLM-based code review. Left:
+                                                                        Correlation between the proposed LLM readability score and hu-
+  Turns vs. Tokens                  0.898        < 0.0001
+                                                                        man scores. Right: Agreement on binary rule verification.
+  Net Lines vs. File Count          0.746         0.0002
+
+                                                                        5.4. Human Validation of LLM-Based Code Review
+
+Correlation between interaction length and performance.                 To assess the reliability of the LLM-based code review used
+Across problems, we observe a clear relationship between                in ProjDevBench, we compare model judgments with expert
+these two. Both the number of interaction turns and total               annotations. The code review process involves two kinds of
+token consumption are strongly negatively correlated with fi-           judgments. The first assigns continuous scores to qualitative
+nal scores (Spearman ρ = −0.668 and ρ = −0.734, respec-                 aspects of code, such as readability and organization. The
+tively). Problems that trigger prolonged interaction tend to            second makes binary decisions on whether a submission
+yield substantially lower performance, whereas easier prob-             violates explicit problem requirements. Multiple human
+lems are typically solved with fewer interaction turns and              annotators independently review the same submissions us-
+tokens, and achieve high scores. This indicates that task diffi-        ing the same criteria. Human judgments are aggregated by
+culty is closely reflected in the extent of agent–environment           averaging continuous scores and by majority vote for binary
+interaction, but extended interaction alone does not guaran-            decisions, and are then compared against the corresponding
+tee successful task completion.                                         LLM-based evaluations.
+                                                                        As shown in Figure 5, LLM-based code review aligns
+                                                                        closely with human judgment. For continuous quality as-
+Turns and token usage. We further observe a strong posi-                sessment, model scores show strong correlation with human
+tive correlation (0.898) between interaction turns and token            ratings, indicating consistent relative evaluation of code
+consumption, suggesting that increased token usage primar-              quality. For binary rule verification, the LLM judge achieves
+ily results from repeated interaction turns rather than a small         high accuracy and substantial agreement with human anno-
+number of isolated long reasoning steps.                                tations, as reflected by an accuracy of 0.852 and a Cohen’s
+                                                                        κ of 0.710. These results indicate that LLM-based code re-
+                                                                        view provides a reliable approximation of human judgment
+Static code complexity. In contrast, static code-level com-
+                                                                        for enforcing specification-level requirements in benchmark
+plexity exhibits only weak relationships with both interac-
+                                                                        evaluation, enabling scalable quality assessment.
+tion length and performance. While the number of files
+and net modified lines are strongly correlated with each
+other, their correlations with interaction turns and scores are         6. Conclusion
+moderate. This suggests that although file-level complexity
+                                                                        In this paper, we introduced ProjDevBench, a novel bench-
+captures certain aspects of problem structure, it does not
+                                                                        mark designed to evaluate coding agents in the context of
+sufficiently explain the variation in agent performance.
+                                                                        end-to-end project development. Our comprehensive eval-
+Overall, these results indicate that task difficulty in ProjDe-         uation of current frontier coding agents reveals that while
+vBench manifests primarily through prolonged interaction                they show promise for simple tasks, significant gaps remain
+and reduced performance, rather than being directly deter-              in handling complex, real-world engineering constraints and
+mined by static code size. Harder problems compel agents                system-level integration. By providing a diverse set of chal-
+to engage in extended interaction, yet often still result in            lenging tasks and a dual-mode evaluation, ProjDevBench
+low final scores, highlighting a limitation of current agents           establishes a more realistic standard for the next generation
+in converting prolonged interaction into effective progress.            of autonomous software engineering agents.
+
+                                                                   8
+                    ProjDevBench: Benchmarking AI Coding Agents on End-to-End Project Development
+
+Limitations and Future Work                                            Hesse, C., Carr, A. N., Leike, J., Achiam, J., Misra,
+                                                                       V., Morikawa, E., Radford, A., Knight, M., Brundage,
+ProjDevBench currently includes 20 tasks. Scaling the                  M., Murati, M., Mayer, K., Welinder, P., McGrew, B.,
+benchmark is challenging due to the substantial effort re-             Amodei, D., McCandlish, S., Sutskever, I., and Zaremba,
+quired to curate project-level problems with clear specifi-            W. Evaluating large language models trained on code.
+cations and robust test suites, especially for long-running            2021.
+agent sessions. Additionally, tasks focus primarily on C++,
+and it remains unclear whether observed agent behaviors              Cursor. Cursor: AI-powered code editor. https://www.
+generalize to other languages. Finally, our evaluation targets         cursor.so/, 2023. URL https://www.cursor.
+fully autonomous agents without human feedback, which                  so/. Accessed: 2025.
+isolates end-to-end capabilities but excludes human-in-the-
+loop workflows; extending to interactive settings is a promis-       Ding, J., Long, S., Pu, C., Zhou, H., Gao, H., Gao, X., He,
+ing future direction.                                                  C., Hou, Y., Hu, F., Li, Z., et al. Nl2repo-bench: Towards
+                                                                       long-horizon repository generation evaluation of coding
+Impact Statement                                                       agents. arXiv preprint arXiv:2512.12730, 2025.
+
+This paper introduces a benchmark for evaluating AI coding           GitHub.     GitHub Copilot: Your AI pair program-
+agents on end-to-end software development. By provid-                  mer. https://copilot.github.com/, 2021.
+ing standardized evaluation with diagnostic feedback and               URL https://copilot.github.com/.            Ac-
+code review mechanisms, our work encourages the devel-                 cessed: 2025.
+opment of coding agents that produce correct, specification-
+compliant, and maintainable code. We believe rigorous                GLM, T., Zeng, A., Xu, B., Wang, B., Zhang, C., Yin, D.,
+benchmarking is a necessary step toward the responsible               Zhang, D., Rojas, D., Feng, G., Zhao, H., et al. Chatglm:
+deployment of autonomous coding systems. We do not fore-              A family of large language models from glm-130b to
+see specific negative societal consequences beyond those              glm-4 all tools. arXiv preprint arXiv:2406.12793, 2024.
+generally associated with advances in AI-assisted program-
+                                                                     Google. Gemini cli, 2025. URL https://github.
+ming.
+                                                                       com/google-gemini/gemini-cli.
+
+References                                                           Google DeepMind.    Gemini 3:      A new era
+                                                                       of intelligence.   https://blog.google/
+Anthropic. Claude code: An agentic coding tool.
+                                                                       products-and-platforms/products/
+  https://docs.anthropic.com/en/docs/
+                                                                       gemini/gemini-3/, 2025. Accessed: 2025.
+  claude-code, 2025a. Accessed: 2025.
+
+Anthropic.   Claude sonnet 4.5: A hybrid reason-                     Hendrycks, D., Basart, S., Kadavath, S., Mazeika, M., Arora,
+  ing model.    Anthropic Technical Report, 2025b.                     A., Guo, E., Burns, C., Puranik, S., He, H., Song, D., and
+  URL      https://www.anthropic.com/news/                             Steinhardt, J. Measuring coding challenge competence
+  claude-sonnet-4-5.                                                   with apps. NeurIPS, 2021.
+
+Augment.    Augment code.        https://www.                        Jimenez, C. E., Yang, J., Wettig, A., Yao, S., Pei, K.,
+  augmentcode.com, 2022. Accessed: 2025.                               Press, O., and Narasimhan, K. R. SWE-bench: Can
+                                                                       language models resolve real-world github issues? In
+Austin, J., Odena, A., Nye, M., Bosma, M., Michalewski,                International Conference on Learning Representations,
+  H., Dohan, D., Jiang, E., Cai, C., Terry, M., Le, Q., et al.         2024. URL https://openreview.net/forum?
+  Program synthesis with large language models. arXiv                  id=VTF8yNQM66.
+  preprint arXiv:2108.07732, 2021.
+                                                                     Li, J., Li, G., Zhao, Y., Li, Y., Liu, H., Zhu, H.,
+Chen, M., Tworek, J., Jun, H., Yuan, Q., de Oliveira Pinto,            Wang, L., Liu, K., Fang, Z., Wang, L., et al. Deve-
+  H. P., Kaplan, J., Edwards, H., Burda, Y., Joseph, N.,               val: A manually-annotated code generation benchmark
+  Brockman, G., Ray, A., Puri, R., Krueger, G., Petrov,                aligned with real-world code repositories. arXiv preprint
+  M., Khlaaf, H., Sastry, G., Mishkin, P., Chan, B., Gray,             arXiv:2405.19856, 2024.
+  S., Ryder, N., Pavlov, M., Power, A., Kaiser, L., Bavar-
+  ian, M., Winter, C., Tillet, P., Such, F. P., Cummings, D.,        Li, Y., Choi, D., Chung, J., Kushman, N., Schrittwieser, J.,
+  Plappert, M., Chantzis, F., Barnes, E., Herbert-Voss, A.,            Leblond, R., Eccles, T., Keeling, J., Gimeno, F., Dal Lago,
+  Guss, W. H., Nichol, A., Paino, A., Tezak, N., Tang,                 A., et al. Competition-level code generation with alpha-
+  J., Babuschkin, I., Balaji, S., Jain, S., Saunders, W.,              code. Science, 378(6624):1092–1097, 2022.
+
+                                                                 9
+                    ProjDevBench: Benchmarking AI Coding Agents on End-to-End Project Development
+
+Liu, A., Mei, A., Lin, B., Xue, B., Wang, B., Xu, B., Wu,             Yao, S., Zhao, J., Yu, D., Du, N., Shafran, I., Narasimhan,
+  B., Zhang, B., Lin, C., Dong, C., et al. Deepseek-v3.                 K., and Cao, Y. ReAct: Synergizing reasoning and act-
+  2: Pushing the frontier of open large language models.                ing in language models. In International Conference on
+  arXiv preprint arXiv:2512.02556, 2025.                                Learning Representations, 2023.
+Liu, T., Xu, C., and McAuley, J. Repobench: Benchmark-                Zeng, Z., Li, Y., Xie, R., Ye, W., and Zhang, S. Bench-
+  ing repository-level code auto-completion systems, 2024.              marking and studying the llm-based agent system in
+  URL https://arxiv.org/abs/2306.03091.                                 end-to-end software development, 2025. URL https:
+                                                                        //arxiv.org/abs/2511.04064.
+Madaan, A., Tandon, N., Gupta, P., Hallinan, S., Gao, L.,
+ Wiegreffe, S., Alon, U., Dziri, N., Prabhumoye, S., Yang,            Zhang, F., Chen, B., Zhang, Y., Keung, J., Liu, J., Zan,
+ Y., Gupta, S., Majumder, B. P., Hermann, K., Welleck,                  D., Mao, Y., Lou, J.-G., and Chen, W. RepoCoder:
+ S., Yazdanbakhsh, A., and Clark, P. Self-refine: iterative             Repository-level code completion through iterative re-
+ refinement with self-feedback. In Advances in Neural                   trieval and generation. In Bouamor, H., Pino, J., and
+ Information Processing Systems, NIPS ’23, Red Hook,                    Bali, K. (eds.), Proceedings of the Conference on Em-
+ NY, USA, 2023. Curran Associates Inc.                                  pirical Methods in Natural Language Processing, pp.
+                                                                        2471–2484, Singapore, December 2023. Association
+OpenAI. Codex cli. https://github.com/openai/
+                                                                        for Computational Linguistics. doi: 10.18653/v1/2023.
+  codex, 2025. Accessed: 2025.
+                                                                        emnlp-main.151. URL https://aclanthology.
+Singh, A., Fry, A., Perelman, A., Tart, A., Ganesh, A.,                 org/2023.emnlp-main.151/.
+  El-Kishky, A., McLaughlin, A., Low, A., Ostrow, A.,
+                                                                      Zhang, K., Li, J., Li, G., Shi, X., and Jin, Z. CodeAgent:
+  Ananthram, A., et al. Openai gpt-5 system card. arXiv
+                                                                        Enhancing code generation with tool-integrated agent sys-
+  preprint arXiv:2601.03267, 2025.
+                                                                        tems for real-world repo-level coding challenges. In Ku,
+Team, K., Bai, Y., Bao, Y., Chen, G., Chen, J., Chen,                   L.-W., Martins, A., and Srikumar, V. (eds.), Proceedings
+  N., Chen, R., Chen, Y., Chen, Y., Chen, Y., et al.                    of the Annual Meeting of the Association for Computa-
+  Kimi k2: Open agentic intelligence. arXiv preprint                    tional Linguistics, pp. 13643–13658, Bangkok, Thailand,
+  arXiv:2507.20534, 2025.                                               August 2024a. Association for Computational Linguis-
+                                                                        tics. doi: 10.18653/v1/2024.acl-long.737. URL https:
+Wang, X., Chen, Y., Yuan, L., Zhang, Y., Li, Y., Peng, H.,              //aclanthology.org/2024.acl-long.737/.
+ and Ji, H. Executable code actions elicit better llm agents.
+ In International Conference on Machine Learning, 2024.               Zhang, Y., Ruan, H., Fan, Z., and Roychoudhury, A. Au-
+                                                                        tocoderover: Autonomous program improvement, 2024b.
+Wang, X., Li, B., Song, Y., Xu, F. F., Tang, X., Zhuge, M.,             URL https://arxiv.org/abs/2404.05427.
+ Pan, J., Song, Y., Li, B., Singh, J., Tran, H. H., Li, F.,
+ Ma, R., Zheng, M., Qian, B., Shao, Y., Muennighoff, N.,
+ Zhang, Y., Hui, B., Lin, J., Brennan, R., Peng, H., Ji,
+ H., and Neubig, G. Openhands: An open platform for
+ ai software developers as generalist agents, 2025. URL
+ https://arxiv.org/abs/2407.16741.
+Wu, Y., Fu, D., Si, W., Huang, Z., Jiang, M., Li, K., Xia, S.,
+ Sun, J., Xu, T., Hu, X., Lu, P., Cai, X., Ye, L., Zhu, W.,
+ Xiao, Y., and Liu, P. Innovatorbench: Evaluating agents’
+ ability to conduct innovative llm research, 2025. URL
+ https://arxiv.org/abs/2510.27598.
+Xia, C. S., Deng, Y., Dunn, S., and Zhang, L. Agentless: De-
+  mystifying llm-based software engineering agents. arXiv
+  preprint, 2024.
+Yang, J., Jimenez, C. E., Wettig, A., Lieret, K., Yao, S.,
+  Narasimhan, K. R., and Press, O. SWE-agent: Agent-
+  computer interfaces enable automated software engineer-
+  ing. In Advances in Neural Information Processing
+  Systems, 2024. URL https://arxiv.org/abs/
+  2405.15793.
+
+                                                                 10
+                     ProjDevBench: Benchmarking AI Coding Agents on End-to-End Project Development
+
+A. Problem Details
+Table 5 summarizes the full set of tasks included in ProjDevBench. The table lists per-problem metadata, including category,
+submission format, resource constraints, and student performance statistics. These attributes are provided for reference.
+Table 5. Detailed information for all 20 problems. Category indicates the problem domain (Algorithm, Management, Game, Interpreter,
+Assembly, Data Structure, Storage, or Optimization). Difficulty is rated as E (Easy) or H (Hard) based on whether an initial codebase
+is provided. Submit specifies the submission method: C++ for direct source code submission, Git for repository-based submission, or
+mov for assembly-only problems. Tests denotes the number of distinct OJ problem IDs associated with each task. Time and Mem show
+the maximum time limit (in seconds) and memory limit (in MiB) across all subtasks, respectively. Avg Score represents the average
+normalized score (0–100) achieved by participating students across all submissions.
+
+  ID    Problem Name                              Category          Difficulty   Submit     Tests   Time (s)   Mem (MiB)   Avg Score
+  001   A+B Problem                               Algorithm         E            Git         1         1          256        54.37
+  002   int2048 - Big Integer Arithmetic          Algorithm         E            C++         6         10         190        48.19
+  003   ICPC Management System                    Management        H            Git         1         2          512        52.07
+  004   Bookstore Management System               Management        H            Git         2         10          64        36.29
+  005   QOI Format Codec                          Algorithm         E            C++         2         10         512        58.87
+  006   Minesweeper-2025 Assignment               Game              E            C++         2         30         256        53.51
+  007   BASIC Interpreter Assignment              Interpreter       E            Git         1          5         256        47.67
+  008   mov Language Problems                     Assembly          E            mov         8          -           -        54.70
+  009   STLite Vector                             Data Structure    E            C++         1        100         768        58.46
+  010   STLite List (Doubly-Linked List)          Data Structure    E            C++         1         25         768        30.76
+  011   STLite Priority Queue                     Data Structure    E            C++         1         15         512        57.25
+  012   STLite Linked HashMap                     Data Structure    E            C++         1         24         893        43.36
+  013   STLite Map                                Data Structure    E            C++         2         30         893        58.21
+  014   Python Interpreter Assignment             Interpreter       E            Git         1         16         512        46.23
+  015   File Storage                              Storage           H            Git         1        16            6        42.71
+  016   File Storage BPT                          Storage           H            Git         1         5           64        40.11
+  017   Train Ticket Management System            Management        H            Git         1         40          47        53.24
+  018   Scheme Interpreter                        Interpreter       E            Git         1        1.5         244        32.94
+  019   Mini-Aidiv-N: GPU Memory Optimization     Optimization      E            C++         1          1         244        36.89
+  020   Buddy Algorithm                           Optimization      E            Git         1        10          244        33.33
+
+
+
+B. Interaction Performance Details
+Table 6 reports per-problem interaction-level statistics aggregated over execution logs from the Claude Code agent framework
+across all evaluated models. The table summarizes final scores, agent–environment interaction measures (token usage and
+interaction turns), and human submission scale statistics (average lines of code and number of files).
+
+ Table 6. Per-problem final scores, aggregated agent–environment interaction statistics in Claude Code, and human submission scale.
+
+                              Problem      Final Score    Tokens (M)       Turns       Avg. Lines    Files
+                                 001          98.80           0.42           42.6          9.8         1
+                                 002          42.65           7.33          173.2        547.7         1
+                                 003          18.27           4.87          144.4        475.3         1
+                                 004          34.04           3.81          135.8       1659.0        18
+                                 005          77.40           2.09          107.0        101.5         1
+                                 006          81.67           4.86          149.8        111.3         1
+                                 007          77.44           6.75          205.0        750.5        17
+                                 008          29.01           4.96          189.6         42.1         1
+                                 009          93.26           2.50           85.4        129.9         1
+                                 010          76.08           3.23          118.0        180.0         1
+                                 011          99.07           2.18           85.6         77.0         1
+                                 012          69.60           5.66          148.4        298.6         1
+                                 013          54.67           3.94          123.8        376.4         1
+                                 014          9.20            6.83          161.4       2377.0        17
+                                 015          79.11           3.07          131.4       2093.9         3
+                                 016          97.87           1.05           65.2       3139.4        11
+                                 017          23.27           6.53          153.0       4204.3        20
+                                 018          20.36          13.31          262.2        691.8        13
+                                 019          33.27           5.31          130.2        157.2         1
+                                 020          34.00           7.52          150.4        111.3         4
+
+
+                                                                   11
+                   ProjDevBench: Benchmarking AI Coding Agents on End-to-End Project Development
+
+C. Scoring Formula
+C.1. Execution Score
+For each problem, the Online Judge evaluates submissions against a test suite consisting of N test cases. The standard
+scoring method assigns a weight wi to each test case i based on its complexity or importance. The raw execution score is
+computed as:
+                                                  XN
+                                         Sraw =       wi · 1[test case i passed]
+                                                   i=1
+
+where 1[·] is the indicator function. The raw score is then linearly normalized to a 0–100 scale:
+
+                                                          Sraw
+                                                 Sexec = PN      × 100
+                                                          i=1 wi
+
+
+Note that different problems may adopt alternative scoring schemes depending on their specific evaluation requirements.
+For example, some problems may use uniform weights across all test cases, while others may assign higher weights to
+advanced test cases or apply penalty-based scoring for partial correctness. Our evaluation scripts automatically handle these
+problem-specific scoring variations and normalize all scores to a consistent 0–100 scale for fair comparison across problems.
+
+C.2. Code Review Score
+The code review score Scr is computed based on a set of problem-specific rules, combining rule-based checks and LLM-based
+qualitative assessments. Each rule contributes to the final code review score, which is also normalized to a 0–100 scale.
+Detailed rule definitions are provided in Section D.
+
+C.3. Final Score
+The final score for each submission is a weighted combination of the execution score and the code review score:
+
+                                              Sfinal = 0.8 × Sexec + 0.2 × Scr
+
+This weighting prioritizes functional correctness (80%) while ensuring compliance with specification-level requirements
+(20%).
+For problems associated with multiple OJ problem IDs, the execution score is computed as a weighted average of normalized
+scores across all associated problems:
+                                                          XM
+                                                                    (j)
+                                                 Sexec =      αj · Sexec
+                                                               j=1
+
+                                                         (j)
+where M is the number of associated OJ problems,
+                                            PM   Sexec is the normalized execution score for the j-th OJ problem, and
+αj is the corresponding weight satisfying j=1 αj = 1. The specific weights for each problem are documented in the
+respective task descriptions provided to agents.
+When multiple submissions are allowed, the final reported score for each agent-problem pair is the maximum final score
+achieved across all valid submissions within the submission limit.
+
+D. Code Review Evaluation Rules
+ProjDevBench employs a comprehensive code review system combining rule-based Python scripts for automatic
+verification and LLM-based evaluation for qualitative assessment. The complete rule definitions are stored in
+scripts/cr/[problem id]/cr list.json files for each problem.
+
+D.1. Check Function Registry
+The code review framework (scripts/cr/common/checks.py) provides the following automated check functions:
+
+                                                                12
+                  ProjDevBench: Benchmarking AI Coding Agents on End-to-End Project Development
+
+                       Table 7. Available check functions in the code review framework (checks.py).
+
+                 Function                            Description
+                 ensure gitignore contains           Verify .gitignore contains required entries (e.g., CMake-
+                                                     Files/, CMakeCache.txt)
+                 forbid pattern in files             Forbid specific pattern in specified files
+                 forbid pattern recursive            Forbid pattern across entire repository with optional suf-
+                                                     fix filtering and comment stripping
+                 ensure allowed includes             Restrict standard library header usage to allowed list
+                 ensure files exist                  Ensure required files exist in submission
+                 ensure files unchanged              Verify template files remain unchanged from reference
+                 ensure cmake outputs code           Check CMakeLists.txt produces executable named
+                                                     “code”
+                 llm as a judge                      LLM-based qualitative evaluation for code quality and
+                                                     specification compliance
+
+
+
+D.2. Problem-Specific Code Review Rules
+Table 8 and Table 9 summarizes the complete set of problem-specific code review rules used in our benchmark.
+
+E. Evaluation Infrastructure
+E.1. Docker Base Image Configuration
+ProjDevBench uses a custom Docker image based on Ubuntu 24.04 with the following components:
+
+   Docker Base Image (Dockerfile)
+
+   FROM ubuntu:24.04
+   ENV DEBIAN_FRONTEND=noninteractive
+
+   # Install Node.js 20
+   RUN apt-get update && apt-get install -y curl \
+       && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+       && apt-get install -y nodejs
+
+   # Install toolchain and Python
+   RUN apt-get update && apt-get install -y \
+       gcc-13 g++-13 cmake \
+       python3.12 python3.12-dev python3-pip \
+       iverilog git curl jq build-essential sudo \
+       && ln -sf /usr/bin/gcc-13 /usr/bin/gcc \
+       && ln -sf /usr/bin/g++-13 /usr/bin/g++ \
+       && ln -sf /usr/bin/python3.12 /usr/bin/python3
+
+   # Install Python dependencies
+   RUN python3 -m pip install requests --break-system-packages
+
+   # Install GitHub CLI
+   RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+       | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+       && apt-get update && apt-get install gh -y
+
+   # Install AI Coding Agents
+   RUN npm install -g @google/gemini-cli
+
+
+                                                           13
+                    ProjDevBench: Benchmarking AI Coding Agents on End-to-End Project Development
+
+
+   RUN npm install -g @anthropic-ai/claude-code
+   RUN npm install -g @github/copilot
+   RUN npm install -g @vibe-kit/grok-cli
+   RUN npm install -g @openai/codex
+   RUN npm install -g @augmentcode/auggie
+
+
+E.2. Evaluation Pipeline
+The evaluation pipeline is orchestrated by scripts/run evaluation.sh, which performs the following steps:
+
+ 1. Configuration Loading: Read problem configuration from config/problem registry.json to obtain maxi-
+    mum submission limits and other parameters.
+
+ 2. Environment Validation: Verify required API tokens (GITHUB TOKEN, OJ TOKEN) and agent-specific credentials.
+
+ 3. Docker Container Initialization: Launch isolated container with:
+       • Problem files mounted read-only at /problems/[problem id]
+       • Test data mounted read-only at /data readonly/[problem id]
+       • Evaluation scripts mounted at /scripts
+       • Writable log directory at /workspace/logs
+
+ 4. Workspace Setup (run agent base.sh):
+       • Copy problem files to writable workspace /workspace/problem [id]
+       • Initialize Git repository with git init
+       • Create remote GitHub repository using gh repo create
+       • Configure token-based authentication for Git operations
+
+ 5. Agent Execution: Run agent-specific script (e.g., run claude code.sh) with standardized prompt
+
+ 6. Result Collection: Capture submission IDs and copy logs to host
+
+ 7. OJ Submission: Agent autonomously submits to OJ via oj client.py
+
+ 8. Code Review: Execute problem-specific checks from cr list.json
+
+E.3. Resource Limits
+Our containerized evaluation environment enforces the following resource limits: memory is capped at 8 GB (configurable
+via AGENT MEMORY LIMIT), CPU is limited to 4 cores (configurable via AGENT CPU LIMIT), and the Node.js heap is
+set to 6 GB (--max-old-space-size=6144). Containers have full internet access for network operations.
+
+F. Agent Prompts
+F.1. Single Problem Prompt
+The following prompt is used for problems with a single OJ problem ID:
+
+   Single Problem Evaluation Prompt
+
+   You are a professional programming expert and Git expert. You are now in a Git repository and need to complete the following
+   tasks:
+   Current Environment
+
+      • Repository URL: https://github.com/{user}/{repo}
+
+
+
+                                                               14
+                     ProjDevBench: Benchmarking AI Coding Agents on End-to-End Project Development
+
+
+      • Working Directory: /workspace/problem {id}
+      • OJBench Problem ID: {problem id}
+
+      • OJ Problem ID: {oj id}
+
+      • Maximum Submission Limit: {max submissions} attempts
+
+   Important Scoring Rules
+      • Final score is based on the highest score among all valid submissions
+
+      • Submissions exceeding limit will not be counted and incur penalties
+
+      • Each test point may have different score weights
+
+   Your Tasks
+     1. Analyze: Read README.md and understand requirements
+
+     2. Develop: Implement the optimal solution
+
+     3. Git Management: Commit and push changes; verify push success
+
+     4. Submit to OJ: Use oj client.py for submission
+     5. Iterate: Analyze errors and optimize within submission limit
+
+     6. Record: Document changes with clear commit messages
+
+   Important Reminders
+
+      • Compile and test locally before submission
+      • If submission stuck pending, abort (doesn’t count) and resubmit
+
+      • Full control over workspace including file modifications
+
+
+F.2. Multiple Problems Prompt
+For problems with multiple OJ problem IDs sharing submission limits:
+
+   Multiple Problems Evaluation Prompt (Key Differences)
+
+   Additional Environment
+
+      • OJ Problem IDs: {id1,id2,...} (comma-separated)
+      • Maximum Submission Limit: {max} attempts SHARED across all problems
+
+   Key Differences
+
+      • Submission limit is SHARED across all problem IDs
+
+      • When submitting, specify which problem ID to submit to
+      • Track remaining attempts across all problems
+
+      • Plan submissions wisely to maximize overall score
+
+
+
+G. Detailed Error Examples
+Example 1: CMake Configuration Error (Problem 017)
+
+CMake Error at CMakeLists.txt:15:
+  add_executable called with incorrect arguments
+
+                                                                   15
+                  ProjDevBench: Benchmarking AI Coding Agents on End-to-End Project Development
+
+
+Configuration failed.
+
+Root Cause: Agent generated CMakeLists.txt with incorrect source file paths.
+Example 2: Logic Error (Problem 003 - ICPC System)
+
+Test: basic_4
+Expected: Team A ranked 1st
+Actual: Team B ranked 1st
+
+Reason: Incorrect tie-breaking logic in penalty time calculation.
+
+Example 3: Memory Limit Exceeded (Problem 015)
+
+Test: pressure_1
+Status: Memory Limit Exceeded
+Used: 8.2 MiB / Limit: 6 MiB
+
+Reason: Agent allocated in-memory hash table instead of
+disk-based B+ tree.
+
+Example 4: Runtime Error (Problem 018 - Scheme)
+
+Test: closure_test
+Status: Runtime Error (SIGSEGV)
+
+Reason: Stack overflow in recursive closure evaluation
+without proper tail-call optimization.
+
+H. Statistical Analysis
+Performance Distribution:
+
+  • Mean score: 54.16 (std: 32.4)
+  • Median score: 55.0
+  • Problems with >80% pass rate: 7 (35%)
+
+  • Problems with <20% pass rate: 5 (25%)
+
+Correlation Analysis:
+
+  • Problem complexity vs. score: r = -0.72 (strong negative)
+
+  • Submission count vs. final score: r = 0.15 (weak positive)
+  • Code review score vs. OJ score: r = 0.68 (moderate positive)
+
+Statistical Significance: Pairwise comparison of top agents (Cursor vs. Claude Code) shows statistically significant
+difference (p < 0.05, paired t-test) in average performance.
+
+
+
+
+                                                          16
+                  ProjDevBench: Benchmarking AI Coding Agents on End-to-End Project Development
+
+
+                                  Table 8. Complete code review rules for all problems (Part I).
+
+ID    Rule Name                            Check Type                   Description
+      CMake Artifact Ignore                gitignore entries            .gitignore must list CMakeFiles/ and CMakeCache.txt
+001
+      Project Readability                  llm as a judge               Assess overall project readability and organization
+      Forbid using namespace std           forbid pattern recursive     No “using namespace std;” in sources/headers
+002   Ensure code.cpp Exists               require files                Submission requires code.cpp file
+      Code Readability                     llm as a judge               Assess code.cpp readability
+      Forbid CMake Artifacts               forbid pattern recursive     Repository must not contain CMake build files
+003   CMakeLists Outputs code              cmakelists outputs code      CMakeLists.txt must produce “code” executable
+      Project Readability                  llm as a judge               Assess overall project readability
+      Forbid CMake Artifacts               forbid pattern recursive     Repository must not contain CMake build files
+      CMakeLists Outputs code              cmakelists outputs code      CMakeLists.txt must produce “code” executable
+004   Disallow Persistent Main Data        llm as a judge               Check avoiding keeping data permanently in memory
+      Forbid Filesystem-as-Database        llm as a judge               Check no filesystem-as-database style design
+      Project Readability                  llm as a judge               Assess overall project readability
+      Restrict Modifications               require unmodified           Only edit qoi.h; other files must match template
+005
+      qoi.h Readability                    llm as a judge               Assess qoi.h readability
+      Restrict Modifications               require unmodified           Do not modify basic.cpp or advanced.cpp
+006
+      server.h/client.h Readability        llm as a judge               Assess server.h and client.h readability
+      CMakeLists Outputs code              cmakelists outputs code      CMakeLists.txt must produce “code” executable
+007   Keep Basic/Utils Templates           require unmodified           Basic/Utils helper files must match template
+      Project Readability                  llm as a judge               Assess overall project readability
+      Line Limit and Bounds                llm as a judge               Code length ≤ 65,536 lines; no out-of-bounds access
+008
+      .mv Files Readability                llm as a judge               Assess .mv files readability
+      Restrict Standard Headers            allowed includes             Only allow cstdio, cstring, iostream, cmath, string
+009   Keep Helper Headers                  require unmodified           exceptions.hpp and utility.hpp must match template
+      vector.hpp Readability               llm as a judge               Assess vector.hpp readability
+      Restrict Standard Headers            allowed includes             Only allow cstdio, cstring, iostream, cmath, string
+010   Keep Helper Headers                  require unmodified           exceptions.hpp and utility.hpp must match template
+      list.hpp Readability                 llm as a judge               Assess list.hpp readability
+      Restrict Standard Headers            allowed includes             Only allow cstddef, functional (from template)
+011   Keep Helper Headers                  require unmodified           exceptions.hpp and utility.hpp must match template
+      priority queue.hpp Readability       llm as a judge               Assess priority queue.hpp readability
+      Restrict Standard Headers            allowed includes             Only allow cstdio, cstring, iostream, cmath, string
+012   Keep Helper Headers                  require unmodified           exceptions.hpp and utility.hpp must match template
+      linked hashmap.hpp Readability       llm as a judge               Assess linked hashmap.hpp readability
+      Restrict Standard Headers            allowed includes             Only allow cstdio, cstring, iostream, cmath, string
+013   Keep Local Test Helpers              require unmodified           exceptions.hpp and utility.hpp must match template
+      map.hpp Readability                  llm as a judge               Assess map.hpp readability
+      CMake Artifact Ignore                gitignore entries            .gitignore must list CMakeFiles/ and CMakeCache.txt
+014
+      Project Readability                  llm as a judge               Assess overall project readability
+      Forbid CMake Artifacts               forbid pattern recursive     Repository must not contain CMake build files
+015   CMakeLists Outputs code              cmakelists outputs code      CMakeLists.txt must produce “code” executable
+      Project Readability                  llm as a judge               Assess overall project readability
+      Forbid CMake Artifacts               forbid pattern recursive     Repository must not contain CMake build files
+016   CMakeLists Outputs code              cmakelists outputs code      CMakeLists.txt must produce “code” executable
+      Project Readability                  llm as a judge               Assess overall project readability
+      Forbid CMake Artifacts               forbid pattern recursive     Repository must not contain CMake build files
+      CMakeLists Outputs code              cmakelists outputs code      CMakeLists.txt must produce “code” executable
+017
+      Restrict STL and Algorithm           forbid pattern recursive     No STL containers (except std::string); no <algorithm>
+      Project Readability                  llm as a judge               Assess overall project readability
+
+
+
+                                                               17
+                ProjDevBench: Benchmarking AI Coding Agents on End-to-End Project Development
+
+
+
+
+                               Table 9. Complete code review rules for all problems (Part II).
+
+ID    Rule Name                      Check Type                   Description
+      Forbid CMake Artifacts         forbid pattern recursive     Repository must not contain CMake build files
+018
+      Project Readability            llm as a judge               Assess overall project readability
+      GPU Simulator API Usage        llm as a judge               Verify correct GPU simulator API and memory allocation
+019   GPU Instruction Constraints    llm as a judge               No stdout logging; no direct Matrix writes
+      src.hpp Readability            llm as a judge               Assess src.hpp readability
+      Forbid CMake Artifacts         forbid pattern recursive     Repository must not contain CMake build files
+020
+      Project Readability            llm as a judge               Assess overall project readability
+
+
+
+
+                                                             18
+

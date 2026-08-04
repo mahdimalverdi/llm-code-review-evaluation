@@ -1,0 +1,759 @@
+                                               Security Defect Detection via Code Review: A
+                                                Study of the OpenStack and Qt Communities
+                                                                Jiaxin Yu1,2 , Liming Fu1,2 , Peng Liang1,2∗ , Amjed Tahir3 , Mojtaba Shahin4
+                                                                           1
+                                                                         School of Computer Science, Wuhan University, Wuhan, China
+                                                                                   2
+                                                                                     Hubei Luojia Laboratory, Wuhan, China
+                                                  3
+                                                    School of Mathematical and Computational Sciences, Massey University, Palmerston North, New Zealand
+                                                                 4
+                                                                   School of Computing Technologies, RMIT University, Melbourne, Australia
+                                                         {jiaxinyu, limingfu, liangp}@whu.edu.cn, a.tahir@massey.ac.nz, mojtaba.shahin@rmit.edu.au
+
+
+                                           Abstract—Background: Despite the widespread use of                       publicly [6], has a negative impact on software quality and
+arXiv:2307.02326v1 [cs.SE] 5 Jul 2023
+
+
+
+
+                                        automated security defect detection tools, software projects still          leads to increased maintenance costs. Therefore, effectively
+                                        contain many security defects that could result in serious damage.          minimizing the financial and reputational costs of security
+                                        Such tools are largely context-insensitive and may not cover all
+                                        possible scenarios in testing potential issues, which makes them            incidents by detecting security defects as early as possible
+                                        susceptible to missing complex security defects. Hence, thorough            remains the major focus for the stakeholders involved in
+                                        detection entails a synergistic cooperation between these tools             software production.
+                                        and human-intensive detection techniques, including code review.               Many organizations are shifting security practices to earlier
+                                        Code review is widely recognized as a crucial and effective                 stages of software development, hoping to address security
+                                        practice for identifying security defects. Aim: This work aims
+                                        to empirically investigate security defect detection through code           concerns before they become more difficult and expensive
+                                        review. Method: To this end, we conducted an empirical study by             to fix [7]. Under this circumstance, code review is proven
+                                        analyzing code review comments derived from four projects in                to be an effective method to identify and locate security
+                                        the OpenStack and Qt communities. Through manually checking                 defects early [8], [9]. Code review is a valuable practice
+                                        20,995 review comments obtained by keyword-based search, we                 of systematically and internally examining revisions before
+                                        identified 614 comments as security-related. Results: Our results
+                                        show that (1) security defects are not prevalently discussed in             code is released to production to detect defects and ensure
+                                        code review, (2) more than half of the reviewers provided explicit          quality. Code review is one of the most important practices of
+                                        fixing strategies/solutions to help developers fix security defects,        modern software development [10]. Compared with security
+                                        (3) developers tend to follow reviewers’ suggestions and action             defect detection tools, code review participants are mostly
+                                        the changes, (4) Not worth fixing the defect now and Disagreement           project members who can take full account of the code
+                                        between the developer and the reviewer are the main causes for
+                                        not resolving security defects. Conclusions: Our research results           context [11]; thus, they are in a position to identify security
+                                        demonstrate that (1) software security practices should combine             defects effectively.
+                                        manual code review with automated detection tools, achieving                   Several studies have focused on security defects detection
+                                        a more comprehensive coverage to identifying and addressing                 in code review (e.g., [12], [13], [14], [15], [8]). Bosu et
+                                        security defects, and (2) promoting appropriate standardization             al. investigated the distribution and characteristics of security
+                                        of practitioners’ behaviors during code review remains necessary
+                                        for enhancing software security.                                            defects identified by code reviewers [8], while Paul et al.
+                                           Index Terms—Code Review, Security Defect, OpenStack, Qt,                 focused on the security defects that were missed during
+                                        Empirical Study                                                             code review [14]. However, most of the research mainly
+                                                                                                                    concentrated on the identification of security defects, rather
+                                                                 I. I NTRODUCTION                                   than delving into their resolution procedures. Specifically, little
+                                           Security defects can have serious consequences, such as                  is known about the actions taken by practitioners and the
+                                        data breaches, intellectual property theft and disruption of                challenges they face when resolving identified security defects
+                                        services [1], [2]. Numerous studies have emphasized the                     in code review. Exploring these aspects could help increase the
+                                        significance of keeping software under control to reduce the                fixing rate of identified security defects during code review.
+                                        risk of exploitation [3], [4], [5]. Nevertheless, the practice                 To this end, this work aims to explore the resolution
+                                        of leaving a large number of security defects unaddressed                   of security defects through the means of code review, thus
+                                        in the production environment for extended periods of time                  contributing to develop a more comprehensive body of
+                                        and only patching them after they have been released                        knowledge on security defect detection via code review.
+                                                                                                                    We first collected 432,585 review comments from four
+                                            This work is funded by the NSFC with Grant No. 62172311 and the         active projects of two widely known communities: OpenStack
+                                        Special Fund of Hubei Luojia Laboratory. Amjed Tahir is supported by a MU
+                                        SREF grant.
+                                                                                                                    (Nova and Neutron) and Qt (Qt Base and Qt Creator).
+                                                                                                                    After a keyword-based search on these review comments,
+                                                                                                                    we manually analyzed 20,995 potential security-related
+                                        978-1-6654-5223-6/23/$31.00 ©2023 IEEE                                      comments, resulting in 614 comments that actually identified
+security defects. We then studied the types of security defects       B. Security Defect Detection in Code Review
+identified, how the practitioners treat the identified defects, and      Several studies have studied security defect detection in
+why some of them are finally unresolved in code review.               code review. For example, di Biase et al. explored the value of
+   Our findings show that: (1) security defects are not widely        modern code review for system security and investigated the
+identified in code review; (2) when faced with security               factors that can affect security testing based on the Chromium
+defects, most reviewers express their opinions on fixing them         project [14]. Thompson et al. conducted a large-scale analysis
+and provide specific solutions, which are generally agreed            of the dataset obtained from GitHub [9] and reaffirmed
+and adopted by developers; (3) Disagreement between the               the crucial relationship between code review coverage and
+developer and reviewer and Not worth fixing the defect now            software security.
+are the most frequent causes of not resolving security defects.          There is a growing interest in improving the effectiveness
+   The contributions of this work are: (1) We highlight               of security code review. Paul et al. analyzed 18 attributes of a
+the importance of manual and context-sensitive security               code review to explore factors that influence the identification
+review of code, which may reveal security defects undetected          of security defects, in order to pinpoint areas of concern and
+by automated tools. (2) We complement the datasets of                 provide targeted measures [21]. Braz et al. analyzed the impact
+previous works on the types of security defects identified            of two external assistance measures on the identification
+during code review. (3) We provide the best practices for             of security defects [22] and found that explicitly requiring
+practitioners’ behaviour in modern code review for security           practitioners to concentrate on security can greatly increase
+defects detection.                                                    the probability of finding security defects, while the further
+                                                                      provision of security checklists did not show better results.
+                                                                         Some studies qualitatively analyzed the implementation
+                      II. R ELATED W ORK                              of security defect detection in code review. Alfadel et al.
+                                                                      investigated security-related reviews in npm packages [15]
+A. Security Defect Detection                                          to analyze the proportion, types, and solutions of identified
+                                                                      security defects in these reviews. In comparison, we targeted
+   A body of research has focused on the current status of
+                                                                      different data sources and provided a more in-depth analysis,
+security defect detection across software ecosystems. Alfadel
+                                                                      which includes the causes for not resolving security defects
+et al. discussed vulnerabilities propagation, discovery, and
+                                                                      and the actions of developers and reviewers when facing
+fixes in Python ecosystem [6]. It was found that most exposed
+                                                                      security defects in code review; therefore providing a holistic
+security defects were not being fixed in a timely manner. A
+                                                                      understanding of the current status of security code review.
+similar study of npm packages demonstrated that delays in
+                                                                      Motivated by these related works, we aim to bridge the
+fixing security defects were often caused by the fact that the
+                                                                      knowledge gap with a view to inspire new research directions
+fix was bundled with other features and did not receive the
+                                                                      and enhance the effectiveness of detecting security defects.
+necessary prioritization [16]. Lin et al. investigated the security
+defect management in Debian and Fedora ecosystems [17],                                   III. M ETHODOLOGY
+and found that over 50% of security defects fixes in Linux
+distributions can be integrated within one week. Our work             A. Research Questions
+differs from the aforementioned studies in that the security             The goal of this study is to examine the implementation
+defects discussed in these works are publicly disclosed, while        of security defect detection in code review. Specially, we
+in our work we focused on security defects that practitioners         analyzed review comments to investigate how security defects
+may notice during their daily coding activities (but may not          are identified, discussed, and resolved by reviewers and
+have been already disclosed).                                         developers. To achieve this goal, we formulated the following
+   Security defects can be detected through automated                 Research Questions (RQs):
+approaches or manually. Tudela et al. utilized hybrid analysis        RQ1: What types of security defects are identified in code
+to detect the OWASP Top Ten security vulnerabilities and              reviews?
+discussed the performance of different tool combinations [18].        Previous studies have explored the distribution of security
+Singh et al. compared the difference in automated (belong             defects found in code reviews [8], [14], [15], [23]. However,
+to DAST) and manual approaches for penetration testing,               those studies have largely focused on specific systems and
+indicating that humans can locate security defects missed             the types of security defects may vary in different systems,
+by automated scanners [19]. Osterweil et al. formulated               warranting additional research encompassing diverse projects
+a framework using IAST to improve human-intensive                     to establish more general findings [14]. Driven by this, RQ1
+approaches in security defect detection and proved its                investigates the frequency of each security defect type within
+effectiveness [20]. Inspired by the above-mentioned studies,          the OpenStack and Qt communities, aiming to complement
+we were motivated to explore an effective human-intensive             the findings from existing studies.
+practice for detecting security defects, i.e., code review, and       RQ2: How do developers and reviewers treat security defects
+pave the way for further integrating automated tools into the         identified in code reviews?
+code review process.                                                  Given that strict reviewing criteria were mostly abandoned
+in modern code review [24], it is necessary to establish a         traceable code review tool - Gerrit7 . Gerrit offers on-demand
+good understanding of the current practices employed by            tracking of the review process [26]. The projects from the two
+practitioners and how they influence the quality of security       communities have been widely used in previous code review
+code review, so as to capture the undesirable behaviors            studies (e.g., [27], [28], [29], [30]). Similar to Hirao et al. [31],
+and formulate corresponding suggestions for best practices.        we selected two active projects from OpenStack (i.e., Nova and
+This RQ aims to explore concrete actions of developers and         Neutron) and Qt (i.e., Qt Base and Qt Creator), which have
+reviewers after security defects were identified. Answering        the highest number of patches.
+this RQ helps to better understand the resolution process              2) Review Comments Collection: Using the RESTful API
+and the extent to which manual security defect detection           provided by Gerrit, we obtained a total of 432,585 review
+is implemented in code review. In addition, the common             comments from the four projects (166,237 review comments
+solutions of each security defect type extracted from the          from OpenStack and 266,348 from Qt) spanning from January
+changed source code can be used to support developers in           2017 to June 2022, the time when we started this work.
+addressing security defects in the future. This RQ is further      Considering that our study aims to analyze the practices of
+decomposed into four sub-RQs:                                      developers and reviewers when dealing with security defects,
+   RQ2.1: What actions do reviewers suggest to resolve             any comments made by bots should be excluded. Hence, we
+security defects?                                                  filtered out the review comments of which the author is a
+   RQ2.2: What actions do developers take to resolve security      bot account (i.e., “Zuul” in OpenStack and “Qt Sanity Bot”
+defects?                                                           in Qt). We also removed review comments in files that do
+   RQ2.3: What is the relationship between the actions             not correspond to any programming language or are clearly
+suggested by reviewers and those taken by developers?              outside the scope of code review, by checking the filename
+   RQ2.4: What are the common solutions to each security           extension (e.g., “.orig” and “.svg”).
+defect type identified in code reviews?                                3) Potential Security-related Comments Collection: We
+RQ3: What are the causes for developers not resolving the          employed a keyword-based search approach to identify
+identified security defects?                                       security-related review comments We adopted the keyword
+In some cases, security defects are identified by reviewers but    set proposed in Paul et al.’s work [21], as it is considered
+not ultimately resolved by developers. However, little research    the most comprehensive keyword set in previous research,
+has been conducted to understand the reasons behind these          with the largest number of types and keywords. The set
+cases, which could shed light on potential obstacles developers    includes 103 keywords, which were classified into 11 security
+encounter and help in facilitating the resolution of identified    defect types and an extra Common Keywords type, with
+security defects. As a result, RQ3 explores potential causes of    each security defect type containing Common Weakness
+why some defects are not fixed, with the objective of filling      Enumerations (CWEs) [32] to clarify its definition. After
+this gap and providing valuable insights.                          thoroughly analyzing the keyword set proposed by Paul et
+                                                                   al. [21], we made the following adjustments to the set:
+B. Data Collection                                                     First, we adapted parts of the types of security defect and
+   The data collection, labelling, extraction, and analysis        corresponding keywords. For example, we split Denial of
+process is described below (an overview is shown in Fig. 1).       Service (DoS) from the Denial of Service (DoS) / Crash type
+   1) Projects Selection: This study analyzes security defects     defined in Paul et al.’s work [21], since we considered DoS
+in code reviews collected from four projects of two                as one clear security defect type based on its definition in
+communities: Nova1 and Neutron2 from OpenStack3 , and Qt           CWEs. The keywords relevant to DoS were also separated
+Base4 and Qt Creator5 from Qt6 . These two communities             and reclassified into the new DoS type.
+are selected based on the following two criteria [25]: 1)              Second, we collected differentiated keywords and security
+Reviewing Policy - the community has established a strong          defect types from previous studies [14], [23] and extended
+review process, and 2) Traceability - the review process of the    the keyword set obtained from the last step. One additional
+community should be traceable.                                     security defect type was added (i.e., the Command Injection
+   OpenStack is a platform that builds and manages public or       type [23]). Moreover, another one additional security defect
+private cloud, with a set of projects responsible for processing   type was created since part of keywords from [14] could
+different core cloud computing services. Qt is a cross-platform    not be mapped into the existing keyword set (i.e., Use After
+application for creating GUI applications. We deemed these         Free was created to include “use-after-free” and “dynamic”
+two communities to be appropriate for our study as they have       based on the definition of CWEs). 19 differentiated keywords
+a large number of code reviews, which are performed using a        collected from previous studies were assigned to specific types
+                                                                   (including Common Keywords) according to their meanings,
+  1 https://github.com/openstack/nova
+  2 https://github.com/openstack/neutron
+                                                                   (e.g., adding “crypto” to the Encrypt type).
+  3 https://www.openstack.org/                                         After that, the initial keyword set of our study was
+  4 https://github.com/qt/qtbase                                   formulated and presented in Table I. We ultimately obtained
+  5 https://github.com/qt-creator/qt-creator
+  6 https://www.qt.io/                                               7 https://www.gerritcodereview.com/
+                                                              4
+                                                              Build a Set of Keywords
+ OpenStack and Qt                                                                                             Pilot Data   Formal Data     Open Coding &      Negotiated
+                  Python Scripts                                                                                                         Constant Comparative Agreement
+   Communities                                                                                                Labelling     Labelling
+                                                                           Refine
+   1                               2                          3                            5       5           6                              7
+    Crawl Review Comments          Remove Robot Comments       Remove Out-of-Scope         Conduct Keyword-     Label Security-Related            Extract and Analyze
+                                                                   Comments                  based Search             Comments                        Comments
+
+
+
+
+                                           Fig. 1.   An overview of our data acquisition, processing and analysis process
+
+
+
+122 keywords, which were categorized into 15 security defect                            code to determine and label whether they are actually security-
+types and the Common Keywords type. To explicitly illustrate                            related. We defined the labelling criteria, i.e., the review
+our adjustments, the sources of each type are presented, and                            comment should be clearly related to security and meet the
+newly added keywords compared to the keywords from Paul                                 definition of one of the CWEs [32] presented in Table I. Aimed
+et al.’s work [21] are emphasized in italics.                                           at ensuring consistency and improving inter-rater reliability, a
+   Given that the effectiveness of the keyword-based approach                           pilot labelling was independently conducted by the first and
+heavily depends on the set of keywords used, we followed the                            second authors on 200 potential security-related comments
+approach proposed by Bosu et al. [8] to refine the initial set                          randomly selected from the Nova project. The labelling results
+of keywords, which includes the following steps:                                        were compared and the level of agreement between the
+  1) build a corpus by searching for review comments                                    two authors was measured using Cohen’s Kappa coefficient
+      that contain at least one keyword of our initial set                              test [35]. For review comments in which the judgements of two
+      of keywords (e.g., “racy”, “overflow”) in the review                              raters differ, they were reviewed, evaluated, and discussed with
+      comments collected in Section III-B2.                                             the third author until a consensus was reached. The calculated
+  2) perform tokenization to each document on the corpus.                               Cohen’s Kappa coefficient is 0.87, thus indicating that the two
+      Considering code snippets contained in review comments,                           authors reached a high level of agreement. The first author
+      we also applied the identifier splitting rules in this                            proceeded to label all the remaining potential security-related
+      progress (e.g., “FlavorImageConflict” becomes “Flavor                             comments, and the review comments that the first author was
+      Image Conflict”, security_group becomes “security                                 unsure were discussed with the second author to reach a
+      group”).                                                                          consensus. This process led to the identification of a total of
+  3) remove stopwords, punctuations, and numbers from the                               614 security-related review comments for further analysis
+      corpus and convert all tokens into lowercase.                                     and the distribution of data points across the four projects is
+  4) use SnowballStemmer from the NLTK toolkit [33] to                                  presented in Table II:
+      obtain the stem of each token (e.g., “merged”, “merging”,                         D. Data Extraction and Analysis
+      and “merges” have the same token “merg”).                                            A set of data items (see Table III) was formulated and
+  5) create a Document-Term matrix [34] from the corpus                                 extracted from the contextual information of each of the
+      and identify the additional words that frequently co-                             614 security-related comments, including their corresponding
+      occur with each of our initial keywords (co-occurrence                            discussion thread and source code, to answer our RQs.
+      probability of 0.05 in the same document, as also utilized                           1) RQ1: We classified 614 security-related review
+      in [8]).                                                                          comments into 15 security defect types predefined in Table I.
+  6) manually analyze the additional words to determine                                 Based on this table, for each review comment, we identified
+      whether to include them into the initial keyword set.                             the CWE corresponding to the issue described in the
+   No additional words were found that co-occurred with                                 comment, and categorized the comment under the security
+any one of the initial keywords. Therefore, we were of the                              defect type to which that CWE belongs. As shown in the
+opinion that the present keyword set is adequate for supporting                         example below, the reviewer pointed out that the calculation
+keywords-based search and filtering. After that, a script was                           of pos+n may overflow and lead to undefined behavior,
+developed to search for code review comments that contain at                            which is consistent with the description of CWE-109, that is
+least one of the keywords identified in Table I. All these steps                        “The software performs a calculation that can produce an
+led to 20,995 review comments from the four projects, which                             integer overflow or wraparound, when the logic assumes that
+is called potential security-related review comments.                                   the resulting value will always be larger than the original
+                                                                                        value”, hence is labelled as Integer Overflow.
+C. Manual Labelling
+                                                                                        Link: http://alturl.com/td7ej
+  The 20,995 potential security-related review comments                                 Project: Qt Base
+                                                                                        Type: Integer overflow
+obtained from the previous step may contain many false                                  Reviewer: This is UB when pos + n overflows...
+positives. Hence, we manually inspected the content of these                            Developer: Done
+comments, their corresponding discussions, and related source
+                                                                     TABLE I
+                                           K EYWORDS TO MINE CODE REVIEWS THAT IDENTIFY SECURITY DEFECTS
+
+   Security Defect Type            Source                    CWE ID                    Keywords*
+   Race Condition                   [21]                     362-364, 366-368          race, racy
+   Crash                           Adapted from [21]         248, 754, 755             crash, exception
+   Resource Leak                   Adapted from [21]         401, 404                  leak
+   Integer Overflow                 [21]                     190, 191, 680             integer, overflow, signedness, widthness, underflow
+   Improper Access                  [21]                     22, 264, 269, 276, 281-   improper, unauthenticated, gain access, permission, hijack, authenticate, privilege,
+                                                             290                       forensic, hacker, root, URL, form, field, sensitive
+   Buffer Overflow                  [21]                     120-127                   buffer, overflow, stack, strcpy, strcat, strtok, gets, makepath, splitpath, heap, strlen,
+                                                                                       out of memory
+   Denial of Service (DoS)         Adapted from [21]         400, 402, 403, 405-406    denial service, dos, ddos
+   Deadlock                         [21]                     833                       deadlock
+   Encryption                       [21]                     310, 311, 320-327         encrypt, decrypt, password, cipher, trust, checksum, nonce, salt, crypto, mismatch
+   Cross Site Scripting (XSS)       [21]                     79-87                     cross site, CSS, XSS, malform, htmlspecialchar
+   Use After Free                  Created in this work      416                       use-after-free, dynamic
+   Command Injection                [23]                     77-78, 88                 command, exec
+   Cross Site Request Forgery       [21]                     352                       cross site, request forgery, CSRF, XSRF, forged, cookie, xhttp
+   Format String                    [21]                     134                       format, string, printf, scanf, sanitize
+   SQL Injection                    [21]                     89                        SQL, SQLI, injection, ondelete
+   Common Keywords                  [21]                     -                         security, vulnerability, vulnerable, hole, exploit, attack, bypass, backdoor, threat,
+                                                                                       expose, breach, violate, fatal, blacklist, overrun, insecure, scare, scary, conflict, trojan,
+                                                                                       firewall, spyware, adware, virus, ransom, malware, malicious, risk, dangling, unsafe,
+                                                                                       steal, worm, phishing, cve, cwe, collusion, covert, mitm, sniffer, quarantine, scam,
+                                                                                       spam, spoof, tamper, zombie, cast, xml
+   * Most of the keywords in this list are adopted from the prior study of Paul et al. [21]. The keywords in italic are our additions to this list.
+
+
+
+
+                          TABLE II                                                         We inspected the discussion and the follow-up submitted
+K EYWORDS TO MINE CODE REVIEWS THAT IDENTIFY SECURITY DEFECTS                           code to determine whether a security defect has been resolved.
+    Project     Comments        Potential Security-related      Security-related        A security defect was considered resolved only when the
+    Neutron       56,846                  3,289                        88               situation meets the following three possible categories:
+     Nova        109,391                  7,677                       192
+    Qt Base      170,820                  7,677                       241                 1) Code is modified in the subsequent patchsets by the
+   Qt Creator     95,528                  2,352                        93                     developer to resolve the security defect before the code
+     Total       432,585                  20,995                      614
+                                                                                              change is merged.
+                                                                                          2) Developer mentioned clearly in the reply to comments
+   2) RQ2: We categorized the actions suggested by reviewers                                  that the security defect has been fixed in another code
+into three categories with reference to what was formulated by                                change.
+Tahir et al. in [36], [37].                                                               3) The code change with the security defect was abandoned.
+  1) Fix: recommend fixing the security defect.                                               As insecure code is not merged, it would not pose a
+  2) Capture: detect the security defect, but do not provide                                  harmful threat to the source code base.
+      any further guidance.                                                                As shown in Fig. 2, the developer added an assert
+  3) Ignore: recommend ignoring the security defect.                                    statement to check the buffer size in Line 70 of
+   Confronted with review comments posted by reviewers,                                 tst\_qlocalsocket.cpp in patchset 5 to fix the buffer
+there are three possible behaviors for developers:                                      overflow, thus we can confirm that the security defect identified
+  1) Resolve: The developer resolved the security defect                                in this review comment was resolved.
+      identified by the reviewer.                                                          Employing the open coding and constant comparative
+  2) Not resolve: The developer ignored the security defect                             method [38], we used MAXQDA8 as the coding tool and
+      identified by the reviewer.                                                       extracted the solutions developers adopted from the specific
+  3) Unknown: We are unable to determine the behavior of                                code modification for fixing security defects in resolved
+      the developer.                                                                    instances, so as to investigate the common solutions of each
+                                                                                        security defect types.
+   We defined Unknown to describe the case that the developer
+                                                                                           3) RQ3: To further understand why unresolved security
+responds to the reviewer with a promise to fix the security
+                                                                                        defects were ultimately ignored by practitioners, we also
+defect in the future, but we could not obtain specific resolution
+                                                                                        utilized the open coding and constant comparative method [38]
+evidence from the source code due to the overwhelming
+                                                                                        to examine the discussions between developers and reviewers.
+amount of manual inspection of unlimited commits. An
+                                                                                           For the purpose of minimizing bias, this data extraction was
+example of such a case is shown below:
+                                                                                        performed by the first author and verified by two other co-
+Link: http://alturl.com/8g2p9                                                           authors. Any conflicts were discussed and addressed by the
+Project: Nova
+Type: Buffer overflow                                                                   three authors, using a negotiated agreement approach [39]. The
+Developer: ...In a future patch that adds the                                           complete extraction results in this step is available online [40].
+    ability to configure the executor type, we will
+    need to deal with the issue you raise here.                                            8 https://www.maxqda.com/
+                                           Fig. 2. An example of adding an assert statement to fix buffer overflow.
+
+
+
+                             TABLE III                                                                         TABLE IV
+       DATA I TEMS TO BE E XTRACTED FROM R EVIEW C OMMENTS                            F REQUENCY OF EACH ROLE THAT IDENTIFIED THE SECURITY DEFECTS
+
+ Data Item          Description                                             RQ        Who Identified the Security Defect   Number       Percentage
+ Security-Related   Whether the review comment is security-related.         RQ1       Reviewer                             539          87.8%
+ Security Defect    The type of the identified security defect.             RQ1       Developer                            75           12.2%
+ Reviewer’s         The action suggested by the reviewer to cope with the             Total                                614          100.0%
+                                                                            RQ2.1
+ Action             security defect.
+ Developer’s        The action adopted by the developer to cope with the    RQ2.2,
+ Action             security defect.                                        RQ2.3                                 TABLE V
+                    The final coding solution adopted to fix the security
+ Solution                                                                   RQ2.2                 F REQUENCY OF EACH SECURITY DEFECT TYPES
+                    defect.
+                    Relationship between the solution adopted by the
+ Relationship                                                               RQ2.3     Security Defect Type                 Number       Percentage
+                    developer and the solution suggested by the reviewer.
+ Resolution         The location of code modification for resolving the               Race Condition                       210          39.0%
+                                                                            RQ2.4     Crash                                123          22.8%
+ Evidence           security defect.
+ Cause              The cause of not resolving the security defect.         RQ3       Resource Leak                        59           10.9%
+                                                                                      Integer Overflow                     41           7.6%
+                                                                                      Improper Access                      31           5.8%
+                                                                                      Buffer Overflow                      24           4.5%
+                             IV. R ESULTS                                             Denial of Service (DoS)              12           2.2%
+                                                                                      Deadlock                             11           2.0%
+A. RQ1: Category of Security Defects Identified in Code                               Encryption                           9            1.7%
+                                                                                      Cross Site Script (XSS)              8            1.5%
+Reviews                                                                               Use After Free                       8            1.5%
+                                                                                      Command Injection                    1            0.2%
+As explained in Section III-C, 614 review comments were                               Cross Site Request Forgery           1            0.2%
+identified as security-related comments, which account for less                       Format String                        1            0.2%
+                                                                                      SQL Injection                        0            0.0%
+than 1% of all comments in code reviews. As detailed in                               Total                                539          100.0%
+Table IV, the majority of security defects (539 out of 614,
+87.8%) were identified by reviewers, which is considerably
+more than those raised by developers. Therefore this study is                        B. RQ2: Treatment of Security Defects by Developers and
+based on 539 security-related review comments that meet the                          Reviewers
+former case. As described in Section III, we have predefined
+15 types of security defects with their distribution (see                            RQ2.1: Table VI shows that over half of the reviewers (290
+Table V). On the whole, we found that Race Condition is                              out of 539, 53.8%) expected developers to fix the identified
+the most frequently identified type and was discussed in as                          security defects. A large portion (251 out of 290, 86.6%) of
+many as 39.0% of instances. The second and third most                                these cases include specific solutions to assist developers in
+frequently identified types are Crash and Resource Leak,                             resolution, which may provide suggestions or even detailed
+accounting for 22.8% and 10.9%, respectively. There are 41                           code snippets for resolving the defects. Below is an example
+(7.6%) review comments identified Integer Overflow, followed                         where the reviewer recommended that the developer should
+by Improper Access with 31 (5.8%) instances. As can be seen                          add verification logic to avoid the Buffer Overflow defect.
+in Table V, there are also nine types that were identified on                        Link: http://alturl.com/tk8t9
+rare occasions with proportions lower than 5%. Although SQL                          Project: Qt Base
+                                                                                     Type: Buffer Overflow
+Injection is a common network attack and listed as the top 10                        Reviewer: you should verify that this matches
+web application security risks by the Open Web Application                                   chunkSize,otherwise the buffer may overflow.
+Security Project (OWASP) in the past 15 years [41], no
+instance of this type was found in this study.                                         Only 13.4% (39 out of 290) of those fixes asserted that the
+                                                                                     defect needed to be fixed, without any guiding solutions. For
+ RQ1 summary: Security defects are not prevalently                                   example:
+ discussed in code review, with the proportion less than 1%.
+                                                                                     Link: http://alturl.com/783po
+ Of those security-related review comments, a considerable                           Project: Qt Base
+ amount of review comments detected the security defects                             Type: Integer Overflow
+ race condition (39.0%), crash (22.8%), and resource leak                            Reviewer: This could overflow too...You’ll need to
+                                                                                            fix it otherwise the commit won’t integrate.
+ (10.9%).
+                         TABLE VI                                    When reviewers provide a clear idea for fixing the identified
+ACTIONS SUGGESTED BY REVIEWERS TO COPE WITH SECURITY DEFECTS         security defects with specific solutions (Fix with a specific
+ Reviewers’ Actions                          Number     Percentage   solution), the fix rate by developers reaches 81.3% (204 out
+ Fix with a Specific Solution                251        46.6%        of 251). When reviewers only point out that fixing is needed
+ Fix without a Specific Solution             39         7.2%
+ Capture                                     210        39.0%        but do not offer any guidance (Fix without a specific solution),
+ Ignore                                      39         7.2%         developers choose to address these defects in 61.5% (24 out
+ Total                                       539        100.0%
+                                                                     of 39) of the cases. Furthermore, when reviewers indicate
+                                                                     the existence of security defects without further instructions
+                         TABLE VII                                   (Capture), only 59.5% (125 out of 210) of these issues
+  ACTIONS TAKEN BY DEVELOPERS TO COPE WITH SECURITY DEFECTS
+                                                                     are fixed. Based on our findings, it can be speculated that
+ Developers’ Actions                         Number     Percentage   reviewers’ suggestions that include guidance in code review,
+ Resolve                                     355        65.9%        such as whether and how to resolve defects, are crucial to
+ Not Resolve                                 161        29.9%
+ Unknown                                     23         4.2%         improving the overall fix rate of identified security defects.
+ Total                                       539        100.0%       As shown in Fig. 3, for the instances in which the actions
+                                                                     suggested by reviewers are the Fix type, 78.6% (228 out
+                                                                     of 290) of developers fixed the identified security defects.
+   There are also 210 (39.0%) cases where reviewers only             For the instances in which reviewers suggested ignoring the
+identified security defects without indicating the next step that    defects, nearly all (36 out of 39, 92.3%) developers ignored
+the developer should follow, which fall under the definition         the defects. Overall, it can be concluded that the majority
+of Capture type. Besides that, there were a few reviewers (39,       of developers tend to agree with reviewers’ opinions when
+7.2%) who explicitly suggested ignoring the identified security      the reviewers express clear perspectives on defect handling.
+defects for various reasons, such as the issues not worth fixing.    Hence, the participation and enthusiasm of reviewers are
+RQ2.2: We inspected the discussion and subsequent patchsets          crucial for detecting security defects during code review.
+to determine whether a security defect was fixed finally. As
+shown in Table VII, developers chose to fix the identified
+security defect more often, accounting for 65.9%. The actions
+developers took to each security issue are presented in
+Table VIII. The overall result is that almost every type of
+security defect has a fix rate upwards of 50.0%, except for
+Deadlock, as low as 36.4%. As analyzed in RQ1, defects of
+type Race Condition, Crash, and Resource Leak are the top
+three frequently identified security defects. As demonstrated in
+Table VIII, these types of security defect are also frequently
+addressed by developers in code reviews with fix rates of
+                                                                                                                                   Resolve, 2
+64.3%, 71.5%, and 79.7%, respectively. In addition to the
+                                                                                                         Not Resolve, 12
+top three types of security defects, there are another 11                           Unknown, 10
+                                                                                                           Unknown, 3              Unknown, 1
+
+security defect types from “Integer Overflow” to “Format
+String”, totalling 147, and the fixing rate of these 11 types
+is comparatively low, at 57.8% (85 out of 147).                      Fig. 3. The treemap of relationship between the action developers taken and
+                                                                     the action reviewers suggested
+RQ2.3: The relationship between the action developers took
+and the action reviewers suggested is illustrated in Fig. 3.         RQ2.4: The coding solutions adopted by developers to resolve
+                                                                     different security defects are further investigated and presented
+                                                                     in Table IX. In order to make the sample size large enough
+                          TABLE VIII                                 to ensure the credibility of the conclusions, we only selected
+ D EVELOPERS ’ RESOLUTION RATE FOR EACH SECURITY DEFECT TYPES
+                                                                     the top three security defects based on their prevalence for
+  Security Defect Type             Reviews    Resolve   Percentage   analysis, i.e., Race Conditions, Crash, and Resource Leak.
+  Race Condition                   210        135       64.3%
+  Crash                            123        88        71.5%           In terms of Race Condition, the most common approach
+  Resource Leak                    59         47        79.7%        adopted by developers is to take thread-safety measures.
+  Integer Overflow                 41         26        63.4%
+  Improper Access                  31         17        54.8%        These measures include using thread-safe functions, such
+  Buffer Overflow                  24         14        58.3%        as atomic operations, the invokeMethod function, or
+  Denial of Service (DoS)          12         6         50.0%
+  Deadlock                         11         4         36.4%        synchronization functions that utilize signals and slots (e.g.,
+  Encryption                       9          5         55.6%        QFutureWatcher in Qt). They also employed custom logic
+  Cross Site Script (XSS)          8          4         50.0%
+  Use After Free                   8          6         75.0%        when working with resources, including measures such as
+  Command Injection                1          1         100.0%       adding locks, usage limitations, and updating before usage
+  Cross Site Request Forgery       1          1         100.0%
+  Format String                    1          1         100.0%       to ensure consistency. Code refactoring is also an important
+  Total                            539        355       65.9%        solution for Race Condition, with 33 instances. A few
+                           TABLE IX                                 C. RQ3: Causes of Not Resolving Security Defects
+T HE SOLUTIONS OF THE TOP THREE MOST FREQUENT SECURITY DEFECT
+                                TYPES                               According to the aforementioned result of RQ2.2, there are
+                                                                    161 instances where the identified security defects were not
+ Type              Solution                                Number
+                   Take thread-safety measures             55
+                                                                    resolved. By manually inspecting the discussion for each
+ Race Condition
+                   Code refactoring                        33       review comments, we excluded 64 (39.8%) review comments
+                   Concurrency management                  9
+                   Handle side effects                     7
+                                                                    neither developers nor reviewers involved in these instances
+                   Code refactoring                        30       clearly indicate the causes for ignoring the identified security
+                   Add condition check to avoid crash      26
+ Crash             Capture exceptions by try/catch block   13
+                                                                    defects, leaving us with 97 instances (60.2%) for further
+                   Safely terminate execution in advance   6        analysis. The statistical results of the remaining instances can
+                   Use safe functions                      4
+                   Add release function                    20
+                                                                    be found in Table X, and six causes were then identified.
+                   Use resource-management techniques      9           Nearly half of (44, 45.4%) unresolved security defects
+ Resource Leak     Reduce usage of resource                8        are because either developers or reviewers think it is Not
+                   Code refactoring                        4
+                   Handle side effect                      2        worth fixing the defect now, which is the most common
+                                                                    cause of not resolving the identified security defects. From
+                                                                    the perspective of security defects, the identified security
+                                                                    defects in these cases may be harmless and acceptable for
+cases adopted concurrency management, which includes
+                                                                    developers, or the occurrence scenarios of security defects
+passing messages between threads and adding wait functions.
+                                                                    are so tricky that they will not become system hazards under
+Additionally, 7 developers solved the issue by handling side
+                                                                    normal utilization. It may also be because that there are other
+effects, which means dealing with the consequences of Race
+                                                                    security defects in the code that will have a greater impact,
+Conditions indirectly, such as capturing exceptions.
+                                                                    and those currently found are negligible comparatively. On the
+   In the instances of Crash, there are five possible solutions.    developer side, fixes might cost too much effort and require
+Code refactoring and adding condition check are the two             tons of changes. If existing solutions had other adverse effects
+main solutions adopted by developers to fix the Crash defects.      on the system and were irreconcilable, developers would also
+In 13 review comments, developers captured exceptions by            choose to ignore the identified defects in light of the benefit
+try/catch block to avoid Crash. Furthermore, 6 developers           of current code changes. In addition, some developers noted
+safely terminated execution in advance to prevent damage            that the resolutions for identified security defects were not
+caused by an abrupt Crash, and a specific example of this           an immediate concern and could be considered in the future.
+case is to add an assert statement to immediately trigger an        Two examples corresponding to the above two situations are
+exception and terminate the execution of the program, if a          presented below, the cruxes has been emphasized in bold:
+certain condition or constraint is not met. There are also 4
+                                                                    Link: http://alturl.com/hm4o7
+cases where developers used safe functions that can eliminate       Project: Nova
+potential exceptions, thus improve the overall stability of the     Developer: after discussing it on IRC [1], we went
+program and minimize the likelihood of crashing.                        on a consensus that it’s acceptable to remove
+                                                                        the VIF from the metadata since the NIC on the
+   Approximately half of Resource Leak defects are fixed by             VM already detached, even if the Neutron action
+adding resource release functions, where developers may                 could potentially fail.
+explicitly close resources or prevent skipping of the deletion
+function through modification in code logic. 9 developers           Link: http://alturl.com/xcb6n
+                                                                    Project: Qt Base
+also used resource-management techniques, such as smart             Developer: I’ll leave it as it is - otherwise I’ll
+pointers, Resource Acquisition Is Initialization (RAII), or             have to change the example too much and write
+bridge technologies during fixing. Additionally, 8 developers           tons of code obscuring the real example.
+reduced resource allocation to avoid leaks through converting         We attribute Disagreement between the developer and the
+to passing by reference, transferring resource ownership and so     reviewer to be the reason why developers do not resolve the
+on. Only 4 cases involve code refactoring as a solution, while      security defects in 33 review comments (34.0%). In these
+just 2 cases addressed the security defects through handling        cases, some developers could not comprehensively understand
+side effects, as previously mentioned.                              reviewers’ opinions, while others indicated that the identified
+                                                                    security defects did not exist. Furthermore, some developers
+ RQ2 summary: 53.8% of the reviewers indicated a need               believed that fixing was unnecessary or the solution was
+ to fix the identified security defects after their detection,      unreasonable. In the following example, the developer objected
+ and most of them were willing to provide specific solutions        to the reviewer’s suggestion to control traffic by adding a
+ for developers to fix the defects. From the developers’            security group, asserting that no modification was required.
+ perspective, majority of developers tend to agree with             Link: http://alturl.com/9uwgv
+ reviewers’ suggestions, and over half of the identified            Project: Neutron
+ security defects were resolved by developers.                      Reviewer: i suspect this requires security groups.
+                                                                    Developer: Why we need this? Could you explain
+                                                                        because I don’t think we need anything here.
+                            TABLE X                                      by reviewers. This indicates that reviewers’ assessment of
+   T HE DISTRIBUTION OF CAUSES FOR IGNORING SECURITY DEFECTS             security defects is trustworthy for developers. Generally
+                       IDENTIFIED IN CODE REVIEWS
+                                                                         speaking, code review is effective in detecting and addressing
+ Cause                                                 Number   %        security defects. Although various tools (e.g., SAST, DAST,
+ Not worth fixing the defect now                       44       45.4%
+ Disagreement between the developer and the reviewer   33       34.0%    IAST) have been used in modern code review to speed up the
+ No clear solution to solve the problem                11       11.3%    review process, these tools test only based on known scenarios
+ Out of the scope of this commit                       6        6.2%
+ Think users should make correct choices               2        2.1%
+                                                                         and have limitations in test coverage, thus resulting in potential
+ Developers had no time to rework                      1        1.0%     false positives [19]. Experienced and knowledgeable code
+ Total                                                 97       100.0%   reviewers, due to their deeper understanding of code context,
+                                                                         can capture security defects which do not conform to known
+                                                                         patterns and cannot be detected by tools. Therefore, automated
+   Due to the lack of knowledge or limitation by other system
+                                                                         tools and code review, as two significant approaches of
+logic, 11.3% of identified security defects were ignored for the
+                                                                         security defect detection, need to complement each other. We
+reason that practitioners had no effective solution to thoroughly
+                                                                         recommend a two-step detection mechanism that combines the
+resolve the defects, and below is an example of this case:
+                                                                         two approaches: tools to conduct scalable and fast security
+Link: http://alturl.com/t5paz                                            defect detection as the first check, and then the reviewers to
+Project: Qt Creator
+Reviewer: ...If you are not happy with a crash you
+                                                                         conduct code review referring to the detection results of the
+    can add a check against 0. This will avoid the                       tool. During the second step, the reviewers check the results
+    crash here but I am pretty sure that it will                         generated by tools to provide developers with instructions for
+    crash sooner or later on a different location...
+                                                                         further action, and at the same time review the submitted
+   In 6.2% review comments, the reason for not resolving                 code to find defects that the tool failed to detect. This
+security defects is that the resolution is considered out of the         mechanism not only improves efficiency, but also enhances
+scope of the commit. As shown in the example below, the                  the comprehensiveness of security defect detection.
+identified security defect was historical and thus orthogonal            The characteristics of the project can affect the type and
+with the feature of this commit. Accordingly, the developers             quantity of security defects found in it. We found that XSS
+reckoned that those defects should wait to be resolved in                (Cross-Site Scripting) and SQL Injection are less discussed
+specific logic changes in the future, rather than now.                   during code review, which is consistent with the findings
+                                                                         of Paul et al. [21], but contrary to the results of di Biase
+Link: http://alturl.com/joasw                                            et al. [14], which demonstrated that XSS was a frequently
+Project: Nova
+Developer: ...I think that the multi-attach problem                      identified security defect with a relatively higher number than
+    is orthogonal and should be investigated in                          other types. The projects used in this study (Nova, Neutron,
+    another patch.                                                       Qt Base, and Qt Creator) and Paul et al.’s work (Chromium
+                                                                         OS) are the projects that provide infrastructure for higher-level
+   In addition, three occasional instances were found, in two
+                                                                         applications to run on, with less direct interaction with users’
+(2.1%) of which the developers believed that it was users’
+                                                                         inputs and outputs, while di Biase et al. selected Chromium,
+responsibility to make correct choices to guarantee the system
+                                                                         a Web browser that has multiple ways of directly interacting
+running appropriately, and no any modification was conducted
+                                                                         with users. One possible reason for this result is that the
+to the source code. While in the remaining one (1.0%), the
+                                                                         likelihood of potential input/output-related security defects
+developer clearly indicated that he/she had no time to rework
+                                                                         in core components and projects may be low. This further
+and left the reviewer to accept identified defects or directly
+                                                                         confirms that project characteristics can influence the types
+abandon the whole change.
+                                                                         and quantity of security defects that may exist in this project.
+ RQ3 summary: Generally speaking, 39.8% related                          Reviewers need to pay more attention to high-risk code
+ instances did not provide the cause of failure to resolve. Not          with the use of multi-threading or memory allocation.
+ worth fixing the defect now and Disagreement between the                Race Condition and Resource Leak related security defects are
+ developer and the reviewer are the main reasons of ignoring             frequently identified in code review. These two defect types
+ security defects.                                                       are also widely recognized as common defects in software
+                                                                         development [42], [43]. Hence, we encourage code reviewers
+                                                                         to conduct a rigorous inspection of code involving multi-
+                           V. I MPLICATIONS                              threading and memory allocation during code review, as they
+   Here we discuss several implications of the findings reported         can potentially introduce Race Condition and Resource Leak
+in this paper.                                                           defects, making them more susceptible to security risks.
+A two-step of detection mechanism is suggested to conduct                Appropriate standardization of practitioners’ behaviors
+security practices in software development. Our study found              in code review is critical for better detection of security
+that in the process of code review, the majority of reviewers            defects. In modern code review, strict reviewing criteria are
+provided useful suggestions to fix identified security defects,          not mandated [44]. We found that some developers’ and
+and developers usually agreed and adopted solutions suggested            reviewers’ actions result in ambiguity during the code review
+process. For example, some comments that identified security       et al. [8], ensuring a comprehensive set of keywords to cover
+defects were neither responded nor had corresponding code          all eligible review comments as much as possible.
+modifications. Hence, code reviews may not foster a sufficient        External Validity: We selected four projects from the
+amount of discussion [45], increasing the time and effort of       OpenStack and Qt communities (two each) as the primary
+the development process and having a negative impact on            data source of our study. However, these projects may not
+software quality. Here are several specific recommendations        fully represent the entire landscape of security defects across
+regarding standardization: (1) For security defects that remain    all software systems. This limitation poses a potential threat
+unresolved due to disagreement between developers and              to the generalizability of our results. To address this concern,
+reviewers, reviewers could further assess the risk of the          we compared and discussed with the previous studies that
+security defects. We found that the main reason for not            explored similar questions to supplement our own findings and
+resolving security defects is Disagreements between the            reduce the risk of interpretation bias.
+developer and the reviewer in which the developer did                 Construct Validity: Since this study predefined the types of
+not agree with the reviewer’s assessment, and thus decided         security defects and matched practical scenarios with security
+not to fix the security defects identified. However, due to        defect types through manual inspection, there is a potential
+the different knowledge and experience, it is likely for the       cognitive bias arising from subjective judgments. To reduce
+developer to merge risky security defects into the source          this bias, we based the classification on the security defect
+code. Hence, we suggest that when there is a disagreement,         types proposed in previous works [21] and clarified these
+reviewers should further assess the risk of identified security    security defects by CWEs, thus ensuring the concepts of each
+defects and communicate with developers if necessary. (2)          type are accurate, appropriate, and consistent throughout the
+It is preferable for developers to resolve identified security     entire research process. In addition, all the data labeling and
+defects. However, when developers decide not to address            extraction processes in this study were carried out manually,
+a security defect (possibly due to risk assessment or cost-        which introduces the possibility of subjective and potentially
+benefit considerations), they should provide clear reasons         misleading conclusions. Therefore, during the data labelling
+for this decision in the discussion. It was found that in          phase, the first and second authors conducted a pilot data
+40% of the cases, the identified security defects were left        labelling independently and reached a consensus on labelling
+unresolved, with no reasons provided. This negatively impacts      criteria through discussions. During the data extraction phase,
+adequate communication between reviewers and developers,           while the first author performed the extraction work, the
+making review details opaque and untraceable. Therefore, we        second and third authors reviewed the results to ensure the
+recommend that when a security defect was decided to be            accuracy and comprehensiveness of the data extraction results.
+left unresolved, sufficient justifications should be provided in      Reliability: We drafted a protocol outlining the detailed
+the discussion to facilitate further handling of the unresolved    procedure before conducting our study. The protocol was
+security defects. (3) Unresolved security defects should be        reviewed and confirmed by all authors to ensure the clarity
+properly documented, and the developers who decide to fix          and repeatability of the method. We also made our full dataset
+them in the future should be clearly scheduled for resolution in   available online for future replications [40].
+subsequent stages. According to the results of RQ2.2, 29.9%
+of security defects were unresolved and merged into source                              VII. C ONCLUSIONS
+codeDocumenting unresolved security defects in code review            In this work, we investigated the security defects identified
+helps to effectively track and manage them. Clearly scheduling     in code review comments. We analyzed the data from four
+unresolved security defects that developers decide to fix in       open source projects of two large communities (OpenStack
+the future can ensure they are actually resolved in a timely       and Qt) that are known for their well-established code
+manner, thus preventing them from causing damage to the            review practices. More specifically, we manually inspected
+system. Therefore, we encourage practitioners to document          20,995 review comments obtained by keyword-based search
+unresolved defects and schedule needed fixes.                      and identified 614 security-related comments. We extracted
+                                                                   the following data items from each comment: 1) the type
+                 VI. T HREATS TO VALIDITY                          of security defect, 2) the action taken by reviewers and
+                                                                   developers, 3) reasons for not resolving identified defects from
+   Internal Validity: During the data processing phase, there      these comments. Our main results are: (1) security defects are
+are comments that were either generated by bots or related to      not widely discussed in code reviews, and when discussed,
+non-review target files, which could influence the accuracy of     Race Condition and Crash security defects are the most
+the final results. We filtered these comments to mitigate bias.    frequently identified types; (2) the majority of the reviewers
+Furthermore, we employed a keyword-based search approach           express explicit fixing suggestions of the detected security
+to obtain potential security-related comments, which can lead      defects and provide specific solutions. Most of the developers
+to missing security-related comments that do not contain the       are willing to agree with reviewers’ opinions and adopt their
+exact keywords. To reduce this bias, we collected all the          proposed solutions; (3) Not worth fixing the defect now and
+keywords utilized in previous studies into the keyword list and    Disagreement between the developer and the reviewer are the
+refined the list according to the approach proposed by Bosu        main reasons for not resolving security defects.
+                               R EFERENCES                                              comprehensive framework for using iterative analysis to improve human-
+                                                                                        intensive process security: An election example,” ACM Transactions on
+ [1] R. Telang and S. Wattal, “An empirical analysis of the impact of software          Information and System Security, 2017.
+     vulnerability announcements on firm stock price,” IEEE Transactions on        [21] R. Paul, A. K. Turzo, and A. Bosu, “Why security defects go unnoticed
+     Software Engineering, vol. 33, no. 8, pp. 544–557, 2007.                           during code reviews? a case-control study of the chromium os project,”
+ [2] H. Cavusoglu, B. Mishra, and S. Raghunathan, “The effect of                        in Proceedings of the 43rd IEEE/ACM International Conference on
+     internet security breach announcements on market value: Capital                    Software Engineering (ICSE), pp. 1373–1385, IEEE, 2021.
+     market reactions for breached firms and internet security developers,”        [22] L. Braz, C. Aeberhard, G. Çalikli, and A. Bacchelli, “Less is more:
+     International Journal of Electronic Commerce, vol. 9, no. 1, pp. 70–               supporting developers in vulnerability detection during code review,”
+     104, 2004.                                                                         in Proceedings of the 44th International Conference on Software
+ [3] E. Iannone, R. Guadagni, F. Ferrucci, A. D. Lucia, and F. Palomba, “The            Engineering (ICSE), pp. 1317–1329, ACM, 2022.
+     secret life of software vulnerabilities: A large-scale empirical study,”      [23] A. Bosu and J. C. Carver, “Peer code review to prevent security
+     IEEE Transactions on Software Engineering, vol. 49, no. 01, pp. 44–63,             vulnerabilities: An empirical evaluation,” in Proceedings of the 7th
+     2022.                                                                              IEEE International Conference on Software Security and Reliability
+ [4] G. McGraw, J. H. Allen, N. Mead, R. J. Ellison, and S. Barnum,                     Companion (SERE-C), pp. 229–230, IEEE, 2013.
+     “Software security engineering: A guide for project managers,” tech.          [24] C. Sadowski, E. Söderberg, L. Church, M. Sipko, and A. Bacchelli,
+     rep., CMU/SEI, 2013.                                                               “Modern code review: a case study at google,” in Proceedings of the 40th
+ [5] S. Planning, “The economic impacts of inadequate infrastructure for                international conference on software engineering: Software engineering
+     software testing,” National Institute of Standards and Technology, vol. 1,         in practice (ICSE), pp. 181–190, ACM, 2018.
+     2002.                                                                         [25] S. McIntosh, Y. Kamei, B. Adams, and A. E. Hassan, “The impact of
+ [6] M. Alfadel, D. E. Costa, and E. Shihab, “Empirical analysis of security            code review coverage and code review participation on software quality:
+     vulnerabilities in python packages,” Empirical Software Engineering,               A case study of the qt, vtk, and itk projects,” in Proceedings of the 11th
+     vol. 28, no. 3, p. 59, 2023.                                                       Working Conference on Mining Software Repositories (MSR), pp. 192–
+ [7] GitLab, GitLab: Mapping the DevSecOps Landscape - 2022 Survey,                     201, ACM, 2014.
+     2022. https://about.gitlab.com/developer-survey/#operations.                  [26] P. Thongtanunam, S. McIntosh, A. E. Hassan, and H. Iida, “Review
+ [8] A. Bosu, J. C. Carver, M. Hafiz, P. Hilley, and D. Janni, “Identifying             participation in modern code review: An empirical study of the android,
+     the characteristics of vulnerable code changes: An empirical study,” in            qt, and openstack projects,” Empirical Software Engineering, vol. 22,
+     Proceedings of the 22nd ACM SIGSOFT international symposium on                     pp. 768–817, 2017.
+     foundations of software engineering (FSE), pp. 257–268, ACM, 2014.            [27] D. Spadini, M. Aniche, M.-A. Storey, M. Bruntink, and A. Bacchelli,
+ [9] C. Thompson and D. Wagner, “A large-scale study of modern code                     “When testing meets code review: Why and how developers review
+     review and security in open source projects,” in Proceedings of the 13th           tests,” in Proceedings of the 40th International Conference on Software
+     International Conference on Predictive Models and Data Analytics in                Engineering (ICSE), pp. 677–687, ACM, 2018.
+     Software Engineering (PROMISE), pp. 83–92, ACM, 2017.                         [28] K. Hamasaki, R. G. Kula, N. Yoshida, A. C. Cruz, K. Fujiwara, and
+[10] A. Bosu, J. C. Carver, C. Bird, J. Orbeck, and C. Chockley, “Process               H. Iida, “Who does what during a code review? datasets of oss peer
+     aspects and social dynamics of contemporary code review: Insights from             review repositories,” in Proceedings of the 10th Working Conference on
+     open source development and industrial practice at microsoft,” IEEE                Mining Software Repositories (MSR), pp. 49–52, IEEE, 2013.
+     Transactions on Software Engineering, vol. 43, no. 1, pp. 56–75, 2016.        [29] X. Han, A. Tahir, P. Liang, S. Counsell, K. Blincoe, B. Li, and
+[11] S. McConnell, Code Complete. Pearson Education, 2004.                              Y. Luo, “Code smells detection via modern code review: A study of
+[12] A. Edmundson, B. Holtkamp, E. Rivera, M. Finifter, A. Mettler,                     the openstack and qt communities,” Empirical Software Engineering,
+     and D. Wagner, “An empirical study on the effectiveness of security                vol. 27, no. 6, p. 127, 2022.
+     code review,” in Proceedings of the 5th International Symposium               [30] L. Fu, P. Liang, Z. Rasheed, Z. Li, A. Tahir, and X. Han, “Potential
+     on Engineering Secure Software and Systems (ESSoS), pp. 197–212,                   technical debt and its resolution in code reviews: An exploratory study
+     Springer, 2013.                                                                    of the openstack and qt communities,” in Proceedings of the 16th
+[13] R. Paul, “Improving the effectiveness of peer code review in identifying           ACM/IEEE International Symposium on Empirical Software Engineering
+     security defects,” in Proceedings of the 29th ACM Joint Meeting on                 and Measurement (ESEM), pp. 216–226, ACM, 2022.
+     European Software Engineering Conference and Symposium on the                 [31] T. Hirao, S. McIntosh, A. Ihara, and K. Matsumoto, “Code reviews
+     Foundations of Software Engineering (ESEC/FSE), pp. 1645–1649,                     with divergent review scores: An empirical study of the openstack and
+     ACM, 2021.                                                                         qt communities,” IEEE Transactions on Software Engineering, vol. 48,
+[14] M. di Biase, M. Bruntink, and A. Bacchelli, “A security perspective                no. 1, pp. 69–81, 2020.
+     on code review: The case of chromium,” in Proceedings of the 16th             [32] The MITRE Corporation, Common Weakness Enumeration, 2022. https:
+     IEEE International Working Conference on Source Code Analysis and                  //cwe.mitre.org/.
+     Manipulation (SCAM), pp. 21–30, IEEE, 2016.                                   [33] S. Bird, E. Klein, and E. Loper, Natural Language Processing with
+[15] M. Alfadel, N. Nagy, D. Costa, R. Abdalkareem, and E. Shihab,                      Python: Analyzing Text with the Natural Language Toolkit. O’Reilly
+     “Qualitative analysis of security-related code reviews in npm packages:            Media, 2009.
+     An empirical study,” Available at SSRN 4161317, 2022.                         [34] P.-N. Tan, M. Steinbach, and V. Kumar, Introduction to Data Mining.
+[16] B. Chinthanet, R. G. Kula, S. McIntosh, T. Ishio, A. Ihara, and                    Pearson Education India, 2016.
+     K. Matsumoto, “Lags in the release, adoption, and propagation of npm          [35] J. Cohen, “A coefficient of agreement for nominal scales,” Educational
+     vulnerability fixes,” Empirical Software Engineering, vol. 26, pp. 1–28,           and Psychological Measurement, vol. 20, no. 1, pp. 37–46, 1960.
+     2021.                                                                         [36] A. Tahir, A. Yamashita, S. Licorish, J. Dietrich, and S. Counsell, “Can
+[17] J. Lin, H. Zhang, B. Adams, and A. E. Hassan, “Vulnerability                       you tell me if it smells? a study on how developers discuss code
+     management in linux distributions: An empirical study on debian and                smells and anti-patterns in stack overflow,” in Proceedings of the 22nd
+     fedora,” Empirical Software Engineering, vol. 28, no. 2, p. 47, 2023.              International Conference on Evaluation and Assessment in Software
+[18] F. M. Tudela, J.-R. B. Higuera, J. B. Higuera, J.-A. S. Montalvo, and              Engineering (EASE), pp. 68–78, ACM, 2018.
+     M. I. Argyros, “On combining static, dynamic and interactive analysis         [37] A. Tahir, J. Dietrich, S. Counsell, S. Licorish, and A. Yamashita, “A large
+     security testing tools to improve owasp top ten security vulnerability             scale study on how developers discuss code smells and anti-pattern in
+     detection in web applications,” Applied Sciences, vol. 10, no. 24, p. 9119,        stack exchange sites,” Information and Software Technology, vol. 125,
+     2020.                                                                              p. 106333, 2020.
+[19] N. Singh, V. Meherhomji, and B. Chandavarkar, “Automated versus               [38] B. G. Glaser, “The constant comparative method of qualitative analysis,”
+     manual approach of web application penetration testing,” in Proceedings            Social Problems, vol. 12, no. 4, pp. 436–445, 1965.
+     of the 11th International Conference on Computing, Communication and          [39] J. L. Campbell, C. Quincy, J. Osserman, and O. K. Pedersen, “Coding in-
+     Networking Technologies (ICCCNT), pp. 1–6, IEEE, 2020.                             depth semistructured interviews: Problems of unitization and intercoder
+[20] L. J. Osterweil, M. Bishop, H. M. Conboy, H. Phan, B. I.                           reliability and agreement,” Sociological Methods & Research, vol. 42,
+     Simidchieva, G. S. Avrunin, L. A. Clarke, and S. Peisert, “A                       no. 3, pp. 294–320, 2013.
+[40] J. Yu, L. Fu, P. Liang, A. Tahir, and M. Shahin, Dataset of the Paper             web applications via deterministic replay,” in Proceedings of the 39th
+     “Security Issue Detection in Code Review: An Exploratory Study of                 IEEE/ACM International Conference on Software Engineering (ICSE),
+     OpenStack and Qt communities”, 2023. https://doi.org/10.5281/zenodo.              pp. 278–288, IEEE, 2017.
+     7886148.                                                                     [44] E. Shihab, A. Mockus, Y. Kamei, B. Adams, and A. E. Hassan, “High-
+[41] The OWASP® Foundation, Top 10 Web Application Security Risks in                   impact defects: a study of breakage and surprise defects,” in Proceedings
+     OWASP, 2022. https://owasp.org/www-project-top-ten/.                              of the 19th ACM SIGSOFT Symposium on the Foundations of Software
+[42] T. Wu, J. Liu, X. Deng, J. Yan, and J. Zhang, “Relda2: an effective static        Engineering and the 13th European Software Engineering Conference
+     analysis tool for resource leak detection in android apps,” in Proceedings        (ESEC/FSE), pp. 300–310, ACM, 2011.
+     of the 31st IEEE/ACM International Conference on Automated Software          [45] S. McIntosh, Y. Kamei, B. Adams, and A. E. Hassan, “An empirical
+     Engineering (ASE), pp. 762–767, IEEE, 2016.                                       study of the impact of modern code review practices on software
+[43] L. Zhang and C. Wang, “Rclassify: classifying race conditions in                  quality,” Empirical Software Engineering, vol. 21, pp. 2146–2189, 2016.
+

@@ -1,0 +1,871 @@
+                                        Measuring how changes in code readability attributes affect code
+                                                quality evaluation by Large Language Models
+                                                               Igor Regis da Silva Simões                                                 Elaine Venson
+                                                                   igor@bb.com.br                                                     elainevenson@unb.br
+                                                       Banco do Brasil / Universidade de Brasília                                    Universidade de Brasília
+                                                                    Brasília, Brazil                                                    Brasília, DF, Brazil
+                                        Abstract                                                                 the bottom-up approach, the developer starts directly from the code
+                                        Code readability is one of the main aspects of code quality, influ-      implementation [2].
+                                        enced by various properties like identifier names, comments, code           Source code can be readable and comprehensible. These two
+                                        structure, and adherence to standards. However, measuring this           characteristics are often treated as the same, but they are distinct
+arXiv:2507.05289v2 [cs.SE] 9 Jul 2025
+
+
+
+
+                                        attribute poses challenges in both industry and academia. While          textual features. Readability relates to the complexity of the pre-
+                                        static analysis tools assess attributes such as code smells and com-     sented text, while comprehensibility relates to the reader’s ability to
+                                        ment percentage, code reviews introduce an element of subjectiv-         grasp the text’s meaning. Thus, code measured as readable may still
+                                        ity. This paper explores using Large Language Models (LLMs) to           be incomprehensible to a reader lacking the necessary knowledge
+                                        evaluate code quality attributes related to its readability in a stan-   or experience to understand it [3].
+                                        dardized, reproducible, and consistent manner. We conducted a               This research focuses on two commonly studied readability at-
+                                        quasi-experiment study to measure the effects of code changes on         tributes of source code - identifier names and code comments, as
+                                        Large Language Model (LLM)s’ interpretation regarding its read-          detailed in Section 4. We do not address other artifacts that com-
+                                        ability quality attribute. Nine LLMs were tested, undergoing three       prise the software (documentation, architecture, etc.). Also, our
+                                        interventions: removing comments, replacing identifier names with        study do not cover the code understandability research area, as it
+                                        obscure names, and refactoring to remove code smells. Each in-           would require evaluating developers and their characteristics, such
+                                        tervention involved 10 batch analyses per LLM, collecting data           as seniority and familiarity with the language in which the code is
+                                        on response variability. We compared the results with a known            written [4].
+                                        reference model and tool. The results showed that all LLMs were             Low code readability is treated as a type of technical debt. Static
+                                        sensitive to the interventions, with agreement with the reference        code analysis tools aim to map violations of coding best practices
+                                        classifier being high for the original and refactored code scenarios.    to measure this debt. SonarQube classifies this type of violation as:
+                                        However, this agreement diverged for the other two interventions.        “Code Debt - Refers to problems found in the source code (violating
+                                        The LLMs demonstrated a strong semantic sensitivity that the refer-      best practices or coding rules) that negatively affect its readability
+                                        ence model did not fully capture. A thematic analysis of the LLMs’       and make it difficult to maintain.” 1 [5].
+                                        reasoning confirmed their evaluations directly reflected the nature         Low source code readability affects the industry, causing nega-
+                                        of each intervention. The models also exhibited response variability,    tive impacts over developers’ productivity [6] and job satisfaction
+                                        with 9.37% to 14.58% of executions showing a standard deviation          [7]. Many research studies have been conducted to advance the
+                                        greater than zero, indicating response oscillation, though this did      understanding of code readability metrics [8]. Several approaches
+                                        not always compromise the statistical significance of the results.       have been developed, yet none of them reach the same level of
+                                        LLMs demonstrated potential for evaluating semantic quality as-          accordance with human evaluation, showing that there is still gaps
+                                        pects, such as coherence between identifier names, comments, and         to be filled [9, 10, 11, 12, 13, 14].
+                                        documentation with code purpose. Further research is needed to              The rise of LLMs and their emergent abilities, opens up new
+                                        compare these evaluations with human assessments and explore             avenues for research. There are works investigating which code
+                                        real-world application limitations, including cost factors.              characteristics LLMs are sensitive to [15], how LLMs can be used
+                                                                                                                 to evaluate code quality [16], and how they can support personal-
+                                        Keywords                                                                 ized assessments of code readability for individual developers [17].
+                                                                                                                 These preliminary results point to the need for a better understand-
+                                        Code Quality, Code Comprehensibility, Static Analysis, Software
+                                                                                                                 ing of how LLM assess code readability.
+                                        Engineering, LLM, ChatGPT, Gemini, Llama, Claude
+                                                                                                                    In this work, we explore these issues, addressing the following
+                                        1    Introduction                                                        research questions:
+                                        Reading source code is necessary for developers to understand the           (1) Can LLMs be used to generate a metric that assesses
+                                        software’s purpose, making it a central activity in software mainte-            code quality attributes associated with readability?
+                                        nance [1]. This activity of understanding the software or program           (2) How code attributes such as identifier naming and code
+                                        can occur top-down or bottom-up. In the top-down approach, the                  comments affect readability and quality perception by
+                                        developer starts by reading documents such as requirements and                  an LLM?
+                                        architectural documents, then moves to implementation layers. In
+                                        Submitted for review, May 25,                                            1 SonarQube https://www.sonarsource.com/learn/technical-debt/#types-of-technical-
+                                        2025. https://doi.org/10.48550/arXiv.2507.05289                          debt
+Submitted for review, May 25,
+                                                                                                         Igor Regis da Silva Simões and Elaine Venson
+
+
+   (3) How can the inherent variability of LLMs affect their             These models have shown surprising results even in Zero-Shot
+       evaluation of code readability and quality?                       Learning (ZSL) approaches, where no prior examples are provided;
+   The remainder of this paper is organized as follows: Section          only a contextualization and description of the task to be performed
+3, explores the studies addressing the researched topic. Section 4,      are given in the prompt [24].
+details the method applied in this study. Section 5, presents the            Between 2017 and 2024, more than 70 different LLMs were used
+findings from each stage of the experiment. Section 6, provides a        in research, being applied to various Software Engineering tasks.
+general analysis and discussion of the results from all experiment       The most commonly used prompt engineering techniques are FSL
+stages. Limitations and future work directions are presented in          and ZSL [25].
+Section 7; and finally, the conclusion is in Section 8.                      These models’ learning abilities from a few examples are due
+                                                                         to various factors, including their number of parameters, compu-
+2 Background                                                             tational power, and the dataset used in their training. Historically,
+2.1 Code Readability, Comprehensibility and                              natural language processing (NLP) software was developed for spe-
+                                                                         cific tasks, which determined its modeling and training. These FSL
+    SAT
+                                                                         abilities, called as ‘emergent abilities’ by Wei et al. [26], have al-
+The topic of reading and understanding code has been studied for         lowed the software to be used for tasks beyond its original design.
+over 45 years [8]. This activity can occupy 30 to 70% of a developer’s   Furthermore, new LLM models have become capable of surpassing
+time [18]. According to Boehm, Brown, and Lipow [3], code read-          results considered the state of the art for specialized models [26].
+ability is a necessary characteristic for its comprehension. Codes
+measured as having low readability are identified as having low
+comprehensibility [19].                                                  3   Related work
+   Code readability and comprehensibility are intertwined concepts       This work lies at the intersection of LLMs’ and code readability and
+as readability metrics are known to affect the code comprehension.       comprehensibility. We conducted a comprehensive review of litera-
+Readability is a complex characteristic to measure due to its com-       ture exploring these intersections. Firstly, we examined automated
+position of various attributes [20, 12]. In their systematic mapping,    approaches for measuring code readability and comprehensibility.
+Wyrich, Bogner, and Wagner [8] identified the most mentioned             Secondly, we investigated how LLMs are utilized to enhance code
+code attributes, as popular themes in mapped studies related to          readability and comprehensibility. To conduct this review, we used
+code comprehension. The most cited code attribute was identifier         the results of the systematic mappings from Bexell [27], Wyrich,
+names (variable names, method names, etc.), mentioned in 16 stud-        Bogner, and Wagner [8], and Hou et al. [25].
+ies. The second most cited attribute was code comments, present in          Bexell [27] mapped 76 studies related to code readability, two of
+10 studies. These two attributes are the focus of our investigation.     which specifically address the automation of its measurement.
+   Code readability is a desired metric for developers and their            Wyrich, Bogner, and Wagner [8] mapped 95 studies on code
+managers, for optimizing the decision making. This metric can            comprehensibility, two of which study its automation, with one
+inform decisions on which code should be prioritized for testing,        being the same found in Bexell [27]’s mapping. Other studies have
+refactoring, or detailed inspection during a code review performed       also conducted some form of automation related to source code
+by a human developer [21].                                               quality [20, 10, 4].
+   Static analysis software measures some readability characteris-          Hou et al. [25] mapped 395 studies on the application of LLM in
+tics of code like adherence to the conventions of the programming        various software engineering tasks, eight of which were classified
+language in use. However, some other characteristics are measured        as "Code understanding" research. Three studies investigate or
+with limitations. Documentation is measured by its proportion            propose improvements in LLMs to enhance their performance in
+relative to the code, given as a percentage. The ability of the docu-    code-related activities, but without aiming to use LLMs for code
+mentation to facilitate code comprehension is not evaluated. Even        comprehension [28, 29, 30]. A fourth study presents a dataset for
+naming conventions for identifiers are limited to length (very short     training LLMs, demonstrating its effectiveness in improving models’
+names) and dictionary use, without evaluating the meaning of the         capabilities in code generation and comprehension tasks [31].
+identifiers’ names and its relevance to the program’s context. These        We classified the mapped studies, focusing on automated ap-
+limitations are addressed only during the code review stage and are      proaches. The studies are grouped into three main categories: (1)
+not automated [22]. An investigation about how LLMs’ react to such       Machine Learning Based Approaches and (2) Deep Learning Based
+attribute changes could unveil a path towards such automation.           Approaches.
+                                                                            Machine Learning Based Approaches: This group focuses on
+2.2     Large Language Model                                             using quantifiable metrics extracted from the source code, documen-
+Large Language Models are Artificial Intelligence models that can        tation, and developer profiles to predict or explain code comprehen-
+have hundreds of billions of parameters, trained using a large vol-      sibility. These studies often employ statistical analysis and machine
+ume of data. Commercial and open-source LLM models such as               learning techniques to identify correlations and build predictive
+ChatGPT, Gemini, Claude, and Llama use the Transformer architec-         models. Buse and Weimer [9] introduced a metric for software read-
+ture [23].                                                               ability using the average score provided by 120 human annotator
+   LLMs have a significant capacity to learn from a few examples,        to train their binary classifier. Dorn [10] also identified promising
+in an approach called Few-Shot Learning (FSL), where information         results, when compared with previous metric, on automating the
+about the task to be performed is provided in the command prompt.        measurement of code readability using also linguistic attributes
+                                                                                                                                        Submitted for review, May 25,
+Measuring how changes in code readability attributes affect code quality evaluation by Large Language Models
+
+
+(e.g., validating identifier names with English dictionaries). Fur-                      quality, but indicates the need for further studies. Hu et al. [15]
+ther work also explored lexical artifacts [11]. Scalabrino et al. [32]                   found that LLMs are highly sensitive to semantic perturbations in
+demonstrated that no single code attribute can be used to explain                        code. However, their work did not seek to develop a metric based
+code comprehensibility in isolation. Trockman et al. [33] devel-                         on this property. Vitale et al. [17] evaluated the use of LLM to
+oped a binary logistic regression model, reanalyzing the data from                       generate a personalized readability assessment, by using previous
+Scalabrino et al. [32], considering source code properties, docu-                        works’ datasets [20, 10, 12] and adopting three labels "unreadable",
+mentation, and developer profile data (e.g., experience). This study                     "readable", "neutral". They compared their LLM approach with Scal-
+highlighted the importance of combined metrics and revealed that                         abrino’s Classifier, using precision, recall and f-1 score metrics.
+code understandability would be measurable in future. Scalabrino                         Their results demonstrated that the use of LLMs for personalized
+et al. [4] investigated 121 metrics related to code, documentation,                      readability are less effective than state-of-art generalist model.
+and developers. They found weak correlations between individ-                               Studies related to code readability and comprehensibility have
+ual metrics and perceived comprehensibility. Although combining                          seen a progression from classifiers using machine learning algo-
+metrics showed some discriminatory power, the results were insuf-                        rithms [20] to NLP models [34], and more recently Deep Learning
+ficient for practical use [12]. Additionally, those studies lack the                     [37]. Current research focuses on evaluating the use of LLMs for
+evaluation of semantic aspects, such as meaning of identifier names                      evaluate code quality [16] and readability [17].
+and the meaning of the text in a comment, in relation to the code.                          Our work falls on LLM-Based Approach. The findings in this
+    Deep Learning Based Approaches: This group utilizes Natu-                            work can be used to direct further investigation towards the devel-
+ral Language Processing (NLP) and other deep learning techniques                         opment of a code readability metric, or even a more broad novel
+to analyze code and related text (e.g., comments, documentation) to                      code quality metric.
+understand code semantics and improve comprehensibility. Kanade
+et al. [34] presented CuBERT (Code Understanding BERT), achiev-                          4     Methodology
+ing superior results in various code-related tasks, with one related                     In this work, we study the response of a set of objects (nine LLMs)
+in correlating comments with code (docstring task). Shen et al. [35]                     to the same set of interventions (code interventions) into the same
+benchmarked pre-trained models (including CuBERT and Code-                               set of subjects (12 Java Classes). The tested hypothesis consider
+BERT) for identifying syntactic structures in code. They found that                      that LLMs will change its evaluation of source code accordingly to
+these models still lacked comprehensive code syntax understand-                          the interventions. There is no random selection of interventions,
+ing, achieving results inferior to simpler reference models. This                        objects, or subjects, thus we are conducting a quasi-experiment [38].
+highlights the challenges of applying NLP models to capture the                          This is a type of experiment often used in software engineering
+nuances of code syntax.                                                                  research [39].
+    Mi et al. [13] introduced the use of Convolutional Neural Net-                          Therefore, we conducted a "blocked subject-object" study, as we
+work (CNN) trained on a matrix representation of code, generated                         have nine study objects (LLMs) and 12 subjects (12 classes) that
+by its characters ASCII values, inspired by image recognition ap-                        will undergo changes (intervention) in their characteristics com-
+proaches. Their model was compared to previous ML based models                           monly related to readability and source code quality, which will be
+and achieved a slightly improved accuracy compared to the best                           measured by the LLMs [39].
+one, from Scalabrino et al. [11]. Latter Mi et al. [36] presented a                         Fakhoury et al. [40] identified that tools used to detect style prob-
+CNN trained on code representation based on three levels of infor-                       lems are able to capture readability characteristics of source code.
+mation: character-level (ASCI value), token-level (key word) and                         In their study, those type of tools demonstrated better sensibility
+node level (Abstract Syntax Tree (AST)). Their model demonstrated                        than models proposed by Scalabrino et al. [11] and Dorn [10]. The
+improved compared to previous works on readability classification,                       use of a comparison group is necessary to identify random changes
+including their previous model.                                                          on LLMs’ metric that are not caused by source code changes, but
+    Seeking for improvements Mi et al. [14] presented a novel ap-                        inherent LLM’s variability.
+proach using CNN to extract structural features from the ASCII                              We included two approaches as comparison groups [38]. One
+matrix representation of code. Also a combination of CNN and                             approach is the static analysis software SonarQube and some of its
+BERT model to generate token representation and extract semantic                         metrics. We chose this tool because it is broadly used in industry
+features from code. Finally they have used a CNN to extract visual                       and some of its metrics evaluate code style problems. The other
+features from RGB matrix generated from source code screen shots.                        comparison reference is the Scalabrino et al. [12] model, which
+Their new approach obtained the best performance compared to                             combine several source code features and had its accuracy exten-
+all previous, leading to the hypothesis that different deep learning                     sively evaluated in previous works[40, 4, 41]. Their reproducibility
+technics combined can extract unmapped readability features. They                        toolkit2 has a working software, able to automatically extract fea-
+also demonstrated that visual features contributed the least to the                      tures and perform code readability classification, without human
+readability assessment, while the structural features being the most                     intervention. This characteristic ensures that we do not introduce
+relevant.                                                                                interpretation errors when building our own version of their model.
+    LLM-Based Approaches: This group explores the use of LLMs                               Yet, according to Shadish, Cook, and Campbell [38], the use
+for code comprehension and readability. Simões and Venson [16]                           of control groups are of minimal advantage unless they are also
+investigated the use of LLMs for source code quality assessment,                         accompanied by pretest measurements taken on the same outcome
+including readability, by comparing the results with SonarQube
+analysis. Their study shows the LLM potential for evaluating code                        2 https://dibt.unimol.it/report/readability/
+Submitted for review, May 25,
+                                                                                                                      Igor Regis da Silva Simões and Elaine Venson
+
+
+variable as the posttest. So we executed a pretest, i.e, all source        the tool work with current Java syntax, we updated the AST parser
+code was evaluated by SonarQube, Scalabrino Classifier and LLMs’           library. The model combines structural and textual features. Com-
+before any code intervention, mitigating selection bias for both,          ments Readability, Textual Coherence and Number of Concepts
+source code and LLMs’, creating a baseline metric.                         are the three most important textual features for this model. That
+    The submission of the classes and their interventions to the           makes it as the right fit to evaluate the type of code interventions
+LLMs’ analyses was not randomized. The interventions conducted             we have performed, further explained in section 4.5.
+on code were not random since they were guided by the measure-                The scores obtained with this classifier will be named as Scalabrino
+ments of the control measurement tool. Also, it was not necessary          Classifier (SC). The classifier’s output is a number with 16 digits
+any randomized LLM analysis, since the LLM’s had no context                precision, which we convert to the same LLM scale (0 to 100), with
+about previous code intervention, being unable to retain this infor-       one digit precision.
+mation and compare the different states of code, which could affect
+its evaluation.                                                            4.3      Objects - Selection of LLMs
+    The LLM’s were instructed to output its evaluation similarly           We studied nine objects, which are the LLMs: ChatGPT (4o and
+to a binary classification, i.e. emit a 0 to 100 score. This approach      4o-mini), Gemini (2.0 Pro and Flash), Llama (3.1 405B and 3.1 8B),
+ensures a direct comparison with the Scalabrino Classifier. Details        Claude (3.7 Sonnet and 3.5 Haiku) and Deep Seek V3. Each of the
+about this approach are in Section 4.3.                                    first four listed LLMs has both a robust and a fast version, except
+                                                                           Deep Seek V3.
+4.1     Comparison Group - SonarQube Metrics                                  The objective is to evaluate the capability and sensitivity of
+SonarQube has a set of rules known as Code Smells. According to its        the LLMs in detecting changes in code attributes that affect its
+documentation, Code Smells are issues related to maintainability.          readability, compared to the detection made by the control tool,
+   Currently, SonarQube is replacing this definition with a more           SonarQube.
+granular one called Clean Code, which includes the following at-              There are various benchmarks for LLMs, covering a wide range
+tributes: consistency, intentionality, adaptability, and responsibility.   of applications and tasks, from general to more specific purposes
+The first two attributes relate to code readability characteristics.       [42]. This study does not aim to create or conduct a benchmark but
+   According to SonarQube’s documentation "consistent code is              rather to evaluate the performance of these models in assessing
+formatted, conventional, and identifiable" and "intentional code is        code readability.
+clear, logical, complete, and efficient".                                     However, given the constant evolution of commercial and open-
+   SonarQube also measures the percentage of documentation lines           source models, selecting models for research use becomes chal-
+relative to the code lines of a class, as well as the total number of      lenging. To select the best and most current models, we referred
+lines in the class.                                                        to the ranking on the Artificial Analysis website3 , which classifies
+   In this experiment, we manipulate code attributes that affect           models offered through rest API, based on three main comparisons:
+metrics related to its readability, which can be captured by Sonar-        Intelligence, Speed, and Price.
+Qube’s Clean Code metrics and documentation-related metrics                   In this work, we did not analyze costs, so we selected the top
+directly measured by the percentage of documentation.                      four models in quality and the top four models in speed. If a model
+   To use SonarQube as our comparison group for metrics, we                appeared in more than one criterion, we selected the next model in
+utilize Clean Code metrics and their attributes: Consistency (C),          the ranking where the duplicated model had the least affinity.
+Intentionality (I), Adaptability (A) and Responsibility (R) represent-        At the time of planning this work, the top four models in quality
+ing the number of issues detected into the analyzed source code.           and speed are the ones listed in Table 1. We did not considered the
+Higher values for (C) and (I) are supposed to reduce source code           models classified as reasoning model. The ChatGPT 4o-mini model
+readability. The percentage of comments or documentation (D),              was also ranked second by quality, but since its purpose is speed
+and the total number of lines (L) in each manipulated class as the         and it is present in the respective ranking, we removed it from the
+SonarQube’s documentation metric is a ration of the total lines of         intelligence list. Similarly Gemini 2.0 Pro ranked third on speed,
+code. We refer to all Clean Code violations as Code Smells.                but we considered it on intelligence rank only.
+                                                                              During execution of this research (between 10/2024 and 03/2025),
+                                                                           some models received updates and the Deep Seek V3model entered
+4.2     Comparison Group - Scalabrino’s Classifier
+                                                                           the rank. We decided to execute the update and to add this new
+As an approach evaluated against several datasets and also com-            model.
+pared against code style tools, with an outstanding performance,              All models were used through REST APIs from the following
+we will take Scalabrino’s classifier as our ground truth metric. It        sites: OpenAI4 , Google5 , Anthropic6 , DeepInfra7 and DeepSeek8 .
+was tested against 600 code snippets, evaluated by 5k+ people.                These models are able to learn from a few examples. This capabil-
+   The classifier provided by Scalabrino et al. [12] works as a com-       ity is due to various factors, including their number of parameters,
+mand line tool that receives either a code snippet with a Java
+method, an entire class file or a folder with any of these types.          3 Artificial Analysis https://artificialanalysis.ai/
+                                                                           4 OpenAI https://openai.com/
+Upon its execution it produces a score between 0 (surely unread-
+                                                                           5 Google AI Studio https://ai.google.dev/aistudio
+able) and 1 (surely readable), rating the code readability.                6 Anthropic https://www.anthropic.com/
+   The provided tool uses a Opens Source Software (OSS) library            7 DeepInfra https://deepinfra.com/
+
+to parse an AST. As its last update was in 2021, in order to make          8 DeepSeek https://deepseek.com
+                                                                                                                                      Submitted for review, May 25,
+Measuring how changes in code readability attributes affect code quality evaluation by Large Language Models
+
+                            Table 1: Selected models
+                                                                                             For such reason, we decided to use Java language software in this
+                                                                                         research and selected the open-source Open JDK project9 , which
+                 Model               Score Release Date Criteria
+                                                                                         refers to the fundamental libraries of the Java SDK. We selected two
+                 Gemini 2.0 Pro         49    05/02/2025   intelligence
+                 Claude 3.7 Sonnet      48    19/02/2025   intelligence
+                                                                                         classes with rich API documentation, with the intention to clearly
+                 Deep Seek V3           46    26/12/2024   intelligence                  detect the impact of a rich documentation removal from the sour
+                 ChatGPT 4o             41    13/05/2024   intelligence
+                 Llama 3.1-405B         40    23/07/2024   intelligence                  code. The two selected classes were java.util.DoubleSummaryStatistics
+                 Gemini 2.0 Flash      265    05/02/2025   speed                         and java.time.Month.
+                 Llama 3.1-8B          185    23/07/2024   speed
+                 ChatGPT 4o-mini        79    18/07/2024   speed                             Additionally, a set of demonstration classes from the JDK was
+                 Claude 3.5 Haiku       66    13/03/2024   speed                         selected. This set of classes was chosen for their less rich documenta-
+                                                                                         tion since they were written to demonstrate the language’s use. The
+                                                                                         list of selected classes is as follows: root package ../demo/share/jfc/,
+                                                                                         sub packages SampleTree, classes DynamicTreeNode, SampleData,
+computational power, and the dataset used in their training. These                       SampleTree, SampleTreeCellRenderer, SampleTreeModel, sub pack-
+FSL abilities, referred to as emergent abilities by Wei et al. [26], have                age Notepad, classes ElementTreePanel, Notepad, sub package
+enabled the software to perform tasks beyond its original design.                        Stylepad, classes HelloWorld, Stylepad and Wonderland.
+Furthermore, new LLMs have become capable of surpassing results                              The total number of original selected classes is 12, totaling 4,051
+considered the state-of-the-art for specialized models [26]. In this                     lines. Each class was used in 4 different intervention states, totaling
+work, we adopt a ZSL approach.                                                           48 classes with 14.919 lines. The number of classes and code was
+    To create the prompt that guides the LLM on how to respond to                        kept low to allow for manual interventions in the code. The main
+the assigned task, we used three patterns mapped by White et al.                         studies in this area have used the following datasets: Buse and
+[43] (Persona, Template, and Reflection). We instructed the LLM to                       Weimer [20] dataset with 100 snippets totaling 769 lines of code,
+assume a persona capable of performing the analysis with a certain                       Dorn [10] has 120 snippets totaling 3,617 lines and Scalabrino et al.
+knowledge. For this purpose, we used the passage: "The assistant is a                    [12] has 200 snippets totaling 5.140 lines. Sergeyuk et al. [41] has
+seasoned senior software engineer, with deep Java Language expertise,                    120 snippets totaling 5,533 lines.
+doing source code evaluation as part of a due diligence process, these
+source codes are presented in the form of a Java Class File. Your task                   4.5     Interventions in the algorithms
+is to emit a score from 0 to 100 based on the readability level of the                   To explore how source code attributes affect the scores assigned
+source code presented.".                                                                 by the LLMs, we perform interventions on the code, followed by
+    The LLM was requested to present an explanation for the grade,                       re-analyses by SonarQube and the LLMs. After each intervention,
+by passing guidelines on its format "- The ”explanation” attribute                       we present the results from the LLMs. Identifier naming and code
+must not surpass 450 characters and MUST NOT contain special char-                       comments are the two most studied source code attributes related
+acters or new lines.". To enable the LLM’s responses to be processed                     to code readability and comprehensibility [8]. The interventions
+via software, we requested it to follow a template for the response:                     will target these two attributes. We did not test if the changes cause
+"Your answers MUST be presented ONLY in the following json format:                       an improvement or deterioration to readability, other than compare
+”score”:”NN%”, reasoning:”your explanation about the score”". This ex-                   the results with the evaluation of comparison group.
+planation was used for debug purposes to iterate between prompts                            Intervention on code comments: In the second analysis, we identify
+improvements.                                                                            the impact of comments on SonarQube and LLM evaluations by
+    In all executions, the prompt remained unchanged. Each class                         removing the comments and re-running the analysis. All comments
+was analyzed 10 times, totaling 120 analyses and consuming about                         were removed except source code that was commented out.
+1.2 million tokens per model on each scenario. The total number of                          Intervention on variable names: In the third analysis, we alter the
+analysis for this research was 4.320 or around 43.2 million tokens.                      names of variables and methods. Good variable and method names
+The results were submitted to an analysis of the variability of the                      facilitate code comprehension. This is a widely accepted axiom by
+responses presented by each LLM. The output files of all executions,                     industry [45] and extensively investigated showing that consistent
+as well as the Python code used to perform these analyses, are                           use of descriptive names improve code readability [8, 46, 47, 11, 20].
+preserved in a GitHub repository [44].                                                      In order to emulate such an extreme intervention as the removal
+                                                                                         of all comments, we modify all variables and methods to seman-
+                                                                                         tically confusing values, such as names of vegetables and spices
+4.4     Subjects - Algorithms for analysis
+                                                                                         (potato, tomato, parsley, rosemary etc).
+The most commonly used language in studies related to code read-                            We expect SonarQube not to show changes in its evaluation,
+ability and comprehensibility is Java, with 47% of published articles.                   but the LLMs should be able to identify the confusion caused in
+Over 40 years of research, more than 88% of studies have used only                       the code, impacting the score. Class names are preserved to allow
+one programming language in their investigations. The most com-                          comparison of results, as well as overridden methods.
+mon approaches for obtaining code snippets for readability studies                          Intervention on Code Smells: In the fourth analysis, we fix all
+were: (1) code produced by researchers, (2) code from open-source                        fixable Code Smells, especially those of Clean Code Attributes C
+projects, and (3) code used in previous works [8]. Also, Scalabrino                      and I, that are strongly related to readability.
+et al. [12] model has proven results only against Java code, as well
+as its toolkit is able to extract features only from Java AST.                           9 Open JDK https://github.com/openjdk/jdk
+Submitted for review, May 25,
+                                                                                                               Igor Regis da Silva Simões and Elaine Venson
+
+
+    We expect these changes to positively impact SonarQube metrics            Coding and Inter-Coder Agreement: For each thematic code
+as well as the LLMs’ evaluations. Changes are performed only               in the codebook, a corresponding set of regular expression patterns
+on methods and classes containing a Code Smell. Thus, classes              was developed to identify its presence within the textual data. To
+𝐶 1 , 𝐶 7 and 𝐶 10 , which do not have Code Smells, do not undergo         avoid false positives in cases of ambiguous explanations, when-
+intervention at this stage, as can be seen on Table 2, detailed on         ever a negative code (e.g., Poor Readability) was detected, the
+Section 5.1.                                                               corresponding positive code (e.g., Good Readability) was not
+    Code versions: The interventions generate four code versions for       accounted for in the same comment.
+the 12 classes (with the identifier we use to refer to each scenario          Data Reduction and Analysis: The final step was to analyze
+in parentheses):                                                           the resulting structured data. This was achieved by quantifying the
+                                                                           frequencies of each thematic code for each of the four scenarios
+        (OC) Original code state;                                          (OC, I1, I2, and I3).
+        (I1) without comments;                                                This structured and inductive approach ensured that the analysis
+        (I2) with confusing names for identifiers;                         of the LLMs’ reasoning was not merely a subjective interpretation
+        (I3) with fixed Code Smells.                                       but a methodologically sound process, grounded in the data itself
+   In Section 6, we compare the results of all analyses.                   and aligned with established practices in qualitative data analysis.
+   Every code analysis involved statistical evaluation of the LLM
+performance. For each scenario (𝑆 ∈ {𝑂𝐶, 𝐼 1, 𝐼 2, 𝐼 3}) and Java class    5 Results
+(𝐶𝑖 , where 𝑖 ∈ {0, 1, . . . , 12}), we calculated the mean and standard   5.1 Analysis of the original code with
+deviation of the scores from 10 analysis samples for each LLM.                 comparison group
+   To compare LLM performance across scenarios for each class, we
+                                                                           The metrics shown in Table 2 were collected to be used as the
+computed the precision, recall and f-1 score between LLM scores
+                                                                           basis for comparison with the LLMs’ results. A total of nine Code
+and the Scalabrino Classifier (SCO), taken as our ground truth, as
+                                                                           Smells were identified by SonarQube. All classes were rated A for
+previous work [17]. To stablish this ground truth, we have applied
+                                                                           maintainability, indicating a high presumed quality level. All classes
+the same interval found by Piantadosi et al. [48] for the SCO. In
+                                                                           are referenced in this section by its alias, as listed in table 2.
+their work they have found that the readability prediction tool
+is unreliable when its output score is within the range of [0.416,                            Table 2: SonarQube attributes values
+0.600]. Based on this, we established thresholds for classification:
+a score below 0.416 classifies the code as ’unreadable,’ and a score
+                                                                                      Alias (class name)          Clean Code        D      L     SC
+above 0.600 classifies it as ’readable.’ Scores within this interval are                                          C I A R
+considered ’neutral’. We applied the same thresholds to all LLM’s                     𝐶 1 (DoubleSummaryStatistics) - -    -   -   62.9%   294   90.7
+scores.                                                                               𝐶 2 (Month)                   2 1    -   -   63.4%   526   91.0
+                                                                                      𝐶 3 (DynamicTreeNode)         - 2    -   -   32.1%   155   93.3
+                                                                                      𝐶 4 (ElementTreePanel)        - 3    2   -   23.0%   579   78.9
+                                                                                      𝐶 5 (HelloWorld)              - 3    2   -   11.0%   177   64.4
+4.6     Thematic Coding of LLM Reasoning                                              𝐶 6 (Notepad)                 9 20   5   -   10.2%   824   77.4
+                                                                                      𝐶 7 (SampleData)              - -    -   -   25.5%    75   93.3
+To systematically analyze the LLMs reasoning for the scores they                      𝐶 8 (SampleTree)              - 5    5   -   27.4%   596   74.8
+                                                                                      𝐶 9 (SampleTreeCellRenderer)  - 1    1   -   16.5%   131   80.2
+assigned, we employed an inductive thematic analysis methodology.                     𝐶 10 (SampleTreeModel)        - -    -   -   38.2%    48   89.1
+This approach, as outlined by Guest, MacQueen, and Namey [49],                        𝐶 11 (Stylepad)               - 15   7   -    7.9%   378   74.0
+                                                                                      𝐶 12 (Wonderland)             - 1    6   -    5.7%   268   68.5
+is designed to identify and examine themes from textual data in
+a transparent, credible, and systematic manner. The primary ob-               Only three of the 12 classes do not have any Code Smell. Most of
+jective of this analysis was to understand the qualitative aspects         the Code Smells are of type C and I, strongly related to source code
+and the criteria the LLMs used to evaluate code readability across         readability according to SonarQube documentation. The 𝐶 1 and 𝐶 2
+the different intervention scenarios. The process was executed as          classes have more than 60% of comments, and all classes have some
+follows:                                                                   level of comments. The complexity indicators show that some of
+    Data Preparation and Segmentation: Comments from all                   the classes have a low level of complexity while others have higher
+LLMs for a given scenario have been consolidated into a single file,       levels, yet still considered low.
+containing one comment per line.
+    Inductive Theme Identification: We did not start with a pre-           5.2    Analysis of the original code with the LLMs
+conceived set of themes. Instead, two researchers independently
+read a subset of the LLM reasoning texts. The goal was to become           Next, we list the models that presented variation on score attribu-
+familiar with the data and to notice recurring concepts, ideas, and        tion, with their respective standard deviation (SD) and coefficient
+justifications—the emergent themes.                                        of variation (CV), using notation 𝐶𝑖 SD (CV):
+    Codebook Development: After the initial pass, a preliminary            ChatGPT 4o - 𝐶 7 1.6 (1,67%)
+list of themes was discussed and refined. This led to the creation of a    ChatGPT 4o-mini - 𝐶 4 4.2 (5,08%)
+formal codebook. For each code, we developed A descriptive label:          Llama 3.1-405B - 𝐶 4 2.4 (2,89%)
+A short mnemonic for easy reference (e.g., Good Readability)               Gemini 2.0 Pro - 𝐶 4 4.8 (6.62%), 𝐶 6 1.6 (2.24%), 𝐶 9 2.6 (3.01%) and
+and Inclusion/Exclusion Criteria: A set of keywords or short                      𝐶 11 2.6 (3.59%).
+expressions to be used for regular expression matching.                    Half of the models did not show any variation in the scores assigned.
+                                                                                                                                                                     Submitted for review, May 25,
+Measuring how changes in code readability attributes affect code quality evaluation by Large Language Models
+
+
+   The 𝐶 1 and 𝐶 2 classes, which are rich in documentation, received                       Table 5 lists the variation between the results of the first and
+the highest evaluations from the LLMs.                                                   second analyses. The new distribution of LLM scores showed 38
+   As shown in Table 3, all nine evaluated LLMs demonstrated 100%                        score reductions and nine score increases. We marked the reduc-
+agreement with the Scalabrino Classifier (SC) for the original code                      tions in red, increases in green, changes with moderate statistical
+scenario. In this scenario, all classes were classified as readable by                   significance in yellow and with no statistical significance in gray.
+SCO and by all LLM.
+                                                                                                   Table 5: Average score by class and LLM - Comments removed
+       Table 3: Agreement with Scalabrino Classifier - Original Code
+                                                                                                     ChatGPT               Gemini               Llama                 Claude            DeepSeek               SC
+
+                  ChatGPT        Gemini         Llama           Claude      Deep           Class      4o    4o-mini   2.0-Pro   2.0-Flash   3.1-405B   3.1-8B   3.7-Sonnet   3-Haiku             V3
+
+        Metric      4o    4o     2.0    2.0  3.1       3.1   3.7    3.5     Seek          𝐶1         0.0%        0%    -5.3%       -5.6%       -9.8%   -13.0%        -5.6%      -8.4%            -2.6    -11.82%
+                         mini    Pro Flash 405B        8B Sonnet Haiku        V3          𝐶2         0.0%    -10.5%     0.0%        0.0%        0.0%     0.0%        -5.3%       0.0%             0.0    -15.24%
+                                                                                          𝐶3         0.0%    -11.8%     0.0%      -11.8%      -15.3%   -34.8%       -11.8%     -23.5%             0.0    -12.00%
+        Precision 100% 100% 100% 100% 100% 100%               100%   100%   100%          𝐶4         0.0%     -9.6%    -4.1%        0.0%       -4.2%    -8.2%       -11.8%       0.0%             0.0    -24.33%
+        Recall    100% 100% 100% 100% 100% 100%               100%   100%   100%          𝐶5         0.0%      0.0%     1.3%        0.0%        0.0%   -25.0%         0.0%      13.3%             0.0     11.00%
+                                                                                          𝐶6         0.0%      0.0%    -0.7%        0.0%       16.7%     0.0%       -11.8%       0.0%             0.0     -8.14%
+        F1-Score 100% 100% 100% 100% 100% 100%                100%   100%   100%          𝐶7       -10.1%      0.0%     0.0%       -5.3%       -2.4%     0.0%       -11.8%     -11.8%            -4.2     -6.00%
+                                                                                          𝐶8         0.0%    -11.8%     0.7%        0.0%      -12.5%     0.0%       -11.8%     -11.8%             0.0    -17.44%
+                                                                                          𝐶9         0.0%      0.0%    -2.9%          0.0      -5.9%     0.0%         0.0%     -11.8%             0.0    -41.26%
+                                                                                          𝐶 10       0.0%      0.0%     2.9%       -5.6%        0.0%    -5.9%         5.3%       0.0%             0.0    -22.01%
+                                                                                          𝐶 11       0.0%      0.0%    -1.4%        0.0%        0.0%   -25.0%         0.0%       0.0%             0.0     -4.72%
+5.3     Analysis after removing comments                                                  𝐶 12       0.0%      0.0%     3.2%        0.0%       14.3%     0.0%        15.4%       0.0%             0.0     -9.66%
+
+
+In the second analysis, Sonar’s rating remained A, but the number                           All models presented at least one score variation, ChatGPT 4o
+of Code Smells increased due to the repercussion of removing com-                        showed only one reduction, while Deep Seek V3 had two - one with
+ments, as classes with public methods lacking JavaDoc, violating                         no statistical significance and the other with moderate significance.
+a quality rule10 , or empty blocks of code, that should at least be                      Claude 3.7 Sonnet presented variations for nine classes, all statisti-
+documented11 .                                                                           cally significant. Seven out of nine changes pointed by Gemini 2.0
+   In Table 4, we marked the measures reductions in red and in-                          Pro had no statistical significance, making it the model with the
+crements in green. The only Code Smell reduction was due to the                          most noise.
+removal of a comment with a FIXME string that was generating                                Table 6 shows a uniform recall of 83.3% across all nine LLMs, as
+a Code Smell by SonarQube, indicating the need to developer to                           they have successfully identified most of the classes in accordance
+take an action12 . As expected, the total lines of code (L) and doc-                     with SC. The precision is lower than the recall. This suggests that
+umentation ratio (D) decreased, except for the 𝐶 5, 𝐶 8, 𝐶 11 classes,                   the LLMs incorrectly classified a number of unreadable classes
+which contain commented-out source code that was kept after the                          (according to the SC) as readable, resulting in a higher rate of false
+intervention. The SC also decreased the score, but not for class 𝐶 5 .                   positives. This was caused by 2 of the 12 classes being on neutral
+                                                                                         range by Scalabrino Classifier, while all classes remained classified
+             Table 4: SonarQube values after comments removal                            as readable by all LLM.
+                                                                                             Table 6: Agreement with Scalabrino Classifier - Comments Removed
+                         Class   Clean Code      D      L    SC
+                                 C I A R
+                         𝐶1      - 1    -   -   0.0%    99   80.0                                             ChatGPT                Gemini                Llama                Claude              Deep
+                         𝐶2      2 1    -   -   0.0%   177   77.1                            Metric             4o       4o         2.0         2.0       3.1        3.1   3.7             3.5          Seek
+                         𝐶3      - 2    -   -   0.0%   103   82.1                                                       mini        Pro      Flash      405B         8B Sonnet          Haiku             V3
+                         𝐶4      - 3    2   -   0.0%   424   59.7
+                         𝐶5      - 4    2   -   1.4%   166   71.5                            Precision 69.44% 69.44% 69.44% 69.44% 69.44% 69.44% 69.44% 69.44% 69.44%
+                         𝐶6      9 19   5   -   0.0%   699   71.1                            Recall    83.33% 83.33% 83.33% 83.33% 83.33% 83.33% 83.33% 83.33% 83.33%
+                         𝐶7      - -    -   -   0.0%    47   87.7                            F1-Score 75.76% 75.76% 75.76% 75.76% 75.76% 75.76% 75.76% 75.76% 75.76%
+                         𝐶8      - 5    5   -   5.0%   451   61.7
+                         𝐶9      - 1    1   -   0.0%   109   47.1
+                         𝐶 10    - -    -   -   0.0%    28   69.4
+                         𝐶 11
+                         𝐶 12
+                                 - 15
+                                 - 2
+                                        7
+                                        6
+                                            -
+                                            -
+                                                1.3%
+                                                0.0%
+                                                       239
+                                                        69
+                                                             70.5
+                                                             61.9
+                                                                                         5.4        Analysis after using confusing names
+                                                                                         In the third analysis, Sonar’s rating remained A and no attributes
+   Below, we list models that presented variation on score attribu-                      changed, making this scenario invisible to Sonar’s analysis. The new
+tion in this scenario, along with their respective SD and CV:                            distribution of LLM scores showed a noticeable decline compared to
+                                                                                         previous versions. This indicates that the naming of variables and
+Claude 3.7 Sonnet - 𝐶 10 5.2 (6.54%);                                                    methods in the code impacts the perception of readability according
+Claude 3.5 Haiku - 𝐶 1 2.6 (2.97%);                                                      to the LLM evaluations.
+Llama 3.1-8B - 𝐶 4 6.3 (8.11%);                                                             All models changed its variability behavior upwards, Gemini 2.0
+Llama 3.1-405B - 𝐶 1 2.2 (2.58%) and 𝐶 7 2.6 (3.11%);                                    Flash, Claude 3.7 Sonnet and Deep Seek V3 presented no variation.
+Deep Seek V3 - 𝐶 1 2.6 (2.85%) and 𝐶 7 2.1 (3.32%);                                      Below we list the variation on score attribution in this scenario for
+Gemini 2.0 Pro - 𝐶 5 3.2 (4.16%), 𝐶 8 1.6 (2.28%), 𝐶 10 2.6 (3.01%), 𝐶 11                the other models, with their respective SD and CV:
+        2.1 (2.97%) and 𝐶 12 1.3 (1.63%).
+                                                                                         Claude 3.5 Haiku - 𝐶 2 5.2 (5.67%);
+10 SonarQube Rule: https://rules.sonarsource.com/java/RSPEC-1176/                        Llama 3.1-405B - 𝐶 5 1.0 (2.38%);
+11 SonarQube Rule: https://rules.sonarsource.com/java/RSPEC-108/                         Llama 3.1-8B - 𝐶 3 6.3 (8.11%) and 𝐶 7 9.7 (13.06%);
+12 SonarQube Rule: https://rules.sonarsource.com/java/RSPEC-1134/                        ChatGPT 4o-mini - 𝐶 1 4.2 (5.78%), 𝐶 6 3.2 (4.94%) and 𝐶 11 4.2 (5.78%);
+Submitted for review, May 25,
+                                                                                                                                                                                Igor Regis da Silva Simões and Elaine Venson
+
+
+ChatGPT 4o - 𝐶 1 2.6 (3.80%), 𝐶 3 and 𝐶 4 5.2 (6.54%);                                                               5.5       Analysis after code smell fix
+Gemini 2.0 Pro - 𝐶 2 2.1 (2.24%), 𝐶 4 4.2 (6.30%), 𝐶 5 4.2 (19.17%), 𝐶 6                                             In the fourth analysis, SonarQube indicated a strong reduction in
+           3.2 (10.20%) and 𝐶 9 , 𝐶 11 1.6 (2.61%);                                                                  Code Smells, along with changes in comments and lines of code. In
+   Table 7 presents the scores obtained by class and LLM for this                                                    Table 9 we marked the measures reductions in red and increments
+analysis. Almost all evaluations showed a score reduction high-                                                      in green. Four classes suffer a score reduction by our reference
+lighted in red. ChatGPT 4o presented two reductions with moderate                                                    classifier, two received a increase and other two (marked with *)
+statistical significance, in yellow. ChatGPT 4o-mini Llama 3.1-8B                                                    had a slight increase which was truncated, since Scalabrino classifier
+and Claude 3.5 Haiku presented one non statistical significant re-                                                   uses 16 digits score.
+duction each one and Gemini 2.0 Pro presented two, all of them in
+gray color.                                                                                                                              Table 9: SonarQube values after code cleaning
+
+
+                                                                                                                                                    Class Clean Code                     D      L      SC
+        Table 7: Average Score by Class and LLM - Use of Confusing Names                                                                                  C I A R
+                                                                                                                                                    𝐶1          -      -    -     -   62.9%    294 90.7
+           ChatGPT               Gemini               Llama                  Claude            DeepSeek        SC
+                                                                                                                                                    𝐶2          -      -    -     -   63.4%    526 91.1
+                                                                                                                                                    𝐶3          -      -    -     -   32.1%    155 93.3*
+ Class      4o    4o-mini   2.0-Pro   2.0-Flash   3.1-405B   3.1-8B   3.7-Sonnet   3.5-Haiku         V3                                             𝐶4          -      -    -     -   21.0%    586 78.9*
+ 𝐶1      -28.4%    -14.1%   -68.4%      -38.9%      -57.9%    -7.6%       -77.8%      -10.5%       -57.9    -0.69%
+                                                                                                                                                    𝐶5          -      -    1     -    9.8%    177 70.2
+ 𝐶2      -10.5%    -10.5%    -1.1%       -5.6%      -15.8%    -3.1%       -31.6%       -4.2%       -10.5    -1.72%                                  𝐶6          -      -    3     -   10.3%    825 76.5
+ 𝐶3       -7.1%    -11.8%   -29.4%      -47.1%      -29.4%   -15.2%       -58.8%      -11.8%       -11.8    -2.34%                                  𝐶7          -      -    -     -   25.5%     75 93.3
+ 𝐶4       -7.1%     -9.6%    -7.5%      -13.3%      -28.1%     0.0%       -52.9%      -11.8%       -23.5     0.13%                                  𝐶8          -      -    -     -   24.6%    589 72.3
+ 𝐶5      -11.8%    -13.3%   -70.7%      -60.0%      -42.0%   -25.0%       -53.8%      -13.3%       -52.9   -13.12%                                  𝐶9          -      -    1     -   17.2%    132 80.2
+ 𝐶6      -23.5%    -14.7%   -56.0%      -46.7%      -66.7%     0.0%       -64.7%      -23.5%       -47.1     0.85%                                  𝐶 10        -      -    -     -   38.2%     48 89.1
+ 𝐶7      -20.6%    -17.6%   -26.3%      -78.9%      -29.4%    -7.5%       -58.8%      -23.5%       -31.6    -1.56%
+ 𝐶8        0.0%    -11.8%     0.0%      -13.3%      -25.0%     0.0%       -58.8%        0.0%       -23.5    -2.34%
+                                                                                                                                                    𝐶 11        -      -    5     -    6.9%    364 73.2
+ 𝐶9        0.0%      0.0%   -30.9%      -11.8%      -29.4%   -25.0%       -60.0%      -23.5%       -11.8     1.11%                                  𝐶 12        -      -    2     -    5.7%    276 67.1
+ 𝐶 10      0.0%      0.0%   -17.6%       -5.6%        0.0%     0.0%       -20.0%      -11.8%       -11.8    -0.50%
+ 𝐶 11    -23.5%     -2.7%   -16.0%      -46.7%      -33.3%   -25.0%       -60.0%      -23.5%       -23.5    -1.25%
+ 𝐶 12    -11.8%    -13.3%   -60.0%      -40.0%      -42.9%   -29.4%       -53.8%      -23.5%       -52.4   -10.06%      Only three models presented variation. The Gemini 2.0 Pro model
+                                                                                                                     had its results significantly more severely affected by its variation.
+   Gemini 2.0 Flash, Claude 3.7 Sonnet and Deep Seek V3 were the                                                     Below we list the variation on score attribution in this scenario,
+only ones reducing scores for every class. The Llama 3.1-8B model                                                    with their respective SD and CV:
+maintained the score for the largest number of classes, followed by                                                  Claude 3.7 Sonnet - 𝐶 5 3.2 (4.27%);
+ChatGPT 4o and ChatGPT 4o-mini.                                                                                      Deep Seek V3 - 𝐶 6 1.6 (1.67%);
+   Table 8 reveals the increased and inconsistent divergence be-                                                     ChatGPT 4o-mini - 𝐶 6 4.8 (6.19%) and 𝐶 11 4.8 (5.89%);
+tween LLMs readability scores with a reference model. Unlike pre-                                                    Gemini 2.0 Pro - 𝐶 6 2.3 (3.14%), 𝐶 7 1.8 (1.95%) and 𝐶 8 1.8 (2.19%);
+vious scenarios, the agreement rates vary dramatically between                                                       Llama 3.1-8B - 𝐶 5 6.3 (10.20%), 𝐶 7 1.6 (1.87%), 𝐶 8 2.4 (2.96%), 𝐶 10 3.0
+models. They range from a high recall of 91.67% for models like                                                             (3.42%) and 𝐶 12 1.6 (1.96%);
+ChatGPT 4o, ChatGPT 4o-mini, Llama 3.1-8B, and Claude 3.5 Haiku,                                                        In Table 10, we see that LLMs showed 16 instances of score
+to an extremely low 16.67% for Claude 3.7 Sonnet. SCO marked two                                                     increases, highlighted in green, being six with no statistical signifi-
+classes as neutral and kept all others as readable.                                                                  cance, in gray color and two with moderate significance in yellow.
+   Gemini 2.0 Flash and Claude 3.7 Sonnet reacted most strongly to                                                   Also, we have 14 instances of score reductions in red color, with
+the nonsensical names. Claude 3.7 Sonnet exemplifies this with an                                                    three of these reductions with no significance in gray. Claude 3.7
+extremely low recall of 16.67%, correctly identifying only two read-                                                 Sonnet was the only one to not present statistical noise.
+able classes and marking all others as unreadable. This shows a deep
+semantic analysis that diverges sharply from the SC’s assessment,                                                                 Table 10: Average score by class and LLM - Clean Code
+resulting in a very low F1-Score (28.21%).
+   Gemini 2.0 Pro and Deep Seek V3 were more conservative. Their                                                                ChatGPT              Gemini                      Llama                Claude           DeepSeek       SC
+
+high precision (91.67%) shows that when they classified code as                                                        Class    4o    4o-mini   2.0-Pro    2.0-Flash       3.1-405B   3.1-8B   3.7-Sonnet    3-Haiku        V3
+
+                                                                                                                       𝐶1      0.0%      0.0%     0.0%         0.0%            0.0%     0.0%          5.6%       0.0         0.0     0.0%
+readable, they were very likely to be correct according to the SC.                                                     𝐶2      0.0%      0.0%     0.0%         0.0%            0.0%    -3.1%          0.0%       0.0         0.0    0.13%
+However, their lower recall (66.67%) means they were stricter than                                                     𝐶3      0.0%      0.0%     0.0%         0.0%            0.0%    -7.6%          0.0%       0.0         0.0    0.03%
+                                                                                                                       𝐶4      0.0%      2.4%     9.6%         0.0%            1.8%     0.0%          0.0%       0.0         0.0    0.02%
+the SCO and flagged more code as unreadable.                                                                           𝐶5      0.0%      0.0%    -6.7%         0.0%            0.0%   -22.5%         13.8%       0.0         0.0    8.97%
+                                                                                                                       𝐶6      0.0%      4.0%     3.5%         0.0%            0.0%    33.3%        -11.8%       0.0         0.0   -1.11%
+   Similar to previous scenario SCO marked almost all classes as                                                       𝐶7      0.5%      0.0%    -4.7%         0.0%            0.0%     5.6%          0.0%       0.0        -0.5     0.0%
+                                                                                                                       𝐶8      0.0%      0.0%    15.0%         0.0%            0.0%    35.8%        -11.8%       0.0         0.0   -3.38%
+readable, but one as neutral.                                                                                          𝐶9      0.0%      0.0%    -2.9%         0.0%           -5.9%     6.2%          0.0%       0.0         0.0     0.0%
+                                                                                                                       𝐶 10    0.0%    -11.8%     0.0%         0.0%            0.0%     1.6%          0.0%       0.0         0.0     0.0%
+                                                                                                                       𝐶 11    0.0%      9.3%    -2.8%         0.0%            0.0%   -25.0%          0.0%       0.0         0.0   -1.10%
+  Table 8: Agreement with Scalabrino Classifier - use of confusing names                                               𝐶 12    0.0%      0.0%     0.0%         0.0%            0.0%    -5.3%         15.4%       0.0         0.0   -2.03%
+
+
+
+                     ChatGPT                Gemini                Llama               Claude          Deep              For this scenario, Table 11 shows a result equivalent to the origi-
+    Metric             4o4o     2.0    2.0    3.1    3.1    3.7    3.5 Seek                                          nal code. All LLMs agree with SC, marking all classes as readable.
+                       mini    Pro Flash    405B     8B Sonnet Haiku      V3
+    Precision 84.03% 84.03% 91.67% 91.67% 91.67% 84.03% 91.67% 84.03% 91.67%                                            Table 12 shows the results of thematic coding performed on
+    Recall    91.67% 91.67% 66.67% 41.67% 58.33% 91.67% 16.67% 91.67% 66.67%                                         LLMs reasoning for their scores. The table quantifies the frequency
+    F1-Score 87.68% 87.68% 77.19% 57.29% 71.30% 87.68% 28.21% 87.68% 77.19%
+                                                                                                                     of themes mentioned by the LLMs for each of the four scenarios,
+                                                                                                                     based on the inductive thematic analysis methodology described in
+                                                                                                                                      Submitted for review, May 25,
+Measuring how changes in code readability attributes affect code quality evaluation by Large Language Models
+
+        Table 11: Agreement with Scalabrino Classifier - Clean Code
+                                                                                            After removing comments (𝑂𝐶 → 𝐼 1), all models showed at
+                  ChatGPT       Gemini      Llama       Claude         Deep              least one score reduction. The LLMs proved to be more lenient than
+        Metric      4o    4o    2.0    2.0  3.1   3.1   3.7     3      Seek              the SC, correctly identifying most readable classes but at the cost
+                         mini   Pro Flash 405B    8B Sonnet Haiku        V3              of misclassifying several unreadable ones as described in Table 6.
+        Precision 100% 100% 100% 100% 100% 100%        100%    100%    100%              SonarQube showed a slight increase in Code Smells, as explained in
+        Recall    100% 100% 100% 100% 100% 100%        100%    100%    100%
+        F1-Score 100% 100% 100% 100% 100% 100%         100%    100%    100%              step 5.3, and also indicated a significant drop in the percentage of
+                                                                                         comments and the total number of lines in the classes. SC showed
+Section 4. The results reveal how the LLMs’ qualitative assessments                      a consistent and strong decrease of score for all classes, except for
+changed in response to each intervention:                                                𝐶 5 that received a strong increment, those new scores resulted in
+   Original Code (OC): This column establishes the baseline, show-                       two classes falling as ’neutral’ classification.
+ing high praise for "Good Code Structure" (1030 mentions) and                               As described by Good and Poor Readability on Table 12, LLMs
+"Good Readability" (1068 mentions). Mentions for "Good Documen-                          appear to consider that the absence of comments is not sufficient
+tation" (287) and "Good Variable/Method Names" (346) were also                           to drastically reduce readability, in most cases. There may be some
+strong.                                                                                  other aspects of code that interact with the presence (or absence)
+   Comments Removed (I1): This intervention caused the ex-                               of comments, which could interfere in the LLMs analysis.
+pected sharp decline in comments about "Good Documentation"                                 Changing the code to use confusing identifier names (𝑂𝐶 → 𝐼 2)
+(from 287 to 32) and an increase in "Lack of Documentation/Com-                          caused a significant fluctuation in scores across all models as well as
+ments" (from 17 to 64) and Unprofessional Comments (from 35 to                           an increase in the magnitude of its variability. Both Gemini models
+0). Consequently, mentions of "Good Readability" also decreased                          and Claude 3.7 Sonnet showed the greatest drop in scores, being
+from 1068 to 933.                                                                        Claude 3.7 Sonnet more consistent. All models showed some level
+   Confusing Names (I2): This scenario had the most dramatic                             of sensitivity to the unconventional names used in the experiment,
+impact on the LLMs’ reasoning. Mentions of "Poor Variable/Method                         significantly stronger comparing with reference model. But there
+Names" skyrocketed from 4 to 890, while "Poor Readability" jumped                        were cases when a model did not reduce the score, as for 𝐶 10 , the
+from 105 in the original code to 561. This demonstrates that the                         smallest class with 48 lines. As expected, SonarQube did not show
+LLMs’ reasoning directly identified the semantic failure of the in-                      any changes in its indicators after the identifier names were altered.
+tervention, confirming their sensitivity to poor identifier choices.                     All models were capable to criticize the semantic conflict between
+Also "Good Readability" plummeted from 1068 to 438, and "Good                            the structure of the presented algorithms and the adopted names,
+Code Structure" dropped from 1030 to 599.                                                as mapped by thematic coding.
+   Code Smells Fixed (I3): Fixing code smells led to a decrease in                          The SC showed some level of sensitivity in this scenario. That
+mentions of "Bad Code Structure" (from 125 to 116) and a significant                     could be explained by the fact that this classifier performs a correla-
+increase in praise for "Good Error Handling" (from 65 to 92), sug-                       tion between the terms in comments and terms in code, measuring
+gesting these were the types of issues addressed. However, fixing                        the overlap between both (CIC measure). The use of confusing
+smells did not uniformly improve the perception of readability, as                       names reduced this correlation. This algorithm also takes into ac-
+mentions of "Poor Readability" slightly increased (from 105 to 133).                     count the use of full formed words present in dictionary, as we
+                                                                                         have chosen to use this type of change, this measurement was not
+                 Table 12: Code Evaluation Across Scenarios                              affected. Another metric used is called Textual Coherence, that is a
+                                                                                         measurement of vocabulary overlap between all possible pairs of
+            Theme                                 OC   I1     I2      I3                 blocks of code [11]. Since we have chosen to use only seasonings
+            Adherence to Best Practices     267 226 98 263                               and vegetables names, we have created an artificial coherence, but
+            Good Implementation/Logic       237 216 105 256                              with no semantic meaning to the code. These changes mislead SC
+            Good Use of Language Features    78 88 15     89
+            Consistent Formatting           182 178 53 208
+                                                                                         but not the LLMs .
+            Inconsistent Formatting           2 22 25      8                                Cleaning the code (𝑂𝐶 → 𝐼 3) resulted in all LLMs agreeing with
+            Good Code Structure            1030 983 599 1115                             SC, returning to the same results of original code state. The the-
+            Bad Code Structure              125 155 74 116
+            Good Documentation              287 32 161 250                               matic coding demonstrated that LLMs reacted to changes reducing
+            Lack of Documentation/Comments   17 64 31     22                             comments about "Bad Code Structure", incrementing comments
+            Unprofessional Comments          35   0 42    40                             on "Good Error Handling", but with a small increase of comments
+            Good Error Handling              65 132 20    92
+            Poor Error Handling              19 72 18     28                             about "Poor Readability".
+            Good Readability               1068 933 438 1021                                To evaluate LLMs variability we used 12 classes, 9 LLM and 4
+            Poor Readability                105 99 561 133
+            Good Variable/Method Names      346 457 111 390
+                                                                                         scenarios, resulting in 432 combinations and 4,320 LLM executions.
+            Poor Variable/Method Names        4   2 890   22                             All LLM presented variation at least in one scenario. 47 (10.88%)
+                                                                                         combinations out of 432 presented variation, Gemini 2.0 Pro was
+                                                                                         responsible by 18 (38.30%) of all variations occurrence, being the
+6    Discussion                                                                          only to present variation in all four scenarios. Conversely, Gemini
+With each intervention in the code, the LLMs presented different                         2.0 Flash was the only one to present no variation throughout all
+results. In this section, we will discuss the results presented.                         executions.
+   In the original code scenario, the LLMs showed a level of corre-                         31 (65.96%) variations were equal to or lower than 5% and sce-
+lation with SC, except for Gemini 2.0 Pro and ChatGPT 4o.                                nario I2 (confusing names) had 9 variations above 5% followed by I3
+Submitted for review, May 25,
+                                                                                                             Igor Regis da Silva Simões and Elaine Venson
+
+
+(code cleaning) with 3. Near half of variations did not compromise          threat, we executed a pretest to all selected classes using all selected
+the statistical relevance of emitted scores. Therefore most of LLM          LLMs, comparing the results with the control measurement tools.
+score (94.02%) does not present statistical noise.                             We also recognize that we are subject to the internal validity
+   The reference model uses textual features to compose its readabil-       threat described by Shadish, Cook, and Campbell [38] as the "Instru-
+ity score[11], but LLMs have shown the ability to evaluate semantic         mentation Threat". Since the LLMs were used through web API, we
+aspects of texts present in code, revealing deeper sensitivity to           have no control over its internal state and runtime configuration.
+identifiers name changes, not present in the reference model. This          The providers could change any parameter, causing a difference
+was shown in scenario I2.                                                   in its behavior which could be confused as a difference caused by
+   The same characteristics seem to affect the I1 scenario. The refer-      code interventions. To prevent that, we have executed all API calls
+ence model has shown to be more sensitive to comments removal,              to the same LLM into the same day, in a short time interval.
+mostly due to its metrics that correlate code with comments. Con-
+                                                                            External Validity. The source code used in this work is written in
+versely, the LLMs seemed to be capable to extract the easiness of
+                                                                            Java, as well as one of the control tools used (SC), which was able to
+code to be read, even without comments. This fact raises a ques-
+                                                                            perform readability analysis for Java Code. This is a known threat
+tion: does LLM have used also the code semantics to understand it,
+                                                                            to validity of our findings, as the interventions executed could have
+dispensing documentation for algorithm comprehension?
+                                                                            different outcomes for different programming languages. Despite
+                                                                            the fact the Java is the most studied language in this subject, it
+7    Limitations and threats to validity                                    is important to reproduce the study with different programming
+Shadish, Cook, and Campbell [38] enlist several types of threats to         languages in the future.
+validity common to quasi-experiment design. The main categories                 We have chosen not to study the interactions of causal relation-
+are: Construct Validity, Internal Validity, External Validity and Statis-   ship over code interventions (i.e treatment variations); this is a
+tical Conclusion Validity. In this section we detail all mapped threats     known limitation of the collected results. The SC model, for ex-
+to validity, limitations and future works derived from this study,          ample, measures the relationship between algorithm terms and
+grouped by the above listed categories.                                     documentation terminology. By performing the interventions in
+                                                                            isolation we introduced a bias to the results, as detailed in section
+Construct Validity. Source code readability is a complex construct          6. As the goal of this work is to characterize how LLMs respond
+to be explained and characterized. Failing to do so, could lead us          to such isolated changes, this approach was considered enough
+to confound it with other aspects of source code quality as well as         to answer the research questions. In the future a study could be
+incorrect inference about the the correlations observed from every          performed to analyze how the interaction between different code
+operation (intervention) into the source code. To mitigate this threat      interventions affects the perception of readability.
+we performed an extensive literature review on the main related                 Our work uses the results of Scalabrino’s Classifier (SCO) as
+studies and adopted a recognized state of the art model obtained            ground truth, despite evidence that it can be unreliable under certain
+in a state of use that required no implementation or intervention           conditions [48], and that it does not fully capture code readability
+to work. Even so it is know that readability models have a limited          as perceived by humans [50, 48, 41]. This is a known threat to
+capability to assess code readability the same way humans do [40,           validity of this work and a limitation. The results only prove the
+41], being this a existent threat to validity.                              comparability of LLMs with SCO, even though they produce results
+   The adopted strategy was also a mitigating factor for other two          semantically distinct.
+threats: The mono-operation bias caused by our strategy to perform          Statistical Conclusion Validity. Since we selected a small set of algo-
+a single stereotyped operation at a time (i.e removing comments,            rithms to perform manual and controlled changes, we are subject
+replacing identifiers names), which under represent the broad con-          to a threat of having low statistical power in our results as well
+cept of source code readability. And the mono-method bias caused            as other statistical threats, such as inaccurate results. To ensure
+by the self produced source code interventions, which could lead            the results described are adequate, we performed complementary
+to a bias of interventions performed based on what the research             statistical tests, using non parametric tests. With these tests we
+team understands to be a "code readability intervention".                   were able to detect non statistically relevant results, and highlight
+   There is a threat to confounding the constructs with the levels          them during results description. Still, the low amount of code used
+of constructs. In this quai-experiment, we performed interventions          poses a threat to the generalizability of the results obtained.
+that were limited to a very specific set of characteristics related            An extraneous variance in the experimental setting is a threat
+to source code readability. We are not able to generalize it to the         caused by the known variance of LLMs answers to a prompt. To
+broad concept of readability. The findings we present can lead us to        mitigate this threat we performed a 10 fold execution for every
+conclusions related solely to those manipulated characteristics. The        evaluation and executed statistical analysis for the results. This
+control mechanisms used guarantee that the interventions achieved           approach allowed us to draw the conclusions on when a LLM score
+the goal to change the source code readability, for those aspects           have changes because of a code intervention and when its just
+solely.                                                                     random noise.
+                                                                               The unreliability of treatment implementation is a threat that
+Internal Validity. We tried to select algorithms with different levels      could raise from the manual interventions done into the code. In
+of readability. Since it was an arbitrary selection, we are subjected       order to mitigate it, we decided to execute very simple interven-
+to the selection bias. To remediate any undesirable effect from this        tions, as described in section 4.5, just removing the comments,
+                                                                                                                                       Submitted for review, May 25,
+Measuring how changes in code readability attributes affect code quality evaluation by Large Language Models
+
+
+replacing identifiers name by a dictionary of words, and perform-                        address the variability in the model’s responses and their activation
+ing SonarQube’s guided fixing for Code Smells. With this approach                        costs.
+we have guaranteed a strict and reproducible method for manual
+                                                                                         Data Availability
+code intervention.
+                                                                                         The source code of the programs used to execute the LLMs, as well
+                                                                                         as the source codes of the analyzed programs and the datasets from
+8    Conclusion and future work                                                          these analyses, are available in the GitHub repository referenced
+This work explored the sensitivity of LLM models to interventions                        in this article [44].
+related to source code readability. Our results demonstrated that all
+models exhibited some level of reaction to the changes. However,                         References
+the results also raised some new questions.                                               [1]    Darrell R. Raymond. “Reading source code”. In: Proceedings of
+   (1) The results of this research are promising regarding the possi-                           the 1991 conference of the Centre for Advanced Studies on Col-
+bility of using LLMs to generate a metric that assesses code quality                             laborative research. CASCON ’91. Toronto, Ontario, Canada:
+attributes related to readability. However, when comparing the re-                               IBM Press, Oct. 1991, pp. 3–16. (Visited on 05/02/2025).
+sults demonstrated by LLMs with the reference model, we observe                           [2]    Michael P. O’Brien, Jim Buckley, and Teresa M. Shaft. “Ex-
+differences in their scores.                                                                     pectation based, inference-based, and bottom-up software
+   The LLM analysis did not fully agree with the reference model,                                comprehension”. en. In: Journal of Software Maintenance and
+but behaved differently. It was influenced by the changes performed                              Evolution: Research and Practice 16.6 (Nov. 2004), pp. 427–
+on source code; but this resulted in a score statistically different                             447. issn: 1532-060X, 1532-0618. doi: 10.1002/smr.307. url:
+from the reference model in most cases. As future work, we plan to                               https://onlinelibrary.wiley.com/doi/10.1002/smr.307.
+compare the LLMs results with human evaluation.                                           [3]    B. W. Boehm, J. R. Brown, and M. Lipow. “Quantitative eval-
+   (2) With respect to the attributes that affect readability, we ob-                            uation of software quality”. In: Proceedings of the 2nd Inter-
+served that LLMs show more sensitivity to the changes made to                                    national Conference on Software Engineering. ICSE ’76. event-
+identifiers name (I2), when intentionally confusing names have                                   place: San Francisco, California, USA. Washington, DC, USA:
+been used. This behavior raised a hypothesis that the LLMs are                                   IEEE Computer Society Press, 1976, pp. 592–605.
+relying on semantic meaning of words to evaluate code quality.                            [4]    Simone Scalabrino et al. “Automatically Assessing Code Un-
+   When comments were removed (I1), it was expected to see a                                     derstandability”. In: IEEE Transactions on Software Engineer-
+reduction in readability scores. Although there was some reduction                               ing 47.3 (Mar. 2019), pp. 595–613. issn: 0098-5589, 1939-3520,
+(20.83% of subjects), the majority of scores remained unchanged,                                 2326-3881. doi: 10.1109/TSE.2019.2901468.
+with even a few improvements. This behavior could also be caused                          [5]    Philippe Kruchten and Ipek Ozkaya. Managing Technical
+by the reliance on semantic meaning, but now extracted from the                                  Debt Reducing Friction in Software Development. eng. OCLC:
+algorithm itself. There may be other code attributes that could be                               1338840518. Sydney: Pearson Education, Limited, 2019. isbn:
+influencing LLMs to generate a score for code readability. This                                  978-0-13-564596-3.
+should be investigated in future work.                                                    [6]    Lan Cheng et al. “What improves developer productivity at
+   The clean code scenario (I3) demonstrated disappointing results,                              google? code quality”. en. In: Proceedings of the 30th ACM
+with more score reductions (9) than improvements (5), a lot of                                   Joint European Software Engineering Conference and Sym-
+statistical noise (11) and mostly no change (71). Even for the control                           posium on the Foundations of Software Engineering. Singa-
+tool SC there was 4 improvements, 4 reductions and 4 classes with                                pore Singapore: ACM, Nov. 2022, pp. 1302–1313. isbn: 978-
+no change. We conclude that fixing code smells does not guarantee                                1-4503-9413-0. doi: 10.1145/3540250.3558940. url: https:
+an improvement in code readability.                                                              //dl.acm.org/doi/10.1145/3540250.3558940.
+   (3) In relation to the inherent variability of LLMs, our results                       [7]    Terese Besker et al. “The influence of Technical Debt on
+show that while this variability affects the assessment of code qual-                            software developer morale”. en. In: Journal of Systems and
+ity, its occurrence rate is low. In the four scenarios evaluated, there                          Software 167 (Sept. 2020), p. 110586. issn: 01641212. doi:
+were 9.37% (OC and I1), 12.50% (I3) and 14.58% (I2) of combinations                              10.1016/j.jss.2020.110586. url: https://linkinghub.elsevier.
+with standard deviation different from zero. Most of them affected                               com/retrieve/pii/S0164121220300674 (visited on 08/09/2024).
+the statistical reliability of results, with exception of scenario I2.                    [8]    Marvin Wyrich, Justus Bogner, and Stefan Wagner. “40 Years
+We recommend future evaluations of LLMs based on this study, to                                  of Designing Code Comprehension Experiments: A System-
+perform additional redundant tests, followed by statistical analysis,                            atic Mapping Study”. en. In: ACM Computing Surveys 56.4
+to check the validity of obtained results. A ten round execution                                 (Apr. 2024), pp. 1–42. issn: 0360-0300, 1557-7341. doi: 10.
+demonstrated to be sufficient to provide data for a statistical validity                         1145/3626522. url: https://dl.acm.org/doi/10.1145/3626522.
+check.                                                                                    [9]    Raymond P.L. Buse and Westley R. Weimer. “A metric for
+   Overall, this study demonstrates that LLMs have the potential                                 software readability”. en. In: Proceedings of the 2008 interna-
+to be used as a complementary technique for evaluating quality                                   tional symposium on Software testing and analysis. Seattle
+aspects involving semantics, such as identifier names, comments                                  WA USA: ACM, July 2008, pp. 121–130. isbn: 978-1-60558-
+content, and code documentation. Further research is needed to                                   050-0. doi: 10.1145/1390630.1390647. url: https://dl.acm.org/
+investigate the comparability of the metrics generated by LLMs                                   doi/10.1145/1390630.1390647 (visited on 01/27/2025).
+with human developers’ perceptions and to develop strategies to
+Submitted for review, May 25,
+                                                                                                                   Igor Regis da Silva Simões and Elaine Venson
+
+
+[10]    Jonathan Dorn. “A general software readability model”. In:               [20]   Raymond P L Buse and Westley R Weimer. “Learning a Met-
+        MCS Thesis 5 (2012), pp. 11–14. url: http://www.cs.virginia.                    ric for Code Readability”. In: IEEE Transactions on Software
+        edu/weimer/students/dorn-mcs-paper.pdf.                                         Engineering 36.4 (July 2010), pp. 546–558. doi: 10.1109/TSE.
+[11]    Simone Scalabrino et al. “Improving code readability mod-                       2009.70. url: http://ieeexplore.ieee.org/document/5332232/.
+        els with textual features”. In: 2016 IEEE 24th International             [21]   Raymond P. L. Buse and Thomas Zimmermann. “Informa-
+        Conference on Program Comprehension (ICPC). Austin, TX,                         tion needs for software development analytics”. In: 2012
+        USA: IEEE, May 2016, pp. 1–10. isbn: 978-1-5090-1428-6. doi:                    34th International Conference on Software Engineering (ICSE).
+        10.1109/ICPC.2016.7503707. url: http://ieeexplore.ieee.org/                     Zurich: IEEE, June 2012, pp. 987–996. isbn: 978-1-4673-1066-
+        document/7503707/.                                                              6 978-1-4673-1067-3. doi: 10.1109/ICSE.2012.6227122. url:
+[12]    Simone Scalabrino et al. “A comprehensive model for code                        http://ieeexplore.ieee.org/document/6227122/.
+        readability”. en. In: Journal of Software: Evolution and Process         [22]   Sanuri Gunawardena, Ewan Tempero, and Kelly Blincoe.
+        30.6 (June 2018), e1958. doi: 10.1002/smr.1958. url: https:                     “Concerns identified in code review: A fine-grained, faceted
+        //onlinelibrary.wiley.com/doi/10.1002/smr.1958.                                 classification”. en. In: Information and Software Technology
+[13]    Qing Mi et al. “An Inception Architecture-Based Model for                       153 (Jan. 2023), p. 107054. issn: 09505849. doi: 10.1016/j.
+        Improving Code Readability Classification”. en. In: Proceed-                    infsof.2022.107054. url: https://linkinghub.elsevier.com/
+        ings of the 22nd International Conference on Evaluation and                     retrieve/pii/S0950584922001653 (visited on 05/25/2024).
+        Assessment in Software Engineering 2018. Christchurch New                [23]   Ashish Vaswani et al. “Attention is All you Need”. In: Ad-
+        Zealand: ACM, June 2018, pp. 139–144. isbn: 978-1-4503-                         vances in Neural Information Processing Systems. Ed. by I.
+        6403-4. doi: 10.1145/3210459.3210473. url: https://dl.acm.                      Guyon et al. Vol. 30. Curran Associates, Inc., 2017. url: https:
+        org/doi/10.1145/3210459.3210473 (visited on 02/15/2025).                        / / proceedings . neurips . cc / paper _ files / paper / 2017 / file /
+[14]    Qing Mi et al. “Towards using visual, semantic and structural                   3f5ee243547dee91fbd053c1c4a845aa-Paper.pdf.
+        features to improve code readability classification”. en. In:            [24]   Zhiqiang Wang, Yiran Pang, and Yanbin Lin. Large Language
+        Journal of Systems and Software 193 (Nov. 2022), p. 111454.                     Models Are Zero-Shot Text Classifiers. arXiv:2312.01044 [cs].
+        issn: 01641212. doi: 10.1016/j.jss.2022.111454. url: https:                     Dec. 2023. url: http://arxiv.org/abs/2312.01044.
+        //linkinghub.elsevier.com/retrieve/pii/S0164121222001467.                [25]   Xinyi Hou et al. “Large Language Models for Software En-
+[15]    Chao Hu et al. “How Effectively Do Code Language Models                         gineering: A Systematic Literature Review”. en. In: ACM
+        Understand Poor-Readability Code?” en. In: Proceedings of                       Transactions on Software Engineering and Methodology 33.8
+        the 39th IEEE/ACM International Conference on Automated                         (Nov. 2024), pp. 1–79. issn: 1049-331X, 1557-7392. doi: 10.
+        Software Engineering. Sacramento CA USA: ACM, Oct. 2024,                        1145/3695988. (Visited on 05/29/2025).
+        pp. 795–806. isbn: 979-8-4007-1248-7. doi: 10.1145/3691620.              [26]   Jason Wei et al. Emergent Abilities of Large Language Models.
+        3695072. url: https : / / dl . acm . org / doi / 10 . 1145 / 3691620 .          arXiv:2206.07682 [cs]. Oct. 2022. url: http://arxiv.org/abs/
+        3695072 (visited on 05/31/2025).                                                2206.07682.
+[16]    Igor Regis Da Silva Simões and Elaine Venson. “Evaluat-                  [27]   Andreas Bexell. “Software Source Code Readability: A Map-
+        ing Source Code Quality with Large Languagem Models: a                          ping Study”. PhD thesis. Karlskrona, Sweden: Blekinge Insti-
+        comparative study”. en. In: Proceedings of the XXIII Brazil-                    tute of Technology, Aug. 2020. url: https://www.diva-portal.
+        ian Symposium on Software Quality. Salvador Bahia Brazil:                       org / smash / record . jsf ? pid = diva2 % 3A1452612 & dswid= -
+        ACM, Nov. 2024, pp. 103–113. isbn: 979-8-4007-1777-2. doi:                      8633.
+        10.1145/3701625.3701650. url: https://dl.acm.org/doi/10.                 [28]   Jianyu Zhao et al. Understanding Programs by Exploiting
+        1145/3701625.3701650 (visited on 01/01/2025).                                   (Fuzzing) Test Cases. Version Number: 2. 2023. doi: 10.48550/
+[17]    Antonio Vitale et al. Personalized Code Readability Assess-                     ARXIV.2305.13592. url: https://arxiv.org/abs/2305.13592.
+        ment: Are We There Yet? arXiv:2503.07870 [cs]. Mar. 2025.                [29]   Man-Fai Wong et al. “Natural Language Generation and
+        doi: 10.48550/arXiv.2503.07870. url: http://arxiv.org/abs/                      Understanding of Big Code for AI-Assisted Programming:
+        2503.07870 (visited on 03/23/2025).                                             A Review”. en. In: Entropy 25.6 (June 2023), p. 888. issn:
+[18]    Roberto Minelli, Andrea Mocci, and Michele Lanza. “I Know                       1099-4300. doi: 10.3390/e25060888.
+        What You Did Last Summer - An Investigation of How De-                   [30]   Yue Wang et al. “CodeT5+: Open Code Large Language Mod-
+        velopers Spend Their Time”. In: 2015 IEEE 23rd International                    els for Code Understanding and Generation”. In: Proceedings
+        Conference on Program Comprehension. Florence, Italy: IEEE,                     of the 2023 Conference on Empirical Methods in Natural Lan-
+        May 2015, pp. 25–35. doi: 10.1109/ICPC.2015.12. url: http:                      guage Processing. Association for Computational Linguistics,
+        //ieeexplore.ieee.org/document/7181430/.                                        Dec. 2023. doi: 10 . 18653 / v1 / 2023 . emnlp - main . 68. url:
+[19]    Carlos Eduardo C. Dantas and Marcelo A. Maia. “Readability                      https://aclanthology.org/2023.emnlp-main.68/.
+        and Understandability Scores for Snippet Assessment: an                  [31]   Dung Nguyen Manh et al. “The Vault: A Comprehensive
+        Exploratory Study”. In: Anais do IX Workshop de Visualização,                   Multilingual Dataset for Advancing Code Understanding and
+        Evolução e Manutenção de Software (VEM 2021). Brasil: So-                       Generation”. In: Proceedings of the 3rd Workshop for Natural
+        ciedade Brasileira de Computação - SBC, Sept. 2021, pp. 46–                     Language Processing Open Source Software (NLP-OSS 2023).
+        50. doi: 10.5753/vem.2021.17217. url: https://sol.sbc.org.br/                   Singapore: ACL Association for Computational Linguistics,
+        index.php/vem/article/view/17217.                                               Dec. 2023. url: https : / / aclanthology . org / 2023 . nlposs -
+                                                                                        1.25.pdf.
+                                                                                                                                      Submitted for review, May 25,
+Measuring how changes in code readability attributes affect code quality evaluation by Large Language Models
+
+
+[32]    Simone Scalabrino et al. “Automatically assessing code un-                       [42]    Yupeng Chang et al. “A Survey on Evaluation of Large Lan-
+        derstandability: How far are we?” In: 2017 32nd IEEE/ACM                                 guage Models”. en. In: ACM Transactions on Intelligent Sys-
+        International Conference on Automated Software Engineer-                                 tems and Technology 15.3 (June 2024), pp. 1–45. doi: 10.1145/
+        ing (ASE). Urbana, IL: IEEE, Oct. 2017, pp. 417–427. isbn:                               3641289. url: https://dl.acm.org/doi/10.1145/3641289.
+        978-1-5386-2684-9. doi: 10 . 1109 / ASE . 2017 . 8115654. url:                   [43]    Jules White et al. “A Prompt Pattern Catalog to Enhance
+        http://ieeexplore.ieee.org/document/8115654/ (visited on                                 Prompt Engineering with ChatGPT”. In: Monticello, Illinois,
+        08/08/2024).                                                                             USA, Oct. 2023. url: https : / / www. dre . vanderbilt . edu /
+[33]    Asher Trockman et al. “"Automatically assessing code un-                                 ~schmidt/PDF/PLoP-patterns.pdf.
+        derstandability" reanalyzed: combined metrics matter”. en.                       [44]    Igor Regis. LLMSonarQuarkusAnalysis. https://github.com/
+        In: Proceedings of the 15th International Conference on Min-                             igorregis/LLMSonarQuarkusAnalysis. 2024.
+        ing Software Repositories. Gothenburg Sweden: ACM, May                           [45]    Martin Fowler and Kent Beck. Refactoring: improving the de-
+        2018, pp. 314–318. doi: 10.1145/3196398.3196441. url: https:                             sign of existing code. The Addison-Wesley object technology
+        //dl.acm.org/doi/10.1145/3196398.3196441.                                                series. Reading, MA: Addison-Wesley, 1999. isbn: 978-0-201-
+[34]    Aditya Kanade et al. “Learning and Evaluating Contextual                                 48567-7.
+        Embedding of Source Code”. In: Proceedings of the 37th Inter-                    [46]    Naser Al Madi et al. “From Novice to Expert: Analysis of To-
+        national Conference on Machine Learning. Ed. by Hal Daumé                                ken Level Effects in a Longitudinal Eye Tracking Study”.
+        III and Aarti Singh. Vol. 119. Proceedings of Machine Learn-                             In: 2021 IEEE/ACM 29th International Conference on Pro-
+        ing Research. PMLR, July 2020, pp. 5110–5121. url: https:                                gram Comprehension (ICPC). Madrid, Spain: IEEE, May 2021,
+        //proceedings.mlr.press/v119/kanade20a.html.                                             pp. 172–183. doi: 10.1109/ICPC52881.2021.00025. url: https:
+[35]    Da Shen et al. Benchmarking Language Models for Code Syn-                                //ieeexplore.ieee.org/document/9462965/.
+        tax Understanding. Version Number: 1. 2022. doi: 10.48550/                       [47]    Andrea Schankin et al. “Descriptive compound identifier
+        ARXIV.2210.14473. url: https://arxiv.org/abs/2210.14473.                                 names improve source code comprehension”. en. In: Pro-
+[36]    Qing Mi et al. “Improving code readability classification                                ceedings of the 26th Conference on Program Comprehension.
+        using convolutional neural networks”. en. In: Information                                Gothenburg Sweden: ACM, May 2018, pp. 31–40. isbn: 978-
+        and Software Technology 104 (Dec. 2018), pp. 60–71. issn:                                1-4503-5714-2. doi: 10.1145/3196321.3196332. url: https:
+        09505849. doi: 10 . 1016 / j . infsof . 2018 . 07 . 006. url: https :                    //dl.acm.org/doi/10.1145/3196321.3196332.
+        //linkinghub.elsevier.com/retrieve/pii/S0950584918301496.                        [48]    Valentina Piantadosi et al. “How does code readability change
+[37]    Qing Mi et al. “An Enhanced Data Augmentation Approach                                   during software evolution?” en. In: Empirical Software En-
+        to Support Multi-Class Code Readability Classification”. In:                             gineering 25.6 (Nov. 2020), pp. 5374–5412. issn: 1382-3256,
+        July 2022, pp. 48–53. doi: 10.18293/SEKE2022-130. url: http:                             1573-7616. doi: 10.1007/s10664- 020- 09886- 9. url: https:
+        //ksiresearchorg.ipage.com/seke/seke22paper/paper130.                                    //link.springer.com/10.1007/s10664-020-09886-9.
+        pdf.                                                                             [49]    Greg Guest, Kathleen MacQueen, and Emily Namey. Applied
+[38]    William R. Shadish, Thomas D. Cook, and Donald T. Camp-                                  Thematic Analysis. 2455 Teller Road, Thousand Oaks Cali-
+        bell. Experimental and quasi-experimental designs for general-                           fornia 91320 United States: SAGE Publications, Inc., 2012.
+        ized causal inference. eng. Nachdr. Belmont, CA: Wadsworth                               isbn: 978-1-4129-7167-6 978-1-4833-8443-6. doi: 10.4135/
+        Cengage Learning, 2001. isbn: 978-0-395-61556-0.                                         9781483384436.
+[39]    Claes Wohlin et al. Experimentation in Software Engineer-                        [50]    Jevgenija Pantiuchina, Michele Lanza, and Gabriele Bavota.
+        ing. en. Berlin, Heidelberg: Springer Berlin Heidelberg, 2012.                           “Improving Code: The (Mis) Perception of Quality Metrics”.
+        isbn: 978-3-642-29043-5 978-3-642-29044-2. doi: 10.1007/978-                             In: 2018 IEEE International Conference on Software Main-
+        3-642-29044-2. url: http://link.springer.com/10.1007/978-3-                              tenance and Evolution (ICSME). Madrid: IEEE, Sept. 2018,
+        642-29044-2.                                                                             pp. 80–91. isbn: 978-1-5386-7870-1. doi: 10.1109/ICSME.2018.
+[40]    Sarah Fakhoury et al. “Improving Source Code Readability:                                00017. url: https://ieeexplore.ieee.org/document/8530019/.
+        Theory and Practice”. In: 2019 IEEE/ACM 27th International
+        Conference on Program Comprehension (ICPC). Montreal, QC,
+        Canada: IEEE, May 2019, pp. 2–12. isbn: 978-1-7281-1519-1.
+        doi: 10.1109/ICPC.2019.00014. url: https://ieeexplore.ieee.
+        org/document/8813254/.
+[41]    Agnia Sergeyuk et al. “Reassessing Java Code Readability
+        Models with a Human-Centered Approach”. en. In: Pro-
+        ceedings of the 32nd IEEE/ACM International Conference on
+        Program Comprehension. Lisbon Portugal: ACM, Apr. 2024,
+        pp. 225–235. isbn: 979-8-4007-0586-1. doi: 10.1145/3643916.
+        3644435. url: https : / / dl . acm . org / doi / 10 . 1145 / 3643916 .
+        3644435 (visited on 05/26/2025).
+

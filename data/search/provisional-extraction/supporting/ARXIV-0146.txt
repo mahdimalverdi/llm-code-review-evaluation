@@ -1,0 +1,255 @@
+               Code Review Without Borders: Evaluating
+                  Synthetic vs. Real Data for Review
+                          Recommendation
+        Yogev Cohen                     Dudi Ohayon                    Romy Somkin                  Yehudit Aperstein           Alexander Apartsin
+ School Of Computer Science,     School Of Computer Science,     School Of Computer Science,     Afeka Academic College of   School Of Computer Science,
+     Faculty Of Sciences             Faculty Of Sciences             Faculty Of Sciences                Engineering              Faculty Of Sciences
+ Holon Institute of Technology   Holon Institute of Technology   Holon Institute of Technology         Tel Aviv Israel       Holon Institute of Technology
+
+                                                                              trained on vast corpora of code, such as GPT-4o, possess an
+   Abstract—Automating the decision of whether a code change                  impressive understanding of programming languages' syntax
+requires manual review is vital for maintaining software quality              and semantics, even for newer or less popular languages.
+in modern development workflows. However, the emergence of
+                                                                              However, while these models can fluently generate code in
+new programming languages and frameworks creates a critical
+bottleneck: while large volumes of unlabelled code are readily                these languages, they do not inherently understand which code
+available, there is an insufficient amount of labelled data to train          changes are considered critical or review-worthy, knowledge
+supervised models for review classification. We address this                  typically learned from labelled examples.
+challenge by leveraging Large Language Models (LLMs) to                          In this work, we explore a novel transfer learning approach
+translate code changes from well-resourced languages into
+                                                                              that leverages the generative capabilities of GPT-4 to
+equivalent changes in underrepresented or emerging languages,
+generating synthetic training data where labelled examples are                synthesize labelled training data for low-resource languages.
+scarce.                                                                       Specifically, we translate code changes from Java, where
+   We assume that although LLMs have learned the syntax and                   labelled review data is abundant, into equivalent C++ code
+semantics of new languages from available unlabelled code, they               changes using GPT-4. These synthetic examples are then used
+have yet to fully grasp which code changes are considered                     to train a review classification model based on CodeBERT, a
+significant or review-worthy within these emerging ecosystems.
+To overcome this, we use LLMs to generate synthetic change                    transformer model pre-trained on source code (excluding C++
+examples and train supervised classifiers on them. We                         data).
+systematically compare the performance of these classifiers                      We empirically evaluate this pipeline by comparing the
+against models trained on real labelled data. Our experiments                 performance of the classifier trained on LLM-generated
+across multiple GitHub repositories and language pairs                        synthetic C++ data with that of a baseline trained on real,
+demonstrate that LLM-generated synthetic data can effectively                 labelled C++ data. Our experiments evaluate the effectiveness
+bootstrap review recommendation systems, narrowing the                        of synthetic data in approximating real-world review patterns
+performance gap even in low-resource settings. This approach
+                                                                              and investigate the feasibility of utilizing LLM-driven data
+provides a scalable pathway to extend automated code review
+capabilities to rapidly evolving technology stacks, even in the               generation to extend automated code review systems to new
+absence of annotated data.                                                    languages and frameworks, thereby eliminating the need for
+                                                                              costly manual annotation efforts.
+                          I. INTRODUCTION
+                                                                                                    II. LITERATURE REVIEW
+   As software ecosystems continue to diversify, the challenge
+of maintaining code quality across an increasingly complex                       The emergence of large language models has spurred new
+range of languages and frameworks becomes more                                approaches to automating code review tasks. For example, Lu
+complicated. Automated tools that classify whether a code                     et al. (2023) introduced LLaMA-Reviewer, an LLM-based
+change requires manual review play a vital role in modern                     framework fine-tuned with minimal data for code review
+development workflows, improving both productivity and                        assistance. Remarkably, even a 6.7 B-parameter LLaMA
+                                                                              model, after parameter-efficient tuning, matched the
+software reliability. However, such tools typically rely on
+                                                                              performance of specialized code-review models. This
+supervised learning approaches that require substantial
+                                                                              demonstrates that pre-trained large language models (LLMs)
+labelled datasets—resources that are often unavailable for
+                                                                              can be adapted to generate helpful review comments without
+newly emerging or less mature programming languages.
+                                                                              requiring massive retraining. In industry settings, LLM-driven
+While large repositories of unlabelled code exist for these
+                                                                              review systems have already been deployed. Sun et al. (2025)
+languages, the lack of annotated examples limits the
+                                                                              describe BitsAI-CR. This two-stage code review pipeline
+effectiveness of conventional machine learning methods.                       utilizes fine-tuned large language models (LLMs) first to
+   Recent advancements in Large Language Models (LLMs)                        identify issues against a set of 219 review rules and then filter
+present a promising avenue for mitigating data scarcity. LLMs                 and verify the findings. Their system achieved high precision,
+                                                                              with ~75% of suggestions being useful, and was rolled out to
+over 12,000 developers at ByteDance, demonstrating the             a sequence-to-sequence transformer pre-trained on Java and
+practicality of LLM-based code analysis at scale. Notably,         Python functions, along with their documentation, via
+some approaches focus on classifying code changes rather           denoising autoencoding. PLBART can perform code
+than generating comments. For instance, Google’s recent            generation and translation in multiple languages; indeed, it
+experimental method utilizes an LLM to classify issues in          outperformed or matched state-of-the-art methods on code-to-
+code modifications (e.g., flagging changes that violate a          code translation benchmarks covering seven programming
+policy), rather than generating review text. This trend across     languages. In a similar vein, Wang et al. (2021) developed
+research and industry underscores that LLMs can both               CodeT5, which leverages T5-style text-to-text training on
+generate review feedback and classify which code changes           diverse code. These multilingual code language models
+need attention, forming a foundation for automated review          (LLMs) effectively learn a shared space for different
+even when labelled examples are limited.                           programming languages. As a result, they enable translating a
+   A key challenge in classifying code changes for new             code change written in an “unknown” language to a known
+languages or frameworks is the lack of labelled training data.     one, or even directly assessing the change in a language-
+Recent work shows that transfer learning with LLMs can             agnostic way. Such capabilities are highly relevant for cross-
+overcome this by leveraging knowledge from high-resource           language code review: an LLM could, for example, take a
+languages. Multilingual code models, such as CodeBERT              code diff in a new framework and explain or classify it by
+(Feng et al., 2020), learn unified representations from source     internally mapping it to concepts learned from other
+code in multiple languages, enabling some extent of zero-shot      languages.
+generalization. Empirically, Baltaji et al. (2024) conducted an       When real labelled data is scarce, generating synthetic data
+extensive study of cross-lingual transfer on code tasks, finding   has emerged as a powerful strategy for training and adapting
+that model performance can transfer surprisingly well between      models. Recent studies have leveraged large language models
+programming languages. In their experiments spanning 11–41         (LLMs) to create artificial code examples or annotations that
+languages, models trained on one language (e.g., Kotlin or         serve as substitutes for human-labelled data. For instance, Zhu
+JavaScript, identified as particularly transferable sources)       et al. (2024) present an approach called MIRACLE to
+often performed well on others, even without target-language       improve code change translation through synthetic data.
+labels. Similarly, Li et al. (2022) demonstrated cross-lingual     MIRACLE utilizes a pre-trained code model to translate
+adaptation for a specific analysis task, namely type inference.    functions from one language to another, and employs static
+                                                                   analysis and compilation checks to curate high-quality parallel
+They proposed PLATO, a framework that trains a model on
+                                                                   code pairs. By adding thousands of these LLM-generated pairs
+one language’s typed code and applies it to another language
+                                                                   to the training set, they significantly enhanced translation
+by focusing on standard syntactic features.             PLATO
+                                                                   accuracy for low-resource language pairs, even outperforming
+significantly outperformed prior transfer-learning techniques –    code-specific LLMs that were 10 times larger in parameters.
+for example, using a model trained on Python to analyse            Notably, their method achieved up to a 43% improvement in C
+JavaScript yielded over 5% absolute accuracy gain versus           code translation despite having fewer than 150 real examples
+baseline methods. These results confirm that an LLM or             for that case. This illustrates how synthetic diffs or code pairs
+transformer trained on one ecosystem can be repurposed for         can fill in gaps in training data. In the realm of code review
+another, which is crucial for classifying or reviewing code in     and defect detection, synthetic data can be created by
+new languages. Through transfer learning, an LLM could             simulating code changes. Allamanis et al. (2021)
+learn what kinds of changes are risky or require review from       demonstrated this with BugLab, a self-supervised system for
+one language’s data and then apply that knowledge to a novel       bug finding. BugLab trains a bug selector model to insert bugs
+language where such data is unavailable.                           into code deliberately and a bug detector model to catch them,
+   Another approach to handling unlabelled code changes in a       effectively letting the model “learn from its own mistakes”.
+new language is automatic code translation using large             This hide-and-seek training yielded a 30% improvement over
+language models (LLMs). By translating an unfamiliar-              baseline methods on real-world bug datasets, all without any
+language code change into a language where tools or                manually labeled examples of buggy code. The success of
+classifiers exist, one can leverage existing review knowledge.     BugLab shows that an ML model can learn to flag problematic
+Research in the last few years has made great strides in LLM-      code changes (in this case, buggy edits) by training on
+based code translation. Rozière et al. (2020) achieved a           synthetically generated changes.
+breakthrough with TransCoder, an unsupervised transformer             More broadly, researchers are recognizing that LLMs can
+model that learned to translate code among C++, Java, and          be utilized to synthesize data for various software engineering
+Python without any parallel training data. Their approach          tasks. As noted by Nadas and Diosan (2025) in their recent
+combined cross-lingual language modelling and back-                survey, LLM-generated code data (from synthetic code review
+translation, yielding strong results on this challenging task.     examples to machine-generated coding tasks) has proven
+This demonstrated that an LLM can automatically learn              effective for augmenting low-resource scenarios. The ability
+semantic mappings between languages – a form of cross-             to produce diverse code snippets, translations, or commit
+language generalization – purely from large monolingual code       messages on demand means an LLM can supply a pseudo-
+corpora.                                                           labeled dataset for a new language or framework where one
+   Subsequent models incorporated code translation into their      did not previously exist. This synthetic data, when carefully
+training objectives. Ahmad et al. (2021) introduced PLBART,        filtered for accuracy, can then be used to supervise a model in
+determining which code changes require review. In summary,          the same test set to assess the effectiveness of using synthetic
+the literature indicates a convergence of transfer learning,        data for code review classification.
+cross-language large language models (LLMs), and synthetic
+data generation as enabling techniques. Together, these                                            IV. RESULTS
+advances allow LLM-based classifiers to determine whether a            We evaluate the performance of the CodeBERT-based
+given code change requires human review, even in novel              classifier in two training scenarios: using real C++ code
+programming languages or ecosystems, by leveraging                  review data and using synthetic C++ examples generated from
+generalized knowledge learned from other contexts and               Java code changes via GPT-4o. Both models are evaluated on
+supplemented with artificial training examples.                     the same held-out real C++ test set to ensure fair comparison.
+                      III. METHODOLOGY                               Training Data                Accuracy       Precision       Recall         F1
+   We generate a labeled C++ code review dataset by                         Real C++                0.65            0.64          0.65         0.64
+translating labeled Java code changes from the dataset
+introduced in Automating Code Review Activities by Large-                Synthetic C++              0.65            0.65          0.68         0.66
+Scale Pre-training. Each Java code change includes a binary               Table 1: Evaluation results on real and synthetic data
+label indicating whether it required manual review. Using
+GPT-4o, we translate these Java changes into C++ while                The results show that the model trained on real C++ data
+preserving the original intent and the assigned review label.       achieves higher performance across all evaluation metrics.
+GPT-4o is prompted to produce functionally equivalent C++           However, the model trained on synthetic data demonstrates
+code changes that reflect the same significance as the original     competitive results, indicating that LLM-generated training
+Java changes. We assume that while GPT-4o understands the           data can effectively approximate real-world review patterns in
+syntax and semantics of C++, it does not inherently know            low-resource scenarios
+which changes are critical, so the original review label is
+retained for the translated code. Basic validation through static                V. CONCLUSIONS AND FUTURE RESEARCH
+analysis ensures that the generated C++ code is syntactically
+correct. The resulting synthetic dataset enables the training of              This work demonstrates the feasibility of using large
+a CodeBERT classifier to predict review needs for C++ code          language models, specifically GPT-4o, to generate synthetic
+changes, addressing the lack of labeled data for this language.     code review datasets for low-resource programming
+                                                                    languages. By translating labeled Java code changes into C++
+                                                                    while preserving review labels, we enable supervised training
+                                                                    of a CodeBERT-based classifier in the absence of sufficient
+                                                                    real-world, C++-labeled data. Although models trained on real
+                                                                    data still outperform those trained on synthetic data, the
+                                                                    performance gap is narrow enough to suggest that LLM-
+                                                                    generated examples can be a practical solution when real data
+                                                                    is unavailable.
+                                                                              Future work will explore extending this methodology
+      Figure 1: Data generation, training, and evaluation flow      to additional programming languages and frameworks,
+                                                                    particularly those emerging in specialized domains such as
+   Additionally, we extract the original C++ code changes
+from the source dataset and partition them into training and        mobile development (e.g., Swift, Kotlin) and data science
+testing sets. The training portion is used to create a baseline     (e.g., Julia, R). We also plan to investigate the use of more
+classifier using real C++ examples. In contrast, the test portion   advanced prompting techniques and reinforcement learning
+is used to evaluate both the baseline model and the model           strategies to improve the quality and realism of the synthetic
+trained on synthetic C++ examples generated by GPT-4o. This         code changes. Additionally, incorporating domain-specific
+setup allows a direct comparison of model performance using         review criteria and experimenting with multilingual code
+real versus synthetic training data.                                models may further enhance cross-language transferability and
+   We use a CodeBERT-based classifier to predict whether a          review recommendation accuracy.
+C++ code change requires manual review. For the baseline
+case, the model is fine-tuned on the real C++ training data                                         REFERENCES
+extracted from the source dataset. For the synthetic case, the      [1] Arnaoty, M., & Servant, F. (2023). OneSpace: Detecting cross-language
+same model architecture is fine-tuned using the C++ code            clones by learning a common embedding space. Journal of Systems and
+changes generated by GPT-4o from the labeled Java examples.         Software, 208(6), Article 111911.
+In both cases, the test set, comprising fundamental C++ code        [2] Chen, F., Fard, F. H., Lo, D., & Bryksin, T. (2022). On the transferability of
+changes not encountered during training, is used for                pre-trained language models for low-resource programming languages. In
+evaluation. This ensures that the performance comparison            Proceedings of the 30th IEEE/ACM International Conference on Program
+                                                                    Comprehension (ICPC 2022) (pp. 401–412). New York, NY: ACM.
+between models trained on real and synthetic data is
+                                                                    [3] Khajezade, M., Wu, J. J., Fard, F. H., Rodriguez-Perez, G., & Zou, Y. (2024).
+conducted under identical conditions. Evaluation metrics such       Investigating the efficacy of large language models for code clone detection.
+as accuracy, precision, recall, and F1-score are computed on
+In Proceedings of the 32nd IEEE/ACM International Conference on Program                [22] Roziere, B., Lachaux, M.-A., Chanussot, L., & Lample, G. (2020).
+Comprehension (ICPC 2024) (pp. 161–165). New York, NY: ACM.                            Unsupervised translation of programming languages. In Advances in Neural
+[4] Malhotra, R., & Meena, S. (2024). A systematic review of transfer learning         Information Processing Systems, 33 (NeurIPS 2020).
+in software engineering. Multimedia Tools and Applications, 83(39), 87237–             [23] Shao, Y., Li, L., Ma, Y., Li, P., Song, D., Cheng, Q., … & Lin, D. (2025).
+87298.                                                                                 Case2Code: scalable synthetic data for code generation. In Proceedings of the
+[5] Shao, Y., Li, L., Ma, Y., Li, P., Song, D., Cheng, Q., Li, S., Li, X., Wang, P.,   29th International Conference on Computational Linguistics (COLING 2024).
+Guo, Q., Yan, H., Qiu, X., Huang, X., & Lin, D. (2025). Case2Code: Scalable            [24] Tao, C., Zhan, Q., Hu, X., & Xia, X. (2022). C4: contrastive cross-language
+synthetic data for code generation. In Proceedings of the 31st International           code clone detection. In Proceedings of the 30th IEEE/ACM International
+Conference on Computational Linguistics (COLING 2024) (pp. 11056–11069).               Conference on Program Comprehension (ICPC 2022) (pp. 413–424).
+Association for Computational Linguistics.                                             25] Vijayvergiya, M., Salawa, M., Budiselić, I., Zheng, D., Lamblin, P.,
+[6] Tufano, R., Dabić, O., Mastropaolo, A., Ciniselli, M., & Bavota, G. (2024).        Ivanković, M., & Just, R. (2024). AI-assisted assessment of coding practices in
+Code review automation: Strengths and weaknesses of the state of the art.              modern code review. In Proceedings of the 1st ACM International Conference
+IEEE Transactions on Software Engineering, 50, 338–353.                                on AI-augmented Software Development (AIware'24’24) (pp. 1–9).
+[7] Tufano, R., Masiero, S., Mastropaolo, A., Pascarella, L., Poshyvanyk, D., &        [26] Wang, Y., Wang, W., Joty, S., & Hoi, S. C. H. (2021). CodeT5: identifier-
+Bavota, G. (2022). Using pre-trained models to boost code review                       aware unified pre-trained encoder-decoder models for code understanding
+automation. In Proceedings of the 44th International Conference on Software            and generation. In Proceedings of the 2021 Conference on Empirical Methods
+Engineering (ICSE 2022) (pp. 2291–2302). New York, NY: ACM.                            in Natural Language Processing (EMNLP 2021) (pp. 8696–8708). Association
+[8] Wang, K., Yan, M., Zhang, H., & Hu, H. (2022). Unified abstract syntax tree        for Computational Linguistics.
+representation learning for cross-language program classification. In                  [27] Yang, L., Xu, J., Zhang, Y., Zhang, H., & Bacchelli, A. (2023). EvaCRC:
+Proceedings of the 30th IEEE/ACM International Conference on Program                   evaluating code review comments. In Proceedings of the 31st ACM Joint
+Comprehension (ICPC 2022) (pp. 390–400). New York, NY: ACM.                            European Software Engineering Conference and Symposium on the
+[9] Yu, Y., Rong, G., Shen, H., Zhang, H., Shao, D., Wang, M., Wei, Z., Xu, Y., &      Foundations of Software Engineering (ESEC/FSE 2023) (pp. 275–287).
+Wang, J. (2025). Fine-tuning large language models to improve accuracy and             [28] Yu, Y., Rong, G., Shen, H., Zhang, H., Shao, D., Wang, M., … & Wang, J.
+comprehensibility of automated code review. ACM Transactions on Software               (2024). Fine-tuning large language models to improve accuracy and
+Engineering and Methodology, 34(1), Article 14, 1–26.                                  comprehensibility of automated code review. ACM Transactions on Software
+[10] Ahmad, W., Chakraborty, S., Ray, B., & Chang, K.-W. (2021). Unified pre-          Engineering and Methodology, 34(1).
+training for program understanding and generation. Proceedings of the 2021             [29] Yuan, W., Zhang, Q., He, T., Fang, C., Hung, N. Q. V., Hao, X., & Yin, H.
+Conference of the North American Chapter of the Association for                        (2022). CIRCLE: continual repair across programming languages. In
+Computational Linguistics (NAACL 2021), 2655–2668.                                     Proceedings of the 31st ACM SIGSOFT International Symposium on Software
+[11] Ahmed, T., & Devanbu, P. (2022). Multilingual training for software               Testing and Analysis (ISSTA 2022) (pp. 678–690).
+engineering. In Proceedings of the 44th International Conference on Software
+Engineering (ICSE 2022) (pp. 1443–1455).
+[12] Chen, B., Golebiowski, J., & Abedjan, Z. (2024). Data augmentation for
+supervised code translation learning. In Proceedings of the 21st IEEE/ACM
+International Conference on Mining Software Repositories (MSR 2024).
+                                                                                       .
+[13] Feng, Z., Guo, D., Tang, D., Duan, N., Feng, X., Gong, M., … & Zhou, M.
+(2020). CodeBERT: a pre-trained model for programming and natural
+languages. In Findings of the Association for Computational Linguistics:
+EMNLP 2020 (pp. 1536–1547).
+[14] Guo, D., Ren, S., Lu, S., Feng, Z., Tang, D., Liu, S., … & Zhou, M. (2021).
+GraphCodeBERT: pre-training code representations with data flow. In
+International Conference on Learning Representations (ICLR 2021).
+[15] Guo, D., Lu, S., Duan, N., Wang, Y., Zhou, M., & Yin, J. (2022). UniXcoder:
+unified cross-modal pre-training for code representation. In Proceedings of
+the 60th Annual Meeting of the Association for Computational Linguistics
+(ACL 2022) (pp. 7212–7225). Association for Computational Linguistics.
+[16] Guo, Q., Cao, J., Xie, X., Liu, S., Li, X., Chen, B., & Peng, X. (2024).
+Exploring the potential of ChatGPT in automated code refinement: an
+empirical study. In Proceedings of the 46th International Conference on
+Software Engineering (ICSE 2024) (pp. 1–13).
+[17] Li, Y., Choi, D., Chung, J., Kushman, N., Schrittwieser, J., Leblond, R., … &
+Vinyals, O. (2022). Competition-level code generation with AlphaCode.
+Science, 378(6624), 1092–1097.
+[18] Majumdar, S., Bansal, A., Das, P. P., Clough, P. D., Datta, K., & Ghosh, S.
+K. (2022). Automated evaluation of comments to aid software maintenance.
+Journal of Software: Evolution and Process, 34(7), e2463.
+[19] Mao, R., Zhang, L., & Zhang, X. (2024). Mutation-based data
+augmentation for software defect prediction. Journal of Software: Evolution
+and Process, 36(6), e2634.
+[20] Moumoula, M. B., Kaboré, A. K., Klein, J., & Bissyandé, T. F. (2025). The
+struggles of LLMs in cross-lingual code clone detection. In Proceedings of the
+33rd ACM SIGSOFT International Symposium on the Foundations of Software
+Engineering (FSE 2025).
+[21] Pornprasit, C., & Tantithamthavorn, C. (2024). Fine-tuning and prompt
+engineering for large language model-based code review automation.
+Information and Software Technology, 159, 107523.
+

@@ -1,0 +1,253 @@
+RevMine: An LLM-Assisted Tool for Code Review
+   Mining and Analysis Across Git Platforms
+                  Samah Kansab                                Francis Bordeleau                            Ali Tizghadam
+  Software and IT Engineering Department          Software and IT Engineering Department          Network Softwarisation and AI
+   École de technologie supérieure (ÉTS)           École de technologie supérieure (ÉTS)                       TELUS
+             Montreal, Canada                                Montreal, Canada                             Toronto, Canada
+        samah.kansab.1@etsmtl.net                       francis.bordeleau@etsmtl.ca                  ali.tizghadam@telus.com
+
+
+
+    Abstract—Empirical research on code review processes is           interactive pipeline that unifies data collection, transformation,
+increasingly central to understanding software quality and collab-      interpretation, and visualization through an intuitive dash-
+oration. However, collecting and analyzing review data remains a        board. Users can define their analysis goals using natural
+time-consuming and technically intensive task. Most researchers
+follow similar workflows—writing ad hoc scripts to extract,            language—for example, retrieving reviews from a specific
+filter, and analyze review data from platforms like GitHub and       timeframe or matching certain patterns—and RevMine auto-
+GitLab. This paper introduces RevMine, a conceptual tool that        matically infers the necessary API calls and filters. Supporting
+streamlines the entire code review mining pipeline using large       both GitHub and GitLab, the tool facilitates cross-platform
+language models (LLMs). RevMine guides users through authen-          analysis and delivers both quantitative and qualitative insights.
+tication, endpoint discovery, and natural language–driven data
+collection, significantly reducing the need for manual scripting.          In this poster, we present the motivation, architecture, and
+After retrieving review data, it supports both quantitative and       potential of RevMine. Our goal is to empower researchers
+qualitative analysis based on user-defined filters or LLM-inferred   with a flexible and intelligent assistant that streamlines review
+patterns. This poster outlines the tool’s architecture, use cases,    mining tasks and opens up opportunities for broader and more
+and research potential. By lowering the barrier to entry, RevMine    accessible empirical studies in software engineering.
+aims to democratize code review mining and enable a broader
+range of empirical software engineering studies.                                           II. RELATED WORK
+    Index Terms—Code Review Mining, Large Language Models,
+GitHub and GitLab, Empirical Software Engineering                       Code review is a critical quality assurance activity in
+                                                                     modern software development. It is used to detect defects,
+                         I. INTRODUCTION                             improve code readability, and ensure compliance with design
+   Code reviews are a cornerstone of modern software devel-          and style guidelines. Empirical evidence shows that reviewed
+opment, enabling collaborative evaluation of changes, improv-        code tends to be of higher quality and less likely to contain
+ing code quality, and facilitating knowledge sharing. Con-           bugs [16, 2, 24]. RevMine builds on this foundation by
+sequently, code review data has become a key subject of              enabling researchers to efficiently mine, filter, and analyze
+investigation in empirical software engineering. Researchers         review data across platforms using LLM-guided orchestration
+increasingly analyze pull requests and merge requests to study       and structured metrics.
+various development aspects, such as developer behavior,                Several studies have modeled the dynamics of the code
+review practices, project dynamics, and opportunities for au-        review process, identifying factors that affect review dura-
+tomating code review (see related work1).                            tion and reviewer behavior. For example, predictive models
+   Despite its value, the process of collecting and analyzing        for review completion and reviewer engagement have been
+code review data remains technically demanding. Researchers          proposed by Chouchen et al. and Maddila et al. [6, 15], while
+often repeat similar workflows: manually authenticating to           Hasan et al. [7] show that fast initial responses (particularly
+platforms like GitHub or GitLab, discovering and configuring         from humans rather than bots) correlate with shorter review
+relevant API endpoints/queries, writing scripts to extract and       lifetimes. Social and contextual factors also play a role: Bosu
+filter data, and applying custom logic to perform analysis.          et al. [4] show that well-known developers receive faster
+These tasks are not only time-consuming, but they also intro-        feedback, while Jiang et al. [9] link the number of reviewers
+duce inconsistencies and limit reproducibility across studies.       to review duration. Other studies focus on inefficiencies and
+   This paper presents RevMine, a conceptual tool that stream-       bottlenecks, such as patch features that attract more attention
+lines the code review mining process by leveraging large             [23], duplicated pull requests [14], and abandoned submissions
+language models (LLMs) to bridge the gap between research            [12]. Notably, Kansab et al. [11] demonstrate that mining
+intent and technical execution. Unlike existing solutions such       review activity can expose deeper DevOps patterns, including
+as PyDriller or GH Archive, RevMine provides a no-code,              effects of process changes and branching policies—a use case
+                                                                     RevMine aims to directly support through customizable metric
+  1https://figshare.com/s/c5b0e108520072210818                       collection.
+   The usefulness and quality of review comments are also              1. Platform and Access. The user begins by selecting
+a focal point in the literature. Yang et al. [26] introduced        GitHub or GitLab and providing access credentials (personal
+EvaCRC, a framework for explainable comment quality as-             access token, project/repository ID, and optional metadata for
+sessment. Turzo et al. [25] conducted a large-scale study in        self-hosted instances). RevMine then automatically verifies
+the OpenDev Nova project, showing that linguistic clarity,          permissions, endpoint availability, and token validity to ensure
+politeness, and reviewer expertise contribute to perceived          smooth and error-free data collection.
+usefulness. Rahman et al. [19] developed RevHelper, a model            2. Orchestrated Interaction. Once the platform is config-
+predicting comment usefulness based on textual and contextual       ured, users define their data collection intent through a flexible
+features, achieving 66                                              interaction layer that supports both natural language queries
+   Other researchers have examined how different types of           and manual configuration. For example, a user may write:
+artifacts are treated during reviews. For example, Nejati et        “Collect the commits of all the merge requests created in
+al. [17] show that build specification files are reviewed less      2023 that include at least one reviewer comment.” RevMine
+often but draw more defect-related feedback. Spadini et al. [21]    forwards this prompt to an integrated LLM, which identifies
+find that reviewers prioritize production over test code when       relevant API endpoints (e.g., listing merge requests by creation
+both are changed, although test files still serve a critical ver-   date, retrieving associated commits, fetching comments), in-
+ification function. Similarly, Thongtanunam et al. [22] report      fers the appropriate filters (e.g. presence of comments), and
+that defect-prone files often receive less reviewer attention,      determines which metrics should be extracted. It then gener-
+but raised issues often target evolvability, such as improving      ates a preliminary data collection plan and presents it to the
+documentation rather than correcting functional logic. These        user for validation or refinement before execution. We chose
+findings inform RevMine’s support for file-type-based filtering     to integrate LLMs to allow users to express complex review
+and classification during analysis.                                 mining goals in natural language. Unlike fixed-rule systems
+   In the industrial context, code review practices have been       or custom scripts, LLMs enable exploratory and flexible data
+studied to understand scalability and tool support. Bosu et         collection across a wide range of project structures.
+al. [5] conducted a multi-phase study at Microsoft, revealing          A manual configuration mode remains available for users
+how reviewer tenure and review scope affect comment use-            who prefer deterministic, reproducible setups. In this mode,
+fulness. Hasan et al. [8] explore developers’ perceptions of        users can select desired metrics through a structured graphical
+feedback and propose automated models for evaluating com-           interface. These metrics are organized into intuitive categories
+ment quality. Jureczko et al. [10] studied review effectiveness     (e.g., commits, comments, metadata), enabling users to include
+at Ocado Technology, comparing tool-assisted and over-the-          an entire group of related fields with a single selection. For
+shoulder reviews. They found that while automated tools pro-        example, choosing the commits category will automatically
+duce higher volumes of comments, in-person reviews improve          include metrics such as creation date, authored date, author
+knowledge sharing. Alomar et al. [1] analyzed how developers        identity, commit message, and file diffs, without requiring
+at Xerox review refactoring changes, pointing to challenges in      individual selection.
+conveying intent and understanding structural impact. Kim et           This interaction layer bridges the gap between high-level
+al. [13] investigated automated code review bots at Samsung         research questions and low-level API configurations. It em-
+Electronics, showing their effectiveness in detecting style         powers users—especially those unfamiliar with Git platform
+issues and speeding up the review process. Likewise, systems        internals or REST APIs—to define and launch complex data
+like Google’s Tricorder [20, 18] and Microsoft’s internal code      workflows without writing any code.
+analysis tools [3] demonstrate that automation enhances review         3. Data Collection. Once the data collection plan is con-
+efficiency without replacing human judgment.                        firmed, RevMine initiates the retrieval process by issuing
+   Together, these studies underscore the need for tooling that     platform-specific API requests to extract structured code re-
+bridges manual and automated review processes, supports             view data. This can includes metadata for each merge or pull
+multi-dimensional analysis, and adapts to different artifact        request (e.g., title, description, creation date, merge status),
+types and review contexts. RevMine addresses this gap by of-        the list of changed files, associated commits, and both inline
+fering an LLM-guided, platform-agnostic tool that streamlines       and general review comments. The system is built to robustly
+data collection and supports both quantitative and qualitative      handle pagination, rate limiting, and transient errors through
+review analysis across a variety of research and industrial         automatic retries and detailed logging, ensuring reliable and
+scenarios.                                                          traceable data extraction.
+                                                                        To support reproducibility and reduce redundant API usage,
+                 III. TOOL ARCHITECTURE                               RevMine first stores all retrieved data in its raw form as
+  RevMine is built as a modular system that enables re-              a JSON file. This allows researchers to revisit or reprocess
+searchers to extract and analyze code review data across             the data later without needing to re-run the full extraction
+platforms in a guided, semi-automated manner. As shown in            pipeline—saving time and avoiding platform quota limitations.
+Figure 1, its architecture consists of four main components:           Following raw data acquisition, RevMine constructs a struc-
+(1) Platform and Access, (2) Orchestrated Interaction, (3) Data      tured dataset based on the specific metrics selected by the user
+Collection, and (4) Data Analysis Engine.                            (see the evolving list of metrics in1). At this stage, additional
+filters—such as file extensions, time windows, or user-defined                                                  The tool will be deployed within the partners’ development
+keywords—can be applied to refine the dataset. The resulting                                                 environments for validation. In parallel, we are applying
+data is exported in CSV format and made accessible for further                                               RevMine to open-source projects to compare its outputs with
+analysis or visualization.                                                                                   existing scripts and benchmarks, assessing consistency and re-
+   4. Data Analysis. After data collection, RevMine offers                                                   liability. We also plan to extend support to additional platforms
+an interactive analysis interface that supports both predefined                                              such as Gerrit to broaden its applicability.
+metrics and user-driven exploration. Users can generate high-
+                                                                                                                            V. CONCLUSION & PROGRESS
+level summaries based on the collected metrics—such as the
+average number of comments per review, review duration, or                                                      Overall, RevMine offers a complete, customizable, and user-
+basic metric trend charts—or request the LLM to generate                                                     friendly pipeline that eliminates the need for repetitive script-
+custom analysis code (e.g., Python scripts that group reviews                                                ing while supporting high-quality and reproducible empirical
+by week and visualize comment activity). The generated out-                                                  research on code reviews across Git-based platforms.
+puts can be displayed within the tool as part of an interactive                                                 To date, we have implemented core components of the
+dashboard and exported for reporting or publication.                                                         tool, including the data collection engine, metric calcula-
+   This flexibility allows users to iteratively refine their re-                                             tion routines, metric grouping logic, and initial testing of
+search questions and adapt the analysis process without rewrit-                                              the LLM-based orchestration layer. The next steps involve
+ing scripts. RevMine supports both quantitative insights (e.g.,                                              evaluating and comparing LLM-based orchestration strategies,
+counts, durations, participation) and qualitative filtering based                                            fine-tuning LLMs for context-aware code generation (e.g.,
+on review comment content, using keyword matching or LLM-                                                    generating plots or analysis scripts), and completing the user
+inferred patterns.                                                                                           interface for interactive usage.
+                                                                                                                                      REFERENCES
+                                                                      Platform & Access
+                                                                                                              [1]   Eman Abdullah AlOmar et al. “Refactoring practices in
+                                                          Github/GitLab, project ID, access token                   the context of modern code review: An industrial case
+                                                                                                                    study at Xerox”. In: 2021 IEEE/ACM 43rd International
+                                                                                                                    Conference on Software Engineering: Software Engi-
+            User                                                  Validate credentials
+                                                           & Auto-discover accessible projects
+
+
+                                                                                                                    neering in Practice (ICSE-SEIP). IEEE. 2021, pp. 348–
+                                               Orchestrated Interaction
+                                                                                                                    357.
+                             LLM assisted flow
+                     User prompt
+                                                                                   Manual flow
+                                                                                                              [2]   Gabriele Bavota and Barbara Russo. “Four eyes are bet-
+                     LLm parse intent identifies:
+                     * Relevent endpoints, Filters, Metrics
+                                                                      - User manually select:
+                                                                        * Filters, Metrics to be collected          ter than two: On the impact of code reviews on software
+                                                                      on by one
+                   to be collected
+                                                                                                                    quality”. In: 2015 IEEE International Conference on
+                                       List of endpoint+metrics to be collected                                     Software Maintenance and Evolution (ICSME). IEEE.
+                                                                                                                    2015, pp. 81–90.
+                                                     Data Collection
+                                                                                                              [3]   Christian Bird, Trevor Carnahan, and Michaela Greiler.
+                                                         Data collection
+                                                                                                                    “Lessons learned from building and deploying a code
+                                   API calls                                            Raw
+                                                            & Filters                   data                        review analytics platform”. In: 2015 IEEE/ACM 12th
+                                                                                                                    Working Conference on Mining Software Repositories.
+                                 Metric
+                                Collection
+                                               Structured
+                                                               Filters (if other
+                                                                necessary at           Filtered                     IEEE. 2015, pp. 191–201.
+                                                  CSV            this stage)             CSV
+                                                                                                              [4]   Amiangshu Bosu and Jeffrey C Carver. “Impact of
+                                                      Data Analysis
+                                                                                                                    developer reputation on code review outcomes in oss
+                           LLM assisted flow                                       Manual flow
+                                                                                                                    projects: An empirical investigation”. In: Proceedings
+                    User prompt                                          - User manually select from
+                                                                                                                    of the 8th ACM/IEEE international symposium on em-
+                                                                                                                    pirical software engineering and measurement. 2014,
+                    LLM generates:                                       existed features the plots to
+                    * Scripts to calculate, Review                       generate
+                   stats, Plots, NLP rules
+                                                                                                                    pp. 1–10.
+                                                     Visualizations
+                                                                                                              [5]   Amiangshu Bosu, Michaela Greiler, and Christian Bird.
+                                                                                                                    “Characteristics of useful code reviews: An empirical
+          Fig. 1. Conceptual architecture of the RevMine tool                                                       study at microsoft”. In: 2015 IEEE/ACM 12th Working
+                                                                                                                    Conference on Mining Software Repositories. IEEE.
+                                                                                                                    2015, pp. 146–156.
+                      IV. TESTS & VALIDATION                                                                  [6]   Moataz Chouchen et al. “Learning to Predict Code
+   We are collaborating with two industrial partners—large                                                          Review Completion Time In Modern Code Review”.
+software companies with active development teams—to test                                                            In: Empirical Software Engineering 28.4 (2023), p. 82.
+and validate the tool in real-world settings. Experts from these                                              [7]   Kazi Amit Hasan et al. “Understanding the Time to First
+companies will interact with RevMine, provide structured                                                            Response In GitHub Pull Requests”. In: arXiv preprint
+feedback on usability, and evaluate its relevance for their                                                         arXiv:2304.08426 (2023).
+internal analytics workflows.
+ [8]   Masum Hasan et al. “Using a balanced scorecard to              [20]   Caitlin Sadowski et al. “Tricorder: Building a program
+       identify opportunities to improve code review effective-              analysis ecosystem”. In: 2015 IEEE/ACM 37th IEEE In-
+       ness: An industrial experience report”. In: Empirical                 ternational Conference on Software Engineering. Vol. 1.
+       Software Engineering 26 (2021), pp. 1–34.                             IEEE. 2015, pp. 598–608.
+ [9]   Yujuan Jiang, Bram Adams, and Daniel M German.                 [21]   Davide Spadini et al. “When testing meets code review:
+       “Will my patch make it? and how fast? case study on                   Why and how developers review tests”. In: Proceedings
+       the linux kernel”. In: 2013 10th Working Conference                   of the 40th International Conference on Software Engi-
+       on Mining Software Repositories (MSR). IEEE. 2013,                    neering. 2018, pp. 677–687.
+       pp. 101–110.                                                   [22]   Patanamon Thongtanunam et al. “Investigating code
+[10]   Marian Jureczko, Łukasz Kajda, and Paweł Go´recki.                    review practices in defective files: An empirical study
+       “Code review effectiveness: an empirical study on se-                 of the qt system”. In: 2015 IEEE/ACM 12th Working
+       lected factors influence”. In: IET Software 14.7 (2020),              Conference on Mining Software Repositories. IEEE.
+       pp. 794–805.                                                          2015, pp. 168–179.
+[11]   Samah Kansab et al. “Leveraging Merge Request Data             [23]   Patanamon Thongtanunam et al. “Review participation
+       to Analyze Devops Practices: Insights From a Network-                 in modern code review: An empirical study of the
+       ing Software Solution Company”. In: CS & IT Confer-                   android, Qt, and OpenStack projects”. In: Empirical
+       ence Proceedings. Vol. 15. 10. CS & IT Conference                     Software Engineering 22 (2017), pp. 768–817.
+       Proceedings. 2025.                                             [24]   Rosalia Tufano et al. “Towards automating code review
+[12]   SayedHassan Khatoonabadi et al. “On Wasted Contri-                    activities”. In: 2021 IEEE/ACM 43rd International Con-
+       butions: Understanding the Dynamics of Contributor-                   ference on Software Engineering (ICSE). IEEE. 2021,
+       Abandoned Pull Requests–A Mixed-Methods Study of                      pp. 163–174.
+       10 Large Open-Source Projects”. In: ACM Transactions           [25]   Asif Kamal Turzo and Amiangshu Bosu. “What makes a
+       on Software Engineering and Methodology 32.1 (2023),                  code review useful to opendev developers? an empirical
+       pp. 1–39.                                                             investigation”. In: Empirical Software Engineering 29.1
+[13]   Hyungjin Kim et al. “Understanding automated code re-                 (2024), p. 6.
+       view process and developer experience in industry”. In:        [26]   Lanxin Yang et al. “EvaCRC: Evaluating Code Review
+       Proceedings of the 30th ACM Joint European Software                   Comments”. In: Proceedings of the 31st ACM Joint
+       Engineering Conference and Symposium on the Foun-                     European Software Engineering Conference and Sym-
+       dations of Software Engineering. 2022, pp. 1398–1407.                 posium on the Foundations of Software Engineering.
+[14]   Zhixing Li et al. “Redundancy, context, and preference:               2023, pp. 275–287.
+       An empirical study of duplicate pull requests in OSS
+       projects”. In: IEEE Transactions on Software Engineer-
+       ing 48.4 (2020), pp. 1309–1335.
+[15]   Chandra Maddila et al. “Nudge: Accelerating Overdue
+       Pull Requests toward Completion”. In: ACM Transac-
+       tions on Software Engineering and Methodology 32.2
+       (2023), pp. 1–30.
+[16]   Shane McIntosh et al. “The impact of code review
+       coverage and code review participation on software
+       quality: A case study of the qt, vtk, and itk projects”. In:
+       Proceedings of the 11th working conference on mining
+       software repositories. 2014, pp. 192–201.
+[17]   Mahtab Nejati, Mahmoud Alfadel, and Shane McIntosh.
+       “Code review of build system specifications: preva-
+       lence, purposes, patterns, and perceptions”. In: 2023
+       IEEE/ACM 45th International Conference on Software
+       Engineering (ICSE). IEEE. 2023, pp. 1213–1224.
+[18]   Rachel Potvin and Josh Levenberg. “Why Google stores
+       billions of lines of code in a single repository”. In:
+       Communications of the ACM 59.7 (2016), pp. 78–87.
+[19]   Mohammad Masudur Rahman, Chanchal K Roy, and
+       Raula G Kula. “Predicting usefulness of code review
+       comments using textual features and developer expe-
+       rience”. In: 2017 IEEE/ACM 14th International Con-
+       ference on Mining Software Repositories (MSR). IEEE.
+       2017, pp. 215–226.
+

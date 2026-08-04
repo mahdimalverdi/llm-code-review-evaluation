@@ -1,0 +1,811 @@
+                                          Beyond Summaries: Structure-Aware Labeling of Code Changes
+                                                        with Large Language Models
+                                                                              Bar Weiss∗                                           Antonio Abu-Nassar
+                                               Viterbi Faculty of Electrical and Computer Engineering                                  IBM Research
+                                                                Technion, Haifa, Israel                                                 Haifa, Israel
+                                                          barweiss@campus.technion.ac.il                                       Antonio.Abu.Nassar@ibm.com
+
+                                                                             Adi Sosnovich                                               Karen Yorav
+                                                                           IBM Research                                                  IBM Research
+                                                                            Haifa, Israel                                                 Haifa, Israel
+arXiv:2605.26100v1 [cs.SE] 25 May 2026
+
+
+
+
+                                                                         adisos@il.ibm.com                                             yorav@il.ibm.com
+
+                                         Abstract
+                                         Code review is a critical practice in software engineering, yet the
+                                         growing scale and frequency of code patches in modern projects,                                           Static Analysis        LLM
+                                         together with the widespread adoption of AI code assistants, make              Language Agnostic                 No               Yes
+                                         manual review increasingly challenging. Identifying the types of               Development Effort             Very High           Low
+                                         changes within a patch, such as renames, moves, or logic modifi-
+                                         cations, can substantially improve review efficiency by enabling               Maintenance                     Medium             Low
+                                         prioritization, filtering, and automation. However, existing LLM-              Provable Guarantees               Yes              No
+                                         based approaches to code review have largely focused on summa-                 Label Customization             Medium            High
+                                         rization and comment generation, leaving structured code reviews
+                                         underexplored. In this paper, we present a systematic study of using          Accuracy                      High           ?
+                                         large language models (LLMs) for taxonomy-based labeling of code           Table 1: Static analysis and LLM properties comparison.
+                                         changes in a code patch. We introduce a two-stage pipeline that as-
+                                         signs labels to diff hunks and then refines them to capture structural
+                                         relationships and semantic attributes, such as rename propagation        requests (PRs), but our formulation is independent of the surround-
+                                         and type changes. Our approach employs few-shot prompting to             ing review workflow. Recent advances in Large Language Models
+                                         produce language-agnostic and customizable labels, without the           (LLMs) have transformed code-related tasks, including code com-
+                                         engineering overhead of traditional static-analysis pipelines. We        pletion, bug detection, and summarization [3, 10, 18]. In the context
+                                         evaluate four LLMs across multiple context configurations on a           of code review, LLMs are increasingly used to summarize patches,
+                                         manually curated benchmark of natural and synthetic patches. Our         generate review comments, and explain changes [5, 13, 16]. While
+                                         best configuration achieves up to 84% recall and 81% precision, with     these approaches aim to reduce cognitive load and improve produc-
+                                         high accuracy in extracting relational and attribute metadata. These     tivity, they primarily produce free-text outputs, which are difficult
+                                         results suggest that LLM-based labeling can effectively complement       to integrate into automated workflows or analytics pipelines.
+                                         static analysis by enabling flexible, multilingual, and automation-         One promising direction is to support both human understanding
+                                         friendly code review workflows.                                          and automation by labeling diff hunks according to a well-defined
+                                                                                                                  taxonomy of change types (e.g., rename, move, interface change,
+                                         CCS Concepts                                                             style change). Such structured output enables downstream post-
+                                         • Software and its engineering → Maintaining software.                   processing, supports tailored workflows, and integrates naturally
+                                                                                                                  with dashboards and analytics systems. Traditionally, change-type
+                                         Keywords                                                                 identification relies on static analysis of program structure, offer-
+                                         Code Review, Refactoring, Large Language Models, Classification          ing strong accuracy and formal guarantees within supported do-
+                                                                                                                  mains. However, these methods are often language-specific, costly
+                                         1    Introduction                                                        to extend, and expensive to maintain. By contrast, an LLM-based
+                                                                                                                  approach promises greater flexibility: it can be largely language-
+                                         Code review is an essential activity in software engineering: having
+                                                                                                                  agnostic (assuming the model has sufficient exposure to the lan-
+                                         human peers inspect changes helps catch defects early, ensures
+                                                                                                                  guage), easier to adapt to new taxonomies, and faster to deploy.
+                                         consistent standards, and fosters shared knowledge among team
+                                                                                                                  This flexibility comes at the cost of reduced formal guarantees and
+                                         members [15]. Yet, as codebases grow and code patches become
+                                                                                                                  potentially less predictable accuracy, motivating a careful empirical
+                                         more frequent, review throughput and quality increasingly become
+                                                                                                                  study of its capabilities and limitations.
+                                         bottlenecks. We use the term code patch to denote a set of code
+                                                                                                                     This paper presents a study of LLMs for structured labeling of
+                                         changes. In practice, such patches are often obtained from pull
+                                                                                                                  diff hunks in patches. Specifically, we investigate whether LLMs
+                                         ∗ Work done while interning at IBM Research.                             can: (1) assign taxonomy-based labels to individual diff hunks; (2)
+                                         2026-05-26 02:42. Page 1 of 1–13.
+                                                                                                     Bar Weiss, Antonio Abu-Nassar, Adi Sosnovich, Karen Yorav
+
+
+capture structure-aware relationships across hunks (e.g., renaming
+a function argument and all of its usages); and (3) extract semantic
+attributes (e.g., old/new identifier names for renaming changes,
+old/new types for retyping changes). To evaluate our approach,
+we assembled a manually curated benchmark of PRs and assessed
+four LLMs across multiple retrieval-context strategies. Our best
+configuration achieves 84% recall and 81% precision. Overall, our
+method complements classical static-analysis techniques by trading
+                                                                                  Figure 1: Example of a diff hunk with identified labeling.
+formal guarantees for faster adoption, multilingual support, and
+easier customization, while retaining structured outputs that enable
+practical downstream automation. We conclude by discussing trade-
+offs, limitations, and opportunities for extending this framework to
+semantic and intent-level change classification. 1
+
+2    Related Work
+Traditional approaches to identifying fine-grained code changes
+rely on static analysis of program structure. These techniques typ-
+ically operate on Abstract Syntax Trees (ASTs) and apply rule-
+based algorithms to detect refactoring and structural edits. Repre-
+sentative tools include RefactoringMiner [17], GumTree [6], and
+ChangeDistiller [7]. RefactoringMiner, for example, introduced a                                      (a)                                        (b)
+threshold-free AST-based matching technique capable of identify-
+ing 15 common refactoring types directly from commit histories,                  Figure 2: Illustration of hunk relationships in (a) rename and
+without requiring projects to be built. These tools demonstrate the              (b) move label types.
+effectiveness of static analysis for structured change detection, but
+remain constrained by language-specific implementations, fixed
+taxonomies, and the engineering effort required to adapt them to                 changes between the old and new versions of the code. Our goal
+new ecosystems.                                                                  is to assign to each diff hunk in the patch all the label types from
+   LLMs have demonstrated strong capabilities in code-related tasks              T that describe the changes in it. Formally, a labeling instance is
+such as completion, bug detection, and summarization [3, 10, 18].                defined as a tuple, ℓ = (𝑖, ℎ, 𝑡, 𝑝, 𝑎), where 𝑖 ∈ N is an integer index,
+Code-oriented assistants like Codex [4] and Claude Code [1] lever-               ℎ ∈ H is the diff hunk the labeling is attached to, 𝑡 ∈ T is the label
+age large-scale training on code corpora to enable few-shot and                  type, 𝑝 ∈ N is the index of the parent labeling instance, and 𝑎 is a
+zero-shot reasoning. In the context of code review, LLMs have been               set of string attributes. For most label types, 𝑝 and 𝑎 are unused and
+applied to PR summarization, comment generation, and reviewer                    are therefore set to default values; their role is described in detail
+assistance [5, 13, 16]. While these efforts highlight the potential of           later. The output of our system is the set of all labeling instances,
+LLMs to support review workflows, they primarily produce free-                   denoted by L. This formulation allows diff hunks to remain un-
+text outputs rather than structured representations of code changes.             labeled, indicating that none of the label types in T adequately
+   To the best of our knowledge, no prior work has systemati-                    describes the changes in the hunk. Importantly, we do not assume
+cally evaluated LLMs for taxonomy-based labeling of diff hunks in                that T exhaustively covers all possible change types. Overall, we
+code patches. Existing change-classification tools rely mainly on                wish to assign to each diff hunk ℎ ∈ H a (possibly empty) set of
+static analysis, achieving high precision for refactoring detection              labels, as illustrated in Figure 1.
+but remaining language-specific and difficult to customize. In con-                  Static analysis tools can provide information about relationships
+trast, our work investigates whether LLMs can provide structured,                between edits for certain classes of code changes. We therefore
+language-agnostic labels for code edits, including cross-hunk re-                extend our formulation to capture what we term structure-aware
+lationships (e.g., rename propagation, code moves) and semantic                  labels, which explicitly encode relationships between related code
+attributes (e.g., old/new identifiers), opening a new direction for              changes. Figure 2 illustrates this concept. For a rename label, the
+automation-friendly code review.                                                 labeling corresponding to the declaration change references the
+                                                                                 labelings corresponding to the renamed usages. Similarly, for a
+3    Labeling Code Changes                                                       move label, the labeling representing code removal is linked to the
+                                                                                 labeling representing code addition at the new location. These rela-
+In this paper, we study the problem of labeling code changes. We
+                                                                                 tionships are encoded via the 𝑝 field of the labeling tuple, which
+define a set of label types T , each type describing a supported
+                                                                                 stores the index of the parent labeling object, and is set to 0 when
+category of code change (the full taxonomy is detailed in Appen-
+                                                                                 no such relationship exists. In addition, for rename and retype labels,
+dix A). Using git diff, we decompose a patch into a set of diff
+                                                                                 we extract attributes describing the change itself. For rename oper-
+hunks H , where each hunk corresponds to a contiguous block of
+                                                                                 ations, we record the kind of renamed entity (VAR, CLASS, PACKAGE,
+1 Additional experimental details and prompt templates are available in the an   METHOD, ATTRIBUTE, or PARAMETER), along with the old and new
+anonymized appendix at https://figshare.com/s/a254f611ba26b4da18a2.              names. For retype operations, we extract the name of the retyped
+                                                                                                                              2026-05-26 02:42. Page 2 of 1–13.
+Beyond Summaries: Structure-Aware Labeling of Code Changes with Large Language Models
+
+
+
+
+                                                  Figure 3: Illustration of our system’s pipeline.
+
+
+element and its old and new types. These attributes are stored in                  4.1    Labeler
+the 𝑎 field, for example 𝑎 = ("VAR", "old_name", "new_name").                      As described above, the Labeler assigns label types to individual diff
+                                                                                   hunks. It operates by prompting an LLM with task instructions and
+                                                                                   label definitions (see Appendix B.1), followed by a stream of diff
+                                                                                   hunks. For each hunk ℎ ∈ H , the model returns a set of label types
+                                                                                   𝑇 (ℎ) ⊆ T (Figure 3B). These subsets are subsequently converted
+4    Proposed Approach                                                             into the labeling set representation L defined in Section 3 (Figure
+Our objective is to develop an LLM-based tool for labeling patches                 3C), with the fields 𝑝 and 𝑎 initialized to default values and later
+that can be readily integrated into larger review and analysis pipelines.          refined by the Refiner for label types that require that.
+As outlined in Section 1, we adopt a zero-shot and few-shot prompt-                    Constructing the diff hunk stream introduces a fundamental
+ing strategy, following prior work on large language models and                    context trade-off. Providing more hunks supplies the LLM with a
+in-context learning [3, 10, 18]. The pipeline is illustrated in Figure             richer global context, which can improve label selection; however,
+3. We will explain its stages throughout this section. Each prompt                 longer contexts also increase the burden of filtering irrelevant in-
+provided to the LLM includes (i) the label taxonomy definitions,                   formation, potentially degrading performance. This effect has been
+(ii) a task description, (iii) examples for more complex labels, and               observed in both controlled studies [9, 11, 19] and real-world LLM
+(iv) a required JSON output schema, together with a stream of diff                 applications [20]. To study this trade-off, we evaluate three Labeler
+hunks to be labeled. For each diff hunk, we augment the input with                 operating modes: (1) per-hunk inference, (2) per-file inference, and
+its file name and limited local context—specifically, five non-empty               (3) per-patch inference, corresponding to increasing context lengths.
+lines of code preceding and following the hunk (Figure 3A). The                    Our results empirically demonstrate the impact of this trade-off.
+model’s JSON response is subsequently parsed into structured out-
+put objects for downstream processing. We decompose the overall
+problem into two sequential tasks: (1) Label Assignment, where the                 4.2    Refiner
+LLM assigns zero or more label types to each diff hunk based on its                The Refiner serves two primary purposes: (1) assigning the 𝑝 and 𝑎
+content, and (2) Structure Extraction, where relationships among                   fields to labeling instances, and (2) correcting label types that may
+labeled hunks are identified. We refer to the component handling                   have been misassigned by the Labeler due to limited local context.
+the first task as the Labeler, and to the component performing the                 Because labeling instances across files can be related, the Refiner
+second as the Label Refiner (or Refiner for short).                                processes the entire patch in a single inference. To bound context
+    This decomposition serves several purposes. First, it breaks a                 length, we restrict its input to diff hunks containing labelings that
+complex task into manageable subproblems, improving robustness                     either require relational fields (rename, retype, move) or may con-
+and simplifying prompt design. Second, it enforces a unified output                ceal a missed structure-aware label (logic, unlabeled; Figure 3D).
+schema for all labels identified in the Labeler stage. Third, it allows            Accordingly, the Labeler is instructed to conservatively assign the
+us to vary the context window of the Labeler independently of the                  logic label to suspected rename, retype, or move operations when
+Refiner, enabling controlled experimentation with token-budget                     context is insufficient.
+trade-offs. Lastly, this enables an additional use for the Refiner,                   Identifying relationships between labeling instances also re-
+correcting errors from the Labeler that can originate from a lack of               quires scope awareness. To capture this without substantially in-
+context in the Labeler.                                                            creasing context, we include the git diff hunk header before each
+2026-05-26 02:42. Page 3 of 1–13.
+                                                                                              Bar Weiss, Antonio Abu-Nassar, Adi Sosnovich, Karen Yorav
+
+
+diff hunk as an approximation of the scope (Figure 3E). The Refiner               LLM         Mode     Cost [I/O Tokens]        IoP      IoGT
+is then prompted with task instructions and label definitions (Ap-                            hunk           1437/77            0.63      0.62
+pendix B.2) to assign the 𝑝 and 𝑎 fields (Figure 3F). When a single               SWE         file            808/60            0.66      0.62
+diff hunk contains multiple rename or retype operations, the LLM                              patch           428/51             0.7      0.63
+returns a list of attributes in the 𝑎 field, which is subsequently split
+                                                                                              hunk           1306/111           0.64      0.68
+into distinct labeling instances.                                                 Llama       file            803/81            0.65       0.7
+                                                                                              patch           430/62            0.67      0.68
+5     Evaluation
+                                                                                              hunk           1503/116           0.65      0.72
+We evaluate our system of a benchmark dataset created in this work.               Sonnet      file            946/87            0.76      0.79
+We compare our results on four different LLMs (two open-source                                patch           526/76            0.68      0.71
+and two frontier models): (1) SWE-Agent-LM-32B [21], (2) Llama-
+                                                                                              hunk           1436/863           0.64     0.68
+4-Maverick-17B-128E-Instruct [12], (3) Claude Sonnet 4.5 [2], and                 Gemini-3    file           901/373            0.81     0.84
+(4) Gemini-3-Pro-Preview [8]. We abbreviate these models to SWE,                              patch          492/477            0.68      0.7
+Llama, Sonnet, and Gemini-3, respectively.
+                                                                           Table 2: Labeler results for different LLMs and run modes.
+                                                                           The cost is presented in input/output tokens used, divided
+5.1    Benchmark
+                                                                           by the number of diff hunks.
+We collected PRs to act as code patches from SWE-bench Multi-
+lingual [21] and SWE-PolyBench [14] and manually labeled them
+according to the change types present in each diff hunk. To ensure
+coverage of all label types, we additionally constructed and labeled       and the relative ranking of types changes significantly across LLMs.
+a set of fabricated PRs. The dataset was split into development and        We discuss these trends in Section 6.
+test sets: the development set was used for prompt tuning, while the
+test set was reserved exclusively for the final evaluation reported in
+this paper. The test set contains 6 natural and 7 fabricated PRs, com-
+prising 95 diff hunks and 142 labeling instances in total. Most PRs
+are written in Java; however, to reflect the language-agnostic na-
+ture of our LLM-based approach (Section 1), we also include Python
+PRs (two in the development set and one in the test set). Additional
+details about the benchmark are provided in Appendix C.1.
+
+5.2    Labeler Results
+We evaluate the Labeler and Refiner separately in order to isolate
+their respective contributions. For the Labeler, we compare the
+predicted label type set 𝑇 (ℎ) for each diff hunk ℎ ∈ H against the
+manually annotated ground-truth labels 𝑇𝐺𝑇 (ℎ) from our bench-
+mark. We measure agreement via the intersection of the predicted           Figure 4: Precision versus recall per label type for the Labeler.
+and ground-truth label sets and define the following two metrics:          Results are shown for Gemini-3 in per-file mode.
+                                 1 ∑︁ |𝑇 (ℎ) ∩ 𝑇𝐺𝑇 (ℎ)|
+          Avg-IoP(𝑇 ,𝑇𝐺𝑇 ) =                            ,        (1)
+                                |H |          |𝑇 (ℎ)|
+                                     ℎ∈ H
+                                                                           5.3    Refiner Results
+                                  1 ∑︁ |𝑇 (ℎ) ∩ 𝑇𝐺𝑇 (ℎ)|
+          Avg-IoGT(𝑇 ,𝑇𝐺𝑇 ) =                            .          (2)    The evaluation of the Refiner focuses on the correctness of the
+                                 |H |       |𝑇𝐺𝑇 (ℎ)|
+                                      ℎ∈ H                                 attribute field 𝑎 and the parent field 𝑝 in the labeling objects. We
+Intersection over Predictor (IoP) measures the fraction of predicted       define a parent-match between a predicted and a ground-truth
+labels that are correct, while Intersection over Ground Truth (IoGT)       labeling object when both reference the same parent diff hunk.
+measures the fraction of ground-truth labels recovered by the La-          For each relevant label type (rename and move), we count—per
+beler. These correspond to per-hunk precision and recall, respec-          diff hunk—the number of matching parent references. We then
+tively; we use the IoP/IoGT terminology to avoid ambiguity with            normalize this count by the number of predicted labeling objects
+later analyses. Table 2 reports Labeler performance across LLMs            of that type to obtain a precision score, and by the number of
+and context modes (per-hunk, per-file, and per-patch).                     ground-truth labeling objects to obtain a recall score. We evaluate
+   We further analyze label difficulty using per-type precision and        the attribute field 𝑎 in a similar manner for rename and retype
+recall, defined as the fraction of correct predictions and the fraction    labels. Specifically, we count the number of matching attributes
+of recovered ground-truth instances, respectively. Figure 4 shows          between predicted and ground-truth labeling objects within the
+these metrics for each label type under the best-performing config-        same diff hunk, and normalize to obtain precision and recall scores.
+uration (Gemini-3, per-file mode; Table 2), with additional results in     Since each labeling object contains three attributes, we divide by 3
+Appendix C.2. Performance varies substantially across label types,         to get a score in the range [0, 1]. Results for different LLMs and run
+                                                                                                                        2026-05-26 02:42. Page 4 of 1–13.
+Beyond Summaries: Structure-Aware Labeling of Code Changes with Large Language Models
+
+
+modes are reported in Table 3. For the sake of brevity, we present                 be valuable, for example, by highlighting representative changes
+here the results only for the frontier models (Sonnet and Gemini-3)                during codebase exploration or review.
+and provide the full results in Appendix C.3.                                         Regarding structure extraction, the results in Table 3 show that
+                                                                                   relational structure can indeed be captured by LLMs. In particular,
+                                                                                   Gemini-3 operating in the per-file mode identifies the parent field
+    LLM / Mode           Label         Attribute              Parent
+                                                                                   with very high precision and slightly lower recall. For the attribute
+                                    Precision   Recall   Precision   Recall        field, precision is likewise very high, indicating that when the model
+                        rename        0.92      0.85       0.92        0.85        identifies a rename or retype instance, its attributes are typically
+    Sonnet / hunk        retype        0.8      0.67         -           -         extracted correctly. Figure 4 further shows that, at the Labeler stage,
+                          move          -         -        1.0         0.56        per-hunk rename and retype detection achieves perfect precision
+                        rename        1.0       0.85       1.0         0.85
+                                                                                   and recall. In contrast, attribute recall remains lower than precision
+    Sonnet / file        retype       1.0       0.67         -           -         at the Refiner stage. This gap suggests that most errors stem not
+                          move         -          -        0.93        0.72        from incorrect attribute extraction, but from failures to correctly
+                                                                                   split or enumerate multiple labeling instances within a diff hunk,
+                        rename        1.0       0.85       1.0         0.85
+                                                                                   resulting in fewer extracted instances than required.
+    Sonnet / patch       retype       1.0       0.67         -           -
+                          move         -          -        0.82        0.5            Overall, the results demonstrate strong performance, particularly
+                                                                                   for frontier models. While the approach is not error-free, some
+                        rename        0.97       0.9       1.0         0.92        degree of imperfection is acceptable in the context of code review.
+    Gemini-3 / hunk      retype       0.92       0.61       -            -
+                                                                                   When higher accuracy is required for specific change types, a hybrid
+                          move          -          -       1.0         0.61
+                                                                                   strategy can be adopted—using LLM-based labeling for most types
+                        rename        0.72       0.67      1.0         0.92        while relying on static analysis for a small set of critical label types.
+    Gemini-3 / file      retype       0.92       0.61        -           -
+                          move          -          -       0.93        0.78
+                        rename        1.0        0.69      1.0         0.69        7    Conclusions and Future Work
+    Gemini-3 / patch     retype       1.0         0.5        -           -         We presented a novel LLM-based framework for labeling diff hunks
+                          move         -           -       0.82        0.5         in pull requests. By producing structured outputs, our approach
+Table 3: Refiner results on capturing structure and attributes                     enables systematic evaluation of LLM-based code review meth-
+for different LLMs and run modes, with split precision and                         ods and supports seamless integration into automated review and
+recall values                                                                      analysis pipelines. We further showed that simple cross-hunk rela-
+                                                                                   tionships, such as renames and code moves, can be captured using
+                                                                                   our two-stage labeling and refinement pipeline.
+                                                                                      This work also opens several directions for future research. First,
+                                                                                   the current label taxonomy T can be extended beyond primarily
+6      Discussion                                                                  syntactic change types to incorporate semantic and intent-level
+We now discuss the results presented in Section 5. As shown in                     categories, such as performance optimizations, bug fixes, or vulner-
+Table 2, Gemini-3 achieves the highest overall performance. This                   ability mitigations. Evaluating the reliability of LLMs in identifying
+improvement, however, comes at a cost: its output token usage is                   such changes and determining the pipeline adaptations required
+significantly higher than that of the other models, reaching up to                 to support them remains an open question. Second, our reliance
+7.5× that of the second-best model, Sonnet. This increase is largely               on git diff hunks may limit granularity, as individual hunks of-
+due to the reasoning field in the response schema (Appendix B),                    ten contain multiple distinct changes. Automatically decomposing
+where Gemini-3 provides more detailed explanations, which may                      large hunks into smaller, semantically coherent units could improve
+partly account for its improved accuracy. For all models except SWE,               interpretability and labeling accuracy. Finally, we see substantial
+the per-file inference mode performs best, highlighting a trade-off                potential in integrating our structured outputs into hybrid frame-
+between context length and labeling accuracy. Consistent with                      works that combine LLM reasoning with classical static analysis,
+prior work [11, 19], our results suggest that intermediate context                 enabling more robust automated code review systems. We view this
+sizes offer a better balance between available context and model                   work as an initial step toward structured, machine-interpretable
+focus.                                                                             LLM-based code review beyond free-text feedback.
+   The per-type results in Figure 4 indicate that many label types
+can be detected reliably, though performance varies substantially
+                                                                                   References
+across LLMs (Appendix C.3). For most types, precision and recall
+                                                                                    [1] Anthropic. 2024. Claude Code. AI-assisted coding tool based on Claude models.
+are correlated; however, for several types, these metrics diverge,                      Accessed: 2026-01-12.
+creating opportunities for selective downstream use. Label types                    [2] Anthropic. 2025. Claude Sonnet 4.5. Large language model used for AI-assisted
+                                                                                        coding and writing. Accessed: 2026-01-12.
+with high recall but lower precision capture most true instances                    [3] Tom Brown, Benjamin Mann, Nick Ryder, Melanie Subbiah, Jared D Kaplan,
+but also generate false positives, which can be filtered by users or                    Prafulla Dhariwal, Arvind Neelakantan, Pranav Shyam, Girish Sastry, Amanda
+removed through post-processing. Conversely, label types with high                      Askell, et al. 2020. Language models are few-shot learners. Advances in neural
+                                                                                        information processing systems 33 (2020), 1877–1901.
+precision but lower recall identify predominantly correct instances                 [4] Mark Chen. 2021. Evaluating large language models trained on code. arXiv
+while missing some true cases; nevertheless, such labels can still                      preprint arXiv:2107.03374 (2021).
+2026-05-26 02:42. Page 5 of 1–13.
+                                                                                          Bar Weiss, Antonio Abu-Nassar, Adi Sosnovich, Karen Yorav
+
+
+ [5] Codedog Project. 2024. Codedog: AI-Powered Pull Request Summarization
+     and Review Suggestions. https://github.com/codedog-ai/codedog. Accessed:
+     2024-11-30.
+ [6] Jean-Rémy Falleri, Floréal Morandat, Xavier Blanc, Matias Martinez, and Mar-
+     tin Monperrus. 2014. Fine-grained and accurate source code differencing. In
+     ACM/IEEE International Conference on Automated Software Engineering, ASE ’14,
+     Vasteras, Sweden - September 15 - 19, 2014. 313–324. doi:10.1145/2642937.2642982
+ [7] Beat Fluri, Michael Würsch, Martin Pinzger, and Harald C. Gall. 2007. Change
+     Distilling: Tree Differencing for Fine-Grained Source Code Change Extraction.
+     IEEE Transactions on Software Engineering 33 (2007), 725–743.
+ [8] Google DeepMind. 2025. Gemini 3 Pro. Large multimodal language model.
+     Accessed: 2026-01-12.
+ [9] Cheng-Ping Hsieh, Simeng Sun, Samuel Kriman, Shantanu Acharya, Dima
+     Rekesh, Fei Jia, Yang Zhang, and Boris Ginsburg. 2024. RULER: What’s the
+     Real Context Size of Your Long-Context Language Models? arXiv preprint
+     arXiv:2404.06654 (2024).
+[10] Takeshi Kojima, Shixiang Shane Gu, Machel Reid, Yutaka Matsuo, and Yusuke
+     Iwasawa. 2022. Large language models are zero-shot reasoners. Advances in
+     neural information processing systems 35 (2022), 22199–22213.
+[11] Nelson F Liu, Kevin Lin, John Hewitt, Ashwin Paranjape, Michele Bevilacqua,
+     Fabio Petroni, and Percy Liang. 2024. Lost in the middle: How language models
+     use long contexts. Transactions of the Association for Computational Linguistics
+     12 (2024), 157–173.
+[12] Meta AI. 2025. Llama 4 Maverick 17B 128E Instruct. https://ai.meta.com/llama/
+     Instruction-tuned variant of the Llama 4 Maverick 17B model.
+[13] Palos Publishing. 2024. Leveraging LLMs for Feedback Summarization in Code
+     Reviews. Palos Tech Insights (2024). https://palospublishing.com/llms-for-
+     feedback-summarization-in-code-reviews/
+[14] Muhammad Shihab Rashid, Christian Bock, Yuan Zhuang, Alexander Buch-
+     holz, Tim Esler, Simon Valentin, Luca Franceschi, Martin Wistuba, Prabhu Teja
+     Sivaprasad, Woo Jung Kim, et al. 2025. SWE-PolyBench: A multi-language
+     benchmark for repository level evaluation of coding agents. arXiv preprint
+     arXiv:2504.08703 (2025).
+[15] Caitlin Sadowski, Emma Söderberg, Luke Church, Michal Sipko, and Alberto
+     Bacchelli. 2018. Modern code review: a case study at google. In Proceedings of
+     the 40th international conference on software engineering: Software engineering in
+     practice. 181–190.
+[16] Weisong Sun et al. 2024. Source Code Summarization in the Era of Large Lan-
+     guage Models. arXiv preprint arXiv:2407.07959 (2024). https://arxiv.org/abs/2407.
+     07959
+[17] Nikolaos Tsantalis, Matin Mansouri, Laleh M. Eshkevari, Davood Mazinanian,
+     and Danny Dig. 2018. Accurate and Efficient Refactoring Detection in Commit
+     History. In Proceedings of the 40th International Conference on Software Engi-
+     neering (Gothenburg, Sweden) (ICSE ’18). ACM, New York, NY, USA, 483–494.
+     doi:10.1145/3180155.3180206
+[18] Jason Wei, Maarten Bosma, Vincent Y Zhao, Kelvin Guu, Adams Wei Yu, Brian
+     Lester, Nan Du, Andrew M Dai, and Quoc V Le. 2021. Finetuned language models
+     are zero-shot learners. arXiv preprint arXiv:2109.01652 (2021).
+[19] Peng Xu, Wei Ping, Xianchao Wu, Lawrence McAfee, Chen Zhu, Zihan Liu,
+     Sandeep Subramanian, Evelina Bakhturina, Mohammad Shoeybi, and Bryan
+     Catanzaro. 2023. Retrieval meets long context large language models. arXiv
+     preprint arXiv:2310.03025 (2023).
+[20] John Yang, Carlos E Jimenez, Alexander Wettig, Kilian Lieret, Shunyu Yao, Karthik
+     Narasimhan, and Ofir Press. 2024. Swe-agent: Agent-computer interfaces enable
+     automated software engineering. Advances in Neural Information Processing
+     Systems 37 (2024), 50528–50652.
+[21] John Yang, Kilian Lieret, Carlos E. Jimenez, Alexander Wettig, Kabir Khand-
+     pur, Yanzhe Zhang, Binyuan Hui, Ofir Press, Ludwig Schmidt, and Diyi
+     Yang. 2025. SWE-smith: Scaling Data for Software Engineering Agents.
+     arXiv:2504.21798 [cs.SE] https://arxiv.org/abs/2504.21798
+
+
+
+
+                                                                                                                   2026-05-26 02:42. Page 6 of 1–13.
+Beyond Summaries: Structure-Aware Labeling of Code Changes with Large Language Models
+
+
+A     Supported Code Change Types                                                  B.1      Labeler Prompt
+Here we describe the label types set T supported by our system                     We describe the structure of the Labeler’s Prompt for each of the
+and their description as it appears in the prompt we provide to the                context modes. We put in purple brackets value placeholders that
+LLM.                                                                               are filled for the prompts for better readability. The values are given
+                                                                                   in Appendix B.3. Start with the per-hunk prompt structure:
+
+     (1) Documentation - adding new or changing existing com-
+         ments or descriptions. Also include explicit edits of .txt,                    Labeler per-hunk prompt
+         .md or similar files.                                                          You are an experienced programmer reviewing pull requests
+     (2) Testing - changes to testing code.                                             on a large GitHub repository. You are given a diff hunk
+     (3) Output Handling - changes to code that handles stdout,                         from a single pull request. Choose the labels that best
+         stderr, writes to output files, print statements, etc.                         describe the changes made in the hunk from the following
+     (4) Retype - changing the type of a variable or attribute. ex-                     list:
+         amples: changed int to bool, as a consequence conditions                       {label_types}
+         are different, changed int to long, return type of a method                    {specific_instructions}
+                                                                                        Here are some examples to clarify the instructions:
+         returns base class rather than inherited class.
+                                                                                        {examples}
+     (5) Code move - moving code from one location to another,
+                                                                                        {hunk_format_instructions}
+         this label should be added at the diff hunk where the code                     {json_format_request}
+         was removed and where it was added. examples: replacing                        Here is the diff hunk and some context:
+         a chunk of code with a function that runs the same code.                       {input_stream}
+         Moving code from one file to another.
+     (6) Style change - changes that modify the appearance of the
+         code or the writing style but not the abstract syntax tree
+                                                                                      Now we describe the per-file and per-patch prompt structure.
+         (AST). examples: move { from same line to line below,
+                                                                                   Note that they are the same and will differ only in the length of the
+         change comment style from // to /* */, split long lines,
+                                                                                   input stream.
+         aligning and indentation (when the indentation does not
+         matter), and other cosmetic changes.
+     (7) Logging - everything related to logging, initializing the
+         logger, summarizing the log, writing to the log, etc.                          Labeler per-patch/file prompt
+     (8) Rename - only changes to the name of a variable, method,                       You are an experienced programmer reviewing pull requests
+                                                                                        on a large GitHub repository. You are given a stream of
+         attribute, class, parameter or package.
+                                                                                        diff hunks from a single pull request. For each diff hunk,
+     (9) Error handling - changes that affect when an error or warn-                    choose the labels that best describe the changes made in
+         ing is raised or what happens when they are raised. ex-                        the hunk from the following list:
+         amples: changes in the try-catch block logic, changes in                       {label_types}
+         exception types.                                                               {specific_instructions}
+    (10) Logic change - any change that modifies the application                        ———- Examples (do not respond to these diff hunks) ———-
+         execution, for example modifies the control flow or results                    {examples}
+         in different application behavior. If you suspect that a diff                  ——– End of Examples ———-
+         hunk might be renaming, retyping, or code_move but you                         {stream_format_instructions}
+         lack context to decide, label it as logic_change.                              {json_format_request}
+                                                                                        Here is the diff hunk stream with some context (respond
+    (11) Internal interface change - The interface of a class or a
+                                                                                        to all of these):
+         package are all the publicly accessible elements. Interface                    ———— Diff Hunk Stream ————-
+         changes are changes to the declarations of said elements.                      {input_stream}
+         The word internal refers to elements that are internal to                      ———— end of Diff Hunk Stream —————
+         the application but not internal to a certain file or class. ex-
+         amples: changing methods between being Public or Private,
+         modifying public method declarations or public attributes.
+    (12) External interface change - changes to the interface itself
+                                                                                   B.2      Refiner Prompt
+         or user interfaces, the program’s external API, command
+         line interface, etc. examples: adding or modifying CLI argu-              Here, we provide the strcture of the Refiner’s prompt. For it as well
+         ments.                                                                    we have placeholder values provided in Appendix B.3.
+
+                                                                                   B.3      Placeholder values
+                                                                                   Here we present in table, all the placeholder values from the prompts
+B     Prompts                                                                      described in Appendices B.1 and B.2. The {stream_format_instructions}
+This appendix describes the prompt used for the Labeler and Refiner                and {refiner_stream_format_instructions} placeholders are too
+for the different context modes (per-hunk, per-file, per-patch).                   long to fit in a table and hence we provide them separately. The
+2026-05-26 02:42. Page 7 of 1–13.
+                                                                                         Bar Weiss, Antonio Abu-Nassar, Adi Sosnovich, Karen Yorav
+
+
+                                                                                 "label_names": "[<label4.1>, <label4.2>, ...]"
+  Refiner prompt                                                                 }
+  You are an experienced programmer reviewing pull requests                }
+  on a large GitHub repository. You are given a stream of              }
+  diff hunks from a single pull request that were labeled              </json>
+  by another reviewer. Your task is to provide additional
+  details on the labels. Here is the description of the                Where <diff_hunk_idx1> is the integer index of the diff hunk, as
+  labels.                                                              it is in the diff hunk stream. And there should be an entry in the
+  {label_types}                                                        response_dict for each diff hunk in the stream. The label names
+  For the following labels you should provide attributes               should be exactly the same as in the list above. Example response:
+  and a parent field with the following meaning:
+  {parent_and_attributes_instructions}                                 <json>
+  Note that the parent label might appear after its children           {
+  in the stream.                                                           "response_dict": {
+  The logic change label might be too broad, you may decide                    "3": {
+  to replace it with a more specific label using the                           "reasoning": "The diff hunk describes a change in
+  updated_type field in the response and provide attributes                        the documentation and declares a new public
+  and parent_id accordingly.                                                       method.",
+  The parent_id must have the same label type as the one                           "label_names": [
+  pointing to it.
+                                                                                       "internal_interface_change",
+  If you decide to keep the logic change type return the
+                                                                                       "documentation"
+  same type provided in the response.
+  You should refer to names of attributes of                                       ]
+  a     class     using    "<class_name>.<attribute_name>".                    },
+  And to names of arguments of a method using                                  "4": {
+  "<method_name>.<argument_name>".     The   return    value                   "reasoning": "The method my_func was renamed to
+  of a method "<method_name>.return".                                                  your_func.",
+  {refiner_stream_format_instructions}                                             "label_names": ["renaming"]
+  {json_format_request}                                                        },
+  Here is the diff hunk stream with some context (respond                      "5": {
+  to all of the labels):
+                                                                                   "reasoning": "The change in the diff hunk
+  ———— Diff Hunk Stream ————-
+                                                                                   does not match any of the defined labels.",
+  {input_stream}
+  ———— end of Diff Hunk Stream —————                                               "label_names": []
+                                                                               }
+                                                                           }
+                                                                       }
+                                                                       </json>
+rest of the values are provided in Table 4 for the Labeler and Table
+5 for Refiner specific placeholders.
+                                                                          {refiner_stream_format_instructions}. Ensure the output is
+   {stream_format_instructions}. Ensure the output is valid JSON       valid JSON as it will be parsed using ‘json.loads()‘ in Python. It
+as it will be parsed using `json.loads()` in Python. It should be      should be in the schema:
+in the schema:                                                         <json>
+<json>                                                                 {
+{                                                                          "response_dict": {
+    "response_dict": {                                                         "<label_id1>": {
+        "<diff_hunk_idx1>": {                                                  "reasoning": "<reasoning1>",
+        "reasoning": "<reasoning1>",                                           "updated_type": <updated_type1>,
+        "label_names": "[<label1.1>, <label1.2>, ...]"                         "attributes": [<attribute1.1>,
+        },                                                                         <attribute1.2>, <attribute1.3>],
+        "<diff_hunk_idx2>": {                                                  "parent_id": <parent_id1>
+        "reasoning": "<reasoning2>",                                           },
+        "label_names": "[<label2.1>, <label2.2>, ...]"                         "<label_id2>": {
+        },                                                                     "reasoning": "<reasoning2>",
+        "<diff_hunk_idx3>": {                                                  "updated_type": <updated_type2>,
+        "reasoning": "<reasoning3>",                                           "attributes": [<attribute2.1>,
+        "label_names": "[<label3.1>, <label3.2>, ...]"                             <attribute2.2>, <attribute2.3>],
+        },                                                                     "parent_id": <parent_id2>
+        "<diff_hunk_idx4>": {                                                  },
+        "reasoning": "<reasoning4>",                                           "<label_id3>": {
+                                                                                                                  2026-05-26 02:42. Page 8 of 1–13.
+Beyond Summaries: Structure-Aware Labeling of Code Changes with Large Language Models
+
+
+ Placeholder                         Prompt Segment
+ {label_types}                       List of label types and descriptions as they are presented in Appendix A in the following format:
+                                     label_name: {label}, description: {description}
+ {specific_instructions}             You may choose more than one label if necessary, a diff hunk might contain more than one type of change. Compare the
+                                     diff hunk against all labels in the labels list, and select all the labels that fit, considering all the types of changes in the
+                                     diff hunk. The labels do not cover all possible code changes. Therefore, if none of the label describe the change in the diff
+                                     hunk you should decide to assign no labels, i.e., return an empty list of labels. Pay attention to the file name and its suffix.
+ {examples}                          In file code.py:
+                                     Example diff hunk:
+                                       import pandas as pd
+                                       import matplotlib.pyplot as plt
+                                     + import numpy as np
+                                     + import json
+                                     + import os
+                                     Example response:
+                                     "reasoning": "The diff hunk describes a change that does
+                                     not fit any of the label types in the list, therefore
+                                     the response is none of the labels, an empty list."
+                                     "label_names": []
+
+ {hunk_format_instructions}          Ensure the output is valid JSON as it will be parsed using `json.loads()` in Python. It should be in the schema:
+                                     <json>
+                                     {
+                                          "reasoning": "<reasoning1>",
+                                          "label_names": "[<label1.1>, <label1.2>, ...]"
+                                     }
+                                     </json>
+                                     The label names should be exactly the same as in the list above. Example response:
+                                     <json>
+                                     {
+                                          "reasoning": "The diff hunk describes a change in the
+                                                documentation and declares a new public method.",
+                                          "label_names": ["internal_interface_change", "documentation"]
+                                     }
+                                     </json>
+ {json_format_request}               The output should be only a JSON object according to the schema described above without additional text. For each diff
+                                     hunk output every field only once! Output only a valid JSON object! Do not include quotation marks inside the reasoning
+                                     string as they will make the JSON invalid, for example: Don’t say in the print statement print("hello"), instead
+                                     say print(hello) or simply don’t quote such statements. Do not start the JSON with ```json or end with ```, instead
+                                     use <json> at the beginning and </json> at the end of the JSON.
+                                     Table 4: Placeholder fields used in the Labeler’s prompt templates.
+
+
+
+            "reasoning": "<reasoning3>",                                             Where <label_id> is the integer index of the label, as it is in the
+            "updated_type": <updated_type3>,                                         input stream. And there should be an entry in the response_dict
+            "attributes": [],                                                        for each label in the stream. The label names should be exactly the
+            "parent_id": <parent_id3>                                                same as in the list above. Example response:
+            },                                                                       <json>
+            "<label_id4>": {                                                         {
+            "reasoning": "<reasoning4>",                                                  "response_dict": {
+            "updated_type": <updated_type4>,                                                    "1002": {
+            "attributes": [<attribute4.1>,                                                      ""reasoning": "The orignal label fits this
+                <attribute4.2>, <attribute4.3>],                                                change becuase...",
+            "parent_id": <parent_id4>                                                           "updated_type": "LOGIC_CHANGE",
+            },                                                                                  "attributes": [],
+    }                                                                                           "parent_id": "0"
+}                                                                                               },
+</json>                                                                                         "3000": {
+                                                                                                "reasoning": "This label is a consequence
+2026-05-26 02:42. Page 9 of 1–13.
+                                                                           Bar Weiss, Antonio Abu-Nassar, Adi Sosnovich, Karen Yorav
+
+
+          of the RENAME label with id 5002.",              Input Stream Format. This is a formatting of the diff hunks pro-
+          "updated_type": "RENAME",                     cessed in this call to the LLM. It changes based on the input but it
+          "attributes": ["METHOD", "my_func",           has the following structure. The Labeler’s per-hunk stream follows
+              "your_func"],                             the format below:
+          "parent_id": "5002"                           In file <filename>:
+          },                                            Code above the diff hunk:
+          "5001": {                                     ```
+          "reasoning": "Code from this diff hunk was    <5 lines before hunk>
+              moved to diff hunk 8. as mentioned by     ```
+              label 8000",                              Diff hunk content:
+          "updated_type": "CODE_MOVE",                  Header <header>:
+          "attributes": [],                             ```
+          "parent_id": "8000"                           <diff hunk>
+          },                                            ```
+          "5002": {                                     Code below the diff hunk:
+          "reasoning": "The name of the method          <5 lines after diff hunk>
+              my_func was renamed to your_func
+                                                        And the per-file input stream has the following format:
+              in its declaration. ",
+          "updated_type": "RENAME",                     In file <file_name>:
+          "attributes": ["METHOD", "my_func",           Diff hunk number <diff_hunk_index_1>:
+              "your_func"],                             ```
+          "parent_id": "0"                              <5 lines before hunk 1>
+          },                                            <diff_hunk_1>
+          "7001": {                                     <5 lines after hunk 1>
+          "reasoning": "This label is a consequence     ```
+              of the RENAME label with id 5002.",       .
+          "updated_type": "RENAME",                     .
+          "attributes": ["METHOD", "my_func",           .
+              "your_func"],                             Diff hunk number <diff_hunk_index_k>:
+          "parent_id": "5002"                           ```
+          },                                            <5 lines before hunk k>
+          "9003": {                                     <diff_hunk_k>
+          "reasoning": "This label is a consequence     <5 lines after hunk k>
+              of the RENAME label with id 5002.",       ```
+          "updated_type": "RENAME",                     The per-patch format simply is a concatenation of the per-file
+          "attributes": ["VAR", "x", "y"],              format. The Refiner’s stream follows the format below:
+          "parent_id": "5002"
+                                                        In file <filename>:
+          },
+                                                        Diff hunk number <diff hunk_index_1> in scope <scope_1>:
+          "8000": {
+                                                        Labeled as:
+          "reasoning": "Code from diff hunk 5 was
+                                                        Type: <type_1.1>, ID: <label_id_1.1>
+              moved here as mentioned by label 5001",
+                                                        .
+          "updated_type": "CODE_MOVE",
+                                                        .
+          "attributes": [],
+                                                        .
+          "parent_id": "0"
+                                                        Type: <type_1.m>, ID: <label_id_1.m>
+          },
+                                                        ```
+          9002: {
+                                                        <5 lines before hunk 1>
+          "reasoning": "the variable x was changed
+                                                        <diff_hunk_1>
+              from type int to long",
+                                                        <5 lines after hunk 1>
+          "updated_type": "RETYPE",
+                                                        ```
+          "attributes": ["x", "int", "long"],
+                                                        .
+          "parent_id": "0"
+                                                        .
+          }
+                                                        .
+    }
+}                                                       And this format continues for all files and diff hunks.
+</json>
+                                                        C    Evaluation Appendix
+                                                        Here, we provide additional details on the evaluation in Section 5.
+                                                                                                   2026-05-26 02:42. Page 10 of 1–13.
+Beyond Summaries: Structure-Aware Labeling of Code Changes with Large Language Models
+
+
+   Placeholder                         Prompt Segment
+   {parent_and_attributes
+   _instructions}                      RENAME:
+                                           parent_id - each rename is either a change in the declaration or a change to the usage
+                                           i.e., a consequence of the change in the declaration.
+                                           If the change is in the declaration this is the root of the change and the parent should be 0.
+                                          If the change is a consequence the parent should contain the label id of the declaration change.
+
+                                           attributes - for each rename we require three fields with the following order:
+
+                                           The type of element that was renamed, one of the following:
+
+                                           VAR, ATTRIBUTE, METHOD, CLASS, PARAMETER, PACKAGE.
+                                           The original name.
+                                           The new name.
+
+                                           Example: if there are two renames described by a label the attributes should be:
+                                           ["VAR", "my_var", "your_var", "CLASS", "MyClass", "YourClass"]
+
+                                       RETYPE:
+                                           parent_id - always 0
+                                           attributes - for each retype we require three fields with the following order:
+                                           The name of the retyped element.
+                                           The original type.
+                                           The new type.
+                                           Example: if there are two retypes described by a label the attributes should be:
+                                               ["x", "float", "complex", "res", "list[str]", "dict[str, str]"]
+
+                                       CODE_MOVE:
+                                           parent_id - Where the code was added the parent is 0 and where it was removed
+                                           it should be the label id of the label that describes the addition of the matching code.
+                                           attributes - None, return an empty list []
+
+                                       LOGIC_CHANGE:
+                                           parent_id - always 0
+                                           attributes - None, return an empty list []
+                                         Table 5: Placeholder fields used in the Refiner’s prompt template.
+
+
+
+
+                                 (a)                                                                                    (b)
+
+                      Figure 5: Histogram of label occurrences in our benchmark’s (a) validation set and (b) test set.
+
+
+C.1      Benchmark Statistics                                                      type appearances in the development set and test set are shown in
+Here, we present additional details on the benchmark we con-                       Figure 5. Importantly, all label types are represented in both sets
+structed for this paper. As mentioned in Section 5.1, we split the                 and we made an effort to keep the type frequencies as similar as
+data into development and test sets. The development set contains                  possible.
+3 natural JAVA PRs, 2 fabricated Python PRs. The histogram of label
+2026-05-26 02:42. Page 11 of 1–13.
+                                                                                            Bar Weiss, Antonio Abu-Nassar, Adi Sosnovich, Karen Yorav
+
+
+ LLM / Mode         Label        Attribute              Parent          C.2     Additional Labeler Results
+                              Precision   Recall   Precision   Recall   Here, we present additional results for the Labeler. We present the
+                    rename      0.67       0.62      0.92        0.85
+                                                                        IoP and IoGT of the Labeler without the type update by the refiner
+ SWE / hunk          retype     0.52       0.61        -           -    in Table 6. For almost all modes there is a slight improvement
+                      move        -          -       0.0         0.0    becuase of the additional refiner step, but the trend of per-file being
+                                                                        the best performing mode remains. And Gemini-3 is still the best
+                    rename      0.52       0.52      0.56        0.56
+                                                                        performing model.
+ SWE / file          retype     0.75        0.6        -           -
+                      move        -          -       0.1         0.06
+                                                                                LLM         Mode     Cost [I/O Tokens]         IoP      IoGT
+                    rename      1.67      1.54       0.58        0.54
+ SWE / patch         retype      0.8      0.67         -           -                        hunk           1437/77             0.63      0.62
+                      move        -         -        0.625       0.28           SWE         file            808/60             0.64      0.62
+                                                                                            patch           428/51             0.67      0.61
+                    rename      0.63       0.77      0.81        1.0
+ Llama / hunk        retype     0.67       0.44        -           -                        hunk           1306/111            0.58      0.63
+                      move        -          -       0.375       0.17           Llama       file            803/81             0.64      0.69
+                                                                                            patch           430/62             0.67      0.69
+                    rename      0.58       0.49      1.0         0.85
+ Llama / file        retype     0.67       0.56        -           -                        hunk           1503/116            0.62      0.67
+                      move        -          -       0.44        0.22           Sonnet      file            946/87             0.75      0.77
+                                                                                            patch           526/76             0.68      0.71
+                    rename      0.63       0.44      0.33        0.23
+ Llama / patch       retype     0.43        0.5        -           -                        hunk           1436/863            0.60     0.62
+                      move        -          -       0.64        0.39           Gemini-3    file           901/373             0.79     0.83
+                                                                                            patch          492/477             0.69     0.71
+                    rename      0.92      0.85       0.92        0.85
+ Sonnet / hunk       retype      0.8      0.67         -           -    Table 6: Labeler results for different LLMs and run modes.
+                      move        -         -        1.0         0.56   The cost is presented in input/output tokens used, divided
+                    rename      1.0       0.85       1.0         0.85   by the number of diff hunks.
+ Sonnet / file       retype     1.0       0.67         -           -
+                      move       -          -        0.93        0.72
+                    rename      1.0       0.85       1.0         0.85      We also present here the per-type precision recall plots for ad-
+ Sonnet / patch      retype     1.0       0.67         -           -    ditional run modes in Figure 6. We show results for Gemini-3 and
+                      move       -          -        0.82        0.5    Sonnet in per-hunk and per-file modes. While some label types
+                    rename      0.97       0.9       1.0         0.92   appear to have consistent results (rename, retype, docs).
+ Gemini-3 / hunk     retype     0.92       0.61       -            -
+                      move        -          -       1.0         0.61   C.3     Refiner Results
+                    rename      0.72       0.67      1.0         0.92   We present here the Refiner results for all models in Table 7. We
+ Gemini-3 / file     retype     0.92       0.61        -           -    further present the per-type precision vs. recall plots for the frontier
+                      move        -          -       0.93        0.78   models in all inference modes (per-hunk, per-file and per-patch) in
+                                                                        Figure 6. As mentioned in the main text, the performance of each
+                    rename      1.0        0.69      1.0         0.69
+ Gemini-3 / patch    retype     1.0         0.5        -           -    type for the different models and inference modes varies signifi-
+                      move       -           -       0.82        0.5    cantly. This is especially true for label types with less instances in
+                                                                        the benchmark’s test set (external interface, error handling, unla-
+Table 7: Refiner results on capturing structure and attributes
+                                                                        beled, log). This fact makes it difficult to draw conclusions on the
+for different LLMs and run modes, with split precision and
+                                                                        behavior of each type, and a larger scale experiment is required
+recall values
+                                                                        before deciding how the handle errors of the different types.
+
+
+
+
+                                                                                                                      2026-05-26 02:42. Page 12 of 1–13.
+Beyond Summaries: Structure-Aware Labeling of Code Changes with Large Language Models
+
+
+
+
+                                     (a)                                                         (b)
+
+
+
+
+                                     (c)                                                         (d)
+
+
+
+
+                                     (e)                                                         (f)
+
+Figure 6: Per-type precision recall plots for (a) Gemini-3 per-hunk, (b) Gemini-3 per-file, (c) Sonnet per-hunk, and (d) Sonnet
+per-file.
+
+
+
+
+2026-05-26 02:42. Page 13 of 1–13.
+

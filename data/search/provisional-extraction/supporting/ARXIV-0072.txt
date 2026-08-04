@@ -1,0 +1,1172 @@
+                                               Investigating Autonomous Agent Contributions in the Wild:
+                                                      Activity Patterns and Code Change over Time
+                                                     Razvan Mihai Popescu                                                      David Gros                                       Andrei Botocan
+                                                     r.m.popescu@tudelft.nl                                           dgros@ucdavis.edu                                  a.botocan@student.tudelft.nl
+                                                  Delft University of Technology                                 University of California, Davis                        Delft University of Technology
+                                                      Delft, The Netherlands                                              Davis, USA                                        Delft, The Netherlands
+
+                                                            Rahul Pandita                                                  Prem Devanbu                                           Maliheh Izadi
+                                                     rahulpandita@github.com                                       ptdevanbu@ucdavis.edu                                     m.izadi@tudelft.nl
+                                                             GitHub                                              University of California, Davis                       Delft University of Technology
+                                                           Denver, USA                                                    Davis, USA                                       Delft, The Netherlands
+arXiv:2604.00917v1 [cs.SE] 1 Apr 2026
+
+
+
+
+                                        Abstract                                                                                        ACM Reference Format:
+                                        The rise of large language models for code has reshaped software                                Razvan Mihai Popescu, David Gros, Andrei Botocan, Rahul Pandita, Prem
+                                                                                                                                        Devanbu, and Maliheh Izadi. 2026. Investigating Autonomous Agent Contri-
+                                        development. Autonomous coding agents, able to create branches,
+                                                                                                                                        butions in the Wild: Activity Patterns and Code Change over Time. In . ACM,
+                                        open pull requests, and perform code reviews, now actively con-                                 New York, NY, USA, 13 pages. https://doi.org/10.1145/nnnnnnn.nnnnnnn
+                                        tribute to real-world projects. Their growing role offers a unique
+                                        and timely opportunity to investigate AI-driven contributions and
+                                        their effects on code quality, team dynamics, and software main-                                1    Introduction
+                                        tainability. In this work, we construct a novel dataset of approx-                              In 2021, early evidence emerged showing the ability of large pre-
+                                        imately 110, 000 open-source pull requests, including associated                                trained language models (LLMs) to write complete units of code.
+                                        commits, comments, reviews, issues, and file changes, collectively                              This was illustrated through the HumanEval dataset [1], which eval-
+                                        representing millions of lines of source code. We compare five pop-                             uates the task of generating relatively simple Python programs 1 .
+                                        ular coding agents, including OpenAI Codex, Claude Code, GitHub                                 They reported that GPT-3 could not solve any of the problems, while
+                                        Copilot, Google Jules, and Devin, examining how their usage differs                             their proposed Codex model was able to solve 28.8% of the problems.
+                                        in various development aspects such as merge frequency, edited                                  Other contemporaneous work confirmed that LLMs were capable
+                                        file types, and developer interaction signals, including comments                               of generating methods in various programming languages [2–4].
+                                        and reviews. Furthermore, we emphasize that code authoring and                                     The 2022 release of systems such as GitHub Copilot for code
+                                        review are only a small part of the larger software engineering                                 completion and ChatGPT for general dialog accelerated the broader
+                                        process, as the resulting code must also be maintained and updated                              use of LLMs for software. However, the assistive nature and lim-
+                                        over time. Hence, we offer several longitudinal estimates of survival                           ited environmental integration of these early systems have made
+                                        and churn rates for agent-generated versus human-authored code.                                 it challenging to observe and assess their use in the wild, with
+                                        Ultimately, our findings indicate an increasing agent activity in                               most research focusing on acceptance rates, which, sadly, fail to
+                                        open-source projects, although their contributions are associated                               capture representative software quality attributes [5–7]. Since then,
+                                        with more churn over time compared to human-authored code.                                      AI assistants have become increasingly embedded in developer
+                                                                                                                                        workflows, contributing to higher levels of user satisfaction and
+                                        CCS Concepts                                                                                    productivity [8–13]. Recent works report that over 90% of coding
+                                        • Software and its engineering → Software post-development                                      assistants have been released in the past two years [10], while 84%
+                                        issues.                                                                                         of developers are already using or plan to incorporate AI tools in
+                                                                                                                                        their development process [14].
+                                        Keywords                                                                                           With this wave of progress, the software engineering field is
+                                                                                                                                        transitioning into an AI-native phase, where development is guided
+                                        Autonomous Coding Agents, Large Language Models, Mining Soft-
+                                                                                                                                        by human intent and collaborations with autonomous AI-coding
+                                        ware Repositories, Pull Requests, Code Churn, Empirical Software
+                                                                                                                                        partners [15, 16]. Such emerging agents move beyond passive AI-
+                                        Engineering, Human-AI Collaboration
+                                                                                                                                        assistants, being characterized by three core features, including
+                                                                                                                                        autonomy, expanded scope, and engineering practicality. With im-
+                                        Permission to make digital or hard copies of all or part of this work for personal or           proved tooling, these agents can now actively manage and execute
+                                        classroom use is granted without fee provided that copies are not made or distributed
+                                        for profit or commercial advantage and that copies bear this notice and the full citation       development workflows from requirements to implementation [17].
+                                        on the first page. Copyrights for components of this work owned by others than the                 The fast-paced and sheer volume of contributions produced by
+                                        author(s) must be honored. Abstracting with credit is permitted. To copy otherwise, or          agentic systems, which already accounts for 10% of public Pull Re-
+                                        republish, to post on servers or to redistribute to lists, requires prior specific permission
+                                        and/or a fee. Request permissions from permissions@acm.org.                                     quests (PR) on GitHub [18], creates the need to examine their activ-
+                                        Conference’17, Washington, DC, USA                                                              ity and understand how these systems might influence factors such
+                                        © 2026 Copyright held by the owner/author(s). Publication rights licensed to ACM.
+                                        ACM ISBN 978-x-xxxx-xxxx-x/YYYY/MM
+                                        https://doi.org/10.1145/nnnnnnn.nnnnnnn                                                         1 The median is only seven lines-long reference solutions.
+Conference’17, July 2017, Washington, DC, USA                                                                                              Popescu, et al.
+
+
+as code maintainability, which is traditionally the most resource-            • We assess the subsequent evolution and stability of the code
+intensive phase of the software development life-cycle [19]. Unlike             contributed by agents and humans using indicators such as
+traditional assistants or dialog systems, where mixed developer and             survival rate and code churn.
+AI activity made provenance difficult to trace without access to              • We release our dataset to support further research on agentic
+specialized telemetry or self-admitted usage artifacts [20], agent              software development 2 .
+system’s enhanced environment integration enables relatively eas-
+ier identification of code generated with heavy AI assistance, using    2     Related Work
+their tell-tale signals [16, 18, 21].                                   Below, we review prior work on AI assistants’ evolution into au-
+   In this work, we take advantage of this distinction to mine          tonomous agents, their evaluation, and their real-world activity
+GitHub PRs written by autonomous coding agents. Previous studies        and collaborative interactions with human developers.
+in this area have examined the role of models such as ChatGPT in
+software development [20, 22, 23], while others have explored the       2.1     From Assistants to Agents
+impact of reactive AI assistants on code maintainability through
+                                                                        AI assistants are typically defined by their assistive and predictive
+controlled user studies [24] or synthetic benchmarks [25]. However,
+                                                                        capabilities, integrated within a developer’s workflow, for example,
+such approaches remain limited in capturing how these models
+                                                                        as IDE extensions [16]. These systems can operate as pair program-
+interact with existing code due to the isolated nature of their eval-
+                                                                        mers designed to support developers across various coding tasks,
+uation protocols. More recent work investigating the integration
+                                                                        such as generating code [5], or identifying existing issues or vul-
+of agentic coding in collaborative development remains centered
+                                                                        nerabilities [26]. Early coding assistants including Code4Me [5] or
+on high-level contribution dynamics, such as differences in PR
+                                                                        IntelliCode Compose [6], powered by generative transformer mod-
+purpose, acceptance rates, revision effort, or review behavior [16,
+                                                                        els such as GPT-C and InCoder, were able to perform short-sequence
+18, 21]. More importantly, most of these investigations focus on
+                                                                        token predictions and automatically complete entire lines of syn-
+a limited subset of PRs and are often restricted to highly popular
+                                                                        tactically correct code in several programming languages. Similarly,
+repositories [16] or a single coding agent [21]. We highlight how,
+                                                                        GitHub Copilot and Amazon CodeWhisperer could transform natu-
+unlike human PRs, most agent PR work is concentrated in very
+                                                                        ral language comments into lines or entire blocks of source code
+low-star repositories, making a broad view important for under-
+                                                                        taking into account code-context [25], while AIBugHunter was able
+standing these systems. Our study complements current literature
+                                                                        to locate and classify vulnerability types, estimate their severity,
+by providing a broader and deeper view of the agentic landscape.
+                                                                        and even suggest potential vulnerability fixes to developers [26].
+   Additionally, we contribute new directions to this understanding
+                                                                        However, all these AI assistants require user confirmation and over-
+by studying the characteristics of agentic activity within collabora-
+                                                                        sight at each step in their interaction model. Additionally, despite
+tive development, with a particular focus on change signals associ-
+                                                                        evidence of increased developer productivity and satisfaction [7], in
+ated with the quality of agent-authored code. This includes a first-
+                                                                        many cases these coding assistants still lack a clear understanding
+of-its-kind longitudinal study of the evolution of agent-authored
+                                                                        of contextual clues, leading to the introduction of code smells that
+PR code, focusing on five coding agents, including OpenAI Codex,
+                                                                        can cause technical debt in the long term [10, 25].
+GitHub Copilot, Claude Code, Google Jules, and Devin. Specifically,
+                                                                           The improving ability of LLMs, both on code-generation and
+our main research questions (RQs) are:
+                                                                        instruction-following, has fueled a transition from reactive coding
+RQ1: What is the difference between agent-authored and human-           assistants to more proactive agents that can reason over broader
+     authored PRs in shaping collaboration and development              project contexts. These agents are able to autonomously perform
+     progress?                                                          multi-step task planning, take actions, run self-evaluations, and
+RQ2: How do agent-authored PRs influence the trajectory of code         coordinate across multiple tools [27]. A growing number of agentic
+     maintenance over time compared to human-authored ones?             systems now demonstrate this kind of autonomous coordination
+                                                                        across the software development cycle [27]. RepoAgent has been
+   Our findings indicate that although agent activity is growing        used to proactively generate and maintain comprehensive docu-
+in open-source projects, particularly in lower-starred repositories,    mentation for entire code repositories [28], while RepairAgent,
+their contributions are correlated with more extensive code changes     which leverages a finite state machine to mimic human debugging
+over time compared to human-authored code.                              states, has shown promising results in fixing software bugs [29].
+   Our contributions are as follow:                                     Furthermore, SWE-agent [30] and OpenHands [31] were designed
+                                                                        to equip LLMs with specialized interfaces to transform them from
+     • We curate a large-scale dataset comprising over 110, 000
+                                                                        reactive predictors into autonomous agents capable of complex,
+       PRs and related metadata from public GitHub data, captur-
+                                                                        multi-step actions. Accordingly, these models can navigate entire
+       ing the activity and collaboration of humans and coding
+                                                                        repositories, execute programs, or edit code files [30, 31]; in ad-
+       agents in open-source software development spanning sev-
+                                                                        dition, OpenHands also enables the delegation of tasks to other
+       eral months.
+                                                                        specialized agents to solve challenging problems.
+     • We examine the difference in activity dynamics between
+                                                                           Additionally, there is a rise of multi-agent systems as well, which
+       agent- and human-authored PRs across various dimensions,
+                                                                        mimic the task distribution, specialized roles, and coordination ac-
+       including merge rates, merge latency, complexity of changes,
+                                                                        tivity of real developer teams. AgentCoder [32] allows agents to
+       file composition, commit and review density, and repository
+       characteristics.                                                 2 https://huggingface.co/datasets/AISE-TUDelft/MOSAIC-agentic-3m
+Investigating Autonomous Agent Contributions in the Wild: Activity Patterns and Code Change over Time                Conference’17, July 2017, Washington, DC, USA
+
+
+take on a different role, including programmers, test designers, and                    Table 1: Search signals used to filter PRs per coding agent.
+test executors. Similarly, for MaintainCoder [33], which focuses
+on ensuring high code maintainability, agents are responsible for                          Coding Agent                       Search Signal
+tasks ranging from requirement analysis and design pattern se-
+                                                                                           OpenAI Codex                      head:codex/
+lection to framework design, evaluation, and code optimization.
+                                                                                           GitHub Copilot                    head:copilot/
+Lastly, CodeSim [34] addresses program synthesis with its agents
+                                                                                           Google Jules              author:google-labs-jules[bot]
+focusing on planning, coding, and debugging, introducing a unique
+                                                                                           Devin                   author:devin-ai-integration[bot]
+simulation-driven approach for evaluating agents’ work internally,
+                                                                                           Claude Code              (“Co-Authored-By: Claude” OR
+mirroring how humans visualize and refine algorithms.
+                                                                                                                   “Generated with Claude Code”)
+   These agents not only add a layer of autonomy and persistence
+over their forerunners, but also possess the ability to adjust their
+behavior over the observed effects of their own actions while main-
+taining progress towards the user-provided goal. This is possible
+                                                                                       show that developers employ ChatGPT to automate various tasks,
+through feedback looping, either by internal self-correction, collab-
+                                                                                       including documentation, bug fixing, and code generation [20].
+oration with humans, or negotiation within multi-agent systems.
+                                                                                       Other studies have examined how LLMs and AI-based tools partici-
+Nevertheless, this shift from heavy developer input to increasing
+                                                                                       pate in code reviews, either by assisting developers in providing
+model autonomy can encourage superficial reliance, potentially
+                                                                                       feedback and alternative solutions [22], or by automatically gen-
+leading over time to buggy, unmaintainable, or security-vulnerable
+                                                                                       erating review comments within GitHub workflows [23]. These
+code.
+                                                                                       findings highlight both the growing adoption and the variable effec-
+                                                                                       tiveness of AI-generated reviews, emphasizing the need for careful
+2.2     Agent Evaluations                                                              tool design and a better understanding of their broader impact.
+To assess AI assistants based on output quality, usability, user satis-                   Following this, other studies have focused on the effects of inte-
+faction, or productivity, most prior studies rely on controlled user                   grating coding agents into software development workflows. Using
+experiments that evaluate the relative performance of these sys-                       the AIDev-Pop dataset, containing 7, 122 PRs from GitHub reposito-
+tems in regards to the developer experience and task goals [35, 36].                   ries with more than 500 stars and involving agents such as OpenAI
+Although this evaluation setting is strongly related to the opera-                     Codex, Devin, GitHub Copilot, Cursor, and Claude Code, this work
+tional nature of these tools, it suffers from low external validity, not               explores productivity patterns [16]. They analyze factors such as
+entirely capturing the complexity, pace, and nuances of real-world                     resolution and turnaround times, acceptance rates, and structural
+development.                                                                           properties of agent-generated code, including complexity and the
+   When it comes to agentic systems, static benchmarking repre-                        nature of the changes. Their results showed that agents can dras-
+sents the primary method to evaluate their capabilities in isolation.                  tically accelerate developer output (e.g., one developer submitted
+Pioneering benchmarks, including HumanEval, MBPP, APPS, and                            164 agentic-PRs in three days versus 176 human-PRs over three
+Defects4J [37], are still in the community’s attention, despite known                  years), and PRs authored by agents such as Codex are reviewed and
+issues related to data contamination, erroneous ground truths, or                      merged more quickly than human-authored ones. However, their
+saturation [38, 39]. More recently, a plethora of agentic benchmarks                   analysis also reveals that agentic PRs are less likely to be accepted
+have emerged, targeting different software engineering tasks. SWE-                     than those of human developers, especially for complex tasks such
+Bench evaluates the ability of agents to solve entire GitHub issues                    as feature development or bug fixing.
+by interacting with repositories [30]. Similarly, SWT-Bench, built                        Complementing this investigation, another work using 567 Claude
+on top of SWE-Bench, is specifically designed to evaluate the ability                  Code-generated PRs across 157 open-source projects, analyses how
+to generate bug reproduction tests [40]. Other benchmarks, such                        these agentic PRs differ from human ones in terms of change size
+as AgentBench, assess agents’ decision-making capabilities in di-                      and purpose [21]. Their evaluation shows that agents frequently
+verse environments, including bash scripting, interacting with real                    focus on non-functional improvements such as refactoring, doc-
+SQL databases, or web browsing [41]. Meanwhile, MaintainBench                          umentation updates, and test additions. Moreover, they observed
+measures agents’ capability to produce maintainable code through                       that most rejections stem from the project context rather than in-
+requirement evolution cycles [33]. Although these benchmarks pro-                      herent code flows. Crucially, the work quantifies the revision effort,
+vide controlled and reproducible measures of agent performance,                        concluding that nearly 55% of agentic PRs are merged without
+they capture only narrow aspects of their development abilities                        revision.
+within idealized conditions. This further highlights the need for                         Nonetheless, these studies offer a limited view of agentic contri-
+evaluations that can capture authentic developer-agent interaction                     butions, often focusing on a small set of PRs from a single agent
+and operational project dynamics.                                                      or from highly popular repositories. This creates the need to study
+                                                                                       activity levels at scale across multiple agents and to investigate the
+2.3     Agents In The Wild                                                             ongoing evolution of agent-generated code.
+The growing integration of LLMs into development workflows has
+motivated efforts to examine their real-world footprint, particularly                  3     Methodology
+how these models contribute to and shape activity within reposito-                     This section describes the collection, filtering, and structure of the
+ries. Previous investigations of pull requests, commits, and issues                    GitHub dataset, along with the evaluation protocol.
+Conference’17, July 2017, Washington, DC, USA                                                                                                Popescu, et al.
+
+
+3.1     Data Curation                                                            Table 2: Search signals for distinguishing agent- and human-
+                                                                                 generated PRs.
+We target five autonomous coding agents, including Devin (March
+2024) 3 , Claude Code (February 2025) 4 , OpenAI Codex (May 2025) 5 ,
+GitHub Copilot (May 2025) 6 , and Google Jules (May 2025) 7 , due                  Coding Agent                            Search Signal
+to their growing adoption across both academic and industrial                      OpenAI Codex                               head:codex/
+environments, thus forming a representative coverage of current                    GitHub Copilot                            head:copilot/
+agentic coding paradigms that span both established and more re-                   Cursor                                     head:cursor/
+cent agents. Using the GitHub GraphQL search API 8 , we scrape                     Cosine                                     head:cosine/
+pull requests associated with these agents, along with other contri-               Tembo                                      head:tembo/
+bution metadata such as changed files, issue references, commits,                  OpenHands                                head:openhands
+comments, and reviews from each PR. To ensure coverage of all five                 Google Jules                      author:google-labs-jules[bot]
+agents, we fix an extraction snapshot of three months, covering June               Devin                           author:devin-ai-integration[bot]
+through August 2025, according to the announced release dates. Al-                 Amazon Q                        author:amazon-q-developer[bot]
+though the time-frame is quote recent, most of these coding agents                 Jetbrains Junie                    author:jetbrains-junie[bot]
+had already achieved significant usage [18]; looking further back                  Junie EAP                            author:junie-eap[bot]
+would have included periods when some agents did not yet exist.                    Codegen                                 “About Codegen”
+This window also accounts for earlier agents, such as Devin, which                 OpenHands                      (“Co-authored-by: openhands” OR
+initially lacked PR-related capabilities 9 , and Claude Code, first re-                                        “Automatic fix generated by OpenHands”)
+leased for research preview in February, before becoming generally                 Claude Code                      (“Co-Authored-By: Claude” OR
+available in May. It also includes the newest agent, Google Jules,                                                  “Generated with Claude Code”)
+released in late May, which quickly gained community attention
+through new features such as critic-augmented generation 10 .
+   To identify which pull requests correspond to which agent, we                 volume, using denser sampling for agents with higher PR activity
+use different filtering signals according to the tell-tale signature of          and sparser sampling for those with fewer PRs. In practice, this
+each agent [16, 18, 21], as illustrated in Table 1. When tackling a              corresponds to shorter time intervals (e.g., one hour for Codex) and
+given issue, agents such as Codex and Copilot usually operate by                 longer intervals (e.g., five hours for Claude and Copilot), which we
+creating a new branch prefixed with their name, followed by the                  empirically tuned to achieve balanced coverage throughout the day.
+issue or requirement title. Since these agents do not have an asso-              To manage days with unusually high activity, we impose a daily up-
+ciated GitHub identity and operate as pseudo-authors, the branch                 per limit on sampled PRs for each agent, derived from the per-agent
+prefix serves as the primary signal to identify related PRs, as shown            total sample (with respect to the least active ones), divided by the
+in prior studies [16, 18]. This approach focuses on the head branch,             number of days. This ensures a reasonable and comparable sample
+which contains all proposed changes intended for merging into the                size across all agents, preventing highly active ones from dominat-
+base branch. On the other hand, agents such as Google Jules and                  ing the dataset. To maximize coverage throughout the window, the
+Devin operate as GitHub bots (registered as applications), meaning               daily limit is recalculated after each day according to the remaining
+their contributions can be filtered using the author field. Lastly,              PRs and the number of days left, ensuring that sampling remains
+instead of branch prefixing, Claude Code typically appends an au-                distributed throughout the full period rather than concentrated on
+thorship watermark to its contributions, which we can track in PR                a few high-activity days. Due to their lower PR activity and lack of
+descriptions.                                                                    pronounced usage concentration, we included all PRs for Jules and
+   We observed that agents such as Copilot, Claude, and Codex have               Devin throughout the period.
+substantially more PRs during the selected period than the others,                  After collecting all agent-associated PRs and their corresponding
+with Codex alone reaching approximately 1.1M PRs. As our goal is                 repositories (including base and head repositories), we performed
+to characterize the emerging paradigm of PR-based coding agents                  manual sanity checks and removed duplicate PRs11 based on their
+rather than model adoption trends, we construct a representative                 IDs, accounting for repeated entries introduced by the pagination
+sample for each agent covering this time window. According to the                process. In addition to the absolute counts of PR properties, we
+GitHub Innovation Graph for Q1 2025 [42], most GitHub developers                 also gathered auxiliary metadata for up to the first 100 commits,
+are based in the United States, followed by the European Union,                  comments, issues, reviews, and modified files associated with each
+India, China, and Brazil. To ensure a fair comparison and minimize               PR, when available. This limit corresponds to GitHub’s maximum
+temporal biases, our scraping traverses the entire three-month pe-               page size and avoids rate-limit overhead from nested pagination in
+riod. We adapt the sampling granularity based on the agent’s PR                  the case of unusually large pull requests. Inspection of the distribu-
+3 https://cognition.ai/blog/introducing-devin                                    tions also shows that approximately 75% of PRs (across all agents)
+4 https://www.anthropic.com/news/claude-3-7-sonnet                               contain between 2 and 14 entries per metadata type, supporting
+5 https://openai.com/index/introducing-codex/
+                                                                                 our threshold choice for capturing complete information in most
+6 https://github.blog/news-insights/product-news/github-copilot-meet-the-new-
+                                                                                 cases while still accommodating larger PRs.
+coding-agent/
+7 https://blog.google/innovation-and-ai/models-and-research/google-labs/jules/      For comparison, we apply the same scraping procedure to ob-
+8 https://docs.github.com/en/graphql
+                                                                                 tain human-created PRs for the same three-month window, using a
+9 https://docs.devin.ai/release-notes/overview
+10 https://jules.google/docs/changelog/2025-08-083/                              11 less than 0.001% of data
+Investigating Autonomous Agent Contributions in the Wild: Activity Patterns and Code Change over Time                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               Conference’17, July 2017, Washington, DC, USA
+
+
+Table 3: Dataset summary of pull requests and related contributions. The first three columns indicate the number of PRs
+created by each author, along with their base and head repositories (hence the large number), while the other four reflect
+activity associated with those PRs.
+
+ PR Author                                                                                                                                                                                                                                                                                                                                  #PR                                                                                                                                                                                                                                                                                                                                                                                 #Repository                                                                                                                                                     #Commit                                                                                                                                                                                                                                                                                                                                               #Comment                                                                                                                                                                                                                                                                                                                       #Review                                                                                                                                 #Issue                                                                                                                                                                                                                                                 #Changed File
+ OpenAI Codex                                                                                                                                                                                                                                                                                                          20,835                                                                                                                                                                                                                                                                                                                                                                                                     41,669                                                                                                                                                                                 27,530                                                                                                                                                                                                                                                                                                                                                                                                                         3,693                                                                                                                                                                                                                                1,957                                                                                                                                     45                                                                                                                                                                                                                                                 90,822
+ Claude Code                                                                                                                                                                                                                                                                                                           19,148                                                                                                                                                                                                                                                                                                                                                                                                     38,260                                                                                                                                                                                 82,755                                                                                                                                                                                                                                                                                                                                                                                                                        22,329                                                                                                                                                                                                                                12,728                                                                                                                                  4,052                                                                                                                                                                                                                                                255,275
+ GitHub Copilot                                                                                                                                                                                                                                                                                                        18,563                                                                                                                                                                                                                                                                                                                                                                                                     37,125                                                                                                                                                                                 69,896                                                                                                                                                                                                                                                                                                                                                                                                                        26,664                                                                                                                                                                                                                                20,665                                                                                                                                  9,744                                                                                                                                                                                                                                                158,404
+ Google Jules                                                                                                                                                                                                                                                                                                          18,468                                                                                                                                                                                                                                                                                                                                                                                                     36,936                                                                                                                                                                                 41,032                                                                                                                                                                                                                                                                                                                                                                                                                         5,700                                                                                                                                                                                                                                3,249                                                                                                                                   2,185                                                                                                                                                                                                                                                138,610
+ Devin                                                                                                                                                                                                                                                                                                                 14,045                                                                                                                                                                                                                                                                                                                                                                                                     28,090                                                                                                                                                                                 51,641                                                                                                                                                                                                                                                                                                                                                                                                                        27,518                                                                                                                                                                                                                                6,901                                                                                                                                    294                                                                                                                                                                                                                                                 131,454
+ Human                                                                                                                                                                                                                                                                                                                 20,910                                                                                                                                                                                                                                                                                                                                                                                                     41,542                                                                                                                                                                                 102,037                                                                                                                                                                                                                                                                                                                                                                                                                       18,559                                                                                                                                                                                                                                21,401                                                                                                                                  1,973                                                                                                                                                                                                                                                194,861
+
+
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                Pull Request
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           Review
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              CommitUser
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            id: str
+pr_id: str 
+url: str 
+body: str 
+created_at: str 
+is_minimized: bool 
+minimized_reason: str 
+                                                                                                                                           state: str 
+updated_at: str 
+last_edited_at: str 
+published_at: str 
+submitted_at: str 
+author: User
+
+
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        name: str
+email: str
+  
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                 Pull Request
+                                                                                                                                                                                                                                                                                                                                           Comment
+
+
+
+                                                                                                                                                                                                                                                    id: str
+pr_id: str 
+url: str 
+body: str 
+created_at: str 
+is_minimized: bool                                                                                                                                                                                                                                                                                            minimized_reason: str 
+last_edited_at: str 
+published_at: str 
+updated_at: str 
+author: User
+  
+
+
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    Commit
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        id: str
+pr_id: str 
+sha: str 
+url: str 
+committed_date: str
+additions: str
+deletions: str                                   authored_date: str 
+message_body: str 
+message_headline: str 
+author_count: int 
+committed: CommitUser 
+changed_files: int 
+authors: List[CommitUser] 
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            User
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 id: str
+login: str 
+url: str 
+name: str 
+typename: str 
+  
+
+
+                                                                                                                                                                                   Pull Request
+                                                                                                                                                                                           Repository
+
+
+
+
+        id: str  
+pr_id: str 
+role: str
+name: str
+name_with_owner: str
+url: str
+ssh_url: str
+stargazer_count: int 
+is_fork: bool 
+is_archived: bool 
+is_disabled: bool 
+is_empty: bool 
+is_in_organization: bool 
+is_locked: bool 
+is_private: bool 
+is_mirror: bool 
+is_template: bool 
+is_user_config_repo: bool 
+   forking_allowed: bool 
+fork_count: int 
+created_at: str 
+visibility: str 
+owner: User 
+topics_count: int 
+languages: List[str]
+language_count: int 
+watchers: int 
+license_info: str 
+default_branch: str 
+repository_topics: List[str]
+primary_language: str 
+lock_reason: str 
+pushed_at: str 
+updated_at: str
+archived_at: str 
+description: str
+
+
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            Issue
+
+
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     id: str
+pr_id: str
+title: str 
+url: str 
+body: str 
+created_at: str 
+locked: bool
+number: int 
+state: str
+tracked_issues_count: int                       label_count: int 
+last_edited_at: str 
+published_at: str 
+updated_at: str 
+issue_type: IssueType 
+labels: List[Label]
+state_reason: str 
+author: User 
+prs_closing_issue: int
+  
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        Pull Request
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       merged_at: str 
+closed_at: str
+updated_at: str
+last_edited_at: str
+review_decision: str
+head_ref_name: str
+head_ref_oid: str 
+base_ref_name: str
+based_ref_oid: str
+comments_count: int 
+reviews_count: int 
+commits_count: int 
+files: List[File] 
+assignees_count: int
+closing_issues_count: int 
+author_association: str 
+labels: List[Label]
+active_lock_reason:str
+timeline_count: int( 
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           id: str  
+title: str 
+url: str
+number: int  
+body: str 
+state: str 
+created_at: str 
+is_draft: bool 
+changed_files: int 
+is_cross_repository: bool
+is_in_merge_queue: bool 
+locked: bool
+additions: int
+deletions: int
+author: User 
+label_count: int 
+base_repository: RepositoryPeek 
+head_repository: RepositoryPeek 
+
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 IssueType
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             File
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    name: str
+description: str
+  
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      additions: int
+deletions: int 
+path: str
+change_type: str
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                                                                                         RepositoryPeek
+                                                                                                                                                                                                                                                                                                                                                                                               RepositoryPeek
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  Label
+
+
+
+                                                                                                                                                                                                                                                                                                                       id: str
+name: str
+url: str
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               name: str
+description: str
+  
+
+
+
+
+
+
+Figure 1: Overview of dataset structure. Solid lines indicate relationships between entities. Dotted lines denote nested objects.
+
+
+one-hour time interval because of the high PR density. To exclude                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              3.2                                                                                                                                                                                                                   Data Structure
+agent-generated PRs, we filter based on the head branch prefix,                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              Table 3 presents the final number of pull requests per category,
+authorship, and the presence of agent watermarks in the PR de-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               together with associated activity information for each PR. The
+scription. Because there is no clear picture of all agents that operate                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      resulting dataset includes 111,969 PRs contributed by both agents
+on GitHub, we excluded a set of known agents [18], as well as two                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            and humans. Some variation in activity levels can be seen across
+additional agents, Amazon Q and JetBrains Junie, and an extra sig-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           agents, with Copilot and Claude PRs appearing more active in the
+nal for OpenHands, identified through manual GitHub inspection                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               collected samples. Figure 1 illustrates the overall dataset structure,
+to improve pull request attribution. This list of agents is shown in                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         which is described in more detail below.
+Table 2, together with the filtering signals used for each of them. To
+further reduce the risk of misattributing pull requests, we exclude                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      • Pull Request: records the content, state, and activity of a
+PRs authored by bots or applications (e.g., dependabot or github-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          pull request, including author, repository references, times-
+actions bot), which are commonly used for automatic dependency                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             tamps, and total number of commits, reviews, comments,
+management or other CI/CD tasks.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           closed issues, labels, and files changed.
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         • Repository: stores a repository’s ownership, visibility, sta-
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           tus flags, popularity metrics, programming languages, topics,
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           licensing, timestamps, and descriptive information.
+Conference’17, July 2017, Washington, DC, USA                                                                                          Popescu, et al.
+
+
+      • Commit: captures a commit’s identity, content, timestamps,            3.3.2 Code Change Metrics. We assess code changes using the
+        authoring and committing information, changed files, and              metrics defined below, applied to commits from both AI agents and
+        associated authors for a given pull request.                          human contributors, in line with RQ2.
+      • Review: lists a pull request review, including its identifier,
+                                                                                 Survival Rate. The survival rate measures the proportion of code
+        author, content, state, timestamps, and minimization status.
+                                                                              lines that remain unchanged over a period of time. While this metric
+      • Comment: represents a pull request comment with its iden-
+                                                                              was previously applied at the repository scale [43], we adapt it to
+        tifier, author, content, timestamps, publication status, and
+                                                                              the commit level. Given a seed commit, we extract all line additions
+        minimization details.
+                                                                              in its diff. Next, we identify the nearest subsequent commit within
+      • Issue: stores information about an issue linked to a pull re-
+                                                                              a defined time window. Looking forward from the initial to the
+        quest, including its identifier, author, title, description, state,
+                                                                              target commit, we capture how the newly introduced lines persist
+        timestamps, type, labels, and other associated PRs.
+                                                                              in time. We measure survival at the syntactic level: a line is deemed
+   We also record nested information about the files changed by               surviving if its content is unchanged in the target commit, and dead
+each pull request. For each file, we store the number of changes              otherwise.
+in terms of additions and deletions, the type of change, and the
+absolute path within the repository. Similarly, for users, we capture                                           Survived lines
+                                                                                                Survival rate =                               (4)
+their public-facing data such as identifier, name, login, profile URL,                                           Added lines
+and user type, which were used for attribution filtering and data             A higher survival rate means that the added lines of code were not
+validation.                                                                   modified or removed, indicating that their contribution is stable.
+                                                                                 Churn Rate. The churn rate indicates the proportion of code lines
+3.3     Evaluation Metrics                                                    that were added or modified over a period of time [44]. Similarly,
+3.3.1 Activity Metrics. We start with discussing some of the key              starting from an initial commit, we identify changes from subse-
+high-level metrics, used to address RQ1 [18, 21]. These metrics are           quent commits up to a target commit, focusing on modifications
+computed over the collected pull requests to summarize the activity           in the same files modified by the seed commit. This represents the
+characteristics of both AI agents and human contributors.                     number of lines that are newly added or syntactically differ from
+                                                                              their initial version (Churned LOC), normalized by the total number
+   Change Size. This metric measures the magnitude of a pull re-
+                                                                              of changed lines (Total LOC).
+quest in terms of code modifications, using the additions and dele-
+tions attributes. It indicates how substantial the code modifications                                          Churned LOC
+are within a pull request.                                                                       Churn rate =                              (5)
+                                                                                                                 Total LOC
+                                                                              A higher churn rate reflects code has been more reworked, which
+            Change Size = Lines Added + Lines Removed                  (1)    may raise concerns about maintainability and stability.
+   The value we pull here from the GitHub API reflects the size of               Deletion Rate. The deletion rate captures the proportion of code
+the change when it was first opened. The size of the change might             lines removed over a period of time [44]. While this is similar to
+evolve through the PR process.                                                churn, it focuses on the number of lines deleted from the initial
+                                                                              commit (Deleted LOC), normalized by the total number of changed
+   Merge Rate. The merge rate indicates the proportion of sub-                lines (Total LOC).
+mitted pull requests that are successfully merged into the target
+branch, using the state attribute.                                                                                Deleted LOC
+                                                                                                 Deletion rate =                                 (6)
+                                 Number of merged PRs                                                               Total LOC
+                Merge rate =                                           (2)    A higher deletion rate reflects possible refactoring or restructuring.
+                                  Total number of PRs
+   As noted in previous investigations, merge rates are strongly              4     Results and Discussion
+influenced by the level of human approval involved in the workflow.           In the following, we present our results, first by analyzing the
+For example, GitHub Copilot can open draft PRs on its own, while              activity patterns of the coding agents and then exploring how their
+Codex does so only after human approval [18].                                 contributions affect maintainability signals over time.
+   Merge Time. This metric calculates the duration between the
+opening and merging of a pull request based on the created_at and             4.1    RQ1: Agents’ Contributions
+merged_at timestamps. It reflects how quickly a contribution is               4.1.1 Pull Request and Repositories Characteristics. We start by
+reviewed and accepted into the code base.                                     describing the types of repositories that appear in our sample.
+                                                                                 GitHub Repository Stars: The number of stars of a repository
+                     Merge Time = 𝑡 merged − 𝑡 opened                  (3)    is a signal of its popularity, community engagement, and maturity.
+                                                                              We explore some of the details of this in Table 4 for the BASE (i.e.,
+   Others. We also consider other PR-related measures: the number             the merged into) repositories. We observe that 40.5% of the human
+of comments (comments_count) and reviews (reviews_count), repos-              PRs in our sample are from repositories with 0 stars. Agent PRs
+itory popularity (stargazer_count), the fraction of changes that are          are more likely to be in 0-star repositories. In the case of Codex
+additions (PR additions), and the variety of file types modified (path).      and Jules, about 75% of PRs in our sample have 0 stars. While PRs
+Investigating Autonomous Agent Contributions in the Wild: Activity Patterns and Code Change over Time                                                                         Conference’17, July 2017, Washington, DC, USA
+
+
+                                                                                                                                                                             Total Change Size
+
+
+
+
+                                                                                                     Median Addition Ratio Median Total Lines Changed
+                                 60
+    PRs with Linked Issues (%)
+
+                                                                     52.1%
+                                              Human baseline                                                                                       400
+                                                                                                                                                                                                   Human baseline
+                                 40                                                                                                                300
+                                                 20.3%                                                                                             200                 376
+                                 20                                                 11.8%
+                                       8.6%                                                                                                                                               212
+                                                                             2.0%                                                                  100                                              165
+                                                           0.2%                                                                                                                                               112
+                                 0                                                                                                                              60              53
+                                      Human Claude Codex Copilot Devin              Jules                                                                0
+                                                               Agent                                                                                          Human Claude     Codex     Copilot   Devin     Jules
+                                                                                                                                                                                    Agent
+Figure 2: Fraction of PRs linked to issues. Wilson 95% CIs
+                                                                                                                                                                Proportion of Changes that are Additions
+                                                                                                                                                        1.0
+shown.
+                                                                                                                                                        0.5           0.89      0.81      0.94      0.90      0.77
+                                                                                                                                                               0.72
+Table 4: Distribution of pull requests across repository stars,
+with most PRs originating from repositories with 0 stars. Hu-                                                                                           0.0
+man PRs tend to appear in higher-starred repositories.                                                                                                        Human Claude Codex         Copilot   Devin     Jules
+                                                                                                                                                                                    Agent
+ PR Author                                            PR’s Repository Star Count
+                                                                                                 Figure 3: The plot at the top shows the median PR change
+                                              %=0    %≥10      %≥100      Median    Med(if>0)    size for each agent, while the bottom one shows the median
+ Claude                                  51.7%       19.7%        10.4%         0            5   fraction of changes that are additions. Bootstrapped 95% CIs
+ Codex                                   75.3%        5.2%         2.4%         0            1   shown.
+ Copilot                                 59.6%       15.2%         9.1%         0            3
+ Devin                                   64.1%       23.0%        14.3%         0           39
+ Jules                                   75.7%        4.0%         1.4%         0            1   standard diff format, a modified line is recorded as both a deletion
+ Human                                   40.5%       36.8%        25.0%         1           38   and an addition, so it counts twice toward the total lines changed.
+                                                                                                     We observe that in our sample, agent edits have progressed
+                                                                                                 beyond just simple edits. The median human-opened PR was ap-
+are traditionally used in popular repositories for collaborating with                            proximately 60 lines. Generally agents were used in PRs with more
+other developers, the rise of agents is reshaping the PR usage to                                lines changed (Claude median 376 lines), with the exception of
+also be in developers’ personal or small repositories.                                           Codex, which was used in smaller changes. This is one of the in-
+   While it is more rare that agent PRs occur in very popular 100+                               dicators of how Codex is often used differently than some of the
+star repositories, it does occur in some cases, approaching about 15%                            other agents.
+of an agent’s PRs. The overall median stars are close to 0. Although                                 Our large sample size lends high statistical power, making differ-
+interestingly, when taking the median excluding 0-star repositories,                             ences significant12 . However, there is fairly high variance, so the
+the Devin median more closely matches that of the human PRs. We                                  actual effect size can be moderate to fairly negligible. A Cliff’s Delta
+might speculate that because Devin is a slightly older and relatively                            (𝛿) [46] between Claude and human change sizes is about 𝛿 = 0.37
+more expensive and specialized tool, there is a larger proportion of                             and about 𝛿 = −0.03 between human and Codex. For all agents,
+cases where it is applied to higher-starred repositories. In contrast,                           we observe higher rates of adding code compared to deleting code
+PR agents like Copilot and Codex are more directly in front of every                             relative to our human sample. Due to the between-PR variance,
+developer with less separate cost due to their GitHub and ChatGPT                                effect sizes are fairly small (e.g., human-Copilot 𝛿 = 0.26).
+integration, and thus are more likely to be used in small projects.                                  Overall, these change-size statistics suggest that agent-generated
+   Issues: Different agents encourage different patterns. The frac-                              PRs tend to involve larger, addition-heavy changes, although this
+tion of linked issues is shown in Figure 2, with 95% Wilson [45]                                 is not every PR. The distribution has a long tail of change lines size,
+confidence intervals (CIs) for statistical significance.                                         so we see PRs for all authors of many sizes.
+   Linked issues are relatively uncommon in GitHub PRs, appearing                                    File Type: In Figure 4, we explore what file types are appearing
+in only about 8% of human submissions. In contrast, agents such                                  in the PRs. Our scraping limits to the first 100 files in the PR, and
+as Copilot include linked issues in roughly half of their PRs, as                                reflects touched files from comparing the latest PR HEAD to the
+assigning an issue is a central aspect of the agent’s UX, though it                              BASE when the PR was created.
+can also be invoked through a chat interface. Meanwhile, Codex                                       In line with the general popularity numbers [47], we observe
+and Devin rarely have assigned issues.                                                           that JavaScript and TypeScript (TS/JS) are the most likely group of
+                                                                                                 file types to appear in observed PRs. 13 They occur in approximately
+4.1.2 Pull Request Changes. Next, we examine the specific changes
+introduced in these PRs.                                                                         12 A pairwise Mann-Whitney U test of change size differences estimates all 𝑝 ≪ 0.0001
+   Change Size: Figure 3 shows summary statistics for the number                                 13We opt to combine JS/TS. While these are not equivalent languages, they both reflect
+of lines added or deleted in sampled PRs connected to each agent. In                             closely related ecosystems and usage patterns.
+Conference’17, July 2017, Washington, DC, USA                                                                                                                                      Popescu, et al.
+
+
+                      TypeScript/JavaScript             Markdown                    Python                       JSON               YAML/TOML                        Other
+                                                                                                                                                          45.8%
+                                                                                                                                                          Java (17%), HTML (14%)
+                Human            27.2%                   22.4%                   15.0%                      21.0%                     22.6%               CSS (12%), XML (11%), ...
+                                                                                                                                                          40.2%
+                Claude              41.9%                        47.3%            17.6%                      26.3%                        26.4%           Shell (20%), Go (16%)
+                                                                                                                                                          CSS (15%), HTML (15%), ...
+                                                                                                                                                          39.5%
+                Codex             36.4%                  24.8%                      27.2%                 8.6%                     7.0%                   HTML (32%), CSS (19%)
+        Agent
+
+
+
+
+                                                                                                                                                          PHP (9%), C# (7%), ...
+                                                                                                                                                          47.9%
+                Copilot           35.3%                      43.8%                17.3%                     21.6%                    18.4%                HTML (26%), CSS (20%)
+                                                                                                                                                          C# (15%), Shell (13%), ...
+                                                                                                                                                          31.8%
+                 Devin               49.4%                29.6%                   20.6%                     18.4%                    19.5%                CSS (22%), HTML (20%)
+                                                                                                                                                          Java (11%), Shell (10%), ...
+
+                 Jules             41.5%                 24.6%                    21.1%                    16.8%                   11.8%                  46.0%
+                                                                                                                                                          HTML (36%), CSS (24%)
+                                                                                                                                                          Go (9%), PHP (8%), ...
+                          0         50         100 0         50          100 0            50      100 0            50      100 0             50     100
+                              Percent of PRs           Percent of PRs            Percent of PRs           Percent of PRs           Percent of PRs
+                                with 1 file              with 1 file               with 1 file              with 1 file              with 1 file
+
+Figure 4: Percentage of pull requests containing the corresponding file type. The five most common types are shown (related
+types grouped, e.g., TS/JS, YAML/TOML); less common types are grouped as “Other” with right-margin annotations listing the
+next four most frequent types. Wilson 95% confidence intervals are shown.
+
+
+a quarter of human PRs, but over a third of agent PRs. In particular,                               is merged fairly quickly. The median human PR is merged in 0.4
+Devin has a high fraction of TS/JS PRs.                                                             hours, and a large fraction (43.3%) of PRs are merged in under
+   Python is the second most common programming language rep-                                       10 minutes. These ranges are somewhat typical for other agents
+resenting 15% of human PRs. Agent PRs are more likely to have                                       except for Codex and Jules. The median Codex PR in our sample
+Python code than human PRs, particularly Codex showing a high                                       was merged in 0.5 minutes.
+percent of Python PRs (27%).                                                                           If we consider merge times grouped into three categories by
+   We also observed that agents frequently make changes to non-                                     repository star count (right side of Figure 5), we observe an increas-
+code files. Markdown file edits appear in close to half of Claude                                   ing trend. In the case of humans, the median PR is merged in only a
+PRs, with all agents having a higher occurrence of Markdown than                                    few minutes. This increases to a median of about 10 hours in higher
+in human PRs. This can be a reflection of the propensities of agents                                starred repositories. Although the merge time for some agents’ PRs
+to add documentation, but also might reflect that the agents are                                    (such as Copilot and Devin) also shifts up with higher starred repos-
+more likely to be used for "0 → 1" type edits, where creating                                       itories, the p75 of merge times for Codex remains under 1 hour
+new repositories or independent features from scratch. While these                                  even for higher starred repositories.
+are the most common file types to be included, there is still a long                                   Consistent with the change size findings, this offers an additional
+tail of other file types included in PRs.                                                           perspective on how Codex (and to some extent Jules) is being used
+                                                                                                    differently than other agents. We speculate that the faster merging
+                                                                                                    might arise from agent PRs performing much simpler (or rote)
+4.1.3 Pull Request Merges. Next we explore what happens to these
+                                                                                                    work, or that the agent code is reviewed by humans, off-line, before
+PRs after being opened.
+                                                                                                    PR submission, and using PRs only as the AI system’s provided
+   Merge Rate: In Figure 5, we compare merge rates across agents,
+                                                                                                    mechanism for integrating code into the codebase. The distribution
+shown both for the full dataset and stratified by repository popu-
+                                                                                                    of Copilot PR merge time in high-starred repositories is surprisingly
+larity (right), grouped into three star-count tertiles. Each PR can
+                                                                                                    similar to human PRs (thus, they might be receiving similar amounts
+be in one of three states: open, merged, or closed. We show the
+                                                                                                    of review effort), but there is an approximate 27 points gap in merge
+percentage of all PRs that are merged out of all PRs (as PRs that are
+                                                                                                    rates.
+left open can represent cases where agents did not resolve an issue,
+                                                                                                       High-level Interaction Metrics In Figure 7, we look at some
+but caused developer effort).
+                                                                                                    of the measures of how developers interact with PRs. Some agents
+   Across all the data, we observe that agents such as Claude and
+                                                                                                    (such as Devin) will always comment on their own PRs, while others
+Codex are merged at a higher rate than human PRs in our sample,
+                                                                                                    will not. Thus, we focus on comments labeled by GitHub as being
+while Copilot and Devin are merged at a lower rate (we note signif-
+                                                                                                    from a user rather than a bot.
+icantly separated CIs in Figure 5). When looking at the star count,
+                                                                                                       Comments are fairly rare. Only 21% percent of human PRs in
+we observe different patterns depending on the PR author. Human,
+                                                                                                    our sample receive comments. We observe that agent PRs typically
+Copilot, and Devin PRs follow a slight “inverted-u” pattern; the 1st
+                                                                                                    receive fewer comments (with codex PRs rarely commented on). We
+tertile and 3rd tertile have lower merge rates than the 2nd. The
+                                                                                                    also note that human PRs receive fewer reviews than agent PRs (al-
+merge rate for Codex is roughly similar across star counts. Jules
+                                                                                                    though Co pilot’s PRs get marginally more reviews). In a traditional
+merge rate is fairly flat but falls off at higher star counts (notably,
+                                                                                                    framing of PRs, this would perhaps hint that the PRs and associated
+Jules is also the agent where our sampling finds the fewest PRs
+                                                                                                    changes are simpler and do not require much review. However,
+from high-starred repositories).
+                                                                                                    agent systems can alter this paradigm. For example, Codex and
+   Merge Time: In Figure 6 we show the distribution of times
+                                                                                                    Jules review might have been more likely to occur off-platform in a
+between PR opening and merge events. A typical PR in our sample
+Investigating Autonomous Agent Contributions in the Wild: Activity Patterns and Code Change over Time                                                                                                                                                                                            Conference’17, July 2017, Washington, DC, USA
+
+
+                                                                                                                                                                                     Merge Rate by Repository Star Count
+                                                                                Overall [0, 430,086] Stars                                                                                 Low [0, 0] Stars                                                 Medium [1, 18] Stars                       High [19, 430,086] Stars
+                                                                       100                                                                                         100
+                                                                                        86.4% 87.5%                                                                                       87.6% 88.1%                                                           88.6% 85.6%                                          87.3%
+                                                                                                                                                                                                                                                78.0%   80.6%                                        77.5% 78.7%
+                                                                        80     75.1%                                                             77.3%                 80                                                                                                              72.1% 77.1%
+                                    Merge Rate (%)
+
+
+
+
+                                                                                                                                                                              69.6%                                                                                            66.5%
+                                                                                                           62.2% 62.0%                                                                                      62.8% 59.3%                                                                                                              62.6% 61.5%
+                                                                        60                                                                                             60                                                                                                                                                    50.1%
+                                                                        40                                                                                             40
+                                                                        20                                                                                             20
+                                                                         0                                                                                              0
+                                                                               Human Claude Codex Copilot Devin Jules                                                         Human Claude Codex Copilot Devin Jules                                    Human Claude Codex Copilot Devin Jules       Human Claude Codex Copilot Devin Jules
+
+
+
+                                                                                                                                                         Agent's PRs
+                                                                                                                                                         Fraction of
+                                                                                                                                                                       0.5
+                                                                                                                                                                                    n=      n=   n=    n=                                   n=   n=       n=      n=     n=     n=      n=     n=      n=      n=     n=      n=      n=    n=
+                                                                                                                                                                       0.0         5899    8671 13812 6957                                 5342 10892    4404    5407   3645   3407    1567   3034    5405    2472    784    1186    1796   346
+                                                                                                                                                                                                       Agent                                                              Agent                                         Agent
+
+
+Figure 5: Percentage of pull requests merged per agent, grouped by repository star count (Wilson 95% CIs shown). Lower panel
+shows each agent’s PR fraction within star categories (p33 and p66 of human data). Some agents show an “inverted-u” trend
+across star counts.
+
+                                                                                                                                                                                    Time to Merge by Repository Star Count
+                                                                                 Overall [0, 430,086] Stars                                                                                 Low [0, 0] Stars                                                Medium [1, 23] Stars                       High [24, 430,086] Stars
+                                    Time to Merge (hours, log scale)
+
+
+
+
+                                                                        102                                                                                            102
+
+                                                                        101                                                                                            101
+
+                                                                        100                                                                                            100
+
+                                                                       10 1                                                                                        10 1
+
+                                                                       10 2                                                                                        10 2
+
+                                                                               Human Claude Codex Copilot Devin Jules                                                        Human Claude Codex Copilot Devin Jules Human Claude Codex Copilot Devin Jules Human Claude Codex Copilot Devin Jules
+                                                                                         =-0.11 =-0.49 =0.12 =0.01 =-0.30                                                                  =0.22 =-0.19 =0.47 =0.32 =0.05                                        =-0.08 =-0.44 =0.17 =0.09 =-0.24             =-0.37 =-0.74 =0.08 =-0.15 =-0.46
+                                                                                        p<.001 p<.001 p<.001 p=0.20 p<.001                                                                p<.001 p<.001 p<.001 p<.001 p<.001                                    p<.001 p<.001 p<.001 p<.001 p<.001           p<.001 p<.001 p<.001 p<.001 p<.001
+
+
+Figure 6: Distribution of merge times across agents (log scale) as boxplots with p10–p90 whiskers. Cliff’s 𝛿 and Mann-Whitney
+U test p-values comparing to humans are labeled. Merge times generally increase with repository star count; Codex and Jules
+PRs merge faster, while shorter times may reflect prior human interaction. Star boundaries are based on human PR tertiles of
+merged PRs.
+
+                                                                        Comments 0.6per PR                                                                             Reviews per
+                                                                                                                                                                                1.1
+                                                                                                                                                                                    PR                                                              the mechanism to invoke the system for edits. Additionally, sys-
+                                                                                                                                                1.2
+                            0.6     0.5                                                                      100                                        1.0                                                   100
+                                                                                                                  % of PRs with User Comments
+Mean User Comments per PR
+
+
+
+
+                                                                                                                                                1.0
+                                                                                                                                                                                                                                                    tems such as Copilot include an UI for using the system itself as a
+                                                                                                                                                                                                                   % of PRs with Reviews
+
+
+
+
+                            0.5
+                                                                                                                      Mean Reviews per PR
+
+
+
+
+                                                                                                             80                                                                                               80                                    reviewer.
+                            0.4                                                                                                                 0.8               0.7
+                                                                       0.3
+                                                                                                             60                                                                                               60
+                            0.3                                                                                                                 0.6                                             0.5
+                                                                                                             40                                                                           41%                 40
+                            0.2                                                                                                                 0.4       37%
+
+                                             21%                                        24%
+                                                                                              0.1
+                                                                                                             20
+                                                                                                                                                                       25%                        22% 0.2     20
+                                                                                                                                                                                                                                                    4.2         RQ2: Code Change over Time
+                            0.1                                          15%                         0.1                                        0.2                          0.1
+                                                                               0.0              8%                                                                                                      11%
+                                                                                  2%                   5%                                                                      4%                                                                   We examine code evolution at three post-commit intervals: three
+                            0.0                                                                              0                                  0.0                                                           0
+                                  HumanClaudeCodexCopilot Devin Jules                                                                                 HumanClaudeCodexCopilot Devin Jules                                                           days, one week, and three weeks. We restrict our analysis to pull re-
+                                                                                Agent                                                                                         Agent
+                                                                                                                                                                                                                                                    quests merged into the code base, as our objective is to understand
+                                                                                                                                                                                                                                                    how successfully-integrated code changes over time. These time in-
+Figure 7: Developer interactions overview with pull requests,
+                                                                                                                                                                                                                                                    tervals were chosen to capture short-range changes following code
+showing average counts of user comments (i.e., non-bot com-
+                                                                                                                                                                                                                                                    integration, without extending the analysis into substantially longer
+ments), reviews (main bar, left axis), and the proportion of
+                                                                                                                                                                                                                                                    horizons (e.g., several months or years), which would require addi-
+PRs with at least 1 comment or review (dots, right axis). Boot-
+                                                                                                                                                                                                                                                    tional longitudinal data. While code may continue to change over
+strapped 95% CIs shown.
+                                                                                                                                                                                                                                                    longer time spans, our study focuses on this early post-merge win-
+                                                                                                                                                                                                                                                    dow as a snapshot of current agent-driven development practices.
+                                                                                                                                                                                                                                                        Furthermore, accurately identifying the author of commits can
+                                                                                                                                                                                                                                                    be challenging for some agents. For example, Claude Code allows
+                                                                                                                                                                                                                                                    its watermarks to be disabled, while OpenAI Codex often records
+chat interface, while Copilot is more closely tied with reviews as                                                                                                                                                                                  commits under developers’ accounts [16].
+Conference’17, July 2017, Washington, DC, USA                                                                                     Popescu, et al.
+
+
+
+
+Figure 8: Left plot denotes the fraction of commits with com-
+plete line survival across agents measured at 3-day, 1-week,
+and 3-week intervals. The right plot shows the average net
+additions per agent across the same time intervals. Boot-
+strapped 95% CIs shown.
+
+
+
+                                                                         Figure 10: Per-agent distribution of commit deletion rates
+                                                                         measured over 3-day, 1-week, and 3-week intervals.
+
+
+                                                                         to three days. Mann-Whitney U tests show these differences are
+                                                                         statistically significant (𝑝 < 0.001), and Cliff’s 𝛿 values (-0.05 to
+                                                                         -0.14) suggest the effect sizes are small but consistently negative,
+                                                                         indicating that human-generated changes might persist slightly
+                                                                         longer. In contrast, agent-generated commits are more likely to
+                                                                         have their lines reworked, suggesting a lower stability of their
+                                                                         contributions. Although the overall decline in survival over time
+                                                                         for both humans and agents reflects the natural attrition of code,
+                                                                         the discrepancy between them could be due to how agents are used
+                                                                         in practice. The drop in survival for agent-generated commits may
+                                                                         stem from their changes being more localized and repetitive. It is
+Figure 9: Per-agent distribution of commit churn rates mea-              worth noting that commits from agents tend to produce a larger
+sured over 3-day, 1-week, and 3-week intervals.                          net code increase over the observation interval, as shown in the
+                                                                         right plot of Figure 8. This may result from agents generating larger
+                                                                         code snippets per commit. Alternatively, human commits likely
+   To minimize uncertainty and ensure comparability, we consider         involve more deliberate and distributed design decisions, which
+the commit reflecting the agent’s initial implementation of the as-      could explain their higher commit survival.
+signed issue, typically the first commit in the PR. Since we know the
+PR authorship to be agent-generated from our filtering of observ-           Code Churn. In Figure 9, we illustrate the distribution of commit
+able signals, this commit represents the agent’s first contribution to   churn rates for each agent across the three observation intervals.
+the PR prior to review, reducing the risk of confounded authorship.      For humans, the distribution is concentrated mainly between 0 and
+   However, we note that for GitHub Copilot, the first commit in         0.4, indicating that most commits introduce relatively few changes
+a PR is commonly a placeholder used to initialize an issue plan          to the total modified files. This suggests that overall human contri-
+without introducing any file changes. To address this, we instead        butions are more stable than agent ones, with less volatility in code
+select the second commit from each Copilot PR, which reflects            modifications. On the other hand, agent commits display a higher
+the actual implementation of the requirement. On top of that, we         median churn compared to humans across all time periods, indicat-
+exclude any commits with no file changes across all agents, if any.      ing that their changes are more frequent and larger in proportion
+   Finally, we sample 1560 commits for each agent and for humans.        to the total changed lines. This tendency is more evident in Claude,
+To reduce bias from repositories with zero stars, we perform strati-     which shows pronounced concentration of churn values between
+fied random sampling based on repository popularity. Repositories        0.8 and 1. This behavior could be associated with the tendency of
+with zero stars form a distinct category, while those with at least      Claude Code to modify larger portions of the code base in each
+one star are sampled according to quantile-based star distributions.     commit, as we have seen in Section 4.1.2, which could potentially
+                                                                         increase the occurrence of later revisions. This high number of
+   Code Survival. In Figure 8, the left plot shows the percentage        changes could stem from formatting, documentation (such as more
+of commits where all their initial additions have survived, across       markdown files as seen in Figure 4), or stylistic adjustments, which
+all agents. For all three intervals, we can see that the fraction of     are common in automatically generated code.
+commits where all lines survived is consistently higher for humans          Furthermore, the distributions for agents themselves remain
+than for any agent, with nearly half of their additions surviving        largely consistent across the three time intervals, with only a slight
+Investigating Autonomous Agent Contributions in the Wild: Activity Patterns and Code Change over Time               Conference’17, July 2017, Washington, DC, USA
+
+
+upward shift in median churn. This suggests that most rework                           track more granular contributions. To account for this, our analy-
+occurs within the first few days after a commit, and that code tends                   sis focuses only on pull requests that can be reliably attributed to
+to stabilize relatively quickly after. Compared to the subsequent                      agents and, therefore, reflects only the activity that is observable
+decline in commit survival over longer intervals, the stable churn                     rather than the absolute range of agent contributions. Furthermore,
+indicates that individual commits generally involve incremental                        for the code change analysis, we specifically select the initial com-
+changes, while the later survival drop reflects the cumulative effect                  mits from merged PRs created by agents, to minimize the risk of
+of other commits on previously added lines rather than large-scale                     confounded authorship, while recognizing that precise attribution
+rework in any single commit.                                                           remains an open challenge, especially as agent-based workflows
+   Additionally, Figure 10 shows the distribution of line deletion                     on GitHub are still emerging.
+rates per commit for each agent. Although deletion rates are low,
+                                                                                          Human Attribution Uncertainty. Since the full set of active coding
+agent commits consistently exhibit slightly higher deletion ratios
+                                                                                       agents on GitHub is unknown, filtering for purely human-authored
+than human ones, suggesting that auto-generated code is more fre-
+                                                                                       data may still include undetected agentic contributions. To reduce
+quently replaced or refined. Similar to the survival rate, statistical
+                                                                                       this threat, we identify PRs using signals consistent with prior work,
+tests show a significant difference between human and agent com-
+                                                                                       supplemented with additional agents identified through manual in-
+mits in terms of churn and deletion rates across all intervals, with
+                                                                                       spection to improve coverage of the agentic landscape at the time of
+effect sizes remaining small (𝛿 ≈ 0.04–0.29). Taken together, these
+                                                                                       the study. We also exclude any PRs created by bots or applications
+findings indicate that while human contributions might be more sta-
+                                                                                       that are not real users, and we apply the same commit author-
+ble, agent-generated commits are more susceptible to early changes
+                                                                                       ship strategy used for agents. Together, these measures collectively
+and deletions. Note that this represents only one perspective on the
+                                                                                       remove most automated activities.
+evolution of agent-generated code. Future efforts should examine
+this phenomenon in greater depth; for example, by analyzing the                           Repository Popularity Imbalance. The collected PRs show a skewed
+drivers of code churn (bug fixes, feature additions, requirements                      distribution of repository popularity, particularly across agents,
+changes, or flawed abstractions), and by more clearly distinguishing                   with most PRs originating from low-star repositories. This pat-
+the types of changes made in real-world PRs, such as code, com-                        tern reflects the distribution seen in the wild and aligns with prior
+ments, and documentation. Such analyses would further deepen                           work [18]. In the activity analysis, we report results by repository
+our understanding.                                                                     popularity levels to show how activity patterns vary in practice. For
+                                                                                       the code change analysis, we mitigate potential bias from repository
+5    Future Work                                                                       popularity by using stratified sampling across different popularity
+The rapid evolution of agentic development offers numerous di-                         levels.
+rections for future research. Beyond analyzing agentic activity in                         Data Collection Coverage. For agents with a large number of PRs,
+practice, our dataset provides a foundation for benchmarking the                       the GitHub API may return contributions concentrated within spe-
+quality, stability, and collaboration patterns of agent-generated code.                cific time frames, which may lead to the dataset underrepresenting
+Researchers can use it to fine-tune or evaluate models on tasks such                   the global distribution of agentic contributions. To mitigate this,
+as code generation and repair, using real-world outcomes, such                         we uniformly sample PRs across days and time intervals within
+as post-merge churn or acceptance rates, as objective signals. The                     each day, proportionally to the total number of PRs for each agent.
+dataset can also be extended to span longer periods, include new
+agents, and integrate richer metadata to enable studies of behav-                      7    Conclusion
+ioral changes over time and across diverse projects. Future work
+                                                                                       AI coding agents, although a recent phenomenon, are evolving
+might also incorporate CI/CD metrics (e.g., build and test results),
+                                                                                       rapidly and already shaping software development. Public PRs
+PR timelines (e.g., review iterations), and contributor information.
+                                                                                       from these agents offer a valuable lens on this shift, despite UX
+The long-term effects of agent-generated code could also be studied
+                                                                                       and usage differences that make comparability between agents and
+through analysis of technical debt accumulation and its relationship
+                                                                                       humans challenging. Our longitudinal study of PRs suggests that
+to agent versions, project characteristics, and review practices.
+                                                                                       agent-generated code is significantly less likely to be retained and
+                                                                                       more prone to churn. We also observe a dramatic rise in agent
+6    Threats to Validity                                                               generated PRs targeting zero-star repositories. Although such PRs
+   System Version Changes Opaque. This is a rapidly evolving area.                     behave differently from the PRs in more popular repositories, they
+Even as we scraped our data, these agent systems were actively                         cannot be ignored, as they currently represent the majority of
+being tweaked and modified. Our findings partially accommodate                         agent activity. Whether these agents will see wider adoption in
+this by focusing on aggregated behavioral patterns across all pull                     higher-starred repositories remains uncertain. The reasons for this
+requests, capturing the emergent, longitudinal behavior of agentic                     pattern require further investigation, but the findings may have
+development rather than individual version-specific effects.                           important implications for assessing the overall costs and benefits
+   Agent Contribution Transparency. Agents such as OpenAI Codex                        of automated agents. We hope that our study adds to the initial
+and Claude Code can make untraceable contributions via their CLI                       understanding of this important emerging trend.
+interface, and any authorship watermarks that might signal these
+contributions can be disabled. Particularly for Codex, activity is
+usually recorded under human accounts, making it difficult to fully
+Conference’17, July 2017, Washington, DC, USA                                                                                                                          Popescu, et al.
+
+
+References                                                                                          open source projects: a mining-based study. In Proceedings of the 21st Inter-
+ [1]   Mark Chen et al. 2021. Evaluating large language models trained on code.                     national Conference on Mining Software Repositories (MSR ’24). Association
+       (2021). https://arxiv.org/abs/2107.03374 arXiv: 2107.03374 [cs.LG].                          for Computing Machinery, Lisbon, Portugal, 571–583. isbn: 9798400705878.
+ [2]   Jacob Austin et al. 2021. Program synthesis with large language models. (2021).              doi:10.1145/3643991.3644918.
+       https://arxiv.org/abs/2108.07732 arXiv: 2108.07732 [cs.PL].                           [21]   Miku Watanabe, Hao Li, Yutaro Kashiwa, Brittany Reid, Hajimu Iida, and
+ [3]   Dan Hendrycks et al. 2021. Measuring coding challenge competence with apps.                  Ahmed E. Hassan. 2025. On the use of agentic coding: an empirical study of
+       (2021). https://arxiv.org/abs/2105.09938 arXiv: 2105.09938 [cs.SE].                          pull requests on github. (2025). https : / / arxiv . org / abs / 2509 . 14745 arXiv:
+ [4]   Federico Cassano et al. 2023. Multipl-e: a scalable and polyglot approach to                 2509.14745 [cs.SE].
+       benchmarking neural code generation. IEEE Trans. Softw. Eng., 49, 7, (July 2023),     [22]   Miku Watanabe, Yutaro Kashiwa, Bin Lin, Toshiki Hirao, Ken’Ichi Yamaguchi,
+       3675–3691. doi:10.1109/TSE.2023.3267446.                                                     and Hajimu Iida. 2024. On the use of chatgpt for code review: do developers
+ [5]   Maliheh Izadi, Jonathan Katzy, Tim Van Dam, Marc Otten, Razvan Mihai                         like reviews by chatgpt? In Proceedings of the 28th International Conference on
+       Popescu, and Arie Van Deursen. 2024. Language models for code completion: a                  Evaluation and Assessment in Software Engineering (EASE ’24). Association for
+       practical evaluation. In Proceedings of the IEEE/ACM 46th International Confer-              Computing Machinery, Salerno, Italy, 375–380. isbn: 9798400717017. doi:10.11
+       ence on Software Engineering (ICSE ’24) Article 79. Association for Computing                45/3661167.3661183.
+       Machinery, Lisbon, Portugal, 13 pages. isbn: 9798400702174. doi:10.1145/35975         [23]   Kexin Sun, Hongyu Kuang, Sebastian Baltes, Xin Zhou, He Zhang, Xiaoxing
+       03.3639138.                                                                                  Ma, Guoping Rong, Dong Shao, and Christoph Treude. 2025. Does ai code
+ [6]   Maliheh Izadi, Jonathan Katzy, Tim Van Dam, Marc Otten, Razvan Mihai                         review lead to code changes? a case study of github actions. (2025). https://arx
+       Popescu, and Arie Van Deursen. 2024. Language models for code completion: a                  iv.org/abs/2508.18771 arXiv: 2508.18771 [cs.SE].
+       practical evaluation. In Proceedings of the IEEE/ACM 46th International Confer-       [24]   Markus Borg, Dave Hewett, Nadim Hagatulah, Noric Couderc, Emma Söder-
+       ence on Software Engineering (ICSE ’24) Article 79. Association for Computing                berg, Donald Graham, Uttam Kini, and Dave Farley. 2025. Echoes of ai: inves-
+       Machinery, Lisbon, Portugal, 13 pages. isbn: 9798400702174. doi:10.1145/35975                tigating the downstream effects of ai assistants on software maintainability.
+       03.3639138.                                                                                  (2025). https://arxiv.org/abs/2507.00788 arXiv: 2507.00788 [cs.SE].
+ [7]   Albert Ziegler, Eirini Kalliamvakou, X. Alice Li, Andrew Rice, Devon Rifkin,          [25]   Burak Yetiştiren, Işık Özsoy, Miray Ayerdem, and Eray Tüzün. 2023. Evaluating
+       Shawn Simister, Ganesh Sittampalam, and Edward Aftandilian. 2022. Produc-                    the code quality of ai-assisted code generation tools: an empirical study on
+       tivity assessment of neural code completion. In Proceedings of the 6th ACM                   github copilot, amazon codewhisperer, and chatgpt. (2023). https://arxiv.org/a
+       SIGPLAN International Symposium on Machine Programming (MAPS 2022).                          bs/2304.10778 arXiv: 2304.10778 [cs.SE].
+       Association for Computing Machinery, San Diego, CA, USA, 21–29. isbn:                 [26]   Michael Fu, Chakkrit Tantithamthavorn, Trung Le, Yuki Kume, Van Nguyen,
+       9781450392730. doi:10.1145/3520312.3534864.                                                  Dinh Phung, and John Grundy. 2023. Aibughunter: a practical tool for predict-
+ [8]   Ebtesam Al Haque, Chris Brown, Thomas D. LaToza, and Brittany Johnson. 2025.                 ing, classifying and repairing software vulnerabilities. Empirical Softw. Engg.,
+       The evolution of information seeking in software development: understanding                  29, 1, (Nov. 2023), 33 pages. doi:10.1007/s10664-023-10346-3.
+       the role and impact of ai assistants. In Proceedings of the 33rd ACM International    [27]   Junwei Liu, Kaixin Wang, Yixuan Chen, Xin Peng, Zhenpeng Chen, Lingming
+       Conference on the Foundations of Software Engineering (FSE Companion ’25).                   Zhang, and Yiling Lou. 2024. Large language model-based agents for software
+       Association for Computing Machinery, Clarion Hotel Trondheim, Trondheim,                     engineering: a survey. (2024). https : / / arxiv . org / abs / 2409 . 02977 arXiv:
+       Norway, 1494–1502. isbn: 9798400712760. doi:10.1145/3696630.3731665.                         2409.02977 [cs.SE].
+ [9]   Wenhan Lyu, Yimeng Wang, Yifan Sun, and Yixuan Zhang. 2025. Will your next            [28]   Qinyu Luo et al. 2024. Repoagent: an llm-powered open-source framework for
+       pair programming partner be human? an empirical evaluation of generative ai                  repository-level code documentation generation. (2024). https://arxiv.org/abs
+       as a collaborative teammate in a semester-long classroom setting. In Proceedings             /2402.16667 arXiv: 2402.16667 [cs.CL].
+       of the Twelfth ACM Conference on Learning @ Scale (L@S ’25). Association for          [29]   Islem Bouzenia, Premkumar Devanbu, and Michael Pradel. 2025. Repairagent:
+       Computing Machinery, Palermo, Italy, 83–94. isbn: 9798400712913. doi:10.114                  an autonomous, llm-based agent for program repair. In Proceedings of the
+       5/3698205.3729544.                                                                           IEEE/ACM 47th International Conference on Software Engineering (ICSE ’25).
+[10]   Yunbo Lyu, Zhou Yang, Jieke Shi, Jianming Chang, Yue Liu, and David Lo. 2025.                IEEE Press, Ottawa, Ontario, Canada, 2188–2200. isbn: 9798331505691. doi:10
+       "my productivity is boosted, but ..." demystifying users’ perception on ai coding            .1109/ICSE55347.2025.00157.
+       assistants. (2025). https://arxiv.org/abs/2508.12285 arXiv: 2508.12285 [cs.SE].       [30]   John Yang, Carlos E. Jimenez, Alexander Wettig, Kilian Lieret, Shunyu Yao,
+[11]   Gal Bakal, Ali Dasdan, Yaniv Katz, Michael Kaufman, and Guy Levin. 2025.                     Karthik Narasimhan, and Ofir Press. 2025. Swe-agent: agent-computer in-
+       Experience with github copilot for developer productivity at zoominfo. (2025).               terfaces enable automated software engineering. In Proceedings of the 38th
+       https://arxiv.org/abs/2501.13282 arXiv: 2501.13282 [cs.SE].                                  International Conference on Neural Information Processing Systems (NIPS ’24)
+[12]   Ya Gao and GitHub Customer Research. 2024. Research: quantifying github                      Article 1601. Curran Associates Inc., Vancouver, BC, Canada, 125 pages. isbn:
+       copilot’s impact in the enterprise with accenture. (May 13, 2024). https://githu             9798331314385.
+       b.blog/news-insights/research/research-quantifying-github-copilots-impact             [31]   Xingyao Wang et al. 2025. Openhands: an open platform for ai software de-
+       -in-the-enterprise-with-accenture/.                                                          velopers as generalist agents. (2025). https://arxiv.org/abs/2407.16741 arXiv:
+[13]   JetBrains. 2024. 2024 developer ecosystem report. https://www.jetbrains.com/l                2407.16741 [cs.SE].
+       p/devecosystem-2024/.                                                                 [32]   Dong Huang, Jie M. Zhang, Michael Luck, Qingwen Bu, Yuhao Qing, and Hem-
+[14]   Stack Overflow. 2025. 2025 stack overflow developer survey. https://survey.sta               ing Cui. 2024. Agentcoder: multi-agent-based code generation with iterative
+       ckoverflow.co/2025/.                                                                         testing and optimisation. (2024). https://arxiv.org/abs/2312.13010 arXiv:
+[15]   Ahmed E. Hassan, Gustavo A. Oliva, Dayi Lin, Boyuan Chen, Zhen Ming, and                     2312.13010 [cs.CL].
+       Jiang. 2024. Towards ai-native software engineering (se 3.0): a vision and a          [33]   Zhengren Wang, Rui Ling, Chufan Wang, Yongan Yu, Sizhe Wang, Zhiyu
+       challenge roadmap. (2024). https://arxiv.org/abs/2410.06107 arXiv: 2410.06107                Li, Feiyu Xiong, and Wentao Zhang. 2025. Maintaincoder: maintainable code
+       [cs.SE].                                                                                     generation under dynamic requirements. (2025). https://arxiv.org/abs/2503.242
+[16]   Hao Li, Haoxiang Zhang, and Ahmed E. Hassan. 2025. The rise of ai teammates                  60 arXiv: 2503.24260 [cs.SE].
+       in software engineering (se) 3.0: how autonomous coding agents are reshaping          [34]   Md. Ashraful Islam, Mohammed Eunus Ali, and Md Rizwan Parvez. 2025.
+       software engineering. (2025). https://arxiv.org/abs/2507.15003 arXiv: 2507.150               CodeSim: multi-agent code generation and problem solving through simulation-
+       03 [cs.SE].                                                                                  driven planning and debugging. In Findings of the Association for Computational
+[17]   Yihong Dong, Xue Jiang, Jiaru Qian, Tian Wang, Kechi Zhang, Zhi Jin, and                     Linguistics: NAACL 2025. Luis Chiruzzo, Alan Ritter, and Lu Wang, (Eds.)
+       Ge Li. 2025. A survey on code generation with llm-based agents. (2025). https:               Association for Computational Linguistics, Albuquerque, New Mexico, (Apr.
+       //arxiv.org/abs/2508.00083 arXiv: 2508.00083 [cs.SE].                                        2025), 5113–5139. isbn: 979-8-89176-195-7. doi:10.18653/v1/2025.findings-naac
+[18]   Mark Niklas Müller Christian Mürtz. 2025. Agents in the wild - dashboard.                    l.285.
+       https : / / insights . logicstar . ai. Interactive web dashboard. Code available at   [35]   Shraddha Barke, Michael B. James, and Nadia Polikarpova. 2023. Grounded
+       https://github.com/logic-star-ai/insights. (2025). doi:10.5281/zenodo.15846865.              copilot: how programmers interact with code-generating models. Proc. ACM
+[19]   Bo Lin, Shangwen Wang, Zhongxin Liu, Yepang Liu, Xin Xia, and Xiaoguang                      Program. Lang., 7, OOPSLA1, Article 78, (Apr. 2023), 27 pages. doi:10.1145/358
+       Mao. 2023. Cct5: a code-change-oriented pre-trained model. In Proceedings of                 6030.
+       the 31st ACM Joint European Software Engineering Conference and Symposium on          [36]   Joel Becker, Nate Rush, Elizabeth Barnes, and David Rein. 2025. Measuring the
+       the Foundations of Software Engineering (ESEC/FSE 2023). Association for Com-                impact of early-2025 ai on experienced open-source developer productivity.
+       puting Machinery, San Francisco, CA, USA, 1509–1521. isbn: 9798400703270.                    (2025). https://arxiv.org/abs/2507.09089 arXiv: 2507.09089 [cs.AI].
+       doi:10.1145/3611643.3616339.                                                          [37]   René Just, Darioush Jalali, and Michael D. Ernst. 2014. Defects4j: a database
+[20]   Rosalia Tufano, Antonio Mastropaolo, Federica Pepe, Ozren Dabic, Massi-                      of existing faults to enable controlled testing studies for java programs. In
+       miliano Di Penta, and Gabriele Bavota. 2024. Unveiling chatgpt’s usage in                    Proceedings of the 2014 International Symposium on Software Testing and Analysis
+                                                                                                    (ISSTA 2014). Association for Computing Machinery, San Jose, CA, USA, 437–
+                                                                                                    440. isbn: 9781450326452. doi:10.1145/2610384.2628055.
+Investigating Autonomous Agent Contributions in the Wild: Activity Patterns and Code Change over Time                              Conference’17, July 2017, Washington, DC, USA
+
+
+[38]   Martin Riddell, Ansong Ni, and Arman Cohan. 2024. Quantifying contamination                  International Conference on Mining Software Repositories (MSR ’22). Associ-
+       in evaluating code generation capabilities of language models. (2024). https://a             ation for Computing Machinery, Pittsburgh, Pennsylvania, 365–375. isbn:
+       rxiv.org/abs/2403.04811 arXiv: 2403.04811 [cs.SE].                                           9781450393034. doi:10.1145/3524842.3527941.
+[39]   Shuo Yang, Wei-Lin Chiang, Lianmin Zheng, Joseph E. Gonzalez, and Ion                 [44]   N. Nagappan and T. Ball. 2005. Use of relative code churn measures to predict
+       Stoica. 2023. Rethinking benchmark and contamination for language models                     system defect density. In Proceedings. 27th International Conference on Software
+       with rephrased samples. (2023). https : / / arxiv . org / abs / 2311 . 04850 arXiv:          Engineering, 2005. ICSE 2005. 284–292. doi:10.1109/ICSE.2005.1553571.
+       2311.04850 [cs.CL].                                                                   [45]   Edwin Bidwell Wilson. 1927. Probable inference, the law of succession, and
+[40]   Niels Mündler, Mark Niklas Müller, Jingxuan He, and Martin Vechev. 2025.                     statistical inference. Journal of the American Statistical Association, 22, 209–212.
+       Swt-bench: testing and validating real-world bug-fixes with code agents. (2025).             https://api.semanticscholar.org/CorpusID:121572396.
+       https://arxiv.org/abs/2406.12952 arXiv: 2406.12952 [cs.SE].                           [46]   Norman Cliff. 1993. Dominance statistics: ordinal analyses to answer ordinal
+[41]   Xiao Liu et al. 2025. Agentbench: evaluating llms as agents. (2025). https://arxi            questions. Psychological Bulletin, 114, 494–509. https://api.semanticscholar.org
+       v.org/abs/2308.03688 arXiv: 2308.03688 [cs.AI].                                              /CorpusID:120113824.
+[42]   GitHub. 2025. Developers. https://innovationgraph.github.com/global-metrics           [47]   GitHub Staff. 2024. Octoverse: ai leads python to top language as the number
+       /developers.                                                                                 of global developers surges. GitHub. https://github.blog/news-insights/octove
+[43]   Adem Ait, Javier Luis Cánovas Izquierdo, and Jordi Cabot. 2022. An empir-                    rse/octoverse-2024.
+       ical study on the survival rate of github projects. In Proceedings of the 19th
+

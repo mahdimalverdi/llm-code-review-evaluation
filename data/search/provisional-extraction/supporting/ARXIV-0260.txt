@@ -1,0 +1,851 @@
+                                         Towards Automated Classification of Code Review
+                                                  Feedback to Support Analytics
+                                                                 Asif Kamal Turzo ♡ , Fahim Faysal ♣ , Ovi Poddar ♣ Jaydeb Sarker ♡
+                                                                                Anindya Iqbal ♣ Amiangshu Bosu ♡
+                                                                                 ♡
+                                                                               Wayne State University, Detroit, Michigan, USA
+                                                                  ♣
+                                                                  Bangladesh University of Engineering and Technology, Dhaka, Bangladesh
+                                                        asifkamal@wayne.edu, ffalsoy@gmail.com, ovi.poddar2@gmail.com, jaydebsarker@wayne.edu,
+                                                                           anindya@cse.buet.ac.bd, amiangshu.bosu@wayne.edu
+
+
+                                           Abstract—Background: As improving code review (CR) effec-         consider CRs crucial due to other benefits such as knowledge
+arXiv:2307.03852v1 [cs.SE] 7 Jul 2023
+
+
+
+
+                                        tiveness is a priority for many software development organiza-       dissemination [3], [6], they seek to improve CR effectiveness,
+                                        tions, projects have deployed CR analytics platforms to identify     as even a minor improvement can incur significant savings for
+                                        potential improvement areas. The number of issues identified,
+                                        which is a crucial metric to measure CR effectiveness, can be        large organizations such as Microsoft and Google [3], [7].
+                                        misleading if all issues are placed in the same bin. Therefore,         To identify potential improvement areas, many organiza-
+                                        a finer-grained classification of issues identified during CRs can   tions have developed dashboards detailing various CR analyt-
+                                        provide actionable insights to improve CR effectiveness. Although    ics such as review completion time, best reviewers, and the
+                                        a recent work by Fregnan et al. proposed automated models            number of issues identified [11], [12]. Although the number
+                                        to classify CR-induced changes, we have noticed two potential
+                                        improvement areas – i) classifying comments that do not induce       of issues identified during CRs is an important metric to
+                                        changes and ii) using deep neural networks (DNN) in conjunction      measure CR effectiveness, this metric, as measured by existing
+                                        with code context to improve performances.                           analytics tools [11], can be misleading due to the coarse-
+                                           Aims: This study aims to develop an automated CR comment          grained analysis of identified issues. For example, a CR
+                                        classifier that leverages DNN models to achieve a more reliable      comment identifying a critical functional defect is placed in
+                                        performance than Fregnan et al.
+                                           Method: Using a manually labeled dataset of 1,828 CR              the same bin as one suggesting nitpicking issues such as
+                                        comments, we trained and evaluated supervised learning-based         fixing typos. Therefore, the ratio of functional defects as
+                                        DNN models leveraging code context, comment text, and a set          opposed to nitpicking ones among the identified issues can
+                                        of code metrics to classify CR comments into one of the five         not be measured. If CRs mostly identify nitpicking issues,
+                                        high-level categories proposed by Turzo and Bosu.                    yet bugs are identified post-CR, there may be shortcomings
+                                           Results: Based on our 10-fold cross-validation-based evalu-
+                                        ations of multiple combinations of tokenization approaches, we       in the current CR process that current CR analytics would
+                                        found a model using CodeBERT achieving the best accuracy of          fail to reveal. An automated classifier is necessary to facilitate
+                                        59.3%. Our approach outperforms Fregnan et al.’s approach by         more informative CR analytics as manual classification of CR
+                                        achieving 18.7% higher accuracy.                                     comments on a large scale is infeasible.
+                                           Conclusion: In addition to facilitating improved CR analytics,       On this need, Fregnan et al. [13] developed an automated
+                                        our proposed model can be useful for developers in prioritizing
+                                        code review feedback and selecting reviewers.                        model to classify CR-induced changes into four categories.
+                                           Index Terms—code review, review comment, classification,          The results of their user evaluation show a need for such a
+                                        open source software, analytics, OSS                                 CR analytics platform among the developers. However, we
+                                                                                                             noticed two potential improvement areas over their work.
+                                                              I. I NTRODUCTION                               First, as their model focuses on classifying review-induced
+                                           Peer Code Review (CR) is ubiquitous among contemporary            changes, it fails to account for CR comments that do not
+                                        software development pipelines. CR acts as a quality assurance       trigger changes (e.g., discussion or changes deferred as future
+                                        gateway among popular Open Source Software (OSS) and                 works), even though that feedback was beneficial. Therefore,
+                                        commercial organizations such as Microsoft, Google, and              analytics based on Fregnan et al.’s [13] model fail to allocate
+                                        Facebook [1], [2] [1], [3]. Since many projects have made CR         credits to authors of such reviews. Second, Fregnan et al. [13]
+                                        mandatory [4], [5], developers spend, on average, 10-15% of          uses only classical Machine Learning (ML) algorithms such
+                                        their time (i.e., more than an hour each day) on CR tasks [2].       as Naive Bayes, Decision Tree, and Random Forest in their
+                                        While the primary expectation behind CR adoption is finding          evaluation. We aim to explore deep neural network (DNN)-
+                                        defects, most CRs do not meet this expectation [6]. Recent           based algorithms with CodeBert [14], as these combinations
+                                        studies found four out of the five CR comments regarding style       have shown superior performances for code classification
+                                        and nitpicking issues [7]–[9] that can also be identified using      tasks [15], [16]. Therefore, this study aims to develop an
+                                        static analysis tools. Therefore, some project managers often        automated CR comment classifier that leverages DNN models
+                                        wonder if their CRs are cost-effective and worth practicing [6],     to achieve a more reliable performance than Fregnan et al. [13]
+                                        [10].On the other hand, some project managers, although they            On this goal, we have manually labeled a dataset of
+1,828 CR comments following the CR comment classification           •   We have made our code and dataset publicly
+scheme proposed by Turzo and Bosu [8]. Using this dataset,              available       at:      https://github.com/WSU-SEAL/
+we trained and evaluated supervised-learning-based DNN                  CR-classification-ESEM23
+models leveraging various code and feedback characteristics          The remainder of the paper is organized as the following.
+to classify each CR comment into one of the five high-level       Section II discusses prior related works. Section III presents
+categories proposed by Turzo and Bosu [8]. We empirically         the data collection and manual labeling approach. Section IV
+evaluated multiple combinations of tokenization approaches to     details our model construction and evaluation approach and
+identify the best-performing model. In summary, we answer         answers RQ1. Section V answers RQ2 by comparing the
+the following two research questions:                             performance of our approach with the approach of Fregnan
+(RQ1) Can we use an automated machine learning-based              et al. [13]. Section VI discusses the insight gathered from this
+approach to classifying code review comments?                     experiment. Section VII and VIII address the threats to validity
+Motivation: An automatic CR comment classification model          and concludes the paper, respectively.
+would provide three benefits. First, an author can prioritize
+high-priority issues to prepare revisions. Second, based on                           II. R ELATED W ORKS
+prior CR analytics, an author may identify reviewers who
+                                                                     The following subsections briefly describe prior research
+are more likely to identify their priority issues and select
+                                                                  relevant to the goals of this study.
+reviewers accordingly. Finally, it can provide project managers
+with additional CR analytics to access individuals and overall    Code review effectiveness : Due to the widespread adoption
+process performances.                                             of code review, recent years have seen increased research focus
+                                                                  on this area. This mismatch between developers’ expectations
+Method: We develop a machine learning-based classification
+                                                                  from CRs and outcomes is due to code comprehension chal-
+approach that considers code context, CR comments, and a set
+                                                                  lenges with limited time and context [6]. Their finding that
+of code attributes for classifying CR comments.
+                                                                  approximately 80% CRs do not find bugs is also supported
+Results: The proposed approach can classify CR comments           by several subsequent studies [7]–[11]. Although most CRs
+with an overall accuracy of 59.3%. Our evaluation also sug-       do not find bugs, developers still consider CR as an essential
+gests that all the features (i.e., code context, comment text,    practice due to other benefits such as knowledge dissem-
+and code attributes) improve model performance.                   ination, improving project maintainability, and community
+(RQ2) Can our review comment classification tool perform          building [2], [3], [17]. Studies investigating CR effectiveness
+better than the current state-of-the-art?                         have identified several technical and non-technical factors
+Motivation: Review comment classification task is slightly        having positive associations, which include the reviewer’s
+different from change classification because some comments        experience [7], [8], [18], the author’s reputation [19], and
+might not induce change. However, by retraining, the existing     project tenure [7]. On the other hand, factors with negative
+change classification approach of Fregnan et al. [13] can be      associations with CR effectiveness include missing rationale,
+used for classifying review comments. They considered code        discussion of non-functional requirements of the solution,
+attributes only for classifying a change. Our hypothesis is if    and lack of familiarity with existing code [20], co-working
+we incorporate code context, review comment, and additional       frequency of a reviewer with the patch author [8], [21],
+code attributes, we may achieve better performance to classify    description length of a patch [22], changeset size [1], the
+review comments. RQ2 tests this hypothesis.                       number of files under review [7], [8] and the level of agreement
+Method: We replicated the study of Fregnan et al. [13]            among the reviewers [23].
+on our dataset of 1,828 CR comments from the OpenDev
+Nova project. We used precision, recall, F1-score, and model      Code review automation: To help the reviewers understand
+accuracy to compare the performance of both approaches.           the code better, several studies have focused on developing
+                                                                  the changeset decomposition tool [24]–[27]. By decomposing
+Results: Experimental results found that our proposed ap-
+                                                                  the changeset, these studies aim at helping reviewers under-
+proach achieved an 18.7% performance improvement in model
+                                                                  stand the code better so that reviewers can provide useful
+accuracy over Fregnan et al.’s approach in the review comment
+                                                                  functional feedback. A large number of prior studies have
+classification task.
+                                                                  developed tools for selecting appropriate reviewers [28]–[32].
+  The primary contributions of this study are the following:      By finding appropriate reviewers, those tools assist code au-
+  • A novel machine learning approach for classifying CR          thors in obtaining useful review comments. Existing reviewer
+    comments.                                                     recommendation systems consider history as a benchmark
+  • A detailed investigation by varying the input attributes      for measuring performance. But a recent study suggests that
+    and experimenting with the effect of different review         history can overestimate or underestimate the capability of a
+    comment tokenization and vectorization approaches on          reviewer recommendation system [33]. Several recent studies
+    the model’s performance.                                      have proposed the complete automation of the whole code
+  • Empirically validated that the proposed approach per-         review process [34]–[38]. With the recent advancement of
+    forms better than the existing comparable automatic           transformer model [39], automation of code review activity can
+    change classification approach of Fregnan et al. [13].        be achieved. But, such complete automation of code review ac-
+tivity would deprive developers of the benefits of code review,                  Data         Random              Labeling &               Filtering &
+                                                                                Mining                                                      attribute
+                                                                                              selection          conflict res.
+such as knowledge sharing among team members. We are                                                                                      computation
+
+                                                                    OpenDev Gerrit                                                                 Training dataset
+motivated by prior studies that found the need to develop tools                                             2500
+                                                                                                          comments
+                                                                                                                              Labeled dataset
+
+                                                                                                                     Annotators
+for automating different aspects of the code review process and
+developers’ interests in CR analytics platforms [11]–[13].
+Code review classification: Several studies have manually                        Fig. 1. An overview of our dataset preparations steps
+classified CR comments to identify the ratios of various
+                                                                    instance3 . Our dataset spans July 2011 to March 2022 and
+categories of identified issues. Mäntylä and Lassenius first
+                                                                    includes a total of 795,226 either ‘Merged’ or ‘Abandoned’
+studied industrial and student CRs and found that only one-
+                                                                    CRs. We stored the dataset in a local MySQL server.
+fourth of CRs affect code functionality [40]. They found
+12 types of CR-identified issues, which they further catego-        C. Manual Labeling
+rized into three higher-level groups. Beller et al. manually
+                                                                       We randomly selected 2,500 CR comments from the
+classified 1,400 CR changes and found 10-22% of changes
+                                                                    OpenDev Nova project for manual labeling using MySQL’s
+unrelated to CR comments [9]. They also proposed a taxonomy
+                                                                    rand() function. We only selected CR comments from
+that categorized CR-induced changes into two higher-level
+                                                                    OpenDev Nova as it has the highest number of posted
+categories. As some of the CR comments do not induce
+                                                                    CRs during our dataset span of July 2011 to March 2022.
+any change, prior studies also focused on classifying CR
+                                                                    Prior studies have proposed several CR issues classification
+comments. Bosu et al. conducted a study on Microsoft where
+                                                                    schemes [7]–[9], [11], [13], [40]. In this study, we select
+they identified 13 types of comments that appear in the code
+                                                                    the classification scheme proposed by Turzo and Bosu [8],
+review process [7]. Turzo and Bosu [8] recently adopted
+                                                                    as their classification considers CR comments that did not
+Beller et al.’s change classification scheme to create a CR
+                                                                    induce any change, opposed to the one used by Fregnan et
+comment taxonomy consists of 17 subcategories grouped into
+                                                                    al. [13] Since we aim to classify CR comments, Turzo and
+five higher-level categories. Using a labeled dataset of 800 CR
+                                                                    Bosu’s scheme is more suitable for our goal. Table I shows
+comments, Bosu et el. [7] trained an automated classifier to
+                                                                    the 17 CR comment subcategories that are grouped into five
+automatically identify useful CR comments. Building on their
+                                                                    higher-level categories based on this classification scheme. As
+work, two later studies have developed classifiers with the
+                                                                    building a reliable 17-category classifier is challenging, this
+same goal at different settings [11], [41]. While earlier studies
+                                                                    study focuses on the five higher-level categories, which are: i)
+focused on a binary classification to predict whether a CR
+                                                                    Functional, Refactoring, iii) Documentation’ iv)
+comment was useful, Fregnan et al. [13] is the first to propose
+                                                                    Discussion, and v) False Positive.
+an automated model to classify review-induced changes into
+                                                                       Although our classifier requires labeling each CR com-
+four categories. As Fregnan et al.’s [13] model focuses on
+                                                                    ment into one of the five high-level categories, we manually
+classifying review-induced changes, our work also differs from
+                                                                    labeled using the 17-category classification for future use
+theirs by considering non-change inducing CR comments.
+                                                                    cases of this dataset and fine-grained error analysis. Each
+                    III. DATASET P REPARATION                       of the CR comments was independently labeled by two
+  This section details our project selection, data mining, CR       annotators. During this process, they read the entire comment
+comment classification rubric, and manual labeling approach.        thread and its surrounding code context and induced changes
+Figure 1 shows an overview of our dataset preparation steps.        among subsequent reviews (if any) to assign one of the 17
+                                                                    labels (Table I). We compared the assigned labels to identify
+A. Project Selection                                                conflicts. We computed Cohen’s kappa (κ) [45] to measure
+   For this study, we selected the OpenDev Nova project from        the inter-rater reliability of this manual labeling process. The
+the OpenDev community for the following reasons:                    manual labeling achieved a κ value of 0.68 which indicates
+                                                                    a substantial agreement4 . To resolve the conflicts, a third
+  1) Developers in the OpenDev community practice tool-
+                                                                    annotator independently went through the conflicting ones
+     based CR [2], and OpenDev is one of the largest OSS
+                                                                    to assign final labels. All three annotators are co-authors of
+     communities with contributors from more than 700 orga-
+                                                                    this paper and have significant research experience in code
+     nizations 1 worldwide.
+                                                                    reviews. After completing the manual labeling step, we assign
+  2) OpenDev projects have been the subject of prior CR
+                                                                    the target label for each CR comment according to our schema
+     studies [8], [42], [43].
+                                                                    from Table I . For example, if a category comment belongs
+B. Dataset Preparation                                              to ‘Design discussion’, ‘Question’, or ‘Praise’, we assign the
+                                                                    comment to the Discussion group. We found that 672
+  OpenDev community uses Gerrit2 to manage CRs. We
+                                                                    among the 2,500 CR comments were unrelated to source
+accessed the REST API provided by Gerrit to access and
+mine all the publicly available CRs from OpenDev’s Gerrit             3 https://review.opendev.org
+                                                                       4 Kappa (κ) value interpretation: 0.01–0.20 indicates ‘none to slight’,
+  1 https://openinfra.dev/annual-report/2022
+                                                                    0.21–0.40 indicates ‘fair’, 0.41– 0.60 indicates ‘moderate’, 0.61–0.80 indicates
+  2 https://www.gerritcodereview.com/                               ‘substantial’, and 0.81–1.00 indicates ‘almost perfect agreement’ [46].
+                                                              TABLE I
+                   RUBRIC FOR CLASSIFYING CODE REVIEW COMMENTS WHICH WE ADOPTED FROM PRIOR STUDIES [7]–[9], [11], [40]
+
+  Group                Category                Description
+                       Functional              Functional issues are defects where a code functionality is missing or implemented incorrectly. If requires
+                                               large modification to resolve the issue.
+                       Logical                 Logical issues are defects where there exist control flow problems or logical mistakes (wrong logic
+  Functional                                   implementation, comparison issues).
+                       Validation              All types of user data sanitization issues or issues related to exception handling.
+                       Resource                Any kind of variable, memory, or file issues while handling or manipulating them.
+                       Timing                  Any kind of synchronization issues while using the thread.
+                       Support issues          Any kind of support systems-related issues (e.g. configuration problem or version mismatch).
+                       Interface               Any types of interfacing issues such as issues in an import statement, issues while interacting with the
+                                               database or internal system.
+                       Solution approach       Review comments that suggest an alternative approach for problem-solving.
+                       Alternate Output        Review comments that address issues within the alert message, toast message, or error message.
+  Refactoring          Code Organization       Code organization or refactoring issues presented in the catalog of Martin Fowler [44].
+                       Variable Naming         Review comments that address the violation of the variable naming convention.
+                       Visual Representation   Any kind of indentation, blank line, or code spacing-related issues.
+  Documentation        Documentation           Review comments that address issues related to code comments or documentation files for aiding code
+                                               comprehension.
+                       Design discussion       Comments that discuss design pattern or sourcecode architecture.
+  Discussion           Question                If reviewers ask anything to the code author for clarification.
+                       Praise                  Review comments that praise or complement the developer.
+  False positive       False positive          An invalid concern. A CR comment is considered ‘False Positive’ if (a) the code owner explicitly mentions
+                                               the comment as an invalid concern or (b) no subsequent change occurred nor the code owner agrees to a
+                                               future change [8].
+
+code files (e.g., configuration, build, resources, and commit                 we consider is the review comment in the form of natural
+message). As many of the code attributes selected for our                     language. As our goal is to classify CR comments, comment
+classifiers (Table II) cannot be computed for non-source code                 text can be a crucial feature for the classifier. Hence, we also
+files, we exclude those 672 CR comments at this step. After                   use comment texts as inputs to our models.
+this exclusion, we use the remaining 1,828 CR comments                           We additionally selected 27 code attributes. Those 27 code
+to train and evaluate our classifiers. In this dataset, 8.64%                 attributes were calculated from the source and the destination
+comments belong to False Positive, 24.34% belong to                           files. The source file is where the CR comment was made,
+Discussion, 32.71% belongs to Refactoring, 21.17%                             and the destination file is the file that finally merged into
+belongs to Documentation, and 13.13% comments belong                          the main codebase. If destination file is non-existent, no
+to Functional group.                                                          change occurred after the CR comment was made. We selected
+                                                                              several Abstract Syntax tree-based (AST) based attributes,
+       IV. (RQ1) M ACHINE L EARNING M ODEL FOR                                as recent studies have found that AST can better represent
+           CLASSIFYING CODE REVIEW COMMENTS
+                                                                              source code [49], [50]. Although AST difference-based code
+   To classify CR comments, we consider three types of input                  attributes were not explored by Fregnan et al. [13], those
+attributes for our machine-learning model. We consider the                    could be crucial to identify the type of recommendation
+code context where the review comment was made, the CR                        made in a CR comment. For example, if a CR comment
+comment in the form of natural language, and several code                     suggests no code change, only minor fixes such as updating
+attributes. This section presents our attribute selection, model              documentation, there would be no difference between source
+training approach, and results of our evaluations.                            and destination. If two ASTs have identical structures with
+                                                                              different token names, their associated CR comment may
+A. Attribute Selection
+                                                                              be related to refactoring. Moreover, if two ASTs have the
+   We first consider the code context where the review com-                   same number of tokens and nodes but differ in comparison
+ment was made. Bosu et al. [7] found that a code change                       operators, their CR comment may be related to a logical
+occurs within a limited proximity (+-10 lines) of code, which                 issue (i.e., functional). As machine learning features, we have
+they define as the ‘change trigger’. So, we consider the                      incorporated nine AST-based attributes (e.g., anyDeleted, Any-
+code context of +-10 lines from the occurrence of a CR                        thingInLineMoved, getMovedSrcs). We also used 14 change-
+comment and define that code segment as Review Comment                        based attributes and four file-based attributes. The change-
+Range (RCR). Code context can be a crucial feature as CR                      based and file-based attributes are selected considering our
+comments are made to pinpoint the existing code mistake. So,                  classification goal and the insight we gather from prior studies
+the code context can provide significant insight for classifying              [13], [47], [51]. Table II presents the 27 selected attributes, a
+review comments. Several recent studies have also focused                     short description for each, and a brief rationale for selection.
+on utilizing source code context by extracting source code
+feature vector [14], [48]. We utilize the existing source code                B. Machine Learning Modeling
+vectorization technique and use the code vector as a feature                    Figure 2 shows the architecture of our proposed model. The
+of the machine learning model. The second attribute that                      proposed machine-learning model inputs code, CR comments,
+                                                              TABLE II
+                                     C ODE ATTRIBUTES SELECTION FOR MACHINE LEARNING MODELING
+
+Attributes                 Description                                          Rationale
+AST-based attributes
+anyInserted                Count of AST nodes inserted in the destination       Some code changes involve the addition of a few AST nodes. For
+                           file.                                                example, in case of variable value assignment or logical changes.
+anyDeleted                 Count of AST nodes deleted in the destination        Some code changes involve the deletion of a few AST nodes. In
+                           file.                                                case of variable value assignment or logical changes, few AST
+                                                                                node deletions might occur.
+getMovedSrcs               How many AST nodes moved from the source             If the source code chunk is moved to the destination, it might
+                           file.                                                indicate a refactoring change.
+updatedSrcs                How many sources AST nodes are updated in            Update of a few numbers of AST nodes may indicate logical
+                           the destination file?                                changes.
+anythingInLineMoved        Count of source AST nodes that were within           Prior studies suggest most changes occur in close proximity to the
+                           the Review Comment Range (RCR) but moved             review comment. The number of AST nodes moved within close
+                           elsewhere in the destination file.                   proximity can provide valuable information about the change.
+anythingInLineUpdated      Count of source AST nodes that were within the       Similarly, the number of AST nodes updated within close prox-
+                           RCR and were updated in the destination file.        imity of the review comment can provide valuable information
+                                                                                about the change.
+anythingInLineDeleted      Count of source AST nodes that were within the       Similarly, we argue that the number of AST nodes deleted within
+                           RCR and were deleted.                                close proximity of the review comment can provide valuable
+                                                                                information about the change.
+anythingMovedIntoLine      If an AST node is in the RCR of the source,          Number of nodes moved within RCR can provide crucial infor-
+                           then the number of child nodes moved within          mation for review comment classification, it can be indicative of
+                           that node in the destination file.                   refactoring changes.
+anythingInsertedIntoLine   If an AST node is in the RCR of the source,          Number of nodes newly inserted within RCR can provide crucial
+                           then the number of child nodes that are newly        information for review comment classification, it can be indicative
+                           inserted within that node in the destination file.   of larger changes.
+Change-based attributes
+insertedIfConditions       How many if statements in the destination file       Insertion of ‘if’ condition indicates logical Functional change.
+                           were inserted?
+deletedIfConditions        How many if statements in the source file were       Similarly, deletion of the ‘if’ condition indicates logical Func-
+                           deleted?                                             tional change.
+elseInserted               How many else inserted in the destination file?      Insertion of ‘else’ condition indicates control flow change, which
+                                                                                is a Functional change.
+elseDeleted                How many else statements in the source file          Similarly, deletion of the ‘else’ condition indicates logical Func-
+                           were deleted?                                        tional change.
+entireLineMoved            How many full lines in the RCR were moved in         Number of lines moved within close proximity can be valuable, for
+                           the destination file?                                example, a large number of moved lines can indicate a structural
+                                                                                rearrangement.
+entireLineDeleted          How many full lines in the RCR were deleted          Similarly, a large number of deleted lines can indicate a structural
+                           from the source file?                                change or a larger change.
+stringsUpdated             Number of strings in the source file that was        Higher number of strings updated in the source file can indicate
+                           updated.                                             an ‘Alternate Output’ change.
+magicStringsReplaced       Number of Magic strings replaced with vari-          Magic Strings are strings that are specified internally and impact
+                           ables.                                               the code behavior. Magic string replacement may indicate control
+                                                                                flow-related change.
+movedBlocksInIfConditions Number of blocks within the if conditions were        Number of moved blocks within the ‘if’ condition indicates
+                          moved in the destination file.                        control flow-related issues within code.
+insertedAssertConditions  Number of asserts inserted in destination file        As assert check for condition, insertion of assert condition might
+                                                                                indicate functional change.
+insertedTryCatch         Number of try-catch nodes inserted in the des-         Inserted try/catch statement may indicate Validation issues within
+                         tination file.                                         code.
+removedTryCatch          Number of try-catch nodes in the source file that      Removed try/catch statement may indicate Validation issues or
+                         was removed in the destination file.                   even a Structural change within the code.
+updatedValueAssignments Number of updated statements in the destination         Variables’ value update can indicate logical functional issues.
+                         file where any variables’ value was updated.
+updatedFunctionArguments Number of function arguments that were up-             Number of updated arguments within a function can provide
+                         dated in the destination file.                         valuable information about the change.
+File-based attributes
+hasNewFile               A binary variable indicating destination file ex-      If 0, then it indicates no change occurred, so the comment might
+                         istence.                                               be false positive.
+hasOldFile               A binary variable indicating source files’ exis-       Similarly to the previous one, this variable’s value can provide
+                         tence.                                                 information about a comment.
+cyclomaticComplexity     The Cyclomatic Complexity proposed by Mc-              Cyclomatic complexity can provide vital information regarding
+                         cabe [47] of the source file.                          the issue of the code or the types of review comments.
+commentLOC               The line number of the source file where the           Comment line number can provide crucial information, such as
+                         review comment was made.                               if the commentLOC is small, then most probably the review
+                                                                                comment is targeted for import statements.
+                                                                             LSTM layer consists of 50 LSTM cells. The code output and
+                                                                             comment output from both the LSTM layers are concatenated
+                                                                             together. This concatenated vector is further concatenated with
+                                                                             the calculated code attributes of Table II. The concatenated
+                                                                             vector is then passed through a Dense layer with softmax
+                                                                             activation function. The Dense layer produces the final class
+                                                                             that a review comment belongs to. We used the Categorical
+                                                                             Cross Entropy [54] as the loss function and used Adam
+                                                                             optimizer [55] to optimize the loss function. For training the
+                                                                             model, we used batch size 4 and epoch 8. As the code context
+                                                                             and review comment generate a 512-dimensional vector, we
+                                                                             had to choose a small batch size for training. We also imple-
+                                                                             mented EarlyStopping method from the TensorFlow5 library
+                                                                             with 10% validation data. EarlyStopping was performed to
+                                                                             avoid overfitting. We performed 10-fold cross-validation, and
+                                                                             in each fold, 80% data were used for training, 10% were used
+                                                                             for validation, and the remaining 10% were used for testing.
+
+                                                                             C. Evaluation Metrics
+                                                                               To assess the performance of the proposed model, we
+                                                                             compute Precision, Recall, F1-Score, Matthew’s Correlation
+                                                                             Coefficient (MCC) [56], and overall Model Accuracy.
+
+                                                                             D. Experiments and Results
+                                                                                We conducted two types of experiments to evaluate the
+                                                                             performance of our proposed approach. First, we experimented
+                                                                             on the contribution of code context, CR comment, code
+                                                                             features separately, and the contribution while the attributes are
+                                                                             combined. We also experimented with different tokenization
+                                                                             and embedding on the review comment. The result then leads
+                                                                             us to perform an error analysis to understand the model’s bias.
+                                                             L                  1) Effect of code context, review comment, and code at-
+Fig. 2. Architecture of our proposed Machine Learning model.   indicates a   tributes separately for classifying review comments: First,
+concatenation unit in the image. CR Comments −→ Code Review Comments.
+                                                                             we experimented with the impact of each feature sepa-
+                                                                             rately on the performance of the review comment clas-
+                                                                             sification task. Table III presents the result when we
+and code attributes. Text data must be tokenized and converted
+                                                                             experimented with code context, CR comment, and code
+into vectors to use as inputs for machine learning models.
+                                                                             attributes separately. While Code context was used only,
+We tokenized the code and CR comments using CodeBERT
+                                                                             we achieved F1-Score of 0.232, 0.565, 0.019, 0.056, and
+tokenizer [14] separately. CodeBERT tokenizer provides in-
+                                                                             0.523 for the Discussion, Documentation, False
+put ids and attention mask for both source code and review
+                                                                             Positive, Functional, and Refactoring classes,
+comments. For implementing the CodeBERT tokenizer, we
+                                                                             respectively. While the Review comment was used only,
+used transformers from Hugging Face [52].
+                                                                             we achieved F1-Score of 0.637, 0.673, 0.257, 0.337, and
+   For source code and review comment vectorization, we use                  0.604 for the Discussion, Documentation, False
+the CodeBERT encoder [14]. We separately pass the tokenized                  Positive, Functional, and Refactoring classes re-
+source code and tokenized review comments to the CodeBERT                    spectively. While we used Code attributes only, we achieved
+encoder. CodeBERT is a hybrid pre-trained vectorizer that                    F1-Score of 0.062, 0.056, 0.014, 0.093, and 0.263 for
+has been trained with both source code and natural language                  the Discussion, Documentation, False Positive,
+text. Also, CodeBERT achieved state-of-the-art performance                   Functional, and Refactoring classes respectively. So,
+for source code and natural language [14]. Since we use both                 we can argue that Code context, Review comment, and Code
+source code and CR comments together, CodeBERT may be                        attributes all contribute to the model performance.
+an excellent option for generating contextualized embedding                     2) Effect of different tokenization and vectorization on
+vectors. After getting the embedding vector for code and CR                  code review comment: CR comment is provided in natural
+comments, we pass it through separate LSTM layers.                           language, so initially we selected pre-trained BERT [57]
+   Each embedded source code and review comment vectors
+are then separately passed through an LSTM [53] layer. The                     5 https://www.tensorflow.org/
+                                                             TABLE III
+          P ERFORMANCE OF OUR PROPOSED TOOL WHILE CODE , REVIEW COMMENT, AND CODE ATTRIBUTES ARE CONSIDERED SEPARATELY
+
+                                  Code context only                        Review comment only                       Code attributes only
+  Comment class
+                      Precision    Recall   F1-Score     MCC      Precision   Recall  F1-Score   MCC     Precision     Recall    F1-Score    MCC
+  Discussion             0.326      0.208       0.232    0.396       0.586     0.706     0.637   0.543      0.049       0.121        0.062   0.183
+  Documentation          0.557      0.592       0.565    0.381       0.672     0.685     0.673   0.552      0.067       0.064        0.056   0.212
+  False Positive         0.033      0.013       0.019    0.414       0.441     0.194     0.257   0.571      0.009       0.036        0.014   0.235
+  Functional             0.176      0.055       0.056    0.414       0.416     0.327     0.337   0.568      0.068       0.297        0.093   0.224
+  Refactoring            0.415      0.719       0.523    0.283       0.602     0.624     0.604   0.520      0.255       0.452        0.263   0.145
+  Model Accuracy                                         0.418                                   0.579                                       0.230
+
+
+
+                                                                              and how many samples are classified into other classes. Since
+                                                                              we took the classified instances for the confusion matrix from
+                                                                              10 folds, we combined all the samples for the test set and put
+                                                                              their sums on the confusion matrix. The confusion matrix of
+                                                                              Table V also provides us insights into the model’s biases.
+                                                                              False Positive: According to the confusion matrix, out of 158
+                                                                              False Positive samples, 24 cases are accurately identi-
+                                                                              fied, whereas 43 samples are misclassified as Discussion,
+Fig. 3. Example of a review comment where the reviewer presents a code line
+to pinpoint the issue better. This example has been taken from the OpenDev
+                                                                              29 samples are misclassified as Documentation, 36 sam-
+Nova project.                                                                 ples are detected as Refactoring, and 26 samples as
+                                                                              Functional class. So, our classifier is biased toward
+                                                                              the other four classes in a similar ratio for the’ False
+for review comment tokenization and vectorization task and                    Positive comments. We manually analyzed those cases,
+CodeBERT [16] for the same for code context. We also                          and an example of a False Positive review comment
+experimented using CodeBERT as the tokenizer+vectorizer                       that is classified as a Functional, “A simple unit test would
+for review comments as well. The processing of the other                      assert that we don’t call service get all if enabled services
+two input features, code and code attributes, are kept un-                    is passed in.” This review comment addresses a Functional
+changed, i.e., code context features are always vectorized                    comment, but the concern was not valid for that circumstance.
+with CodeBERT. Table IV compares the results between two                      Therefore, our labelers marked it as a False Positive.
+combinations, i) BERT for CR comments + CodeBERT for
+code context, ii) CodeBERT for CR Comments + CodeBERT                         Discussion: We observe biases towards the Refactoring
+for code context. Table IV suggests that with BERT for CR                     class while predicting the Discussion class comments.
++ CodeBERT for Code context combination, we achieved an                       For example, “We should make this a public method now
+overall model accuracy of 0.502. However, with CodeBERT                       yeah?” belongs to the Discussion class but our model has
+for CR comments + CodeBET for code context combination,                       misclassified it as a Refactoring.
+the model achieves an accuracy of 0.593, which is almost 10                   Documentation: We found biases of the Documentation
+percent higher than the other combination.                                    class towards the Refactoring class. For example, “nit:
+   From Table IV, the result suggests that CodeBERT performs                  add a TODO to remove this proxy and just have callers hit the
+much better than the BERT for review comment tokenization                     necessary clients directly.” is a Documentation comment
+and vectorization task. We were initially surprised by the                    that our classifier misclassified as a Refactoring.
+findings and decided to manually inspect the CR comments.
+We selected 200 review comments randomly from our dataset                     Refactoring: From our evaluation, we found that
+for manual inspection. We found that reviewers present code                   many Refactoring samples are misclassified as a
+chunks in many CR comments for pinpointing the issue to the                   Discussions. For instance, “Is anything else using this
+code author. Figure 3 presents an example from the OpenDev                    method now or can we remove it also?” is misidentified in
+Nova project. CR comments may contain natural language                        the Discussion class category.
+as well as programming language segments. Similarly, Code-                    Functional: In cases, where Functional samples were
+BERT, is trained on both natural language and source code.                    misclassified, they were more likely to be predicted as the
+Therefore, CodeBERT performs better than BERT for review                      Refactoring category. An example where a Functional
+comment tokenization and vectorization tasks.                                 comment is misclassified as a Refactoring comment, “I
+   3) Error Analysis: We analyzed the misclassifications qual-                would lower this too to be safe, but I guess it’s not going to
+itatively and quantitatively to better understand our model’s                 change.”
+performances. Table V shows the confusion matrix from 10-
+fold cross-validation for the best model. The confusion matrix
+shows how many samples of each class are correctly predicted
+                                                        TABLE IV
+ P ERFORMANCE COMPARISON WHILE BERT AND C ODE BERT ARE USED SEPARATELY FOR REVIEW COMMENT TOKENIZATION AND VECTORIZATION
+                                                                 TASK
+
+                                                       BERT                                 CodeBERT
+                   Comment class             (tokenizer + vectorizer)                (tokenizer + vectorizer)
+                                      Precision   Recall   F1-Score   MCC     Precision   Recall   F1-Score   MCC
+                   Discussion            0.516     0.570      0.522   0.449      0.611     0.685      0.638   0.547
+                   Documentation         0.670     0.634      0.644   0.463      0.704     0.762      0.723   0.556
+                   False Positive        0.124     0.041      0.056   0.487      0.376     0.158      0.207   0.576
+                   Functional            0.380     0.116      0.162   0.483      0.408     0.358      0.365   0.572
+                   Refactoring           0.461     0.632      0.523   0.409      0.628     0.633      0.616   0.527
+                   Model Accuracy                                     0.502                                   0.593
+
+
+                                                               TABLE V
+                                                 C ONFUSION M ATRIX FOR ERROR ANALYSIS
+
+                                    Predicted
+                                                Discussion   Documentation    False Positive   Functional   Refactoring
+                 Ground truth
+                 Discussion                            306               29              18           28            64
+                 Documentation                          32              292               3            8            52
+                 False Positive                         43               29              24           26            36
+                 Functional                             37               15              13           85            90
+                 Refactoring                            94               57              13           57           377
+
+
+
+ Key takeaway 1: The proposed machine learning model                 publicly available [58], we were able to write a script to
+ can classify CR comments with 59.3% accuracy. The results           extract their selected attributes for our dataset. We use our five-
+ of our evaluation also suggest that all three categories            class category label for each CR comment as the dependent
+ of input features (i.e., code attributes, code context, and         variable, which we computed in the data preparation step.
+ comment text) contribute to improving model performance.            Thus, we could utilize their approach in our context and obtain
+                                                                     results as a five-class classification. As the Random Forest
+ Key takeaway 2: Although review comments are provided               algorithm performed the best on classifying review-induced
+ in natural language, they often contain programming lan-            changes during their evaluation, we used this algorithm with
+ guage lines and keywords. So, for the tokenization and              10-fold cross-validation for comparison.
+ vectorization of CR comments, we recommend using a
+ hybrid model that is trained both in natural language and
+ programming language, such as CodeBERT [14].
+                                                                     B. Result Comparison
+        V. (RQ2) C OMPARISON AGAINST CURRENT
+        STATE - OF - THE - ART FOR REVIEW COMMENT                       Table VI presents the result of the Fregnan et al. [13]
+                   CLASSIFICATION TASK                               approach and our proposed approach. The values presented
+                                                                     in Bold font represent the best value between the two models.
+  This section presents the replication of Fregnan et al.
+                                                                     The results from Table VI indicate that for all the measures,
+[13] work and the performance comparison between the two
+                                                                     our proposed model performs better than the approach of
+approaches.
+                                                                     Fregnan et al. [13].
+A. Replication                                                          From Table VI, we can see that, for the Discussion,
+   The work of Fregnan et al. [13] proposed models to classify       Documentation, False Positive, Functional, and
+review-induced changes into four categories. Although most           Refactoring classes, Fregnan et al. [13] approach
+CR comment categories trigger changes, some categories, such         achieved an F1-Score of ‘0.362’, ‘0.483’, ‘0.068’, ‘0.139’,
+as false positive, discussion, or praise, do not. Even though        and ‘0.486’ respectively. Whereas, for the Discussion,
+our classifier has a slightly different goal, we can train a         Documentation, False Positive, Functional, and
+model using their approach and our dataset for CR comment            Refactoring classes, we have achieved an F1-Score of
+classification. Therefore, we retrained Fregnan et al.’s [13]        ‘0.638’, ‘0.723’, ‘0.207’, ‘0.365’, and ‘0.616’ respectively.
+model to compare the performance of our approach against             Fregnan et al. [13] approach achieved an overall model accu-
+theirs. We followed their approach as closely as possible for        racy of 0.406, whereas we achieved an overall model accuracy
+replication. Despite the attributes of Fregnan et al. [13] being     of 0.593. Our proposed approach has achieved a significant
+calculated for Java code, and our selected project being written     performance improvement for all five comment classes and
+in Python, we were able to calculate the same set of attributes      overall model accuracy.
+   Since Fregnan et al. [13] provide adequate descriptions of
+the selected attributes and have made their replication package
+                                                          TABLE VI
+                       C OMPARISON BETWEEN OUR PROPOSED APPROACH WITH THE APPROACH OF F REGNAN et AL . [13]
+
+                                            Fregnan et al.’s Approach                     Proposed Approach
+                   Comment class
+                                     Precision   Recall     F1-Score  MCC     Precision     Recall  F1-Score   MCC
+                   Discussion           0.355     0.373        0.362  0.368      0.611       0.685     0.638   0.547
+                   Documentation        0.477     0.497        0.483  0.382      0.704       0.762     0.723   0.556
+                   False Positive       0.283     0.040        0.068  0.410      0.376       0.158     0.207   0.576
+                   Functional           0.297     0.093        0.139  0.408      0.408       0.358     0.365   0.572
+                   Refactoring          0.415     0.592        0.486  0.307      0.628       0.633     0.616   0.527
+                   Model Accuracy                                     0.406                                    0.593
+
+
+
+ Key takeaway 3: Our proposed approach acheives bet-                 performance of the review comment classifier. Code review
+ ter performance than Fregnan et al. [13] for the review             comments contain both natural language and programming
+ comment classification task across all measures. Freg-              language tokens. So, a multipurpose model, such as Code-
+ nan et al. [13] approach shows lower performance for                BERT [16] that is trained both in natural language and
+ the False Positive class. Although our proposed ap-                 programming language performs better for review comment
+ proach achieves a better performance than Fregnan et al.            tokenization and classification task. Therefore, we recommend
+ [13] for the False Positive class; still, the perfor-               evaluating multipurpose pre-trained models in conjunction
+ mance needs significant improvements. Further study is              with general-purpose models for SE domain-specific NLP
+ required for better analyzing and improving the detection           pipelines. 3. Recommendations for Practitioners: To improve
+ of False Positive review comments.                                  CR effectiveness, an organization needs to define a set of
+                                                                     metrics and measure those to identify potential improvement
+                                                                     areas [11]. Projects can leverage our model to track CR
+                      VI. I MPLICATIONS
+                                                                     performances, such as counting the number of issues belonging
+   This section presents the insights obtained from this study,      to various categories, issue category-wise contributions from
+potential future research directions, and recommendations for        each reviewer for a project, and the ratios of defects escap-
+CR practitioners.                                                    ing. These insights can help managers to identify potential
+1. Improving classification performance: Our proposed                improvement areas and adopt new initiatives [11]. Besides
+model result shows that the model performs better for                analytic supports, our model can also help authors prioritize
+the Discussion, Documentation, Refactoring, and                      CR comments. For example, a CR may receive ten comments
+Functional classes than for the False Positive class.                from a reviewer, where eight are minor nitpicking issues, and
+The approach of Fregnan et al. [13] shows an even worse              the two remaining ones are critical defects. Using the code
+performance for the False Positive class than our model.             context and CR comment text, our model can automatically
+This result leads us to further investigate the reasons behind       identify functional issues and help authors prioritize those
+such poor showings for the False Positive class. We                  accordingly. Authors can also leverage an analytic platform
+found that only 8.64% comments in our dataset belong to              built on our model to identify reviewers who have more
+the False Positive class. This underrepresentation of                frequently identified the type of issues (e.g., Refactoring
+the False positive in our sample may be a possible                   vs. Functional) that they are seeking for the current CR
+cause. While we did not explore class-balancing techniques           4. Recommendations for researchers: Although our model
+such as oversampling, that may be a possible direction to im-        improves the current state-of-the-art (SOTA) for CR comment
+prove performances. After examining false positive comments          classification by almost 20% in terms of accuracy, our best
+closely, we found that sometimes review comments pointing            model has only 59.3% accuracy. While a five-category auto-
+to issues belonging to other classes can become False                mated classification is more difficult than binary classifica-
+Positive if refuted. For example, a reviewer has alluded             tions, we believe there are significant improvement opportu-
+to a Functional issue, but the concern is not valid for              nities in this direction. Potential directions for improvements
+the current scenario. Therefore, while the same comment may          include training on larger-scale datasets, including balanced
+have been Functional for another context, it is a False              ratios of issues representing various categories and evaluating
+positive under the current scenario. This observation also           with oversampling techniques.
+shows the need to consider code context characteristics to              In addition, to improving this classifier, we believe our
+classify CR comments. Moreover, the results of our error             model can help build better review automation tools. As most
+analysis also reveal cross miss-categorizations among the five       of the CR comments belong to trivial issues, CR automation
+classes. This analysis can also help identify additional features    tools [34]–[38] trained on randomly curated datasets are more
+to distinguish between such pairs.                                   likely to amplify such issues and miss the rare yet more crucial
+2. Selection of pre-trained vectorizers: From our experiment         ones. Future CR automation tools can leverage our model to
+with two different combinations of tokenizer + vectorizer,           build a more balanced sample, as manual labeling is time-
+we found that tokenization and vectorization can affect the          consuming. Finally, existing history-based automated reviewer
+recommendation systems [28]–[31] consider all prior review          CR comment classification tasks. To facilitate the replication
+interactions equally, which may not be the best approach.           of our work, we have made the dataset and the code publicly
+Our automated model can analyze reviewers’ prior feedback           available.
+history and provide higher priority to reviewers who previously     D. Conclusion Validity First, selecting metrics to evaluate a
+provided more useful (e.g., Functional) feedback.                   model’s performance can also threaten conclusion validity. We
+                                                                    have used five different, widely used performance measuring
+                VII. T HREATS TO VALIDITY                           metrics to mitigate this threat: precision, recall, F1-score,
+   The following subsections detail potential threats to the        MCC, and model accuracy. Therefore, we do not anticipate
+validity of this study and our countermeasures to mitigate          any biases arising from our metrics. Second, machine learning
+those threats.                                                      models can show biased results when a fixed portion of data
+A. Internal Validity: To compare the performance of our             is selected for testing and training. To mitigate the effect of
+approach with Fregnan et al. [13], we retrained their model         such bias, we performed a 10-fold cross-validation. Ten-fold
+on our dataset. A possible threat might appear during this          cross-validation ensured that every portion of the dataset was
+retraining. To avoid any bias, we followed their approach           utilized separately for the training and testing process. Finally,
+as described in their paper. Although their code is publicly        overfitting can be a significant threat to machine learning
+available, we could not directly use it because their attributes    modeling. Overfitting occurs when a machine learning model
+were calculated for the Java project, while our subject (i.e.,      performs well on training data but poorly on test data. We
+OpenDev Nova) is written in Python. However, this threat            implemented the EarlyStopping method to avoid overfitting
+may be minimal, as we used standard libraries to compute            with 10% validation data. This method monitors the model
+the attributes and followed their definitions. We also performed    performance on validation data and stops the training process
+10-fold cross-validation to mitigate biases introduced by using     once the convergence of the training process halts.
+fixed training and testing samples.
+B. Construct Validity: A significant threat to construct validity                        VIII. C ONCLUSION
+is the manual categorization process. For categorizing the
+code review comments, we performed a manual categorization.            We have proposed a machine-learning approach to classify
+Using a rubric adopted from prior studies, we categorized           code review comments in this work. We collected 1,828
+each CR comment into one of the 17 categories. To mitigate          code review comments from the OpenDev Nova project and
+the effect of human error, two authors did the categoriza-          manually classified the code review comments using the
+tion independently. We measured the agreement between the           prior review comment classification scheme. We experimented
+two annotators using Cohen’s kappa [45] value. The manual           with different features that might be used for the review
+labeling task achieved a kappa value of 0.68, which shows           comment classification task and reported the contribution of
+a ‘Substantial’ agreement. A third author then resolved the         those features separately. We then combined those features and
+conflicts between the two authors’ labeling. Therefore, this        developed a machine-learning model that uses those features
+threat to validity remains minimal. Another potential threat to     for classifying code review comments.
+the construct validity is the features that were selected for the      Our proposed approach takes code context, code review
+machine learning approach. Sometimes, used features might           comments, and a set of code attributes for classifying code
+affect the performance of the model negatively. To mitigate the     review comments. We achieved an overall model accuracy of
+effect, we experimented separately with each type of feature        59.3%. Experimental results suggest our proposed approach
+we used in machine learning modeling. The result validates          can classify code review comments better than the existing
+that each feature category contributes to the model’s perfor-       change classification approach proposed by Fregnan et al.
+mance. Also, to mitigate the effect of improper tokenization        [13]. We also experimented with how different tokenization
+and vectorization of review comments, we experimented with          and vectorization approaches can influence the performance
+both BERT and CodeBERT.                                             of a review comment classifier. Finally, we presented the
+C. External Validity: The main threat to external validity is       insight gathered by conducting this study, opportunities for
+the generalizability of the approach. Our approach requires         researchers, and draw recommendations for practitioners.
+manual labeling, which is extremely time-consuming. As a
+result, we could not incorporate multiple projects into this                            ACKNOWLEDGEMENT
+experiment. Even so, as characteristics vary from project to
+project, one cannot claim the generalizability of an approach         Work conducted for this research is partially supported
+with multiple projects. Regardless, this study has proposed         by the US National Science Foundation under Grant No.
+an approach that can be utilized flexibly to develop project-       1850475. Any opinions, findings, conclusions, or recommen-
+specific models. For example, if, for some projects, the code       dations expressed in this material are those of the author(s) and
+context does not contribute to the overall performance, then        do not necessarily reflect the views of the National Science
+the processing channel of code context can be discarded, and        Foundation. We thank Md. Toufikuzzaman for his assistance
+the remaining portion of our architecture can be utilized for       during the data mining process.
+                              R EFERENCES                                         [21] P. Thongtanunam and A. E. Hassan, “Review dynamics and their impact
+                                                                                       on software quality,” IEEE Transactions on Software Engineering,
+ [1] P. C. Rigby, D. M. German, L. Cowen, and M.-A. Storey, “Peer review
+                                                                                       vol. 47, no. 12, pp. 2698–2712, 2020.
+     on open-source software projects: Parameters, statistical models, and
+                                                                                  [22] P. Thongtanunam, S. McIntosh, A. E. Hassan, and H. Iida, “Review
+     theory,” ACM Transactions on Software Engineering and Methodology
+                                                                                       participation in modern code review,” Empirical Software Engineering,
+     (TOSEM), vol. 23, no. 4, pp. 1–33, 2014.
+                                                                                       vol. 22, no. 2, pp. 768–817, 2017.
+ [2] A. Bosu, J. C. Carver, C. Bird, J. Orbeck, and C. Chockley, “Process
+                                                                                  [23] T. Hirao, A. Ihara, Y. Ueda, P. Phannachitta, and K.-i. Matsumoto, “The
+     aspects and social dynamics of contemporary code review: Insights from
+                                                                                       impact of a low level of agreement among reviewers in a code review
+     open source development and industrial practice at microsoft,” IEEE
+                                                                                       process,” in IFIP International Conference on Open Source Systems.
+     Transactions on Software Engineering, vol. 43, no. 1, pp. 56–75, 2016.
+                                                                                       Springer, 2016, pp. 97–110.
+ [3] C. Sadowski, E. Söderberg, L. Church, M. Sipko, and A. Bacchelli,
+                                                                                  [24] M. Barnett, C. Bird, J. Brunet, and S. K. Lahiri, “Helping developers
+     “Modern code review: a case study at google,” in Proceedings of the 40th
+                                                                                       help themselves: Automatic decomposition of code review changesets,”
+     international conference on software engineering: Software engineering
+                                                                                       in 2015 IEEE/ACM 37th IEEE International Conference on Software
+     in practice, 2018, pp. 181–190.
+                                                                                       Engineering, vol. 1. IEEE, 2015, pp. 134–144.
+ [4] P. C. Rigby and C. Bird, “Convergent contemporary software peer review
+                                                                                  [25] M. Dias, A. Bacchelli, G. Gousios, D. Cassou, and S. Ducasse, “Untan-
+     practices,” in Proceedings of the 2013 9th Joint Meeting on Foundations
+                                                                                       gling fine-grained code changes,” in 2015 IEEE 22nd International Con-
+     of Software Engineering. ACM, 2013, pp. 202–212.
+                                                                                       ference on Software Analysis, Evolution, and Reengineering (SANER).
+ [5] P. Wurzel Gonçalves, G. Calikli, A. Serebrenik, and A. Bacchelli,
+                                                                                       IEEE, 2015, pp. 341–350.
+     “Competencies for code review,” Proceedings of the ACM on Human-
+                                                                                  [26] V. U. Gómez, S. Ducasse, and T. d’Hondt, “Visually characterizing
+     Computer Interaction, vol. 7, no. CSCW1, pp. 1–33, 2023.
+                                                                                       source code changes,” Science of Computer Programming, vol. 98, pp.
+ [6] A. Bacchelli and C. Bird, “Expectations, outcomes, and challenges of
+                                                                                       376–393, 2015.
+     modern code review,” in 2013 35th International Conference on Software
+                                                                                  [27] Y. Huang, N. Jia, X. Chen, K. Hong, and Z. Zheng, “Code review
+     Engineering (ICSE). IEEE, 2013, pp. 712–721.
+                                                                                       knowledge perception: Fusing multi-features for salient-class location,”
+ [7] A. Bosu, M. Greiler, and C. Bird, “Characteristics of useful code
+                                                                                       IEEE Transactions on Software Engineering, vol. 48, no. 5, pp. 1463–
+     reviews: An empirical study at microsoft,” in 2015 IEEE/ACM 12th
+                                                                                       1479, 2020.
+     Working Conference on Mining Software Repositories. IEEE, 2015,
+                                                                                  [28] M. B. Zanjani, H. Kagdi, and C. Bird, “Automatically recommending
+     pp. 146–156.
+                                                                                       peer reviewers in modern code review,” IEEE Transactions on Software
+ [8] A. K. Turzo and A. Bosu, “What makes a code review useful to opendev
+                                                                                       Engineering, vol. 42, no. 6, pp. 530–543, 2015.
+     developers? an empirical investigation,” Empirical Software Engineeting,
+                                                                                  [29] P. Thongtanunam, C. Tantithamthavorn, R. G. Kula, N. Yoshida, H. Iida,
+     vol. 28, p. TBD, 2023.
+                                                                                       and K.-i. Matsumoto, “Who should review my code? a file location-
+ [9] M. Beller, A. Bacchelli, A. Zaidman, and E. Juergens, “Modern code
+                                                                                       based code-reviewer recommendation approach for modern code re-
+     reviews in open-source projects: Which problems do they fix?” in Pro-
+                                                                                       view,” in 2015 IEEE 22nd International Conference on Software Analy-
+     ceedings of the 11th working conference on mining software repositories,
+                                                                                       sis, Evolution, and Reengineering (SANER). IEEE, 2015, pp. 141–150.
+     2014, pp. 202–211.
+                                                                                  [30] M. M. Rahman, C. K. Roy, and J. A. Collins, “Correct: code reviewer
+[10] J. Czerwonka, M. Greiler, and J. Tilford, “Code reviews do not find
+                                                                                       recommendation in github based on cross-project and technology expe-
+     bugs. how the current code review best practice slows us down,”
+                                                                                       rience,” in Proceedings of the 38th international conference on software
+     in 2015 IEEE/ACM 37th IEEE International Conference on Software
+                                                                                       engineering companion, 2016, pp. 222–231.
+     Engineering, vol. 2. IEEE, 2015, pp. 27–28.
+                                                                                  [31] P. Pandya and S. Tiwari, “Corms: a github and gerrit based hybrid
+[11] M. Hasan, A. Iqbal, M. R. U. Islam, A. I. Rahman, and A. Bosu, “Using
+                                                                                       code reviewer recommendation approach for modern code review,” in
+     a balanced scorecard to identify opportunities to improve code review
+                                                                                       Proceedings of the 30th ACM Joint European Software Engineering
+     effectiveness: An industrial experience report,” Empirical Software En-
+                                                                                       Conference and Symposium on the Foundations of Software Engineering,
+     gineering, vol. 26, pp. 1–34, 2021.
+                                                                                       2022, pp. 546–557.
+[12] C. Bird, T. Carnahan, and M. Greiler, “Lessons learned from building
+                                                                                  [32] G. Rong, Y. Zhang, L. Yang, F. Zhang, H. Kuang, and H. Zhang,
+     and deploying a code review analytics platform,” in 2015 IEEE/ACM
+                                                                                       “Modeling review history for reviewer recommendation: a hypergraph
+     12th Working Conference on Mining Software Repositories. IEEE,
+                                                                                       approach,” in Proceedings of the 44th International Conference on
+     2015, pp. 191–201.
+                                                                                       Software Engineering, 2022, pp. 1381–1392.
+[13] E. Fregnan, F. Petrulio, L. Di Geronimo, and A. Bacchelli, “What hap-
+                                                                                  [33] I. X. Gauthier, M. Lamothe, G. Mussbacher, and S. McIntosh, “Is his-
+     pens in my code reviews? an investigation on automatically classifying
+                                                                                       torical data an appropriate benchmark for reviewer recommendation sys-
+     review changes,” Empirical Software Engineering, vol. 27, no. 4, p. 89,
+                                                                                       tems?: A case study of the gerrit community,” in 2021 36th IEEE/ACM
+     2022.
+                                                                                       International Conference on Automated Software Engineering (ASE).
+[14] Z. Feng, D. Guo, D. Tang, N. Duan, X. Feng, M. Gong, L. Shou, B. Qin,
+                                                                                       IEEE, 2021, pp. 30–41.
+     T. Liu, D. Jiang et al., “Codebert: A pre-trained model for programming
+                                                                                  [34] P. Thongtanunam, C. Pornprasit, and C. Tantithamthavorn, “Autotrans-
+     and natural languages,” in Findings of the Association for Computational
+                                                                                       form: automated code transformation to support modern code review
+     Linguistics: EMNLP 2020, 2020, pp. 1536–1547.
+                                                                                       process,” in Proceedings of the 44th International Conference on Soft-
+[15] X. Zhou, D. Han, and D. Lo, “Assessing generalizability of codebert,”
+                                                                                       ware Engineering, 2022, pp. 237–248.
+     in 2021 IEEE International Conference on Software Maintenance and
+                                                                                  [35] R. Tufano, L. Pascarella, M. Tufano, D. Poshyvanyk, and G. Bavota,
+     Evolution (ICSME). IEEE, 2021, pp. 425–436.
+                                                                                       “Towards automating code review activities,” in 2021 IEEE/ACM 43rd
+[16] K. Liu, G. Yang, X. Chen, and Y. Zhou, “El-codebert: Better exploiting
+                                                                                       International Conference on Software Engineering (ICSE). IEEE, 2021,
+     codebert to support source code-related classification tasks,” in Proceed-
+                                                                                       pp. 163–174.
+     ings of the 13th Asia-Pacific Symposium on Internetware, 2022, pp. 147–
+                                                                                  [36] Z. Li, S. Lu, D. Guo, N. Duan, S. Jannu, G. Jenks, D. Majumder,
+     155.
+                                                                                       J. Green, A. Svyatkovskiy, S. Fu, and N. Sundaresan, “Automating code
+[17] O. Kononenko, O. Baysal, and M. W. Godfrey, “Code review quality:
+                                                                                       review activities by large-scale pre-training,” in Proceedings of the 30th
+     How developers see it,” in Proceedings of the 38th international con-
+                                                                                       ACM Joint European Software Engineering Conference and Symposium
+     ference on software engineering, 2016, pp. 1028–1038.
+                                                                                       on the Foundations of Software Engineering, ser. ESEC/FSE 2022, 2022,
+[18] P. Thongtanunam, S. McIntosh, A. E. Hassan, and H. Iida, “Revisiting
+                                                                                       p. 1035–1047.
+     code ownership and its relationship with software quality in the scope
+                                                                                  [37] R. Tufano, S. Masiero, A. Mastropaolo, L. Pascarella, D. Poshyvanyk,
+     of modern code review,” in Proceedings of the 38th international
+                                                                                       and G. Bavota, “Using pre-trained models to boost code review automa-
+     conference on software engineering, 2016, pp. 1039–1050.
+                                                                                       tion,” in Proceedings of the 44th International Conference on Software
+[19] A. Bosu and J. C. Carver, “Impact of developer reputation on code
+                                                                                       Engineering, 2022, pp. 2291–2302.
+     review outcomes in oss projects: An empirical investigation,” in Pro-
+                                                                                  [38] M. Tufano, J. Pantiuchina, C. Watson, G. Bavota, and D. Poshyvanyk,
+     ceedings of the 8th ACM/IEEE international symposium on empirical
+                                                                                       “On learning meaningful code changes via neural machine translation,”
+     software engineering and measurement, 2014, pp. 1–10.
+[20] F. Ebert, F. Castor, N. Novielli, and A. Serebrenik, “An exploratory              in 2019 IEEE/ACM 41st International Conference on Software Engi-
+     study on confusion in code reviews,” Empirical Software Engineering,              neering (ICSE). IEEE, 2019, pp. 25–36.
+     vol. 26, pp. 1–48, 2021.
+[39] A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. N. Gomez,         2019 IEEE/ACM 41st International Conference on Software Engineering
+     Ł. Kaiser, and I. Polosukhin, “Attention is all you need,” Advances in          (ICSE). IEEE, 2019, pp. 783–794.
+     neural information processing systems, vol. 30, 2017.                      [50] M. White, M. Tufano, C. Vendome, and D. Poshyvanyk, “Deep learning
+[40] M. V. Mäntylä and C. Lassenius, “What types of defects are really dis-        code fragments for code clone detection,” in Proceedings of the 31st
+     covered in code reviews?” IEEE Transactions on Software Engineering,            IEEE/ACM international conference on automated software engineering,
+     vol. 35, no. 3, pp. 430–448, 2008.                                              2016, pp. 87–98.
+[41] M. M. Rahman, C. K. Roy, and R. G. Kula, “Predicting usefulness of         [51] B. Fluri, M. Wursch, M. PInzger, and H. Gall, “Change distilling:
+     code review comments using textual features and developer experience,”          Tree differencing for fine-grained source code change extraction,” IEEE
+     in 2017 IEEE/ACM 14th International Conference on Mining Software               Transactions on software engineering, vol. 33, no. 11, pp. 725–743,
+     Repositories (MSR). IEEE, 2017, pp. 215–226.                                    2007.
+[42] F. E. Zanaty, T. Hirao, S. McIntosh, A. Ihara, and K. Matsumoto, “An       [52] T. Wolf, L. Debut, V. Sanh, J. Chaumond, C. Delangue, A. Moi,
+     empirical study of design discussions in code review,” in Proceedings           P. Cistac, T. Rault, R. Louf, M. Funtowicz, J. Davison, S. Shleifer,
+     of the 12th ACM/IEEE international symposium on empirical software              P. von Platen, C. Ma, Y. Jernite, J. Plu, C. Xu, T. Le Scao,
+     engineering and measurement, 2018, pp. 1–10.                                    S. Gugger, M. Drame, Q. Lhoest, and A. Rush, “Transformers: State-
+[43] T. Hirao, S. McIntosh, A. Ihara, and K. Matsumoto, “The review linkage          of-the-art natural language processing,” in Proceedings of the 2020
+     graph for code review analytics: a recovery approach and empirical              Conference on Empirical Methods in Natural Language Processing:
+     study,” in Proceedings of the 2019 27th ACM Joint Meeting on European           System Demonstrations. Online: Association for Computational
+     Software Engineering Conference and Symposium on the Foundations                Linguistics, Oct. 2020, pp. 38–45. [Online]. Available: https:
+     of Software Engineering, 2019, pp. 578–589.                                     //aclanthology.org/2020.emnlp-demos.6
+[44] M. Fowler, “Refactoring catalog,” Refactoring Home Page, URL:              [53] S. Hochreiter and J. Schmidhuber, “Long short-term memory,” Neural
+     http://www. refactoring. com/catalog/index. html (letzter Abruf: 09.02.         computation, vol. 9, no. 8, pp. 1735–1780, 1997.
+     2006), 2012.                                                               [54] R. Y. Rubinstein and D. P. Kroese, The cross-entropy method: a unified
+[45] J. Cohen, “A coefficient of agreement for nominal scales,” Educational          approach to combinatorial optimization, Monte-Carlo simulation, and
+     and psychological measurement, vol. 20, no. 1, pp. 37–46, 1960.                 machine learning. Springer, 2004, vol. 133.
+[46] J. R. Landis and G. G. Koch, “An application of hierarchical kappa-        [55] D. P. Kingma and J. Ba, “Adam: a method for stochastic optimization
+     type statistics in the assessment of majority agreement among multiple          3rd int,” in Conf. for Learning Representations, San, 2014.
+     observers,” Biometrics, pp. 363–374, 1977.                                 [56] Y. Reich and S. Barai, “Evaluating machine learning models for engi-
+[47] T. J. McCabe, “A complexity measure,” IEEE Transactions on software             neering problems,” Artificial Intelligence in Engineering, vol. 13, no. 3,
+     Engineering, no. 4, pp. 308–320, 1976.                                          pp. 257–272, 1999.
+[48] U. Alon, M. Zilberstein, O. Levy, and E. Yahav, “code2vec: Learning        [57] J. D. M.-W. C. Kenton and L. K. Toutanova, “Bert: Pre-training of deep
+     distributed representations of code,” Proceedings of the ACM on Pro-            bidirectional transformers for language understanding,” in Proceedings
+     gramming Languages, vol. 3, no. POPL, pp. 1–29, 2019.                           of naacL-HLT, vol. 1, 2019, p. 2.
+[49] J. Zhang, X. Wang, H. Zhang, H. Sun, K. Wang, and X. Liu, “A novel         [58] E. Fregnan, F. Petrulio, L. D. Geronimo, and A. Bacchelli, “What
+     neural source code representation based on abstract syntax tree,” in            happens in my code reviews? - Replication package,” Oct. 2021.
+                                                                                     [Online]. Available: https://doi.org/10.5281/zenodo.5592254
+

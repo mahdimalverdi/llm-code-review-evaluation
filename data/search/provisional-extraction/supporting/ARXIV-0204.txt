@@ -1,0 +1,502 @@
+                                                  Analyzing Toxicity in Open Source Software
+                                                  Communications Using Psycholinguistics and
+                                                          Moral Foundations Theory
+                                                         Ramtin Ehsani                     Rezvaneh (Shadi) Rezapour                               Preetha Chatterjee
+                                                       Drexel University                         Drexel University                                Drexel University
+                                                     Philadelphia, PA, USA                    Philadelphia, PA, USA                            Philadelphia, PA, USA
+                                                    ramtin.ehsani@drexel.edu                 shadi.rezapour@drexel.edu                      preetha.chatterjee@drexel.edu
+arXiv:2412.13133v3 [cs.SE] 27 Jan 2025
+
+
+
+
+                                            Abstract—Studies have shown that toxic behavior can cause
+                                         contributors to leave, and hinder newcomers’ (especially from
+                                         underrepresented communities) participation in Open Source
+                                         Software (OSS) projects. Thus, detection of toxic language plays             User Commented on April 23, 2020
+                                         a crucial role in OSS collaboration and inclusivity. Off-the-                  You all are probably not using the latest version of the database --
+                                         shelf toxicity detectors are ineffective when applied to OSS                   this is not my problem
+                                         communications, due to the distinct nature of toxicity observed                The database does get VACUUM after a large operation before I
+                                         in these channels (e.g., entitlement and arrogance are more                    upload it
+                                         frequently observed on GitHub than on Reddit or Twitter). In                   Whether the database has been recently VACUUM'd does not affect
+                                         this paper, we investigate a machine learning-based approach                   the integrity of the data or SQL queries -- what you are suggesting is
+                                         for the automatic detection of toxic communications in OSS.
+                                                                                                                        complete nonsense
+                                         We leverage psycholinguistic lexicons, and Moral Foundations                   Expect a ban if you absolute idiots continue to spam me with "me
+                                                                                                                        toos" from issue Art cover for games missing Provenance-Emu/
+                                         Theory to analyze toxicity in two types of OSS communication                   Provenance#1314
+                                         channels; issue comments and code reviews. Our evaluation
+                                         indicates that our approach can achieve a significant performance                        Fig. 1. A Toxic Conversation in OSS.
+                                         improvement (up to 7% increase in F1 score) over the existing          manually monitoring adherence is challenging for maintainers
+                                         domain-specific toxicity detector. We found that using moral
+                                         values as features is more effective than linguistic cues, resulting   due to the high volume of daily communications [6]. If project
+                                         in 67.50% F1-measure in identifying toxic instances in code            maintainers and participants were able to proactively detect
+                                         review data and 64.83% in issue comments. While the detection          and prevent toxic communications through automated tools, it
+                                         accuracy is far from accurate, this improvement demonstrates           would lead to more inclusive and sustainable OSS.
+                                         the potential of integrating moral and psycholinguistic features in
+                                         toxicity detection models. These findings highlight the importance
+                                                                                                                   There are several challenges in automatically detecting toxic
+                                         of context-specific models that consider the unique communi-           content in OSS. Directly applying toxicity detection tools
+                                         cation styles within OSS, where interpersonal and value-driven         trained on other domains (e.g., Google Perspective API) to
+                                         language dynamics differ markedly from general social media            software engineering (SE) corpora has proven ineffective due
+                                         platforms. Future work could focus on refining these models to         to the unique language and norms in SE [7], [8]. Toxicity in
+                                         further enhance detection accuracy, possibly by incorporating
+                                         community-specific norms and conversational context to better
+                                                                                                                OSS is often nuanced, including insults resulting from techni-
+                                         capture the nuanced expressions of toxicity in OSS environments.       cal disagreements and comments that are entitled, demanding,
+                                                                                                                or arrogant [9]. Automated toxicity detectors often fail to
+                                           Index Terms—moral principles, toxicity, open source, textual         capture this “covert toxicity”, expressed through cynicism and
+                                         analysis                                                               entitlement in SE communications [10], [11]. Recent advances
+                                                                                                                in Large Language Models (LLMs) have spurred interest
+                                                                I. I NTRODUCTION                                in their application for toxicity detection on platforms like
+                                            Open Source Software (OSS) projects are a societal good             GitHub [12], [13]. However, LLMs also struggle with SE-
+                                         and they have increased the speed of digital advancement.              specific toxicity (e.g., F-measure of 0.62 [12]), particularly
+                                         However, most new OSS projects fail and many longstand-                when it lacks clear indicators such as offensive words or hate
+                                         ing projects are abandoned by developers [1]. A common                 speech. For instance, statements like “Such a plugin already
+                                         reason contributors abandon projects is because of social              exists...You have nobody to blame but yourself ” are misclassi-
+                                         and emotional factors [2], e.g., a negative experience with            fied, as LLMs may fail to recognize the subtle condescension
+                                         other participants through a toxic conversation (as shown              and irony present in OSS communications.
+                                         in Figure 1). Uncivil language can also deter newcomers                   Beyond Software Engineering, researchers in the Natural
+                                         from contributing to OSS [3]–[5]. While some OSS projects              Language Processing (NLP) field have developed methods
+                                         implement codes of conduct to define acceptable behavior,              to automatically detect cyberbullying [14], offensive lan-
+guage [15], and hate speech [16], [17]. For example, using            observations provide several insights and potential areas of
+(psycho)linguistic markers derived from the Linguistic Inquiry        improvement to support future work in toxicity detection,
+and Word Count (LIWC) dictionary [18] has proven effective            e.g., using domain-specific dictionaries, understanding the
+for analyzing toxic language across various communities [19]–         context of the discussion, etc.
+[21]. Studies consistently demonstrate that linguistic styles and
+word choices offer valuable insights into individuals’ thoughts,              II. BACKGROUND AND R ELATED W ORK
+opinions, and emotions [22]–[24].                                   A. Moral Foundations Theory
+   Moral Foundations Theory (MFT) provides a complemen-                Moral Foundations Theory classifies human behavior into
+tary perspective by proposing that judgments are guided             five core principles [25]. Each principle represents a pair
+by intuitive appraisals based on personal values [25], [26].        of opposing values. Care/harm: Rooted in our aversion to
+People’s values and personal norms affect their (spontaneous)       suffering—both for ourselves and others—this principle stems
+attitude, decision-making process, and what they perceive as        from our evolution as mammals, fostering virtues like kind-
+good or bad, and moral or immoral [27], [28]. MFT categorizes       ness, compassion, and gentleness, while condemning cruelty
+people’s moral reactions and behavior into five foundations         and aggression. Fairness/cheating: This principle emphasizes
+or principles which are each further characterized by two           justice and rights, associated with the evolutionary concept
+opposing values as virtues (good) and vices (bad); care/harm,       of reciprocal altruism. Loyalty/betrayal: Grounded in our
+fairness/cheating, authority/subversion, loyalty/betrayal, and      tribal past, this principle encourages patriotism, heroism, trust,
+purity/degradation [25], [26]. Previous research in psychology      and self-sacrifice for the group, holding the ideal of “One
+has addressed the connection between moral foundations and          for all, and all for one” as virtuous and viewing betrayal
+hate and showed that morality is a key feature of hatred;           of social bonds as immoral. Authority/subversion: Informed
+hate is connected to core moral beliefs and higher levels of        by hierarchical social structures in primate history, this prin-
+moral emotions (e.g., contempt, anger, and disgust) [29], [30].     ciple upholds virtues like leadership, deference, and respect
+Ehsani et al. examined the role of morality in OSS toxicity and     for authority and traditions, while perceiving challenges to
+highlighted connections between moral principles and toxic          authority as immoral. Sanctity/degradation: Arising from the
+interactions on GitHub issue threads [31]. Their qualitative        psychology of disgust and contamination, this principle views
+study revealed that purity/degradation and care/harm were           the body as a “temple” that can be defiled by immoral acts,
+the most frequently observed moral principles, often linked         promoting an elevated, noble approach to life.
+to toxic threads that contain insults.
+   Building on Ehsani et al’s work, we investigate if inte-         B. Toxicity in Online Communities
+grating moral dimensions with psycholinguistic markers can             Social media and online gaming communities are rife with
+enhance automated toxicity detection in OSS communication.          online toxicity. Several factors contribute to online toxic-
+Specifically, we explore three machine learning-based classi-       ity, including user anonymity, context collapse, and online
+fiers (Support Vector Machine, Logictic Regression, Gradient        disinhibition effect [32]. Different lexicons and annotated
+Boosting) that leverage psycholinguistic lexicons (LIWC [23])       datasets have been used to study toxicity and abusive language
+and MFT dimensions [25], [26] as features to detect toxicity        on social media platforms. State-of-the-art approaches such
+in OSS communications. To ensure generalizability across            as classic machine learning models using features such as
+different communication channels, we detect and quantify            TF-IDF, part-of-speech tags, and sentiment to detect hate-
+expressions of moral values as well as psychological markers        ful content [33], [34], deep learning [35], and transformer-
+in two types of software-related artifacts: (a) GitHub issue        based models [36] have been used in toxicity detection. In
+comments (dataset by [7]), and (b) Gerrit code review com-          addition, using LLMs for toxicity has shown promises but it
+ments (extended dataset by [8]), to investigate the following       has limitations in generalizability and understanding nuanced
+research questions:                                                 forms of toxicity [37], [38]. Koh et al. [39] found that LLMs
+• RQ1: How does the performance of toxicity models                  are unsuitable for blind toxicity evaluations within unverified
+   change when psycholinguistic cues are added as fea-              factors. Recent research showed that the majority of works
+   tures? We found that using psycholinguistic features, we         and models used for toxicity detection “encode” biases against
+   can achieve a slight improvement (by ∼ 2% in F 11 ) in           marginalized groups [40]. For instance, Sap et al. [41] found
+   performance from baseline in identifying toxic instances         strong associations between toxicity rating and the identities
+   across all classifiers.                                          and beliefs of human coders. Consequently, these biases are
+• RQ2: How does the performance of toxicity models                  embedded in off-the-shelf models such as Perspective API,
+   change when moral values are added as features? Adding           which are vastly used in this domain.
+   morality on top of psycholinguistic features resulted in
+   a significant jump in the performance of all classifiers         C. Toxicity in Open Source
+   (∼ 2 − 7% in F 11 ).                                               Similar to other online forums, OSS communication chan-
+• RQ3: What types of SE texts are difficult to automat-             nels are not free of toxic content. Toxic behaviors have
+   ically detect as toxic using our techniques? We conduct          been responsible for causing stress and burnout [7], reduced
+   a qualitative error analysis to answer this question. Our        developer motivation and productivity [42], leading to team
+                            TABLE I                                                                TABLE II
+              OVERVIEW OF OUR EXPERIMENT DATASETS                                       F EATURES TO IDENTIFY TOXICITY
+            Dataset       Source   #Toxic   #Non-toxic   Total                 Feature Set                 Feature               Value
+        Issue Comments    Github     101       303        404                   Baseline                  Politeness            0 to +1
+          Code Review     Gerrit    3,757     11,271     15028                                    Google’s Perspective API      0 to +1
+                                                                              Psycholinguistic        LIWC (Analytic)           1 to 99
+                                                                                                        LIWC (Clout)            1 to 99
+attrition [43]. Systems to manage toxic comments have been                                            LIWC (Authentic)          1 to 99
+used for several popular OSS platforms, e.g., GitHub. Miller                                            LIWC (Tone)             1 to 99
+                                                                                                        LIWC (Swear)           0 to 100
+et al. [9] studied different aspects of toxicity on GitHub,                                               Sentiment            -1 to +1
+including how developers react to the current moderation                         Morality           Care (Virtue and Vice)     -1 to +1
+                                                                                                 Fairness (Virtue and Vice)    -1 to +1
+mechanism, noting that the current system does not always                                         Ingroup (Virtue and Vice)    -1 to +1
+resolve the problem and that a significant amount of burden                                      Authority (Virtue and Vice)   -1 to +1
+                                                                                                   Purity (Virtue and Vice)    -1 to +1
+continues to be placed on the project maintainers. Therefore
+automated interventions to detect and flag toxic conversations         The existing datasets are imbalanced, with less than 6%
+in OSS are necessary. Despite the presence of several state-of-     and 20% toxic instances in the issue comments and code
+the-art techniques for toxicity detection in blogs and tweets,      review datasets, respectively. For our experiments, we select
+applying these tools directly to the SE-related text is not         a representative subset of the original data with a ratio of
+effective due to several reasons such as longer texts containing    1:3 toxic to non-toxic instances. More specifically, we use
+references to code and other SE-specific factors [8], [11].         undersampling techniques to reduce the size of the non-toxic
+Towards domain-specific detection of toxic content, Raman et        class but retain all the toxic instances in our datasets. Table I
+al. [7] proposed a machine-learning-based technique to detect       shows the details of our datasets.
+toxic issue comments on GitHub. Their model performed best
+when using only two features, the Stanford Politeness score         B. ML Classification
+and Google Perspective API. This model was found to be not             We investigated several supervised machine learning-based
+generalizable across other types of developer communications,       approaches to automatically identify toxic texts. We describe
+such as code reviews and chats [8]. Another study detected          the textual features followed by the suite of machine learning
+offensive language on Stack Overflow, GitHub, and chats by          algorithms investigated for this classification task.
+using the Perspective API and regular expressions [44] as              1) Features: We present three sets of features: Baseline
+features. LLMs also have shown promise in toxicity detection        (2 features), Psycholinguistic (6 features), and Morality (10
+in OSS; however, they struggle with identifying passive-            features). Table II lists the features in each set with their value
+aggressiveness and context-dependent toxic language [12].           range; descriptions of why and how we extract each feature
+   Current approaches in toxicity detection are not generaliz-      follow.
+able in terms that they miss classifying toxic/biased words that    Baseline Features: The state-of-the-art domain-specific tox-
+are salient and cultural or domain-specific (e.g., in SE context)   icity detector for SE [7], leverages Google’s Perspective
+and do not show up in off-the-shelf lexicons and datasets.          API [46] and Stanford’s Politeness Detector [47]. Of the
+Preliminary results from analyzing toxicity in OSS through          additional feature combinations [7] experimented with (e.g.,
+the lens of moral values have shown promise in enhancing the        length of the text, subjectivity score, no. of anger words
+understanding of toxic behaviors [31], and our work builds          from LIWC), their model performed best when using only
+upon the previous works in this domain and investigates the         Politeness and toxicity score from the Perspective API. Hence,
+change in the model’s effectiveness when using additional           we use these two features in our baseline feature set.
+features based on psycholinguistic scores and moral values.         Psycholinguistic Features: To understand how toxicity is rep-
+                                                                    resented in text, we use a subset of features from the Linguistic
+                         III. M ETHODOLOGY                          Inquiry and Word Count (LIWC) [23]. Miller et al. found
+   We developed a suite of machine learning-based techniques        that the most prevalent forms of toxicity in OSS are entitled,
+for automatically identifying toxic SE communications on            trolling, arrogant, and unprofessional comments from project
+GitHub. Our approach takes as input a text segment, either          users, and insults arising from technical disagreements [9]. We
+an issue comment or a code review comment, and classifies           use the following LIWC features to identify the presence or
+them as toxic or non-toxic.                                         the lack of these traits: (a) Clout for entitlement, (b) Authentic
+                                                                    for trolling, (c) Tone for arrogance, (d) Analytic for unprofes-
+A. Datasets                                                         sionalism, and (e) Swear words for insults. These dimensions
+  We leverage two publicly available labeled datasets of toxic      capture the linguistic and psychological cues relevant to OSS
+communications in the SE domain: (1) a dataset of 1,597             toxicity.
+GitHub issue comments (1,496 non-toxic, 101 toxic) [7],                Sentiment is used for understanding people’s emotions and
+and (2) a dataset of 19,571 Gerrit code review comments             affective states and is highly related to contentiousness [48].
+(15,819 non-toxic, 3,757 toxic). The code review dataset is         In this work, we leverage Valence Aware Dictionary and
+an extension of [8]. Both datasets are available in a public        sEntiment Reasoner (VADER) [49] to get the sentiment scores
+GitHub repository [45].                                             of texts in our dataset. VADER performs well on short,
+informal content like OSS communications and is widely              To measure the fraction of automatically identified texts that
+used in different domains, specifically SE [50]. We used the        are indeed toxic, we use precision, the ratio of true positives
+compound score in VADER to get a single unidimensional              (TP) over the sum of true and false positives (FP). To see
+measure of sentiment. The compound score sums the valence           how often our approaches miss toxic data instances, we
+scores of each word in the lexicon and returns a “normalized,       use recall, the ratio of true positives over the sum of true
+weighted composite score” for a given sentence.                     positives and false negatives (FN). F-measure combines these
+Morality Features: As additional feature sets, we leverage          measures by harmonic mean. To measure robustness, we use
+Moral Foundations Theory [25], [51] to investigate the re-          ROC (Receiver Operating Characteristics), which represents
+lationship between morality and toxicity. Our feature design        the degree of separability between prediction classes. We
+is based on the premise that people’s emotions, ideology,           compute precision, recall, and f-measure for non-toxic (class
+and culture can be reflected in their use of language [22].         0) and toxic (class 1) classes. Lastly, because our data is not
+Hatred and tension (online or offline) may be the result of         completely balanced, we compute MCC (Matthews correla-
+differences in values (moral or personal). Therefore, finding       tion coefficient), which is a correlation coefficient between
+representations of such information in user-generated texts can     observed and predicted binary classifications that is well suited
+help in better understanding toxicity in online interactions. The   for unbalanced data.
+Moral Foundations Dictionary (MFD) enables the measure-
+ment of MFT based on text data by associating 324 words with        B. Procedures
+virtues and vices from the MFT [25], [51]. To extract moral            We configured classifiers and ran them as follows.
+values, we used MFDE, an enhanced version of MFD [24].                 1) Hyperparamter Tuning: We investigated several hyper-
+Compared to the original MFD, the enhanced lexicon consists         parameters to adjust each classifier (using scikit-learn), and the
+of about 4,636 terms that were syntactically disambiguated          following configurations produced the best classifications. For
+and manually pruned and verified. To find morality in texts,        the rest of the parameters, we used the default values offered
+we apply Distributed Dictionary Representations (DDR) [52].         by scikit-learn.
+DDR first computes the average of each dictionary and then
+computes the “loading” of a dictionary on a particular piece        • Support-Vector Machine (SVM): We used the LinearSVC
+of text. We used MFDE as the seed words and created ten               class with the following parameters: C=10, max iter=10000.
+                                                                    • Logistic Regression (LR): We used the LogisticRegres-
+separate lists of words representing each moral value (vices
+and virtues of five moral categories). We used word2vec [53]          sion class with following parameters: C=1, max iter=4000,
+to create vector representations of the words.                        multi class=’multinomial’.
+                                                                    • Gradient-Boosting (GB): We used the GradientBoost-
+   2) Classifiers: We trained multiple supervised machine
+learning-based classifiers in our study using Python scikit-          ingClassifier class with the following parameters:
+learn package [54]. We explored other classifiers (e.g., Ran-         learning rate=1.0, n estimators=1000, random state = 0,
+dom Forests); however, we do not discuss them here, since             max depth=10, max features=’sqrt’, min samples leaf=2.
+they yielded significantly inferior results. Here, we provide an       2) Evaluation Process (RQ1, RQ2): For RQ1 and RQ2,
+overview and explanation of our classifier choices.                 results from the classifiers were obtained using stratified 5-fold
+Support Vector Machines (SVM) is a non-probabilistic clas-          cross validation i.e., the dataset was partitioned into five equal-
+sifier that maps input data into a feature space that maximizes     sized sub-samples with stratification, ensuring that the original
+the gap between the classification categories; i.e., toxic, and     distribution of toxic and non-toxic instances is retained in each
+non-toxic in our study. SVM has been observed to achieve            sub-sample.
+high accuracy in predicting toxic content in SE [7], [44].             3) Evaluation Process (RQ3): For RQ3, we developed two
+Logistic Regression (LR) is a discriminative classification         separate sets of test data from issue comments and code
+model that predicts the class by calculating the probability for    reviews to evaluate the effectiveness of our models, and
+each class and choosing the class with the highest probability.     investigate the properties of SE texts that were found to be
+In our case, the class probability is the likelihood of a           challenging to automatically categorize. For the code review
+text being toxic. LR has been widely used for binary text           test set, we randomly selected 100 toxic and 100 non-toxic
+classification in SE [55].                                          reviews from the original dataset, before creating the training
+Gradient Boosting (GB) is an ensemble-based classification          described in the Methodology section. For the second dataset,
+framework where a sequence of decision trees is constructed,        since the issue comments data is small in size and only consists
+and each tree minimizes the residual error of the preceding         of 101 toxic instances, we additionally utilized the held out
+sequence of trees. Ensemble classifiers have been used in           labeled issue test set created by [7], which consists of 194
+predicting offensive language in SE texts [44].                     issue threads labeled as toxic or non-toxic. Since the issue
+                                                                    threads tend to be longer compared to our training data, we
+                  IV. E VALUATION S TUDY
+                                                                    used the length of texts to filter out threads longer than 1,700
+A. Evaluation Metrics                                               characters to have data similar to our training set. Our final
+   We use measures that are widely used for evaluation in           issue comments test set consists of 58 issue comments (25
+information retrieval: precision, recall, F-measure, and ROC.       toxic, 33 non-toxic).
+                                                                 TABLE III
+                              T OXICITY D ETECTION R ESULTS (I SSUE C OMMENTS ) (5-F OLD C ROSS VALIDATION )
+                                                             P0      R0     F 10    ROC0        P1      R1     F 11    ROC1    M CC
+ Baseline                             LinearSVC             84.13   97.00   90.09   71.29      84.92   45.57   58.87   71.29   54.05
+                                      GradientBoosting      86.24   87.67   86.94   73.02      61.48   58.38   59.83   73.02   46.87
+                                      LogisticRegression    83.34   98.00   90.05   69.83      88.89   41.67   56.08   69.83   53.26
+ Baseline+Psycholinguistic            LinearSVC             84.52   96.33   90.03   71.95      82.52   47.57   60.03   71.95   54.14
+                                      GradientBoosting      86.27   92.00   89.01   74.24      71.97   56.48   62.75   74.24   52.98
+                                      LogisticRegression    83.72   97.67   90.15   70.62      86.91   43.57   57.86   70.62   53.89
+ Baseline+Psycholinguistic+Morality   LinearSVC             87.50   90.33   88.79   75.90      70.59   61.48   64.74   75.90   54.64
+                                      GradientBoosting      87.65   89.67   88.56   76.02      68.69   62.38   64.83   76.02   54.06
+                                      LogisticRegression    84.85   95.00   89.62   72.26      77.36   49.52   60.13   72.26   52.55
+                                                               TABLE IV
+                               T OXICITY D ETECTION R ESULTS (C ODE R EVIEW ) (5-F OLD C ROSS VALIDATION )
+                                                             P0      R0     F 10     ROC0       P1      R1     F 11    ROC1    M CC
+ Baseline                             LinearSVC             84.11   89.93   86.93    69.42     61.82   48.91   54.60   69.42   42.24
+                                      Gradient Boosting     81.78   75.01   77.95    62.75     42.49   50.50   45.48   62.75   24.85
+                                      Logistic Regression   84.15   89.90   86.93    69.49     61.81   49.08   54.71   69.49   42.32
+ Baseline+Psycholinguistic            LinearSVC             83.62   95.21   89.04    69.55     75.24   43.88   55.42   69.55   47.96
+                                      Gradient Boosting     87.10   79.67   82.91    72.76     57.04   65.85   60.09   72.76   44.73
+                                      Logistic Regression   84.39   92.73   88.36    70.56     68.91   48.40   56.85   70.56   46.82
+ Baseline+Psycholinguistic+Morality   LinearSVC             84.87   94.58   89.46    71.92     75.41   49.25   59.46   71.92   51.37
+                                      Gradient Boosting     88.60   88.25   88.07    77.35     71.09   66.45   67.50   77.35   57.03
+                                      Logistic Regression   85.82   93.00   89.25    73.35     72.01   53.70   61.43   73.35   51.94
+
+C. Results and Discussion                                             recall (R1 = 43.88%), indicating that it is more restrictive in
+                                                                      labeling a code review comment as toxic.
+   Tables III and IV present the precision, recall, F-measure,           We further looked into the values of psycholinguistic fea-
+ROC, and MCC, for each classification labels (0 for non-toxic,        tures in both toxic and non-toxic comments in our datasets.
+and 1 for toxic). To configure the feature sets, we first combine     In both datasets, the average value of “Swear words” is
+baseline features with psycholinguistic features (baseline +          significantly higher in toxic comments, 2.72 vs. 0.01 in toxic
+psycholinguistic), and then combine baseline features with            and non-toxic comments in issue comments, and 6.3 vs. 0.11
+both psycholinguistic and morality features (baseline + psy-          in the code review dataset. We also observe that, the average
+cholinguistic + morality). We compare the baseline with both          value of “Analytic” is lower in toxic comments, 30.96 vs
+of these configurations.                                              52.3 in toxic and non-toxic comments in issue comments, and
+      a) RQ1. How does the performance of toxicity models             40.99 vs 44.8 in the code review dataset. Since, analytic scores
+change when psycholinguistic cues are added as features?:             represent the degree of formal, logical, and hierarchical think-
+When using baseline+psycholinguistic features, we observe             ing [56], a higher value shows that non-toxic comments were
+an improvement in performance from baseline in identifying            well-thought-out and thus exhibited more professionalism.
+toxic instances across all classifiers.                               Additionally, we found that the average value of “Authentic”
+   In the issue comments dataset (Table III), the F 11 improves       scores is higher in toxic comments. Example of texts that
+from 58.87% to 60.03% for LinearSVC, from 59.83% to                   have low authenticity scores include texts where a person is
+62.75% for GradientBoosting, and from 56.08% to 57.86%                being socially cautious [57] and thus not involved in toxic
+for LogisticRegression. When considering ROC1 and ROC2 ,              behaviors such as trolling. These results also confirm [9]’s
+we observe slight improvement (∼ 1%) from the baseline,               empirical observation of the existence of trolling, insults, and
+across all classifiers. Overall (except MCC), GradientBoost-          unprofessional comments as prevalent forms of OSS toxicity.
+ing performs better compared to the rest of the classifiers.          We do not observe any significant patterns with the rest of
+However, when considering M CC, LinearSVC provides the                the psycholinguistic features across both the datasets, which
+best performance (54.14%).                                            indicates the challenges of generalizing toxicity detection
+   In the code review dataset (Table IV), the F 11 improves           techniques for different types of data.
+from 54.60% to 55.42% for LinearSVC, from 45.48% to                        b) RQ2. How does the performance of toxicity models
+60.09% for GradientBoosting, and from 54.71% to 56.85% for            change when moral values are added as features?: Adding
+LogisticRegression. Overall (except MCC), GradientBoosting            morality on top of baseline+psycholinguistic resulted in a
+performs better than the rest of the classifiers; we observe          significant jump in the performance of all classifiers.
+a significant improvement from the baseline with ∼15%                    In the issue comments dataset (Table III), while Lin-
+(45.48% to 60.09%) in F 11 , ∼10% (62.75% to 72.76%) in               earSVC benefits the most from the addition of moral
+ROC1 . However, for M CC that adjusts for class imbalance,            values, with around 4% increase in the F 11 , Gradient-
+LinearSVC provides better performance (47.96%). LinearSVC             Boosting achieves the highest performance of all models
+also provides a high precision (P1 = 75.24%), but a lower             (F 11 = 64.83%). Furthermore, using this model with base-
+line+psycholinguistic+morality results in the highest ROC1            “Oops, that was dumb. I actually had caught this while you
+as well as ROC0 . When considering M CC, we observe a                 were reviewing and fixed it.”. This is a limitation of using
+slightly better result with LinearSVC. In the code review             lexicon-based features, as words can have different meanings
+dataset (Table IV), the GradientBoosting’s performance jumps          in different contexts.
+from 60.09% with baseline+psycholinguistic to 67.5%. M CC,               We manually analyzed the 45 instances marked FN when
+ROC1 , and ROC0 also significantly improved using this                using all features, and observed that toxicity in several of
+model.                                                                the instances could be understood only in the context of
+   We further looked into the morality features in both toxic         the discussion and with prior project-specific knowledge. For
+and non-toxic comments and found that the average of all              instance, “extra stupid-people safe: do we want ‘pwd -P’ here,
+moral values are higher in toxic comments compared to the             in case someone runs this in a symlinked directory? :)”. The
+non-toxic ones in both datasets used in this paper. In both           other toxic comments were insults without containing any
+datasets, the average value of “degradation” (purity-vice) is         negative terms such as swear words. For instance, in the com-
+significantly higher, 0.41 ± 0.05 vs. 0.35 ± 0.08 in toxic and        ment “...The questions are placed looking for fixes not closed
+non-toxic comments in issue comments, and 0.380 ± 0.07 vs.            stamps. Did they give you that stamp in Kindergarten?...”, the
+0.34 ± 0.08 ones in the code review dataset.                          words “stamps” and “Kindergarten” refer to a false sense of
+   Based on MFT, purity/degradation foundation is influenced          achievement. We also notice that some comments included en-
+by the “psychology of disgust and contamination”. The result          tire sentences written in caps (or uppercase), which insinuates
+of our analysis is in line with previous work that found hate         shouting or harsh tone, e.g., “...@user already said why, stop
+is conceptually closer to disgust and contempt, compared to           asking. BUT CANT YOU JUST CHANGE BESTPLANET IN
+anger and dislike [58].                                               THE CODE AND SET IT TO PLANET 22...”. These instances
+     c) RQ3. What types of SE texts are difficult to auto-            are misclassified by our models, since we are not leveraging
+matically detect as toxic using our techniques?: To answer            the format of the text as a feature.
+RQ3, we performed classification error analysis. Specifically,        RQ3.2. What instances are misclassified by other feature sets
+we investigated the following questions:                              but not morality?
+RQ3.1. What instances are misclassified using all feature sets?       Overall, we observed the best performance when all features
+We qualitatively analyzed the False Positives (FP) and False          are used; specifically adding morality features significantly
+Negatives (FN) using all features, and GB as the classifier. We       improves the performance (5% with SVM for issue comments,
+chose GB since it achieves the best classification performance        7% with GB on code reviews). In this question, we investigate
+overall. We found that 30 instances (4 issue comments, 26             and gather insights on how adding morality features improves
+code reviews) were marked as FP, and 45 instances (7 issue            the classification of toxicity in OSS.
+comments, 38 code reviews) were marked as FN, out of a total             We selected the instances which were misclassified by GB
+of 258 instances in our evaluation dataset.                           classifier using only baseline and psycholinguistic features, but
+    The analysis procedure consisted of the following steps: (1)      correctly classified when all feature sets are used (including
+first we collected the data instances that were marked FP,            morality). Using this selection procedure, we collected a set
+and instances that were marked FN, using all features. (2)            of 33 FPs (3 issue comments, 30 code reviews), and 22 FNs
+Following an open coding procedure [59], the authors of this          (2 issue comments, 20 code reviews). The analysis procedure
+paper independently studied the instances from step 1. We             was the same as RQ3.1.
+manually analyzed the conversations to identify the charac-              We qualitatively analyzed the 33 FPs, and observed that
+teristics of conversations in each category (FP and FN), and          the majority of comments contain domain-specific words.
+recorded comments and reflections from the manual analysis            For instance, “if you call response.body() .string() twice
+in the form of short phrases, e.g., “contains entire sentence(s)      like this response.body().string() response.body().string() you
+written in uppercase”. These insights helped us investigate           will get this unsolvable error” were misclassified using
+additional characteristics that our features failed to capture. (3)   baseline+psycholinguistic features, but adding morality on
+The common observed characteristics in each category (FP and          top of that reduced model confusion. Another instance is
+FN) were grouped. The analysis was performed in an iterative          “Bad merge? You’re shadowing oslo.config.cfg” which was
+approach composed of multiple sessions, which helped in               mistakenly classified as toxic using the baseline and base-
+generalizing the hypotheses and revising the characteristics.         line+psycholinguistic features. However, using moral words
+    We manually analyzed the 30 instances marked FP when              in addition to other features complemented each other, as
+using all features, and observed that most of the instances           also shown in other studies [52], which resulted in decreasing
+contained domain-specific words that were incorrectly iden-           classification error in our models.
+tified as toxic. For instance, “If we add this board, will we            We qualitatively analyzed the 22 FNs, and observed that the
+have to start killing off the rest?...”, where ‘killing’ refers       majority of comments misclassified by other models include
+to terminating an application. These errors could be handled          negative words such as “damn”, “stupid”, and “ugly” which
+using a domain specific dictionary. Other errors included             are not included as swear words in LIWC. One of the
+misidentifying self-deprecating words as toxic. For instance,         shortcomings of LIWC is that the analysis is on the word level,
+which results in missing semantically related words in many         larly those affecting underrepresented groups [61]. Addi-
+cases. Using morality as a feature and the DDR method helped        tionally, developing models that understand the evolution of
+with capturing semantic similarity between words and con-           conversations—recognizing how tone, sarcasm, and passive-
+cepts and going beyond word count. For instance, a comment          aggressiveness unfold over exchanges—could improve the
+“this is pretty ugly. create it in one assignment” is classified    detection of covert toxicity.
+as non-toxic by the baseline and baseline+psycholinguistic
+features, but using moral words improved the performance of                                        R EFERENCES
+the model and resulted in a better accuracy.                         [1] J. Coelho and M. T. Valente, “Why modern open source projects fail,” in
+                                                                         Proceedings of the 2017 11th Joint Meeting on Foundations of Software
+Summary of Key Findings and Takeway. We found that                       Engineering, ser. ESEC/FSE 2017. New York, NY, USA: Association
+psycholinguistic markers, such as “Swear words” and “Ana-                for Computing Machinery, 2017, p. 186–196.
+lytic” scores, proved valuable in distinguishing toxic from non-     [2] M. Gerosa, I. Wiese, B. Trinkenreich, G. Link, G. Robles, C. Treude,
+                                                                         I. Steinmacher, and A. Sarma, “The shifting sands of motivation:
+toxic content, while moral values (particularly “Degradation”)           Revisiting what drives contributors in open source,” in 2021 IEEE/ACM
+captured nuanced forms of toxicity often linked to moral                 43rd International Conference on Software Engineering (ICSE), 2021,
+judgments. These features can be leveraged to build more                 pp. 1046–1058.
+accurate toxicity detectors for SE domains.                          [3] I. Steinmacher, T. Conte, M. A. Gerosa, and D. Redmiles, “Social bar-
+                                                                         riers faced by newcomers placing their first contribution in open source
+   However, several challenges persist. SE-specific terms and            software projects,” in Proceedings of the 18th ACM Conference on
+indirect toxicity, including sarcasm, entitlement, and passive-          Computer Supported Cooperative Work & Social Computing, ser. CSCW
+                                                                         ’15. New York, NY, USA: Association for Computing Machinery, 2015,
+aggressiveness, are often misclassified without domain-aware             p. 1379–1392.
+dictionaries and contextual understanding. Additionally, the         [4] H. S. Qiu, Y. L. Li, S. Padala, A. Sarma, and B. Vasilescu, “The signals
+complexity of OSS communication requires models that can                 that potential contributors look for when choosing open-source projects,”
+account for conversation dynamics and project-specific knowl-            Proc. ACM Hum.-Comput. Interact., vol. 3, no. CSCW, nov 2019.
+                                                                     [5] R. Ehsani, M. M. Imran, R. Zita, K. Damevski, and P. Chatterjee,
+edge. Future research should focus on refining these features            “Incivility in open source projects: A comprehensive annotated dataset
+and developing models capable of handling covert toxicity in             of locked github issue threads,” in 2024 IEEE/ACM 21st International
+diverse SE contexts, potentially by incorporating contextual             Conference on Mining Software Repositories (MSR), 2024, pp. 515–519.
+                                                                     [6] P. Tourani, B. Adams, and A. Serebrenik, “Code of conduct in open
+markers and adaptive, SE domain-specific lexicons.                       source projects,” in 2017 IEEE 24th International Conference on Soft-
+                                                                         ware Analysis, Evolution and Reengineering (SANER), 2017, pp. 24–33.
+           V. C ONCLUSION AND F UTURE W ORK                          [7] N. Raman, M. Cao, Y. Tsvetkov, C. Kästner, and B. Vasilescu, “Stress
+                                                                         and burnout in open source: Toward finding, understanding, and miti-
+   This paper investigates the usefulness of psycholinguistic            gating unhealthy interactions,” in Proceedings of the ACM/IEEE 42nd
+                                                                         International Conference on Software Engineering: New Ideas and
+cues and moral values with toxicity in Open Source Software              Emerging Results. New York, NY, USA: Association for Computing
+(OSS). Due to the use of domain-specific words and jargon in             Machinery, 2020, p. 57–60.
+OSS, the majority of toxicity detection tools do not correctly       [8] J. Sarker, A. K. Turzo, and A. Bosu, “A benchmark study of the
+                                                                         contemporary toxicity detectors on software engineering interactions,”
+identify toxic language in this domain. Therefore, there is              2020 27th Asia-Pacific Software Engineering Conference (APSEC), pp.
+a need to augment the current methods with features and                  218–227, 2020.
+information that are insightful for such task. A recent study [9]    [9] C. Miller, S. Cohen, D. Klug, B. Vasilescu, and C. Kästner, ““did you
+                                                                         miss my comment or what?” understanding toxicity in open source
+in OSS found features such as trolling, arrogant, and unprofes-          discussions,” in 2022 IEEE/ACM 44th International Conference on
+sional comments mostly prevalent to toxicity in OSS. In this             Software Engineering (ICSE), 2022, pp. 710–722.
+work, we leverage Linguistic Inquiry and Word Count (LIWC)          [10] A. Lees, D. Borkan, I. D. Kivlichan, J. Nario, and T. Goyal, “Capturing
+                                                                         covertly toxic speech via crowdsourcing,” in HCINLP, 2021.
+to map these concepts to a subset of linguistic features in
+                                                                    [11] H. S. Qiu, B. Vasilescu, C. Kästner, C. Egelman, C. Jaspan, and
+comments labeled as toxic and non-toxic. In addition, previous           E. Murphy-Hill, “Detecting interpersonal conflict in issues and code
+studies showed that people’s instant emotions and ideologies             review: Cross pollinating open- and closed-source approaches,” in 2022
+can be reflected in their use of language. Moral Foundations             IEEE/ACM 44th International Conference on Software Engineering:
+                                                                         Software Engineering in Society (ICSE-SEIS), 2022, pp. 41–55.
+Theory captures the reactions of people. We use an extended         [12] S. Mishra and P. Chatterjee, “Exploring chatgpt for toxicity detection
+version of Moral Foundations Dictionary [24] to operationalize           in github,” in Proceedings of the 2024 ACM/IEEE 44th International
+morality in text. Using these two sets of additional feature sets        Conference on Software Engineering: New Ideas and Emerging Results,
+                                                                         ser. ICSE-NIER’24. New York, NY, USA: Association for Computing
+on top of a benchmark baseline model, we show that using                 Machinery, 2024, p. 6–10.
+moral values on top of psycholinguistic features improves the       [13] L. Li, L. Fan, S. Atreja, and L. Hemphill, ““hot” chatgpt: The promise
+performance of our toxicity classifiers.                                 of chatgpt in detecting and discriminating hateful, offensive, and toxic
+                                                                         comments on social media,” ACM Trans. Web, vol. 18, no. 2, Mar. 2024.
+   This study opens avenues for enhancing toxicity detection        [14] R. M. Kowalski, S. P. Limber, and P. W. Agatston, Cyberbullying:
+in OSS. Our scripts are available in our replication pack-               Bullying in the Digital Age, 2nd ed. Wiley Publishing, 2012.
+age [60]. Future work can focus on building larger, more            [15] G. Xiang, B. Fan, L. Wang, J. Hong, and C. Rose, “Detecting offensive
+                                                                         tweets via topical feature discovery over a large scale twitter corpus,” in
+balanced datasets to improve the generalizability of toxicity            Proceedings of the 21st ACM International Conference on Information
+models across diverse OSS contexts. Additionally, moving                 and Knowledge Management, ser. CIKM ’12. New York, NY, USA:
+beyond binary classification toward multi-dimensional toxi-              Association for Computing Machinery, 2012, p. 1980–1984.
+                                                                    [16] F. D. Vigna, A. Cimino, F. Dell’Orletta, M. Petrocchi, and M. Tesconi,
+city categorization (e.g., personal harassment, implicit bias)           “Hate me, hate me not: Hate speech detection on facebook,” in ITASEC,
+will capture the complexity of toxic interactions, particu-              2017.
+[17] M. Chaudhary, C. Saxena, and H. M. Meng, “Countering online hate            [39] H. Koh, D. Kim, M. Lee, and K. Jung, “Can llms recognize toxicity? a
+     speech: An nlp perspective,” 2021.                                               structured investigation framework and toxicity metric,” 2024.
+[18] Y. R. Tausczik and J. W. Pennebaker, “The psychological meaning             [40] X. Zhou, M. Sap, S. Swayamdipta, Y. Choi, and N. A. Smith, “Chal-
+     of words: Liwc and computerized text analysis methods,” Journal of               lenges in automated debiasing for toxic language detection,” in Proceed-
+     Language and Social Psychology, vol. 29, no. 1, pp. 24–54, 2010.                 ings of the 16th Conference of the European Chapter of the Association
+[19] J. An, H. Kwak, C. S. Lee, B. Jun, and Y.-Y. Ahn, “Predicting anti-asian         for Computational Linguistics: Main Volume, 2021, pp. 3143–3155.
+     hateful users on twitter during covid-19,” in Findings of the Association   [41] M. Sap, S. Swayamdipta, L. Vianna, X. Zhou, Y. Choi, and N. A.
+     for Computational Linguistics: EMNLP 2021, 2021, pp. 4655–4666.                  Smith, “Annotators with attitudes: How annotator beliefs and identities
+[20] S. C. d. Silva, T. C. Ferreira, R. M. S. Ramos, and I. Paraboni,                 bias toxic language detection.” Seattle, United States: Association for
+     “Data-driven and psycholinguistics-motivated approaches to hate speech           Computational Linguistics, Jul. 2022, pp. 5884–5906.
+     detection,” Computación y Sistemas, vol. 24, no. 3, pp. 1179–1188, 2020.   [42] A. Bosu and J. C. Carver, “Impact of peer code review on peer
+[21] J. Salminen, M. Hopf, S. A. Chowdhury, S.-g. Jung, H. Almerekhi, and             impression formation: A survey,” 2013 ACM / IEEE International
+     B. J. Jansen, “Developing an online hate classifier for multiple social          Symposium on Empirical Software Engineering and Measurement, pp.
+     media platforms,” Human-centric Computing and Information Sciences,              133–142, 2013.
+     vol. 10, no. 1, pp. 1–34, 2020.                                             [43] I. Steinmacher, I. Wiese, A. P. Chaves, and M. A. Gerosa, “Why
+[22] H. C. Triandis, “The self and social behavior in differing cultural              do newcomers abandon open source software projects?” in 2013 6th
+     contexts.” Psychological review, vol. 96, no. 3, p. 506, 1989.                   International Workshop on Cooperative and Human Aspects of Software
+[23] R. L. Boyd, A. Ashokkumar, S. Seraj, and J. W. Pennebaker, “The                  Engineering (CHASE), 2013, pp. 25–32.
+     development and psychometric properties of liwc-22,” Austin, TX:            [44] J. Cheriyan, B. T. R. Savarimuthu, and S. Cranefield, “Towards offensive
+     University of Texas at Austin, 2022.                                             language detection and reduction in four software engineering communi-
+[24] R. Rezapour and J. Diesner, “Expanded morality lexicon,” 2019, https:            ties,” in Evaluation and Assessment in Software Engineering, ser. EASE
+     //doi.org/10.13012/B2IDB-3805242 V1.1.                                           2021. New York, NY, USA: Association for Computing Machinery,
+                                                                                      2021, p. 254–259.
+[25] J. Graham, J. Haidt, S. Koleva, M. Motyl, R. Iyer, S. P. Wojcik, and
+                                                                                 [45] “Cmustrudel.” [Online]. Available: https://github.com/CMUSTRUDEL/
+     P. H. Ditto, “Moral foundations theory: The pragmatic validity of moral
+                                                                                      toxicity-detector
+     pluralism,” in Advances in experimental social psychology. Elsevier,
+                                                                                 [46] G. P. API, “https://www.perspectiveapi.com/,” accessed Aug, 2022.
+     2013, vol. 47.
+                                                                                 [47] C. Danescu-Niculescu-Mizil, M. Sudhof, D. Jurafsky, J. Leskovec, and
+[26] J. Haidt and C. Joseph, “Intuitive ethics: How innately prepared intu-           C. Potts, “A computational approach to politeness with application to
+     itions generate culturally variable virtues,” Daedalus, vol. 133, no. 4,         social factors,” in ACL, 2013.
+     pp. 55–66, 2004.                                                            [48] M. Pennacchiotti and A.-M. Popescu, “Detecting controversies in twitter:
+[27] J. Haidt, “The emotional dog and its rational tail: a social intuitionist        a first study,” in Proceedings of the NAACL HLT 2010 workshop on
+     approach to moral judgment.” Psychological review, vol. 108, no. 4, p.           computational linguistics in a world of social media, 2010, pp. 31–32.
+     814, 2001.                                                                  [49] C. J. Hutto and E. Gilbert, “Vader: A parsimonious rule-based model
+[28] R. Rezapour, L. Dinh, and J. Diesner, “Incorporating the measurement of          for sentiment analysis of social media text,” in ICWSM, 2014.
+     moral foundations theory into analyzing stances on controversial topics,”   [50] B. Lin, F. Zampetti, G. Bavota, M. Di Penta, M. Lanza, and R. Oliveto,
+     in Proceedings of the 32nd ACM Conference on Hypertext and Social                “Sentiment analysis for software engineering: How far can we go?” in
+     Media, 2021.                                                                     2018 IEEE/ACM 40th International Conference on Software Engineer-
+[29] C. Pretus, J. L. Ray, Y. Granot, W. A. Cunningham, and J. J. Van Bavel,          ing (ICSE), 2018, pp. 94–104.
+     “The psychology of hate: Moral concerns differentiate hate from dislike,”   [51] J. Graham, J. Haidt, and B. A. Nosek, “Liberals and conservatives rely
+     Jun 2018.                                                                        on different sets of moral foundations.” Journal of personality and social
+[30] M. Atari, A. M. Davani, D. Kogon, B. Kennedy, N. A. Saxena, I. A.                psychology, vol. 96, no. 5, p. 1029, 2009.
+     Anderson, and M. Dehghani, “Morally homogeneous networks and                [52] J. Garten, J. Hoover, K. M. Johnson, R. Boghrati, C. Iskiwitch, and
+     radicalism,” Jan 2021.                                                           M. Dehghani, “Dictionaries and distributions: Combining expert knowl-
+[31] R. Ehsani, R. Rezapour, and P. Chatterjee, “Exploring moral principles           edge and large scale textual data content analysis,” Behavior research
+     exhibited in oss: A case study on github heated issues,” in Proceedings          methods, vol. 50, no. 1, pp. 344–361, 2018.
+     of the 31st ACM Joint European Software Engineering Conference              [53] T. Mikolov, K. Chen, G. Corrado, and J. Dean, “Efficient estimation of
+     and Symposium on the Foundations of Software Engineering,                        word representations in vector space,” 2013.
+     ser. ESEC/FSE 2023. New York, NY, USA: Association for                      [54] F. Pedregosa, G. Varoquaux, A. Gramfort, V. Michel, B. Thirion,
+     Computing Machinery, 2023, p. 2092–2096. [Online]. Available:                    O. Grisel, M. Blondel, P. Prettenhofer, R. Weiss, V. Dubourg et al.,
+     https://doi.org/10.1145/3611643.3613077                                          “Scikit-learn: Machine learning in python,” the Journal of machine
+[32] J. Suler, “The online disinhibition effect,” Cyberpsychology & Behavior:         Learning research, vol. 12, pp. 2825–2830, 2011.
+     The Impact of the Internet, Multimedia and Virtual Reality on Behavior      [55] P. Chatterjee, K. Damevski, N. Kraft, and L. Pollock, “Automatically
+     and Society, vol. 7, no. 3, p. 321–326, Jun 2004.                                Identifying the Quality of Developer Chats for Post Hoc Use,” in
+[33] T. Davidson, D. Warmsley, M. Macy, and I. Weber, “Automated hate                 Transactions on Software Engineering and Methodology (TOSEM), ser.
+     speech detection and the problem of offensive language,” in Proceedings          TOSEM ’20, 2020.
+     of the international AAAI conference on web and social media, vol. 11,      [56] J. W. Pennebaker, C. K. Chung, J. Frazee, G. M. Lavergne, and D. I.
+     no. 1, 2017, pp. 512–515.                                                        Beaver, “When small words foretell academic success: The case of
+[34] A. M. Founta, C. Djouvas, D. Chatzakou, I. Leontiadis, J. Blackburn,             college admissions essays,” PLOS ONE, vol. 9, p. 1–10, Dec 2015.
+     G. Stringhini, A. Vakali, M. Sirivianos, and N. Kourtellis, “Large scale    [57] M. L. Newman, J. W. Pennebaker, D. S. Berry, and J. M. Richards,
+     crowdsourcing and characterization of twitter abusive behavior,” in              “Lying words: Predicting deception from linguistic styles,” Personality
+     Twelfth International AAAI Conference on Web and Social Media, 2018.             and Social Psychology Bulletin, vol. 29, no. 5, pp. 665–675, 2003.
+[35] S. Agrawal and A. Awekar, “Deep learning for detecting cyberbullying        [58] C. A. Martı́nez, J.-W. van Prooijen, and P. A. Van Lange, “Hate: Toward
+     across multiple social media platforms,” in European conference on               understanding its distinctive features across interpersonal and intergroup
+     information retrieval. Springer, 2018, pp. 141–153.                              targets.” Emotion, vol. 22, no. 1, p. 46, 2022.
+[36] V. Isaksen and B. Gambäck, “Using transfer-based language models           [59] P. Runeson, M. Host, A. Rainer, and B. Regnell, Case Study Research
+     to detect hateful and offensive language online,” in Proceedings of the          in Software Engineering: Guidelines and Examples, 1st ed. Wiley
+     Fourth Workshop on Online Abuse and Harms, 2020, pp. 16–27.                      Publishing, 2012.
+[37] D.-H. Lee, H. Cho, W. Jin, J. Moon, S. Park, P. Röttger, J. Pujara, and    [60] “Anonymized repository.” [Online]. Available: https://anonymous.4open.
+     R. K.-w. Lee, “Improving covert toxicity detection by retrieving and             science/r/toxicity-morality-analysis-2A1F/README.md
+     generating references,” in Proceedings of the 8th Workshop on Online        [61] S. Zacchiroli, “Gender differences in public code contributions: A 50-
+     Abuse and Harms (WOAH 2024). Mexico City, Mexico: Association                    year perspective,” IEEE Software, vol. 38, no. 2, pp. 45–50, 2021.
+     for Computational Linguistics, Jun. 2024, pp. 266–274.
+[38] Y.-S. Wang and Y. Chang, “Toxicity detection with generative prompt-
+     based inference,” 2022.
+

@@ -1,0 +1,1636 @@
+                                         Empirical Software Engineering manuscript No.
+                                         (will be inserted by the editor)
+
+
+
+
+                                         What Makes a Code Review Useful to OpenDev
+                                         Developers? An Empirical Investigation
+                                         Asif Kamal Turzo · Amiangshu Bosu
+arXiv:2302.11686v2 [cs.SE] 19 Jun 2023
+
+
+
+
+                                         Submitted: February 20, 2023 / Accepted: TBD
+
+
+                                         Abstract Context: Due to the association of signifi-        experiences for the files under review have been the
+                                         cant efforts, even a minor improvement in the effective-    most popular attributes for reviewer recommendation
+                                         ness of Code Reviews(CR) can incur significant savings      systems, we do not find any significant association of
+                                         for a software development organization.                    those attributes with CR usefulness.
+                                             Aim: This study aims to develop a finer grain un-          Conclusion: We recommend discouraging frequent
+                                         derstanding of what makes a code review comment use-        code review associations between two individuals as
+                                         ful to OSS developers, to what extent a code review         such associations may decrease CR usefulness. We also
+                                         comment is considered useful to them, and how vari-         recommend authoring CR comments in a constructive
+                                         ous contextual and participant-related factors influence    and empathetic tone. As several of our results deviate
+                                         its degree of usefulness.                                   from prior studies, we also recommend more investi-
+                                             Method: On this goal, we have conducted a three-        gations to identify context-specific attributes to build
+                                         stage mixed-method study. We randomly selected 2,500        reviewer recommendation models.
+                                         CR comments from the OpenDev Nova project and
+                                                                                                     Keywords code review · usefulness · productivity ·
+                                         manually categorized the comments. We designed a sur-
+                                                                                                     empirical
+                                         vey of OpenDev developers to understand their per-
+                                         spectives on useful CRs better. Combining our survey-
+                                         obtained scores with our manually labeled dataset, we
+                                         trained two regression models - one to identify factors     1 Introduction
+                                         that influence the usefulness of CR comments and the
+                                         other to identify factors that improve the odds of ‘Func-   Code Review (CR) is a software development practice
+                                         tional’ defect identification over the others.              where developers asynchronously inspect peers’ code
+                                             Key findings: The results of our study suggest that     changes to identify defects as well as potential quality
+                                         a CR comment’s usefulness is dictated not only by its       improvement opportunities [3]. By addressing the cost
+                                         technical contributions, such as defect findings or qual-   ineffectiveness of traditional Fagan inspections [20], CR
+                                         ity improvement tips, but also by its linguistic char-      has achieved widespread adoption among commercial
+                                         acteristics, such as comprehensibility and politeness.      and Open Source Software (OSS) development organi-
+                                         While a reviewer’s coding experience positively asso-       zations [3, 64, 67]. Many projects mandate each code
+                                         ciates with CR usefulness, the number of mutual re-         change be approved through a CR process before it
+                                         views, comment volume in a file, the total number of        can be integrated into the project’s main codebase [65].
+                                         lines added /modified, and CR interval have the op-         As a result, both commercial and OSS developers are
+                                         posite associations. While authorship and reviewership      spending 10-15% of their time on CR tasks [11]. Due
+                                                                                                     to the large efforts associated with CRs, even a minor
+                                         A. Turzo, and A. Bosu
+                                                                                                     improvement in CR’s effectiveness can save developers
+                                         Department of Computer Science, Wayne State University,     time and can incur significant savings for a software de-
+                                         Detroit, Michigan.                                          velopment organization. Since prior studies report be-
+                                         E-mail: asifkamal@wayne.edu, amiangshu.bosu@wayne.edu       tween 20 to 44% of CRs are marked as ‘not useful’ by
+2                                                                                                     Turzo and Bosu
+
+
+code authors [13, 32, 63], improving CR effectiveness is     since a CR suggesting a ‘variable renaming’ falls into
+a high priority for many organizations [13, 32].             the same bin as the one finding a ‘critical defect’. Rec-
+    The basic building blocks of a CR are suggestions        ommendations obtained through this coarse-grained anal-
+(aka review comments) authored by the reviewers. A           ysis are prone to amplifying trivial issues such as nam-
+CR is effective if comments belonging to that CR are         ing conventions and documentation since the majority
+useful to the code author and involved reviewers [13].       of CR comments belong to that categories [9,13,32,58].
+Therefore, an empirical understanding of what makes          As current recommendations on conducting CRs, as
+CR comments useful to code authors and reviewers is          well as code reviewer recommendation systems, are de-
+essential to improve CR effectiveness. Among the vari-       signed to repeat past histories rather than to maximize
+ous approaches to improve CR effectiveness, which in-        bug finding [26, 62, 82], a large number of functional
+clude adding features to CR tools [6,36,71], automated       defects escape CRs [17, 59].
+reviews [4,77,78], reviewer recommendation [76,82], and          To fill in these three knowledge gaps, the primary
+promoting useful feedback [13,45], this study focuses on     objective of this study is to develop a finer grain under-
+the latter. Findings of recent studies investigating CR      standing of what makes a code review comment useful to
+usefulness suggest that although a developer’s primary       OSS developers, to what extent a code review comment
+expectations from a CR comment are the identification        is considered useful to them, and how various contex-
+of defects, code improvement opportunities, or an alter-     tual and participant-related factors influence its degree
+native solution approach [3,11], the majority of the CR      of usefulness. On this objective, we designed a mixed-
+do not meet those expectations [3,9,13,17]. A CR com-        method three-step case study of the OpenDev commu-
+ment may still be considered useful, even though it did      nity (formerly known as OpenStack). In the first step,
+not meet any of the primary expectations, but satisfies      we randomly selected 2,500 code review comments from
+other secondary criteria, such as improving code main-       the OpenDev Nova project and manually categorized
+tainability, facilitating knowledge sharing, or helping      those comments to identify the frequency of different
+relationship formed between the participants [3,11]. Al-     categories of review comments. In the second step, we
+though developers have limited disagreements regard-         designed an online survey using samples from the first
+ing the primary criteria to judge a CR’s usefulness, the     step to better understand developers’ views regarding
+same cannot be said for those secondary criteria. For        the usefulness of various categories of CR comments.
+example, some developers consider suggestions to im-         We distributed the survey among the OpenDev devel-
+prove code documentation or code visualization as use-       opers and obtained 160 usable responses. In the third
+ful, while others consider the opposite [32]. Therefore,     step, we combined the insights obtained from the survey
+questions remain about how those secondary criteria          with the manually categorized dataset to develop two
+compare to each other among a broader pool of devel-         regression models to identify underlying factors that
+opers.                                                       are associated with CR usefulness as well as the types
+    We have identified three knowledge improvement ar-       of CR comments being authored. This study’s design is
+eas based on existing works investigating CR useful-         motivated by Bosu et al., as this study has overlapping
+ness [3, 13, 30, 46, 67]. First, prior studies on CR use-    objectives with theirs [13]. However, this study’s final
+fulness mostly focused on commercial organizations [3,       two steps, as well as our analysis approach, significantly
+13, 32, 46, 63, 67], except Kononenko et al., which inves-   differ from them.
+tigated CR usefulness among Mozilla developers [45].             Primary contributions of this study include:
+Therefore, we have limited insights regarding OSS de-
+velopers’ perspectives on useful CRs. Second, we have        – A finer-grained understanding from OSS developers’
+a limited understanding of how various contextual and          points of view regarding what makes a code review
+participant factors may influence CR usefulness. Al-           useful;
+though Bosu et al. analyzed how several changeset and        – An empirically developed ranking of code review
+reviewer characteristics influence CR usefulness [13],         comment categories based on perceived usefulness;
+several crucial factors (i.e., detailed in Table 6) were     – An empirical evaluation of how various contextual
+missing from their investigation. These missing insights       and participant-related factors are associated with
+can be helpful in training reviewers, preparing code           CR usefulness.
+changes for CRs, and selecting the best reviewer for         – An empirical evaluation of the factors influencing re-
+those changes. Finally, to analyze CR usefulness fac-          ceiving ‘functional defect finding’ comments vs not
+tors, Bosu et al. [13] grouped code reviews into two           receiving such ones.
+categories, either ‘Useful’ or ‘Not useful’. However, such   – Recommendations for practitioners to improve the
+a coarse grain analysis fails to identify crucial insights     code review process.
+What Makes a Code Review Useful to OpenDev Developers?                                                              3
+
+
+ – To promote replication, our analysis scripts and ag-    2.2 Regression analysis
+    gregated dataset are publicly available at
+    https://github.com/WSU-SEAL/CR-usefulness-EMSE.Regression analysis is a powerful statistical approach
+                                                           that helps to analyze how one or multiple independent
+    The remainder of the paper is organized as the fol-    variables influence one dependent variable [21]. There
+lowing. Section 2 provides a brief overview of the re-     are two primary uses of regression– (i) predictive anal-
+search context. Section 3 introduces our two research      ysis and (ii) inferential analysis [1]. In predictive anal-
+questions based on our primary objective. Section 4 de-    ysis, the goal is to develop a formula to predict the
+tails our research methodology. Section 5 and 6 present    value of a dependent variable based on the values of
+the results of our first and second research questions,    one or more independent variables. In comparison, the
+respectively. Section 7 and 8 discuss the key impli-       goal of an inferential analysis is to determine whether a
+cations of our findings and related works, respectively.   particular independent variable has any impact on the
+Section 9 and Section 10 discuss threats to validity and   dependent variable and the magnitude of that impact
+concludes the paper, respectively.                         if it exists. The inferential analysis differs from the pre-
+                                                           dictive analysis preliminary based on two key factors.
+                                                           First, multicollinearity: if two or more independent vari-
+2 Background                                               ables are highly correlated to each other, considering
+                                                           all of those correlated variables together can produce
+This section presents a brief overview of the contempo-
+                                                           an over-fitting problem in inferential analysis. However,
+rary CR process and regression analysis concepts that
+                                                           in predictive analysis, multicollinearity is not an issue.
+would be essential to understand our research method.
+                                                           Second, R2 : R2 represents the goodness of fit of a re-
+                                                           gression model [35]. Higher R2 is important; however,
+                                                           it is more important in predictive analysis. In an in-
+2.1 Code Review                                            ferential analysis, even with a small R2 , the regression
+                                                           model can provide useful insights regarding the rela-
+Code review is the process of reviewing and rewriting a
+                                                           tionships between the independent and the dependent
+piece of code iteratively before merging it into the main
+                                                           variables [1]. We have used inferential regression anal-
+codebase. Contemporary code reviews are lightweight,
+                                                           ysis in this work.
+asynchronous, tool-based, and time efficient. Popular
+CR tools include Gerrit, Phabricator, ReviewBoard, GitHub
+pull request, Critique, and CodeFlow. While these tools    3 Research Questions
+vary based on the set of supported features, the primary
+workflow is tool agnostic.                                 The following subsections introduce the two research
+    To start a CR process, a code author uploads code to   questions guiding this research.
+a repository and creates a review request with a descrip-
+tion detailing the CR’s goal. The author can invite re-
+viewer(s). Additional contributors with required access    3.1 RQ1: What makes a code review useful to OSS
+can self-assign to review as well. CR tools support re-    developers?
+viewers’ comprehension through various features, such
+as a side-by-side view highlighting the differences be-    These insights may help OSS participants practice code
+tween the current version and the previous one, the        reviews to improve CR effectiveness. However, ‘useful-
+commit history of the file, and potential conflicts. Re-   ness’ as a complex phenomenon may have multiple as-
+viewers can raise concerns regarding a particular code     sociated facets. We divide this question into two sub-
+segment by adding inline comments (e.g., Figure 2).        questions to investigate technical and non-technical facets
+The developer (author of the patch) can view the re-       of CR usefulness. Our first sub-question (i.e., RQ1.A)
+view comments and interact with the reviewers using        aims to find out the open-ended opinions of OSS de-
+the same interface. The author can address the com-        velopers about CR usefulness to identify whether the
+ment by modifying the files and uploading a new patch      CR usefulness criteria for OSS developers are similar
+set, or adding responses. If modified, the author asks for to the ones considered by industry participants [3, 11,
+a re-review. The reviewer checks the modified files and    13]. More specifically, we investigate how primary (e.g.,
+may approve the change if he/she is satisfied. If not,     identification of defects, code improvement opportuni-
+the reviewer may ask for further changes. This process     ties, or alternative solution approaches) and secondary
+may repeat for several iterations until the reviewer(s)    CR usefulness criteria (e.g., improving code maintain-
+approve the change or it is abandoned.                     ability, facilitating knowledge sharing, or helping re-
+4                                                                                                      Turzo and Bosu
+
+
+lationship formation among teammates.) reported by           4 Research Methodology
+prior studies rank among OSS participants.
+                                                             This section details our project selection, data collec-
+   RQ1.A: What are the open-ended opinions of OSS            tion, survey design, and qualitative and quantitative
+developers regarding code review usefulness?                 analyses approach.
+     As we aim to rank CR comments based on the de-
+gree of usefulness, some of the secondary CR usefulness
+criteria, such as relationship formation and knowledge       4.1 Project selection
+sharing, are difficult to rate by an independent evalua-
+tor within the limited context and timeframe of a user       We selected the OpenDev community for the survey
+study. Therefore, we narrow down our focus into a facet      and selected the OpenDev Nova project for our quan-
+that a study participant can independently determine,        titative analysis for the following reasons:
+i.e., the type of comment authored in a CR. Hence, we
+                                                              – OpenDev is one of the largest OSS development
+ask:
+                                                                communities with more than 15K contributors, and
+    RQ1.B: How do OSS developers rank various cate-             OpenDev developers practice tool-based CRs [11].
+gories of code review comments based on their degrees         – The OpenDev family includes 52 different projects
+of usefulness?                                                  as of 2023 [28], which includes Nova, Neutron, Heat,
+                                                                and Swift.
+                                                              – OpenDev community includes approximately 110k
+                                                                persons from more than 700 organizations spanning
+                                                                182 countries worldwide [22].
+                                                              – OpenDev Nova is one of the most active projects in
+3.2 RQ2: Which contextual and participant                       the OpenDev community [39], and it has been the
+characteristics are associated with CR usefulness?              subject of prior studies investigating CRs [30, 81].
+
+We term attributes of a CR context (i.e., where a CR
+occurred) as contextual factors. For example, charac-        4.2 Data Mining
+teristics of changes under review (e.g., code churn and
+number of files) belong to contextual factors. On the        The CR repository of the OpenDev community is man-
+other hand, attributes of the CR participants (e.g., au-     aged by Gerrit1 . We use a Java-based Gerrit Miner
+thor’s /reviewers’ experience and prior history with the     tool to access Gerrits’ REST API to mine all the pub-
+files under review) belong to participant characteristics.   licly available CRs from the OpenDev’s repository2 and
+We focus only on contextual and participant-related          store those in a MySQL database. Our dataset includes
+factors since we aim to identify actionable recommen-        a total of 795,226 completed (i.e., either ‘Merged’ or
+dations for review preparation and reviewer selection        ‘Abandoned’) CRs spanning July 2011 to March 2022.
+to maximize the likelihood of receiving useful feedback.
+Table 6 provides a list of contextual and participant
+factors selected based on prior studies. We divide this      4.3 Classification Rubric
+question into two sub-questions. Our first sub-question
+aims to identify how various contextual and participant      We have identified five prior studies that have pre-
+factors may contribute to maximizing CR usefulness.          sented classifications of issues identified during CRs [9,
+   RQ2.A: How are various contextual and participant         13, 32, 49, 58]. We started with the classification pro-
+characteristics associated with the degree of usefulness     posed by Beller et al. [9]. In the proposed classifica-
+achieved in a code review?                                   tion scheme, Beller et al. classified CR changes into
+                                                             two higher-level categories: ‘Functional’ and ‘Evolvabil-
+    Our second sub-question aims to maximize primary         ity’. They divided ‘Functional’ and ‘Evolvability’ into
+CR usefulness criteria, such as identifying functional       six and three sub-categories, respectively. Two of the
+defects. Therefore, we investigate how various factors       ‘Evolvability’ sub-categories (‘Structure’, and ‘Docu-
+are associated with these primary usefulness criteria in-    mentation’), were further divided to form two lower-
+stead of secondary ones.                                     level sub-categories from each.
+    RQ2.B: How are various contextual and participant         1   https://www.gerritcodereview.com/
+factors associated with identifying functional defects?       2   https://review.opendev.org
+What Makes a Code Review Useful to OpenDev Developers?                                                                     5
+
+
+                                                                2. A ‘False positive’ is a CR comment where the re-
+                                                                   viewer’s concern is invalid. Beller et al. excluded
+                                                                   false positives [9], since those do not induce changes.
+                                             Defects*
+                                                                   We include a new category named ‘False positive’ to
+                                              Logical*             include those, as we target CR comments instead of
+                                                                   changes.
+                                            Validation*
+                                                                3. Instead of four levels in Beller et al.’s schema [9], we
+                                                                   simply our schema into three levels by excluding the
+                      Functional*           Resource*
+                                                                   ‘Evolvability’ category and putting its subcategories
+                                              Timing*
+                                                                   directly under the top level.
+                                                                4. We rename the ‘Structure’ subcategory from Beller
+                                             Support*              et al. into refactoring, since types of changes belong-
+                                                                   ing to fall under Martin Fowler’s refactoring cat-
+                                             Interface*
+                                                                   alog [23]. We add the ‘Alternate output’, another
+                                                                   sub-category discovered by Bosu et al. [13] under
+                                        Solution Approach*
+                                                                   this group as well. Finally, we also include ‘Visual
+                                           Organization*
+                                                                   representation’ under ‘Refactoring’, as those were
+                     Refactoring***
+                                                                   included among refactorings by prior studies [33,80].
+    Code review
+                                         Alternate Output**
+     comments
+                                                                    Figure 1 shows our CR classification scheme. Com-
+                                        Identifier Naming***    ponents in one star (*) are taken from Beller et al [9]
+                                                                without modification. Components in two stars (**)
+                                              Visual
+                                         Representation***      and three stars (***) are our additions and modifica-
+                                                                tions, respectively. Table 1 provides a brief description
+                    Documentation***
+                                                                of each of the CR comment categories from this scheme.
+                                        Design Discussion**
+
+
+                                             Praise**
+                                                                4.4 Manual Labeling
+                      Discussion**
+
+
+                                            Question**            For this phase, we randomly selected 2,500 CR com-
+                                                                  ments from the OpenStack Nova project. We chose Open-
+                      False Positive**                            Dev Nova has the highest number of distinct contrib-
+                                                                  utors as well as the highest number of completed CRs
+                                                                  within the OpenDev community. According to an inves-
+                                                                  tigation of our dataset, during the period of July 2011 to
+Fig. 1: Adopted code review comment classification                March 2022, Nova has 38,775 either completed or aban-
+scheme. * → components adopted directly from Beller               doned CRs. The second highest is the Neutron, which
+et al., ** → newly added categories, and *** → modi-              has 23,456 either completed or abandoned CRs dur-
+fication of Beller et al. scheme.                                 ing the above-mentioned period. Our collected dataset
+                                                                  of the Nova project contains a total of 300,304 code
+                                                                  review comments from July 2011 to March 2022. We
+    While we use their scheme as the basis for our pro-           selected 2,500 as the sample size to achieve a 95% con-
+posed one, we made the following three modifications              fidence interval with a 2% margin of error [79]. Two
+to fit our study context better.                                  of the authors independently categorized each of the
+                                                                  selected comments into one of the eighteen categories
+ 1. Beller et al.’s scheme is targeted towards CR changes [9],
+                                                                  from Table 1 after reading the entire discussion thread
+    whereas we focus on CR comments. Prior studies
+                                                                  associated with a comment and also inspecting its asso-
+    have found a non-trivial number of CR comments
+                                                                  ciated code context. Each author also labeled each com-
+    that do not trigger code changes [13, 32]. For ex-
+                                                                  ment as either ‘useful’ or ‘not useful’. For this labeling,
+    ample, Bosu et al. found four such categories: i)
+                                                                  we adopt the ‘usefulness’ labeling rubric proposed by
+    ‘Praise’, ii) ‘Questions’, and iii) ‘Design discussion’ [13].
+                                                                  Bosu et al. [13]. Two subsequent CR usefulness stud-
+    Later Hasan et al. also found those categories of CR
+                                                                  ies [30,63] have also used this rubric, which is as follows:
+    comments [13]. Therefore, we introduce a new cat-
+    egory named ‘Discussion’ that includes these three              – Useful – A code review comment is considered ‘use-
+    sub-categories.                                                   ful’:
+6                                                                                                                   Turzo and Bosu
+
+              Table 1: Description of the categories from our code review comment classification scheme
+
+    Group                 Category                   Description
+                          Functional defect          Functionality is missing or implemented incorrectly and such defects of-
+                                                     ten require additional code or larger modifications to the existing solu-
+                                                     tion.
+    Functional            Logical                    Control flow, comparison related, and logical errors.
+                          Validation                 Validation mistakes or mistakes made when detecting an invalid value
+                                                     are of this class. Any kind of user data sanitization-related comments are
+                                                     in this category, too.
+                          Resource                   Resource (variables, memory, files, database) initialization, manipulation,
+                                                     and release.
+                          Timing                     Potential issues due to incorrect thread synchronization.
+                          Support                    Issues related to support systems and libraries or their configurations.
+                          Interface                  Mistakes when interacting with other parts of the software such as -
+                                                     existing code library, hardware device, database or operating system.
+                          Solution approach          Suggestions to adopt an alternate algorithm or data structure.
+                          Alternate Output           Comments that suggest modifying the error message, toast message,
+    Refactoring                                      alert, or change what is returned by a function.
+                          Organization of the        Refactoring suggestions such as those included in Martin Fowlers’s cata-
+                          code                       log [23].
+                          Naming Convention          Violations of identifier naming conventions.
+                          Visual   Representa-       Whitespace, blank lines, code rearrangements, and indentation-related
+                          tion                       comments.
+     Documentation        Documentation              Suggestions to add /modify comments or documentation to aid code
+                                                     comprehension.
+                          Design discussion          Discussions on design direction, design pattern, and software architec-
+    Discussion                                       ture.
+                          Question                   Questions to understand the design or implementation choices.
+                          Praise                     Complement for a code.
+    False positive        False positive             If a review comment raises an invalid bug or concern.
+    Others                Other                      Comments not belonging to any of the above categories.
+
+
+    1. if the code author explicitly acknowledges the                 4.5 Survey Design for RQ1
+       identified issue (e.g., “Good catch”).
+    2. If the code author implicitly acknowledges the                 To better understand what makes a CR useful to OSS
+       identified issue by making the suggested changes.              developers (RQ1), we designed an online survey for per-
+    3. If the author explicitly defers the identified issue           sons who have first-hand knowledge of participating
+       to a future change.                                            OSS CRs (i.e., actively participated in CRs by provid-
+                                                                      ing suggestions).
+ – Not useful – A comment is considered ‘not useful’:
+   1. if the code author explicitly states the issue as
+      invalid.                                                        4.5.1 Questionnaire preparation
+   2. if the code author neither makes the suggested
+      changes nor acknowledges deferring it to a future                   Since RQ1.A aims to find out the open-ended opin-
+      change.                                                         ions of OSS developers about CR usefulness. Our sur-
+                                                                      vey asks, ‘What makes a code review useful (Q5 in Ta-
+                                                                      ble 2)?’. RQ1.B aims to understand how useful each
+    We computed the level of inter-rater reliability of
+                                                                      kind of code review comment listed in Table 1 is. On
+this multi-label manual categorization process (assign-
+                                                                      this goal, we include two categories of questions in the
+ing comments into 18 categories) using Cohen’s kappa
+                                                                      survey. First, we ask the respondents to manually rate
+(κ) [16] which was measured as 0.68 (‘a substantial
+                                                                      each CR category on a five-point Likert scale, only
+agreement’3 ). Cohen’s kappa value for the ‘useful’/‘not
+                                                                      based on a short definition of that category (Q7). Sec-
+useful’ categorization is 0.84.
+                                                                      ond, we ask the respondents to rate sample CR com-
+                                                                      ments on a 10-point scale, by only showing screenshots
+  3 Kappa (κ) scores are commonly interpreted as: 0.01–0.20
+                                                                      and without revealing the actual categories those com-
+                                                                      ments belong to (Q8 to Q39), in total, there were 32 CR
+as ‘none to slight,’ 0.21–0.40 as ‘fair,’ 0.41– 0.60 as ‘moderate,’
+0.61–0.80 as ‘substantial,’ and 0.81–1.00 as ‘almost perfect          comment samples. To identify sample CR comments for
+agreement’ [47].                                                      this 10-point scale rating, we identified multiple ideal
+What Makes a Code Review Useful to OpenDev Developers?                                                                    7
+
+                                      Table 2: Questions included in our survey
+
+   #      RQ# Question Text                                                       Answer Choices
+   Q1     D     What is your highest level of education?                          [ High school, Bachelors, Masters,
+                                                                                  Ph.D., Other ]
+   Q2     D   How many years of software development experience do you have?      [ Numeric input]
+   Q3     D   How many years have you been practicing tool-based code re-         [ Numeric input]
+              views?
+   Q4     D   How many hours per week, on average, do you spend reviewing         [Numeric input ]
+              other contributors’ code?
+   Q5     RQ1 In your opinion, what makes a code review useful?                   [Free form text]
+   Q6     D   Approximately, what proportion of code reviews in your project,     [ Numerical slider from 0%-100%]
+              do you feel are useful (i.e., fits the above definition)?
+   Q7     RQ1 Rate the following categories of review comments based on their     Matrix table [61] with [1-5 Star Rat-
+              perceived usefulness to you. Choices are 16 categories from Table   ing]
+              1 excluding the ‘False positive’ and ‘Others’ categories.
+   Q8-    RQ1 How useful do you find the above code review on a scale of 1 to     Each question showed a screenshot
+   Q39        10 if you were the author?                                          such as Figure 2 [1-10 Star Rating]
+
+
+
+
+                                                   (a) Documentation
+
+
+
+
+                                                     (b) Validation
+
+                         Fig. 2: Examples of code review comments included in our survey
+
+
+examples for each CR comment category from our man-           our labeled dataset. They identified a total of 64 candi-
+ually labeled dataset. We consider an example ideal           date examples, where exactly four examples belonged
+if its category can be distinguished unambiguously by         to each CR comment category. We merged these two
+reading the comment and its context (i.e., screenshot).       lists, assigning a score of ‘2’ to examples belonging to
+To be an ideal example, a CR comment: i) must clearly         both lists and assigning ‘1’ to others. Next, we had a
+state what needs to be changed or what the comment            discussion section to pick two of the most representative
+pertains to, and ii) its surrounding code context must        examples for each CR comment category, where exam-
+include the relevant code snippet.                            ples with a score =2, got higher priorities. At the end
+    However, we excluded the ‘False positive’ category        of this process, we selected a total of 32 examples. We
+as those are not useful (i.e., 0). We also excluded ‘Oth-     took Gerrit screenshots of the selected examples with
+ers,’ as we could not find a representative sample for        surrounding code contexts. Figure 2 shows two of the
+that category. With the remaining 16 CR comment cat-          examples included in our survey. Table 2 lists the ques-
+egories, two of the authors independently investigated        tions included in our survey. We have also included all
+8                                                                                                       Turzo and Bosu
+
+
+the questions and 32 selected examples in our supple-        through all the responses to extract the factors of useful
+mentary material.                                            CRs mentioned by our respondents. Then we had a dis-
+4.5.2 Pilot Survey                                           cussion session to cross-validate and create a finalized
+                                                             list of factors. With this list, two of the authors inde-
+For expert reviews, we sent the survey questionnaire to      pendently labeled each response to one or more codes.
+two renowned Software Engineering (SE) researchers           After completion, we compared the labels to identify
+with expertise in code reviews. According to their feed-     conflicts. Finally, we had a discussion session to resolve
+back, we made several edits for structural and linguis-      those conflicting labels. Inter-rater reliability based on
+tic modifications. Finally, we piloted the survey with       Cohen’s kappa κ for this labeling was 0.56 (i.e., ‘mod-
+three SE graduate students for validation. The goal of       erate’). The low κ value is because a single response
+piloting the survey is to identify any visible mistakes      might mention one or multiple CR usefulness criteria,
+and to get any modification suggestions for improving        which creates theoretically exponential possibilities.
+the survey questions. We got the final survey questions,         Table 3 provides an overview of the demograph-
+consent form, participant selection strategy, solicitation   ics of our survey respondents. Our respondents include
+email, and data management protocol reviewed and ap-         mostly experienced software developers, with 79% hav-
+proved by our university’s Institutional Review Board        ing more than five years of software development expe-
+(IRB).                                                       rience. The respondents also have significant code re-
+                                                             view experiences, as almost 90% have been practicing
+                                                             tool-based code reviews for more than two years. On
+4.6 Data Collection                                          average, our respondents spend 5 hours per week in
+                                                             code review, which is on par with the numbers reported
+To solicit the opinions of participants with adequate CR     in prior studies [11, 32]. Based on these characteristics,
+experience, we sent our survey only to developers who        we believe that our respondents are eligible to provide
+have submitted at least 5 code changes for review. Since     valuable opinions to answer our research questions.
+all the code snippets are written in Python, we also
+limited our selection to OpenDev projects with Python
+listed as the primary language. We identified a total of     5 Results: (RQ1) What makes a code review
+4,188 OpenDev developers satisfying these criteria.          useful to OSS developers?
+    We sent personalized emails, composed according
+to the guidelines provided by our IRB, to each of the        The following subsections describe the results of our
+4,188 developers with the link to the survey hosted on       first research question based on our survey responses.
+Qualtrics [70]. Since we obtained the email addresses
+by mining Gerrit, there are ethical considerations [5]
+for sending such invitations. Therefore, each of our in-     5.1 RQ1.A: What are the open-ended opinions of OSS
+vitations: i) indicated the OSS project that we mined to     developers regarding code review usefulness?
+obtain his/her email address, ii) indicated if the partic-
+ipant would get any more emails from us, iii) provided       Based on our respondents’ opinions, we identified 23 dif-
+a link to opt-out, and iv) apologized for the inconve-       ferent criteria (codes) to judge a CR as useful. Posthoc,
+nience. Excluding the 1,010 undelivered ones (i.e., email    we aggregated those codes into 9 higher-level groups.
+address no longer valid), we consider 3,178 emails as de-    Table 4 shows those nine groups, 23 codes, and the per-
+livered. We obtained a total of 238 responses, a response    centage of respondents mentioning the code. The sum of
+rate of 7.49%.                                               the percentages exceeds 100% since respondents could
+                                                             mention multiple codes in their responses. Unsurpris-
+                                                             ingly, ‘Finds defects’ tops this list, followed by ‘Improve
+4.7 Survey data analysis
+                                                             code quality’. However, we notice a strong emphasis
+                                                             on non-technical aspects, with one-third of respondents
+We checked the quality of the recorded responses and
+                                                             judging CR’s usefulness based on linguistic characteris-
+excluded 78 cases where the respondent did not answer
+                                                             tics. We also ran Chi-Square (χ2 ) tests to check whether
+at least one survey question that is tied to our research
+                                                             these criteria differed based on education level, software
+questions (i.e., left the survey after completing only the
+                                                             development experience, or code review experience. We
+demographic section). So, we conducted our analysis
+                                                             found significant differences (χ2 = 13.34, p = 0.012)4
+on 160 responses. For the one qualitative question (i.e.,
+Q5 in Table 2), we adopted a systematic data anal-            4  p − values are adjusted using Benjamini and Hochberg
+ysis process. Two of the authors independently went          corrections [10] due to multiple comparisons.
+What Makes a Code Review Useful to OpenDev Developers?                                                                   9
+
+                                          Table 3: Respondents’ demographics
+
+                                                                                   Categorical                    % of
+     Question                                             Mean         Median
+                                                                                   description             respondents
+                                                                                   High school                  36.6%
+     Q1. What is your highest level of education?           —             —        Bachelors                    50.7%
+                                                                                   Masters                      5.4%
+                                                                                   Ph.D.                        4.4%
+                                                                                   Other                        2.9%
+                                                           10.14                   < 2 years                    1.5%
+     Q2. How many years of software development ex-                    10 years    2-5 years                    19.5%
+                                                           years
+     perience do you have?                                                         6-10 years                   33.7%
+                                                                                   > 10 years                   45.3%
+                                                           5.43                    < 2 years                    10.2%
+     Q3. How many years have you been practicing tool-                  5 years    2-5 years                    44.9%
+                                                           years
+     based code reviews?                                                           6-10 years                   28.8%
+                                                                                   > 10 years                   16.1%
+                                                            5.10                   < 2 hours                    23.9%
+     Q4. How many hours per week, on average, do you                   4 hours     2-5 hours                    42.9%
+                                                           hours
+     spend reviewing other contributors’ code?                                     6-10 hours                   15.1%
+                                                                                   > 10 hours                   18.1%
+
+   Table 4: Codes that emerged from open-ended survey question and category that we assigned each code to
+
+                  Assigned category (% respondents)              Theme (# of respondents)
+                                                                 Defect finding (126)
+                                                                 Security issues (11)
+                  Find defects (44.4% )
+                                                                 Fulfill requirements (11)
+                                                                 NIT/typos (9)
+                                                                 Code optimization (48)
+                  Improve code quality (42.5% )                  Alternative implementation (35)
+                                                                 Improve documentation (21)
+                                                                 Constructive criticism (29)
+                                                                 Respectful (15)
+                  Uses appropriate language
+                                                                 Concrete example (13)
+                  (28.1%)
+                                                                 Understandable (12)
+                                                                 Code comprehensibility (23)
+                  Maintainability (28.1%)                        Maintain design (17)
+                                                                 Reduce maintenance cost (6)
+                                                                 Knowledge transfer (35)
+                  Facilitates knowledge sharing (25.0%)          Mentoring (3)
+                                                                 Project awareness (10)
+                                                                 Design suggestion (27)
+                  Facilitates better design (24.4% )             Consider wider context (13)
+                                                                 Questions leading to better design (12)
+                  Appreciate good work (3.1%)                    Appreciate good work (5)
+                  Helps community building (3.1%)                Helps community building (5)
+                  Timely feedback (1.8%)                         Timely feedback (3)
+
+
+only based on software development experience as vet-           5.1.1 Finds defects
+eran developers with more than ten years of experience
+were more likely to use the ‘finds defect’ criteria.
+                                                                Most of the respondents (44.4%) consider a code review
+                                                                as useful if it points out a defect. Identification of any
+                                                                functional defects (i.e., the functional group from Ta-
+    The following subsections detail those nine CR use-         ble 1) is useful and is one of the primary expectations
+fulness criteria based on our respondents’ opinions. We         of code authors [3].
+also include verbatim excerpts to illustrate their opin-
+                                                                   Points to errors or issues, that the author didn’t see
+ions further. Each excerpt is associated with a numeric
+                                                                   during writing code. [#40]
+value that indicates a unique identifier for the respon-
+dent who expressed that opinion. For example, [#40]                  Prior research found evidence of security defects iden-
+indicates a response from the 40th respondent.                  tified during code reviews [12, 59]. Although the iden-
+10                                                                                                      Turzo and Bosu
+
+
+tification of security defects is rare, they are extremely        Sometimes examples illustrating potential problems
+useful.                                                       are extremely useful to help authors understand prob-
+   Any code review that aims to improve the code is use-      lems with their proposed solutions.
+   ful. Sometimes the improvement is drastic and criti-         ...reviewers must clearly state their concerns and opin-
+   cal, such as pointing out an error that would lead to        ions and where applicable point to specific code lines,
+   a crash, or a security issue. [#116]                         documentation, mailing list threads, or other discus-
+     Code reviews can also serve as a validation step as        sions that are relevant to the matter at hand or pro-
+reviewers may provide feedback on requirement fulfill-          vide examples. [#10]
+ment.                                                             Even if a reviewer rejects a change, it is important
+   Proper scoping of the reviews:- Architectural reviews,     to do so in a constructive way.
+   alignment with requirements ... [#52]                        If negative, provides constructive feedback, the more
+                                                                definitive the better. [#101]
+5.1.2 Improves code quality
+                                                              5.1.4 Improves ‘maintainability’
+Any suggestions to improve code quality are useful. A
+large number of our respondents appreciate suggestions
+                                                              Code reviews checking for violations of project design
+to achieve better quality through an alternate solution
+                                                              constraints are also useful
+approach.
+                                                                 1. what are the problems about the code? 2. Does the
+   Clear, constructive discussion of the code, ..., sugges-
+                                                                 code align with the project’s blueprint? [#141]
+   tions from reviewers for alternative implementations
+                                                                   Code that is not readable is difficult to maintain.
+   if there are areas the code could be improved or does
+                                                              Future contributors will face difficulty to modify the
+   not meet criteria. [#103]
+                                                              less readable code. Suggestions to improve readability
+     Code optimization is another quality improvement
+                                                              from a different person’s perspective are useful.
+area, as reviewers might suggest possible code reuse op-
+                                                                 ...pointing and discussing better ways of achieving the
+portunities and code optimization techniques.
+                                                                 same result. by better ways I mean: code readability,
+   Optimization of code e.g. newcomers may not know
+                                                                 performance, and maintainability. [#215]
+   full design so they may implement an already existing
+   function which could be found in code review. [#206]
+     Documentations to aid program comprehension are          5.1.5 Facilitates knowledge sharing
+crucial for long-term maintenance. Pointing out mis-
+                                                              Prior studies suggest knowledge sharing as one of the
+takes in documentation or documentation improvement
+                                                              most important benefits of code reviews [3, 11]. Code
+suggestions is useful.
+                                                              review is a bidirectional knowledge transfer process, the
+    Finding structural issues/code comments /documen-
+                                                              code owner learns from the reviewers’ comments and
+   tation that would make the code hard to maintain go-
+                                                              the reviewer also learns from the code owner. Reviews
+   ing forward. [#130]
+                                                              facilitating such knowledge transfer are useful.
+5.1.3 Uses appropriate language                                  Knowledge transfer. It lets other members of the com-
+                                                                 munity share their experiences with others. Some-
+To be useful, a CR comment needs to be authored in               times the more experienced review participant knows
+an appropriate language as one of our respondents men-           a better way to do things. Sometimes the more ex-
+tioned,                                                          perienced review participant is aware of past design
+   .. it’s not only about what was written, but also how         decisions or design constraints the other party is not
+   it was written. [#56]                                         aware of. [#8]
+     Harsh critiques may demotivate an author and are              A useful review facilitates the newcomers to learn
+less likely to be useful. Moreover, reviews must be con-      code architecture, team culture, and coding conven-
+cise, understandable, and explanatory so that authors         tions.
+can easily understand their mistakes and make neces-             Friendly relations with the core developers, other par-
+sary changes.                                                    ticipating developers, and mentorship. [#166]
+   I typically write code reviews in the form of ‘appreci-
+   ate - suggest a change or point out the mistake - ap-      5.1.6 Facilitates a better design
+   preciate again’ This seems really useful to me because
+   it does not undermine the developer’s confidence and       Reviewers provide useful suggestions on design direc-
+   at the same time tells them about how to go about          tion and design patterns which makes software products
+   enhancing or correcting their approach. [#221]             better architectured.
+What Makes a Code Review Useful to OpenDev Developers?                                                              11
+
+
+   ...lead to a discussion about potential better solutions   5.2 RQ1.B: How do OSS developers rank various
+   (for bug fixes) or future design (for implementing new     categories of code review comments based on their
+   features). [#121]                                          degrees of usefulness?
+     Code review is the platform for reviewers to iden-
+tify errors and for the code owner to defend their work       In response to Q7 in Table 2, our respondents rated
+or make it correct. Such discussions help increase the        16 CR comment categories on a five-point scale. The
+breadth of knowledge of both reviewers and code own-          three columns under the User perception header in Ta-
+ers.                                                          ble 5 show the distributions of the ratings provided by
+   Providing the wider context (e.g. interactions with        our respondents, the average rating for each comment
+   modules or systems the code author did not consider).      category, and the standard deviation of the assigned
+   [#1]                                                       ratings.
+     Asking critical questions about software architec-           Q8-Q39 asked the respondents to rate 32 selected
+ture leads to a better design of the product. Moreover,       example code reviews on a ten-point scale based on
+when the reviewer asks questions about some change,           their usefulness (i.e., how useful they find a code re-
+that means the code is not sufficiently self-explanatory.     view on a scale of 1 to 10 if they were the author).
+So from the readability perspective, there is an oppor-       Since we included two examples for each category, a
+tunity for improvement.                                       respondent’s Sampled user rating for a comment cate-
+   Highlighting issues in the code or asking relevant ques-   gory was computed by taking the average of their two
+   tions to the topic which could lead to improvements.       scores for the examples of that particular category. For
+   [#111]                                                     comparison against the User perception score of a cat-
+                                                              egory, we divided the average Sampled user rating by
+5.1.7 Appreciates good work                                   2. The three columns under the Sampled user rating
+                                                              header in Table 5 show the distributions of the ratings
+Positive encouragement is essential for inspiring new
+                                                              assigned to sample code reviews from each category.
+contributors to do quality work and increasing their
+                                                              The Ratio of comments column shows the percentage
+confidence. Many respondents find such reviews useful.
+                                                              of review comments belonging to a particular category
+  ... code contributor gets more confident in the code
+                                                              in our manually labeled dataset of 2,500 comments. Fi-
+  that has been appreciated and is encouraged to con-
+                                                              nally, the Avg. Rating for the category was computed
+  tinue contributing. [#41]
+                                                              by taking the average of User perception and Sampled
+5.1.8 Timely feedback                                         user rating for that category. The rows in Table 5 are
+                                                              sorted based on this score.
+As review delays can frustrate authors, useful feedback           Our results suggest that finding functional defects,
+should be timely and not create confusion.                    validation, and logical issues are top priorities for our
+  ...Ideally, all concerns should be expressed at once,       respondents. These results support findings from prior
+  avoiding back and forth communication between the           studies [3, 11]. By comparing this ranking against the
+  reviewer and the code author, which can significantly       classification scheme presented in Table 1, we find most
+  delay the patch approval. [#88]                             of the categories belonging to the ‘Functional’ group
+                                                              ranking at the top. However, only 19% of CR com-
+5.1.9 Helps community building                                ments from our dataset belonged to these categories.
+                                                              This ratio is similar to the ones reported in prior stud-
+Constructive criticism creates openness and better pro-       ies [9,13,32]. Although ‘Documentation’ and ‘Organiza-
+gramming habits within a community and therefore is           tion of code’ rank among the bottom half (i.e., 9th and
+useful.                                                       10th respectively), more than 40% of CR comments be-
+  Build team culture for better programming habits, con-      longed to those categories. These results also support
+  fidence in the artifacts, openness in communication.        the prior observation that most CR comments are re-
+  [#6]                                                        lated to trivial issues [17].
+                                                                  We also noticed a few discrepancies between the
+ Key takeaways: According to OpenDev developers,              ranking based on avg. User perception and the one
+ a CR’s usefulness is dictated not only by its tech-          based on avg. Sampled user rating. While avg. User
+ nical contributions such as defect finding or quality        perception ranking for the ‘Validation’ category places
+ improvement tips but also by linguistic and process          it eighth in the list, and below the ‘Documentation’ cat-
+ aspects such as comprehensibility, tone, and timeli-         egory, it ranks top according to avg. Sampled user rat-
+ ness.                                                        ing. On the contrary, our respondents rated logical cat-
+12                                                                                                     Turzo and Bosu
+
+                        Table 5: Ranking of code review comments based on usefulness rating
+
+  Comment                    User perception                       Sampled user rating           Ratio of   Avg.
+  category           Distribution    Avg (µ).   SD (σ)      Distribution    Avg. (µ)   SD (σ)   comments    Rating
+
+
+  Functional                             4.50     0.82                          4.26     0.89       0.48%      4.38
+  Defect
+
+  Validation                             3.81     1.05                          4.50     0.73       3.68%      4.16
+
+  Logical                                4.51     0.84                          3.71     1.16       2.28%      4.11
+
+  Interface                              4.19     0.96                            4      0.96       1.60%      4.10
+
+  Solution Ap-                           4.12     0.98                          3.88     0.92       8.48%      4.00
+  proach
+
+  Question                               4.08     0.91                          3.89     0.93      13.56%      3.99
+
+  Design      Dis-                       4.07     1.13                          3.66     1.21       3.64%      3.87
+  cussion
+
+  Resource                               3.69     1.09                          3.96     1.20       1.48%      3.83
+
+  Documentation                          3.83      1.0                          3.63     1.17      33.32%      3.73
+
+  Organization                           3.62     1.10                          3.74      1.0       7.68%      3.68
+  of Code
+
+  Alternate                              3.39     1.06                          3.87     0.93       2.56%      3.63
+  Output
+
+  Timing                                 3.62     1.18                          3.37     1.12       0.16%       3.5
+
+  Naming Con-                            3.11     1.20                          3.75     1.10       3.52%      3.43
+  vention
+
+  Praise                                 2.99     1.30                          3.07     1.35       4.20%      3.03
+
+  Visual Repre-                          3.12     1.45                          2.71     1.50       3.92%      2.92
+  sentation
+
+
+
+egories as the top, but the samples’ ratings place that        synchronization’, ‘Design discussion’, and ‘Documenta-
+category at tenth. The high standard deviation for the         tion’.
+sample ratings suggests that although respondents con-
+sider CR identifying logical mistakes as highly useful,
+some of the respondents rated the logical samples from
+our survey as less severe issues. The ‘Praise’ and ‘Vi-
+sual representation’ categories ranked among the low-
+est. We also noticed the highest standard deviations
+(SD) for these two categories. These results suggest that       Key takeaways: While OpenDev developers con-
+developers have contradictory opinions regarding these          sider ‘Functional’ CR comments as most useful, less
+categories, as some developers perceive those as useful,        than 20% CR comments from our sample belonged to
+while others perceive those as less useful. Other cate-         that group. OpenDev developers also had widely var-
+gories where our respondents’ opinions have diverging           ied views regarding the usefulness of comments be-
+opinions ( i.e., high SD) besides these two are ‘Resource       longing to praise, documentation, design discussion,
+                                                                resource synchronization, and visual representation.
+What Makes a Code Review Useful to OpenDev Developers?                                                                                                          13
+
+
+
+
+                                                                           0.0
+6 RQ2. Which contextual and participant
+characteristics are associated with CR
+
+
+
+
+                                                                           0.2
+
+                                                                                 log_RI
+usefulness?
+
+
+
+
+                                                                                                                  PDR
+                                                                                                                  PDL
+                                                                           0.4
+
+
+
+                                                                                          IBF
+                                                              Spearman ρ
+
+
+
+
+                                                                                                                        log_MR
+                                                                           0.6
+To answer this question, we selected a total of 21 at-
+
+
+
+
+                                                                                                                                                           CV
+                                                                                                                                                          INF
+                                                                                                PN
+tributes based on prior code review studies [13, 25, 32,
+
+
+
+
+                                                                           0.8
+
+
+
+
+                                                                                                        log_CCR
+
+
+
+
+                                                                                                                                               log_PFRC
+                                                                                                                                 RPT
+51, 63]. A total of 9 attributes are related to review
+
+
+
+
+                                                                           1.0
+
+
+
+
+                                                                                                                                                 RCS
+
+
+
+
+                                                                                                                                                 CCY
+                                                                                                                                             log_CL
+participants and the remaining 12 are related to the
+
+
+
+
+                                                                                                                                       log_COMC
+                                                                                                     FUR
+                                                                                                     DUR
+
+
+
+
+                                                                                                                                        log_RCE
+                                                                                                                                        log_PRC
+review context. For each attribute, Table 6 provides a
+
+
+
+
+                                                                                                                                           WRC
+                                                                                                                                          RCSH
+short definition and a brief rationale on why this at-
+tribute may influence the usefulness of CR comments.
+In a similar investigation, Bosu et al. selected four par-    Fig. 3: Hierarchical structure among the independent
+ticipant factors and two contextual factors. We selected      variables according to Pearson correlation
+three of the four participant factors from their study, as
+OSS projects do not have the ‘same team’ concept as
+Microsoft. We selected one of the two contextual factors      β2 X2 + β3 X3 + ... + βn Xn on the dataset. Here β0 is the
+from Bosu et al. We do not consider file extension in         intercept and βi is the coefficient of the independent
+our analysis, as more than 90% of the sample belongs          variable Xi . The βi , also indicates the change in the
+to one extension (i.e., ‘py’).                                dependent’s value if Xi changes by one unit, while all
+    We would also like to mention that we do not in-          the other independents remain constant. Therefore, a
+clude any attributes related to the CR comment text           positive βi indicates a positive association of Xi with
+due to our design constraints. Based on the results of        Y and vice versa. The following subsections detail our
+RQ1.A, linguistics attributes of a review seem good at-       model training, evaluation, and results.
+tributes to be included in our analyses. However, we
+created our labeled dataset before the survey since we
+                                                              6.1.1 Model training and evaluation
+needed samples for the survey design. Our manual la-
+beling rubric did not consider linguistics aspects. Judg-
+                                                              We noticed highly skewed distributions for eight out of
+ing non-technical aspects such as ‘respectfulness,’ ‘un-
+                                                              the 21 selected attributes. The list of skewed variables
+derstandable,’ and ‘constructive criticism’ depends on
+                                                              includes COMC, RI, CCR, RCE, MR, PRC, PFRC,
+the participants; therefore, a third-party rater would
+                                                              and CL. Therefore, we applied log transformations (i.e.,
+not have judged those accurately.
+                                                              log10 ) to model those variables’ associations more accu-
+    We use Python scripts and MySQL queries to com-
+                                                              rately with our dependent variables than without such
+pute those attributes for the 2,500 manually labeled CR
+                                                              transformations [14, 56].
+comments from the OpenDev Nova project. After re-
+                                                                   Multicollinearity problems occur when several vari-
+moving the redundant variables, we use this dataset to
+                                                              ables in a multivariate regression have a high degree
+develop two regression models, the first one is a Linear
+                                                              of association with one another. The impacts of indi-
+Regression Model (LR) to investigate how these factors
+                                                              vidual variables may not be accurately detected by a
+the degree of usefulness achieved in a CR (RQ2.A), and
+                                                              model trained with multicollinear factors [48]. We used
+the second one is a Multinomial Logistic Regression
+                                                              Sarle’s Variable Clustering (VURCLUS) method to find
+(MLR) model to identify how these factors associate
+                                                              highly correlated factors [69]. We constructed a hierar-
+with identification of functional defects. The following
+                                                              chical cluster representation of the independents using
+subsections detail our analysis approach and results for
+                                                              Spearman’s rank-order correlation test. Based on Hin-
+the two sub-questions for RQ2.
+                                                              kle et al.’s suggestion [37] we chose the correlation co-
+                                                              efficient |rho| = 0.7 as the cutoff. Only one explanatory
+6.1 RQ2.A: How are various contextual and                     variable from a cluster that contained multiple explana-
+participant characteristics associated with the degree        tory variables with |rho| ≥ 0.7 was selected. After eval-
+of usefulness achieved in a code review?                      uating correlation and redundancy, we chose the most
+                                                              effective set of factors for our model using Jiarpakdee
+To answer this question, we trained a linear regression       et al.’s [42] Autospearman R library.
+(LR) model using the glm function from the stats                   Figure 3 shows the hierarchical structure of the in-
+library in R. In an LR model, if the dependent variable       dependent variables based on correlation analysis. We
+is Y and the independents are X1 , X2 , X3 , ..., Xn , then   identified four highly correlated clusters. From the (RCS,
+glm tries to fit a curve of the form Y = β0 + β1 X1 +         WRC, RCSH, log COMC) cluster, AutoSpearman keeps
+14                                                                                                               Turzo and Bosu
+
+               Table 6: Contextual and participant factors associated with code review usefulness
+
+ Attributes             Description                                   Rationale
+ Participant attributes
+ File commit count       The number of times a person has made        With multiple prior changes, a person’s awareness of
+ (COMC)*                 changes to a file.                           the file grows and therefore odds of useful reviews [13,
+                                                                      63])
+ Weighted   recent       If a file has a total of n prior com-        Recent committers of a file may have a better under-
+ commit (WRC)            mits and the author has made three of        standing of its current design [74].
+                         the prior n commits (e.g., i,j,k), then:
+                                   (i+j +k)   2(i+j +k)
+                         W RC = 1+2+...+n = n(n+1)
+ Mutual       reviews    Number of reviews the particular author      High MR indicates more mutual understanding be-
+ (MR)                    and reviewer have performed mutually.        tween the author and reviewer, so the reviewer may
+                                                                      understand the strengths and weaknesses of the au-
+                                                                      thor and may provide a useful review [11].
+ Prior file review       The number of times a person has re-         With multiple prior reviews, a person’s awareness of
+ count (PFRC)*           viewed the current file.                     the file grows and therefore odds of useful reviews [13,
+                                                                      32, 63])
+ Reviewer code share     The ratio of the number of code lines        If the reviewer has a higher contribution in the file,
+ (RCS)                   written by the reviewer and the total        then he may have a better understanding of the context
+                         number of lines in the code.                 and can provide a useful review [13, 32, 63].
+ Review   experience     Number of reviews the current reviewer       Reviewer review experience may have an association
+ (PRC)                   has performed.                               with review quality [32].
+ Reviewer    commit      Ratio of the number of commits made          If a reviewer makes a large number of commits, then
+ share (RCSH)            by the reviewer and the total number of      she has a higher codebase understanding and provides
+                         commits for the current file.                useful reviews [74].
+ Coding     experience   Number of files the reviewer has submit-     If the reviewer has higher project experience, he may
+ (RCE)                   ted in the codebase as an author.            have a better understanding of the entire code base
+                                                                      [32, 45].
+ Reviewer    project     Tenure of the reviewer in number of          Newcomers of a project are primarily added for knowl-
+ tenure (RPT)*           months.                                      edge dissemination and are less likely to write useful
+                                                                      reviews [13].
+ Contextual attributes
+ Patchset     number     The number of total patches of a review.     Higher PN indicates a review going through more iter-
+ (PN)                                                                 ations due to useful feedback [13, 32].
+ Comment       volume    Ratio between the number of comment          If a file has a high CV, then the code may become
+ (CV)                    lines and the total number of lines in the   easier to understand, and the possibility of providing
+                         current file.                                useful reviews increases.
+ Review interval (RI)    The interval between the submission of       Time required to evaluate a file has an association with
+                         the file to the review tool and the final    the product quality [32, 73, 74].
+                         review outcome
+ Code churn (CCR)        The total number of lines that have          If the number of changed lines is higher, there is a
+                         changed (added and deleted lines).           higher probability of having defects [53, 54]. Identifica-
+                                                                      tion of defects is considered useful by authors.
+ Is bug fix? (IBF)       Whether the current patch is for fixing      Bug fixes are often associated with defect-prone
+                         bugs or not.                                 files [74]. Reviewers may have higher opportunities to
+                                                                      identify more bugs during reviews for bug fixes.
+ Is new file? (INF)      Whether the current file is added to the     A new file may contain more issues than a file that
+                         patch for the first time or not.             went through a review process previously.
+ Directory under re-     How many directories have been affected      Higher number of directories are indicators of tangled
+ view (DUR)              for making current modifications             code changes [18], which are difficult to review.
+ Cyclomatic complex-     The cyclomatic complexity described by       Code comprehension difficulty increases with complex-
+ ity (CCY)               McCabe [50]                                  ity, and therefore reduces the likelihood of useful re-
+                                                                      views.
+ File under review       How many files has been affected for         Larger patches are time-consuming to review. As a re-
+ (FUR)*                  making current modification                  sult such patches often get cursory reviews.
+ Current loc (CL)        Number of lines of code currently avail-     Due to additional required efforts for comprehension,
+                         able in the file                             larger files may receive cursory reviews.
+ Patch    description    Number of words to describe the patch        Patch description helps reviewers understand the ob-
+ length (PDL)                                                         jective of the change, and may help avoid unnecessary
+                                                                      questions.
+ Readability of patch Flesch reading ease [43] score of patch         Patch description should be easy to understand to as-
+ description (PDR)         description                                sist reviewers’ comprehension
+ * - attributes also investigated in Bosu et al.’s study [13].
+What Makes a Code Review Useful to OpenDev Developers?                                                               15
+
+
+RCS. From the (log CL, CCY) cluster CCY survives.           6.1.2 Model analysis
+From (log RCE, log PRC) group, log RCE survives. Fi-
+nally, from the (FUR, DUR), FUR survives. After ex-         Table 7 reports the co-efficient (βi ) for the surviving
+cluding these six variables, we use the remaining 15        variables, 95% confidence interval estimates for the co-
+variables to construct our regression models. In our        efficients, and statistical significance of the associations
+analysis, the dependent variable is a continuous vari-      (i.e. p-value). A negative coefficient value indicates if
+able named usefulness score and the independents are        this variable increases, the CR usefulness score decreases
+15 of the surviving factors from Table 6.                   and vice versa. Each variable’s χ2 value is the differ-
+    For each CR comment from our labeled dataset (there     ence between −2 Log Likelihood of the full model and
+are 2,500 CR comments in the labeled dataset), we com-      a model constructed by dropping that particular vari-
+pute its usefulness score according to the following for-   able under discussion. A higher χ2 value indicates a
+mula.                                                       higher explanatory power added by an independent.
+                                                            Our model’s parameter estimates suggest a total of five
+ i. If a comment is labeled as ‘Not useful’, we assign a    independent variables having statistically significant as-
+    ‘0’ usefulness score.                                   sociations (p − value < 0.05 and presented in bold for-
+ii. If a comment is labeled as ‘Useful’, we check its as-   mat). Among those, log RCE ( log of reviewers’ coding
+    signed category. From the Sampled user rating col-      experience) has the highest level of influence with a pos-
+    umn of Table 5, we take the score obtained for this     itive coefficient. This result suggests that experienced
+    category and that score is its usefulness score.        coders, who have significant project knowledge due to
+                                                            a large number of prior code changes, are more likely
+    While we had two other possible options, i.e., ‘User    to provide useful comments. On the contrary, RPT (re-
+perception’ and ‘Avg Rating’, we found potential issues     viewer’s project tenure has a negative association). As
+with those choices for usefulness scores. We could not      this association is contradictory to RCE, we further in-
+validate that our respondents indeed fully comprehend       vestigated the reasons. We computed persons’ tenures
+a CR comment category based on the brief definitions        from their first interaction with the project. We found
+included in our survey. As ‘Sampled user ratings’ are       many casual contributors who have long tenures but
+obtained based on actual ratings of reviews, those are      have made very few commits. Less useful CR comments
+more accurate than the other two.                           by these casual contributors contribute to the negative
+                                                            association between CR usefulness and RPT. Contrary
+    We assess the goodness of fit for the trained model
+                                                            to our initial assumptions from Table 6, both log MR
+using McFadden’s R2 , which is 0.026 (p < 0.001). We
+                                                            (mutual reviews) and log RI (review interval) also have
+performed a log-likelihood ratio to compare our fitted
+                                                            significant negative associations. Although ‘Quid pro
+model with a null model. Our test results suggest ( χ2
+                                                            quo’ reviews are common [11], negative β for log MR
+= 69.9, p − value < 0.0001 ) significant explanatory
+                                                            discourages such practices. Our results from RQ2.B also
+power of the model over a null model. We acknowledge
+                                                            provide more explanation of this finding. We also no-
+that the R2 value achieved by this model is lower than
+                                                            tice that delayed reviews do not indicate more useful
+what we had anticipated. This lower value may be due
+                                                            reviews. If a review takes longer than usual, the re-
+to two primary reasons. First, in a randomly selected
+                                                            viewer may be overloaded and have done a cursory re-
+code review sample such as ours, the majority of com-
+                                                            view to avoid further delays. Finally, we noticed CV
+ments belong to trivial issues such as ‘Documentation’
+                                                            (comment volume) lowering CR usefulness. Our inves-
+and ‘Naming convention’. As these comments are more
+                                                            tigation found that if a file includes higher ratios of com-
+likely to be participant or context agnostic, a model
+                                                            ments, reviewers often include suggestions to improve
+trained using randomly chosen samples is less likely to
+                                                            those with better wording, explanations, and grammar
+achieve high explanatory power. Second, approximately
+                                                            fixes. Since these types of suggestions have lower use-
+77% CR comments in our dataset are useful ones (i.e.,
+                                                            fulness scores, CV has a negative association.
+scores higher than zero). As a result, we notice a high
+intercept value (i.e., 3.02). Instead of a randomly sam-
+pled one, if we had a dataset with higher ratios of ‘Not
+useful’ comments (i.e., score =0), a model trained with      Key takeaways: i) While a reviewer’s coding experi-
+such a dataset would have achieved a higher R2 . Re-         ence positively associates with code review usefulness,
+gardless, since our goal is to develop an inferential re-    their number of mutual reviews with the author, code
+gression model, not a predictive one, a low R2 score         review interval, comment volume in the file, and se-
+does not invalidate the obtained insights. Moreover, our     lection of casual contributors have opposite associa-
+model significantly outperforms a null model.                tions.
+16                                                                                                          Turzo and Bosu
+
+Table 7: Results of or linear regression model to identify how contextual and participant factors associate with the
+degree of CR usefulness. β in blue background indicates a significant positive association, and red indicates a
+significant negative association.
+
+                   Attribute   Co-efficient (βi ) 95 %Confidence interval for βi         χ2     p-value
+                  log MR              -4.02e-02            [ -7.64e-02 , -4.03e-03 ]  4.745    0.0295 ∗
+                  RPT                 -5.92e-03            [ -1.08e-02 , -1.01e-03 ]  5.590    0.0181 ∗
+                  log PFRC             1.69e-02             [ -5.18e-02 , 8.56e-02 ]  0.232    0.6301
+                  RCS                 -6.37e-03             [ -2.72e-02 , 1.44e-02 ]  0.359    0.5488
+                  log RCE              1.34e-01              [ 6.90e-02 , 1.99e-01 ] 16.287    0.0001 ∗∗∗
+                  PN                   1.67e-03             [ -7.19e-03 , 1.05e-02 ]  0.136    0.7122
+                  CV                  -3.66e-01            [ -5.69e-01 , -1.63e-01 ] 12.471    0.0004 ∗∗∗
+                  FUR                 -1.30e-03             [ -8.39e-03 , 5.79e-03 ]  0.129    0.7186
+                  log RI              -4.83e-02            [ -7.80e-02 , -1.86e-02 ] 10.154    0.0015 ∗∗
+                  log CCR              2.99e-02             [ -3.52e-02 , 9.51e-02 ]  0.812    0.3677
+                  IBF                  1.88e-03             [ -1.55e-01 , 1.59e-01 ]  0.001    0.9813
+                  INF                  1.53e-01             [ -1.09e-01 , 4.15e-01 ]  1.315    0.2517
+                  CCY                  4.20e-05             [ -2.08e-04 , 2.92e-04 ]  0.108    0.7414
+                  PDR                 -3.72e-04             [ -3.48e-03 , 2.74e-03 ]  0.055    0.8145
+                  PDL                 -5.92e-04             [ -1.37e-03 , 1.85e-04 ]  2.229    0.1356
+                  *** , **, and * represent statistical significance at p < 0.001, p < 0.01,
+                  and p < 0.05 respectively.
+
+
+6.2 RQ2.B: RQ2.B: How are various contextual and                6.2.1 Model training and evaluation
+participant factors associated with identifying
+functional defects?                                             For our MLR model, we set comment group as the de-
+                                                                pendent variable, which denotes a CR comment’s group
+When the dependent variable is nominal with more                listed in Table 1. As our categorization scheme listed
+than two levels, MLR allows modeling the likelihood             in Table 1 divides CR comments into five categories,
+of a particular outcome occurring given the values for a        this categorical variable has five possible values. We set
+set of independents. MLR is a Maximum Likelihood Es-            the ‘Functional’ category as the reference since com-
+timator, where the log odds of the dependent variable           ments belonging to this category are a top priority. We
+are captured as a linear combination of the indepen-            excluded the 106 comments belonging to ‘Others’ for
+dents. Since our dependent variable has five levels (i.e.,      this analysis. We use the multinom function of the
+category of CR comment), MLR is a right fit for our             nnet R package to construct our MLR model. We es-
+analyses. MLR also has the following advantages:                timate our models’ goodness of fit using Nagelkerke
+                                                                P seudo R2 [55], which is 0.221 for our model. Our Log
+ – MLR can operate in cases where variables are not
+                                                                Likelihood test’s results (χ2 =567.67, p < 0.001) sug-
+   normally distributed.
+                                                                gest that our model is significantly better than a Null
+ – MLR can be applied when there is no linear rela-
+                                                                model. Our model allocates a total of 60 degrees of free-
+   tionship between independent and dependent vari-
+                                                                dom for the final model, which is significantly lower
+   ables [8].
+                                                                than the maximum 2500  15 = 166 recommended degrees
+ – For MLR analysis, independent variables can be both
+                                                                of freedom by Harrell Jr. [31]. Therefore, our model is
+   discrete and interval (continuous) type, whereas most
+                                                                not overfitted.
+   other analysis requires independent variables to be
+   continuous [8].
+ – MLR does not require inclusion of error terms that           6.2.2 Model analysis
+   are normally distributed [8].
+                                                                Table 8 shows the results of our MLR models with
+    Moreover, MLR allows modeling the likelihood of             Functional comment group as the reference. The OR
+changing to a particular outcome from the existing out-         column under a particular category indicates the odds
+come if a particular independent variable changes. There-       of that category occurring instead of the ‘Functional’
+fore, with MLR, we can set a reference CR comment               if a variable listed under the first column changes by
+category and analyze the likelihood of another CR com-          one unit. OR > 1 indicates a higher probability of the
+ment category if particular independent changes. Fol-           target class than the reference (i.e., ‘Functional’) if the
+lowing subsections detail our model construction and            associated attribute increases and vice versa. For exam-
+analysis approach.                                              ple, the OR value for the variable log MR (i.e., log of
+What Makes a Code Review Useful to OpenDev Developers?                                                                  17
+
+Table 8: Identify the factors that distinguish Functional class from other classes. OR in blue background indicates
+a significant higher likelihood of Functional comments if that variable increases by one unit and red indicates a
+significant lower likelihood for Functional ones.
+
+                                  Discussion       Documentation        False Positive     Refactoring
+                   Attribute
+                                OR        p        OR       p           OR        p       OR       p
+                   log MR       1.11 0.028∗        1.09 0.047∗          1.13 0.009∗∗         0.96 0.289
+                   RPT           1.00 0.561           1.00 0.475           1.01 0.296        0.99 0.310
+                   log PFRC      1.09 0.281           1.05 0.545           0.95 0.471        1.03 0.645
+                   RCS           0.45 0.007∗∗         0.94 0.537           0.82 0.743        0.96 0.628
+                   log RCE       0.86 0.068           1.08 0.332           0.84 0.022∗       1.02 0.772
+                   PN            1.00 0.831           1.00 0.704           1.00 0.945        1.02 0.042∗
+                   CV            1.70 0.079         10.25 0.00∗∗∗          4.21 0.00∗∗∗      0.89 0.705
+                   FUR           0.98 0.016∗          0.97 0.000∗∗∗        0.98 0.027∗       0.97 0.001∗∗
+                   log RI        1.01 0.677           0.94 0.057           1.06 0.084        1.00 0.887
+                   log CCR       1.27 0.002∗∗         1.29 0.000∗∗∗        1.08 0.317        1.23 0.005∗∗
+                   IBF           1.04 0.846           0.97 0.878           0.97 0.871        1.14 0.483
+                   INF           1.20 0.645           1.31 0.455           0.93 0.844        0.90 0.795
+                   CCY           1.00 0.05            1.00 0.0618          1.00 0.137        1.00 0.722
+                   PDR           1.00 0.483           0.99 0.026∗          0.99 0.215        1.00 0.552
+                   PDL           1.00 0.855           1.00 0.137           1.00 0.171        1.00 0.537
+                   *** , **, and * represent statistical significance at p < 0.001, p < 0.01, and p < 0.05
+                   respectively.
+
+
+mutual code reviews) under ‘Discussion’ is 1.11 with a p             A higher likelihood of ‘Refactoring’ comments with
+value of 0.0285 (i.e., significant at p < 0.05). Therefore,      increased ‘PN’ (patchset number) suggests that if the
+if log MR increases by one unit, the likelihood of a ‘Dis-       number of iterations in a CR increase, the later patches
+cussion’ instead of ‘Functional’ increases by 1.11. Simi-        are more likely to receive ‘Refactoring’ suggestions than
+larly, log MR is also associated with a higher likelihood        ‘Functional’ ones. We notice the highest change in OR
+of both ‘Documentation’ and ‘False positive.’ These re-          value (i.e., 10.25) for CV (comment volume) under ‘Doc-
+sults shed further light on our findings from RQ2.A,             umentation.’ This result suggests that if comment vol-
+which found a negative association between log MR and            ume in a file increases, the odds of suggestions to im-
+CR usefulness score.                                             prove those documentation increases drastically. More-
+                                                                 over, a CV increment increases the likelihood of false
+    On the other hand, under the ‘Discussion,’ OR =0.98
+                                                                 positives as well. A lower effort requirement during re-
+for the variable FUR (file under review) indicates that
+                                                                 views for suggesting documentation improvements than
+if the number of files under review increases, the likeli-
+                                                                 for ‘Functional’ ones may be a possible cause.
+hood of comments identifying ‘Functional’ defects also
+increases. Similar associations are seen between FUR
+and the other three categories as well. These findings
+may not be surprising since prior studies have found
+changes involving a higher number of files are more
+likely to include defects [12]. Hence, such changes are
+more likely to receive ‘Functional’ comments.
+    A significant odds reduction for ‘Discussion’ with               Surprisingly, we notice PDR (the patch description’s
+RCS (reviewer’s codeshare) suggests that the likelihood          readability) improves the odds of ‘Functional’ over ‘Doc-
+of discussion over ‘Functional’ decreases if the reviewer’s      umentation.’ These results suggest that well-described
+ownership of the file increases. Our results suggest that        patches are more likely to receive ‘Functional’ than ‘Doc-
+log CCR (i.e., log of code churn) decreases the likeli-          umentation’ comments. Finally, although we noticed
+hood of ‘Functional’ over all four categories. These re-         log RI (i.e., log of review interval) negatively associ-
+sults support prior findings that reviewers opt for shal-        ating with CR usefulness score in RQ2.A, we did not
+low reviews for larger code changes [3]. We notice a             find any significant association here. These results in-
+negative association between log RCE (i.e., log of a re-         dicate that delayed reviews do not increase the odds of
+viewer’s commit experience) and ‘False positive,’ which          any particular comment category. Those are more likely
+suggests that the likelihood of a ‘False positive’ de-           due to overloaded reviewers providing delayed yet shal-
+creases with increased commit count by the reviewer.             low reviews.
+18                                                                                                     Turzo and Bosu
+
+
+                                                                We found the presence of casual contributors [60],
+ Key takeaways: The number of mutual reviews be-                which does not apply to Microsoft, as the reason
+ tween the author and a reviewer, the total number              behind this difference.
+ of lines added /modified in a change, and the ratio of
+ lines that are comments are negatively associated with      2. Comparison with Kononeko et al. [44, 45]
+ receiving comments identifying ‘Functional’ defects.            Kononenko et al. conducted a study on Mozilla to
+ The odds of functional defects and their identifica-        understand whether people and participation have an
+ tion increase with the number of files under review.        influence on review quality as measured by missed de-
+ Experienced committers of the projects are less likely      fects [45]. Results of their study suggest that the num-
+ to author invalid suggestions. Delayed reviews do not       ber of files in a patchset is positively associated with
+ increase the odds of any particular category of com-        post-review defects, while the reviewer’s experience with
+ ment.                                                       the project has the opposite association. While we have
+                                                             a different measure, similar to Kononeko et al., we found
+                                                             the number of files negatively associated with review
+7 Discussion and Implications                                usefulness. However, we did not notice any significant
+                                                             association between the experience measures and re-
+1. Comparison with Bosu et al. [13]: Similar to              view usefulness. In a subsequent study, Kononenko et
+Bosu et al. [13], we found ‘Functional’ defect identifi-     al. conducted a survey of 88 Mozilla core developers to
+cation as the top priority for the CR participants. As       understand their perspective on the code review qual-
+the study of Bosu et al. was conducted in a commer-          ity, factors influencing their code evaluations, and chal-
+cial setup (Microsoft), by contrasting the findings of the   lenges encountered during reviews [44]. One of their re-
+two studies, we can get a picture of the perspective dif-    search questions, where they investigated the charac-
+ferences for commercial and OSS projects. Our results        teristics of a well-done code review, resembles our re-
+deviate from the study of Bosu et al. among several key      search question RQ1.A. Although several perspectives
+aspects as described in the following.                       of the Mozilla core developers, such as finding defects,
+                                                             being constructive, being clear and thorough, review-
+ – Participants from Bosu et al. did not consider ques-      ing on time, and sharing knowledge are similar to ones
+   tions to understand the implementation as ‘Useful’.       expressed by the OpenDev developers, we also found
+   However, most of our respondents consider ques-           several new aspects of review usefulness, which include
+   tions as useful, with its average ‘sample user rating’    being respectful, appreciating good work, facilitating
+   ranking fourth and ‘Avg. Rating’ ranking sixth.           better designs, and improving project maintainability.
+ – Similarly, participants from Bosu et al.’s study con-
+   sider ‘Praise’ and ‘Design discussion’ as ‘Not Use-       3. Comparison with other studies investigating
+   ful’. However, the majority of our respondents con-       CR usefulness: Hasan et el. partially replicated Bosu
+   sider ‘Design Discussion’ as useful. We found ‘Praise’    et al.’s study at another industrial context (i.e., SRBD).
+   as one of the categories with the highest standard        The results of their study concur with ours that ‘Func-
+   deviation, which indicates developers’ opinions vary      tional’ defects are top priorities and developers have
+   widely regarding this category.                           mixed opinions regarding the usefulness of ‘Praise’, ‘Ques-
+ – Bosu et al. found that a reviewer’s prior experience      tions’, and ‘Documentation’. Rahman et al. investigated
+   with the file under review, either as a reviewer or as    the relationship between developer experience and CR
+   an author, positively associates with the likelihood      usefulness. Our results concur with their findings that
+   of providing useful reviews. However, we found none       code-commit experience has positive associations. How-
+   of the factors to measure these experiences (i.e.,        ever, contrasting their findings we do not find any sig-
+   RCS, log PFRC, and log COMC ) having significant          nificant association between CR usefulness and author-
+   associations with usefulness scores in our study.         ship/reviewership for the file under review.
+ – Bosu et al. found CR usefulness drops as the num-         3. Reviewer selection: The results of our study
+   ber of files under review increases. However, we did      suggest that CR usefulness decreases if the number of
+   not notice any such association. On the contrary, we      mutual reviews increases. Our results further suggest
+   found the likelihood of ‘Functional’ defects increas-     that such pairs are likelier to engage in discussions,
+   ing with the number of files.                             identify false issues, or suggest trivial documentation-
+ – Bosu et al. found a positive association between          related changes. With a higher number of mutual re-
+   the likelihood of useful reviews and reviewers’ Mi-       views, two persons are more likely to be aware of each
+   crosoft tenure. However, we found a negative asso-        others’ strengths and weaknesses and therefore overlook
+   ciation between project tenure and useful reviews.        the author’s areas of strength. Moreover, such reviews
+What Makes a Code Review Useful to OpenDev Developers?                                                            19
+
+
+become more predictable and do not bring any fresh             Similar to prior studies [3], we found changes with
+perspectives. Although an author is more likely to re-      higher code churns are less likely to receive CR com-
+ceive acceptance votes from such peers [72], the results    ments identifying ‘Functional’ changes. Therefore, we
+of this study discourage ‘Quid pro-Quo’ reviews and         recommend committing smaller incremental changes.
+recommend rotating reviewers, if possible. Moreover,          Finally, delayed reviews not only frustrate authors
+such rotations will also help knowledge decentraliza-     but also such reviews are less likely to be helpful. Our
+tion.                                                     results indicate that delayed reviews are less likely to
+     The results of our study also suggest that the like- be the results of thorough reviews but more likely due
+lihood of useful reviews increases with the reviewer’s    to overloaded reviewers or other factors. Therefore, an
+commit count. Therefore, experienced authors of a project author should invite an alternative instead of waiting
+are the best reviewers, who not only provide useful feed- for a reviewer who is already late beyond reasonable
+back but also are significantly less likely to write in-  expectation.
+valid ones. However, this approach has drawbacks due
+                                                          6. Using appropriate language: CRs are most use-
+to knowledge centralization as well as overloading expe-
+                                                          ful to developers when participants discuss code issues
+rienced contributors. Therefore, we recommend adding
+                                                          constructively and empathetically. Constructive conver-
+such contributors as reviewers for critical code changes.
+                                                          sation helps to maintain a healthy relationship among
+     We also found reviewers who have long tenure with    the teammates [68]. Approximately one-third of respon-
+the project but have not contributed many commits         dents indicated appropriateness of the language as an
+(i.e., ‘Casual contributors’ [60]) being associated with  important factor in judging CR usefulness. Inappropri-
+low CR usefulness. While authors may invite such con-     ate language may shift the attention from the actual
+tributors as reviewers for various reasons, they should   issue (i.e., code under review) to the participant’s per-
+also include qualified reviewers in such cases to ensure  sonal characteristics and, therefore, not only degrade
+adequate scrutiny.                                        CR’s usefulness but can instigate conflicts. Prior stud-
+                                                          ies also have found that inappropriate languages hinder
+4. Recommendation to reviewers: CR comments               diversity, equity, and inclusion initiatives by dispropor-
+belonging to the ‘Functional’ group are most useful to    tionately hurting the participation of women and other
+authors. Therefore, a reviewer should focus the most on   minorities [29].
+providing such comments. Comments belonging to the
+‘Refactoring’ group rank second. However, ‘Documen-       7. Recommendation to researchers: The devia-
+tation’, nit-picking, and style issues that can be iden-  tions between our results and the ones reported in prior
+tified using static analysis tools should get the lowest  studies [13,63] suggest that more replications are crucial
+priority. Finally, instead of keeping an author waiting   to understanding how various project or organizational
+and providing a shallow review, a reviewer should avoid   factors influence CR usefulness. Although authorship /
+being in such a scenario by rejecting review invitations  reviewership experience for the artifacts under review
+if they cannot review on time or spend adequate effort.   is the most favored attribute for reviewer recommenda-
+                                                          tion systems [62, 76, 82], our results indicate no signifi-
+5. Recommendation to authors: Our results also            cant association with those with CR usefulness scores.
+suggest that the readability of patch description im-     Both Bosu et al. Rahman et al. found a non-linear
+proves the likelihood of ‘Functional’ comments than       relationship between CR usefulness and those experi-
+‘Documentation’ ones. Therefore, an author should cre-    ence measures, where CR usefulness increases linearly
+ate a meaningful and readable description of the patch-   with experience measures at lower values but plateaus
+set during review preparation. On the contrary, CR        beyond a certain threshold, such as 5-15. As we log-
+usefulness decreases if comment volume increases. Al-     transformed those experience measures (i.e., PFRC and
+though most authors do not find suggestions to im-        COMC), we expected linear relationships between use-
+prove ‘Documentation’ useful, they are more likely to     fulness score and (log COMC, log PFRC). However,
+receive those if they write more comments. ‘Documen-      we found no significant association between file experi-
+tation’ comments are low-hanging fruits, and reviewers    ence measures and CR usefulness. Although log COMC
+are more likely to produce those if they do not have      was dropped from the model due to multicollinearity
+time for thorough reviews. Therefore, if an author finds  with RCS, we did not notice any significant association
+‘Documentation’ comments useless, we recommend fol-       with RCS either. Hence, if we had trained models with
+lowing the Agile Manifesto guideline [24] by writing      log COMC instead of RCS, we would have seen a simi-
+self-documenting code and writing documentation only      lar association as the one observed for RCS. This result
+when necessary.                                           raises whether these attributes are good candidates for
+20                                                                                                      Turzo and Bosu
+
+
+building reviewer recommendation systems. While it is         factors [13]. The results of their empirical study sug-
+premature to make a definite recommendation based             gest that the reviewer’s prior experience in changing or
+on a single study, we recommend more investigations           reviewing the artifact and the reviewer’s project experi-
+to identify context-specific appropriate attributes for       ence increases the likelihood that s/he will provide use-
+reviewer recommendation systems.                              ful feedback. Hasan et al. replicated the first two stages
+    We also notice that attributes that increase the like-    of Bosu et al. study in another commercial organiza-
+lihood of the ‘Functional’ group differ from those in-        tion and found that while developers agree on several
+creasing ‘Discussion’ or ‘Documentation.’ While exist-        CR usefulness criteria such as defect identification or
+ing multi-objective reviewer recommendation systems [2,       solution approach, the same cannot be said for sugges-
+52] consider expertise, workload, and knowledge distri-       tions to improve documentation, praise, or questions
+butions, identifying different categories of issues has not   asking clarification [32]. While these two studies only
+been explored. We recommend considering this aspect           focused on the notion of usefulness post-review com-
+as another objective for multi-objective reviewer rec-        pletion, Rahman et al. developed a classifier to predict
+ommendation systems.                                          useful CR comments using both textual and contextual
+                                                              features [63].
+8 Related Work
+                                                                 Kononenko et al. [45] examined CR quality and found
+Besides finding defects, known benefits of CR include:       that personal factors such as reviewer workload, expe-
+improving project maintainability, maintaining code in-      rience, and participation factors such as the number
+tegrity, improving relationships between the participants [11],
+                                                             of developers involved have significant associations. A
+preventing security defects [12,59] and spreading knowl-     later empirical study at Mozilla, by the same set of
+edge, expertise, and development techniques among the        authors, found that useful CRs are thorough and are
+review participants [3, 64]. Hence, CR has achieved          influenced not only by the reviewer’s familiarity with
+widespread adoption among both commercial OSS de-            the code but also by the perceived quality of the code
+velopment organizations [3,64,67]. Many projects man-        itself [44]. Bosu et al.’s survey of OSS and Microsoft
+date each code change be approved through CR before          developers suggest that several human factors such as
+it can be considered for integration into the project’s      the author’s reputation, and the relationship between
+main code base [64].                                         an author and a reviewer, also dictate CR effective-
+    Despite significantly associated efforts, most of the    ness [11]. The results of Hatton et al.’ suggest that
+CRs do not find bugs [17], as the majority of the CR         the capability to identify defects during CRs may vary
+comments involve maintainability issues that do not im-      widely among reviewers as the best reviewer can be
+pact code output [3]. Defect identification during CRs       up to 10 times more efficient than the worst ones [34].
+requires time commitment as well as a deeper under-          Other factors decreasing CR quality include missing ra-
+standing of the code context. Reviewers inadequately         tionale, discussion of non-functional requirements of the
+fulfilling these two criteria often focus more on refactor-  solution, and lack of familiarity with existing code [19],
+ing or nit-picking issues than defect identification [3].    co-working frequency of a reviewer with the patch au-
+Several studies have investigated the types of issues        thor [72], description length of a patch [74], and the
+identified during CRs [3, 9, 13, 32, 49] and found sim-      level of agreement among the reviewers [38].
+ilar ratios across various commercial as well as OSS
+projects, with functional defects representing less than
+20% of the CR comments.                                          Several recent studies have focused on improving
+    On a goal to improve CR effectiveness, prior studies     CR effectiveness through the automation of various CR
+have focused on understanding what makes a CR useful         tasks. Reviewer recommendation systems [57,62,66,76,
+to the participants [13, 32, 63]. In this direction, Bosu    82] focus on finding the best reviewer(s) for a given
+et al. [13] conducted a three-stage empirical study in       change. Since understanding changes during CRs are
+Microsoft. In the first stage, they interviewed develop-     often time-consuming, researchers have proposed tools
+ers to understand what makes a CR useful. Based on           and frameworks to support changeset comprehension [6,
+the insights obtained from the interviews, they manu-        18, 27, 41, 71]. Changeset size reduction is another au-
+ally labeled a dataset CRs to train an automated model       tomation direction, which aims to decide which change
+to predict useful reviews. In the third stage, they used     fragments are error-prone and need to be checked in de-
+the automated model to predict the usefulness of 1.5         tail to expedite a CR process [7]. Recent studies have
+million CR comments and conduct an empirical study           focused on automating the reviews through ML-based
+to understand how CR usefulness varies with various          models [40, 75, 77, 78].
+What Makes a Code Review Useful to OpenDev Developers?                                                             21
+
+
+9 Limitations                                               raters is time-consuming, especially when we have 18
+                                                            different choices for each instance. Therefore, we were
+Internal validity: Our sample selection is the primary      unable to include multiple projects’ datasets in this
+threat to internal validity. While we surveyed develop-     analysis. Replications of this study are essential to de-
+ers from the entire OpenDev community, we selected          rive context-specific customized CR-specific recommen-
+CR comments from only the OpenDev Nova project.             dations. To promote replications, we have made our sur-
+While Nova is the largest and most active project in        vey questions, anonymized dataset, and analysis scripts
+this community, we cannot claim that it is an accurate      publicly available.
+representation of the entire community. However, we         Conclusion validity: While constructing a regression
+are unaware of any evidence regarding the contrary.         model, overfitting appears to be the primary threat to
+Construct Validity: Our survey design and code              conclusion validity. We followed Harrell Jr.’s recommen-
+snippet selection may be subject to biases. To mitigate     dations to encounter this threat by allocating degrees
+the bias, we send the survey to two experts in the Soft-    of freedom less than (n/15), where n is the size of the
+ware Engineering field and modify the survey based on       dataset. For model training, we use stats and nnet
+their feedback. We also told three student researchers      packages, which are considered the gold standards for
+to identify any ambiguous questions before sending the      regression modeling. Hence, we do not anticipate any
+survey to the developers.                                   threat to library selections. Finally, we noticed a low R2
+    For our quantitative analyses (i.e., RQ2.A, RQ2.A,      value for our linear regression model due to the nature
+RQ2.B), we focused only on comment categories to mea-       of the code review dataset. However, as our goal is to
+sure CR usefulness since some of the secondary criteria,    train inferential models, this low measure does not in-
+such as knowledge sharing and relationship formation,       validate obtained insights. Moreover, our log-likelihood
+are difficult to evaluate by an independent rater within    tests found this model significantly better than a null
+the limited context of a survey. While we are aware of      model.
+prior CR studies [15, 52] introducing a metric to mea-
+sure knowledge sharing, we could not use those metrics
+since our unit of analyses is individual CR comment, as     10 conclusion
+opposed to the entire CR used in those studies.
+    Multicollinearity is a potential threat to regression   We conducted a three-stage mixed-method study to in-
+models. Multicollinearity-related threats arise when two    vestigate CR’s usefulness among OSS developers. We
+independent variables are highly correlated, and due        manually categorized 2,500 CR comments, using those
+to the interaction between two multicollinear variables,    comments designed an online survey, received 160 us-
+the interaction between an independent and the de-          able responses from OpenDev developers, combined in-
+pendent variables is underestimated. To mitigate this       sights obtained from the survey with our manually la-
+threat, we followed Harrell Jr. [31]’s approach to iden-    beled dataset, and finally trained two regression models
+tifying highly correlated variable clusters and picked      to provide a better understanding of what makes code
+only one variable from a cluster to train our models.       review useful and the set of factors influencing CR use-
+External Validity: We divided our study objectives          fulness. The results of our study suggest that a CR com-
+into two research questions. The first question aims to     ment’s usefulness is dictated not only by its technical
+understand OSS developers’ perspectives about the use-      contributions such as defect findings or quality improve-
+fulness of CRs and comment categories that are consid-      ment tips but also by its linguistic characteristics such
+ered most useful to the developers. Although we con-        as comprehensibility and politeness. While a reviewer’s
+ducted our survey on OpenDev developers, most of            coding experience positively associates with CR useful-
+the developers have experience working on other open-       ness, the number of mutual reviews, comment volume
+source and industrial projects. Therefore our findings      in a file, the total number of lines added /modified, and
+might apply to other OSS and industrial projects. How-      CR interval have the opposite associations. While au-
+ever, as OSS projects vary based on technology, norms,      thorship and reviewership experiences for the files un-
+culture, and governance, external validity remains a        der review have been the most popular attributes for
+threat.                                                     reviewer recommendation systems, we do not find any
+    Our second research question aims to identify the       significant association of those attributes with CR use-
+factors that are associated with CR usefulness. Since       fulness. As we find several of our results deviating from
+this analysis includes only one project’s data, this re-    prior studies, we also recommend more investigations
+sult may not be generalized outside of our study sub-       to identify context-specific attributes for reviewer rec-
+ject. Manually labeling a large dataset using multiple      ommendation models.
+22                                                                                                             Turzo and Bosu
+
+
+Data availability                                                 9. Beller, M., Bacchelli, A., Zaidman, A., Juergens, E.: Mod-
+                                                                     ern code reviews in open-source projects: Which prob-
+                                                                     lems do they fix? In: Proceedings of the 11th working
+Our analysis scripts, and aggregated dataset are pub-
+                                                                     conference on mining software repositories, pp. 202–211
+licly available at:                                                  (2014)
+https://github.com/WSU-SEAL/CR-usefulness-EMSE.                  10. Benjamini, Y., Hochberg, Y.: Controlling the false discov-
+Upon acceptance, we plan to post it on Zenodo with a                 ery rate: a practical and powerful approach to multiple
+permanent DOI.                                                       testing. Journal of the Royal statistical society: series B
+                                                                     (Methodological) 57(1), 289–300 (1995)
+                                                                 11. Bosu, A., Carver, J.C., Bird, C., Orbeck, J., Chockley,
+                                                                     C.: Process aspects and social dynamics of contemporary
+                                                                     code review: Insights from open source development and
+Funding and Conflicts of interests/Competing                         industrial practice at microsoft. IEEE Transactions on
+interests.                                                           Software Engineering 43(1), 56–75 (2017)
+                                                                 12. Bosu, A., Carver, J.C., Hafiz, M., Hilley, P., Janni, D.:
+Work conducted for this research is partially supported              Identifying the characteristics of vulnerable code changes:
+                                                                     An empirical study. In: 22nd ACM SIGSOFT Interna-
+by the US National Science Foundation under Grant
+                                                                     tional Symposium on the Foundations of Software Engi-
+No. 1850475. Any opinions, findings, and conclusions or              neering, FSE ‘14, pp. 257–268. Hong Kong, China (2014)
+recommendations expressed in this material are those             13. Bosu, A., Greiler, M., Bird, C.: Characteristics of use-
+of the author(s) and do not necessarily reflect the views            ful code reviews: An empirical study at microsoft. In:
+of the National Science Foundation.                                  2015 IEEE/ACM 12th Working Conference on Mining
+                                                                     Software Repositories, pp. 146–156. IEEE (2015)
+    We thank Hemangi Murdande for her assistance                 14. Changyong, F., Hongyue, W., Naiji, L., Tian, C., Hua,
+during manual data labeling.                                         H., Ying, L., et al.: Log-transformation and its implica-
+    The authors have no competing interests to declare               tions for data analysis. Shanghai archives of psychiatry
+                                                                     26(2), 105 (2014)
+that are relevant to the content of this article.
+                                                                 15. Chouchen, M., Ouni, A., Mkaouer, M.W., Kula, R.G.,
+                                                                     Inoue, K.: Whoreview: A multi-objective search-based
+                                                                     approach for code reviewers recommendation in modern
+                                                                     code review. Applied Soft Computing 100, 106908 (2021)
+References                                                       16. Cohen, J.: A coefficient of agreement for nominal scales.
+                                                                     Educational and psychological measurement 20(1), 37–46
+ 1. Allison, P.: Prediction vs. causation in regression analy-       (1960)
+    sis. Statistical Horizons 703 (2014)                         17. Czerwonka, J., Greiler, M., Tilford, J.: Code reviews do
+ 2. Asthana, S., Kumar, R., Bhagwan, R., Bird, C., Bansal,           not find bugs. how the current code review best practice
+    C., Maddila, C., Mehta, S., Ashok, B.: Whodo: automat-           slows us down. In: 2015 IEEE/ACM 37th IEEE Inter-
+    ing reviewer suggestions at scale. In: Proceedings of the        national Conference on Software Engineering, vol. 2, pp.
+    2019 27th ACM Joint Meeting on European Software En-             27–28. IEEE (2015)
+    gineering Conference and Symposium on the Foundations        18. Dias, M., Bacchelli, A., Gousios, G., Cassou, D., Ducasse,
+    of Software Engineering, pp. 937–945 (2019)                      S.: Untangling fine-grained code changes. In: 2015 IEEE
+ 3. Bacchelli, A., Bird, C.: Expectations, outcomes, and chal-       22nd International Conference on Software Analysis,
+    lenges of modern code review. In: 2013 35th Interna-             Evolution, and Reengineering (SANER), pp. 341–350.
+    tional Conference on Software Engineering (ICSE), pp.            IEEE (2015)
+    712–721. IEEE (2013)                                         19. Ebert, F., Castor, F., Novielli, N., Serebrenik, A.: An ex-
+ 4. Balachandran, V.: Reducing human effort and improv-              ploratory study on confusion in code reviews. Empirical
+    ing quality in peer code reviews using automatic static          Software Engineering 26, 1–48 (2021)
+    analysis and reviewer recommendation. In: 2013 35th In-      20. Fagan, M.E.: Design and code inspections to reduce
+    ternational Conference on Software Engineering (ICSE),           errors in program development. IBM Syst. J. 15(3),
+    pp. 931–940. IEEE (2013)                                         182–211 (1976). DOI 10.1147/sj.153.0182. URL https:
+ 5. Baltes, S., Diehl, S.: Worse than spam: Issues in sam-           //doi.org/10.1147/sj.153.0182
+    pling software developers. In: Proceedings of the 10th       21. Foley, B.: What is regression analysis and why
+    ACM/IEEE International Symposium on Empirical Soft-              should i use it. Source: https://www. surveygizmo.
+    ware Engineering and Measurement, pp. 1–6 (2016)                 com/resources/blog/regression-analysis (2018)
+ 6. Barnett, M., Bird, C., Brunet, J., Lahiri, S.K.: Helping     22. Foundation, O.: 2022 openifra foundation annual report.
+    developers help themselves: Automatic decomposition of           https://openinfra.dev/annual-report/2022 (2022)
+    code review changesets. In: Proceedings of the 37th In-      23. Fowler, M.: Refactoring catalog. Refactoring Home Page,
+    ternational Conference on Software Engineering-Volume            URL: http://www. refactoring. com/catalog/index. html
+    1, pp. 134–144. IEEE Press (2015)                                (letzter Abruf: 09.02. 2006) (2012)
+ 7. Baum, T., Schneider, K.: On the need for a new gener-        24. Fowler, M., Highsmith, J., et al.: The agile manifesto.
+    ation of code review tools. In: International Conference         Software development 9(8), 28–35 (2001)
+    on Product-Focused Software Process Improvement, pp.         25. Fukushima, T., Kamei, Y., McIntosh, S., Yamashita, K.,
+    301–308. Springer (2016)                                         Ubayashi, N.: An empirical study of just-in-time defect
+ 8. Bayaga, A.: Multinomial logistic regression: Usage and           prediction using cross-project models. In: Proceedings of
+    application in risk analysis. Journal of applied quantita-       the 11th Working Conference on Mining Software Repos-
+    tive methods 5(2) (2010)                                         itories, pp. 172–181 (2014)
+What Makes a Code Review Useful to OpenDev Developers?                                                                        23
+
+
+26. Gauthier, I.X., Lamothe, M., Mussbacher, G., McIntosh,            International Conference on Software Maintenance and
+    S.: Is historical data an appropriate benchmark for re-           Evolution (ICSME), pp. 92–103. IEEE Computer Soci-
+    viewer recommendation systems?: A case study of the               ety (2018)
+    gerrit community. In: 2021 36th IEEE/ACM Interna-             43. Kincaid, J.P., Fishburne Jr, R.P., Rogers, R.L., Chissom,
+    tional Conference on Automated Software Engineering               B.S.: Derivation of new readability formulas (automated
+    (ASE), pp. 30–41. IEEE (2021)                                     readability index, fog count and flesch reading ease for-
+27. Gómez, V.U., Ducasse, S., D’Hondt, T.: Visually charac-          mula) for navy enlisted personnel. Tech. rep., Naval Tech-
+    terizing source code changes. Science of Computer Pro-            nical Training Command Millington TN Research Branch
+    gramming 98, 376–393 (2015)                                       (1975)
+28. Governance,       O.:     Openstack     project      teams.   44. Kononenko, O., Baysal, O., Godfrey, M.W.: Code review
+    https://governance.openstack.org/tc/reference/projects/           quality: How developers see it. In: Proceedings of the
+    (2023)                                                            38th International Conference on Software Engineering,
+29. Gunawardena, S.D., Devine, P., Beaumont, I., Garden,              ICSE ’16, pp. 1028–1038. ACM, New York, NY, USA
+    L.P., Murphy-Hill, E., Blincoe, K.: Destructive criticism         (2016). DOI 10.1145/2884781.2884840. URL http://doi.
+    in software code review impacts inclusion. Proceedings of         acm.org/10.1145/2884781.2884840
+    the ACM on Human-Computer Interaction 6(CSCW2),               45. Kononenko, O., Baysal, O., Guerrouj, L., Cao, Y., God-
+    1–29 (2022)                                                       frey, M.W.: Investigating code review quality: Do people
+30. Han, X., Tahir, A., Liang, P., Counsell, S., Luo, Y.:             and participation matter? In: 2015 IEEE international
+    Understanding code smell detection via code review: A             conference on software maintenance and evolution (IC-
+    study of the openstack community. In: 2021 IEEE/ACM               SME), pp. 111–120. IEEE (2015)
+    29th International Conference on Program Comprehen-           46. Kononenko, O., Rose, T., Baysal, O., Godfrey, M.,
+    sion (ICPC), pp. 323–334. IEEE (2021)                             Theisen, D., De Water, B.: Studying pull request merges:
+31. Harrell Jr, F.E., Lee, K.L., Califf, R.M., Pryor, D.B.,           a case study of shopify’s active merchant. In: Proceedings
+    Rosati, R.A.: Regression modelling strategies for im-             of the 40th international conference on software engineer-
+    proved prognostic prediction. Statistics in medicine 3(2),        ing: software engineering in practice, pp. 124–133 (2018)
+    143–152 (1984)                                                47. Landis, J.R., Koch, G.G.: An application of hierarchical
+32. Hasan, M., Iqbal, A., Islam, M.R.U., Rahman, A., Bosu,            kappa-type statistics in the assessment of majority agree-
+    A.: Using a balanced scorecard to identify opportunities          ment among multiple observers. Biometrics pp. 363–374
+    to improve code review effectiveness: an industrial experi-       (1977)
+    ence report. Empirical Software Engineering 26(6), 1–34       48. Mansfield, E.R., Helms, B.P.: Detecting multicollinearity.
+    (2021)                                                            The American Statistician 36(3a), 158–160 (1982)
+33. Hassan, A.E., Holt, R.C.: Studying the chaos of code de-      49. Mäntylä, M.V., Lassenius, C.: What types of defects are
+    velopment. In: WCRE, vol. 3, p. 123 (2003)                        really discovered in code reviews? IEEE Transactions on
+34. Hatton, L.: Testing the value of checklists in code inspec-       Software Engineering 35(3), 430–448 (2008)
+    tions. IEEE software 25(4), 82–88 (2008)                      50. McCabe, T.J.: A complexity measure. IEEE Transactions
+35. Helland, I.S.: On the interpretation and use of r2 in re-         on software Engineering (4), 308–320 (1976)
+    gression analysis. Biometrics pp. 61–69 (1987)                51. McIntosh, S., Kamei, Y., Adams, B., Hassan, A.E.: An
+36. Henley, A.Z., Muçlu, K., Christakis, M., Fleming, S.D.,          empirical study of the impact of modern code review
+    Bird, C.: Cfar: A tool to increase communication, produc-         practices on software quality. Empirical Software En-
+    tivity, and review quality in collaborative code reviews.         gineering 21, 2146–2189 (2016)
+    In: Proceedings of the 2018 CHI Conference on Human           52. Mirsaeedi, E., Rigby, P.C.: Mitigating turnover with
+    Factors in Computing Systems, pp. 1–13 (2018)                     code review recommendation: balancing expertise, work-
+37. Hinkle, D., Jurs, H., Wiersma, W.: Applied statistics for         load, and knowledge distribution. In: Proceedings of the
+    the behavioral sciences (1998)                                    ACM/IEEE 42nd International Conference on Software
+38. Hirao, T., Ihara, A., Ueda, Y., Phannachitta, P., Mat-            Engineering, pp. 1183–1195 (2020)
+    sumoto, K.i.: The impact of a low level of agreement          53. Nagappan, N., Ball, T.: Use of relative code churn mea-
+    among reviewers in a code review process. In: IFIP In-            sures to predict system defect density. In: Proceedings of
+    ternational Conference on Open Source Systems, pp. 97–            the 27th international conference on Software engineer-
+    110. Springer (2016)                                              ing, pp. 284–292 (2005)
+39. Hirao, T., McIntosh, S., Ihara, A., Matsumoto, K.: Code       54. Nagappan, N., Ball, T.: Using software dependencies and
+    reviews with divergent review scores: An empirical study          churn metrics to predict field failures: An empirical case
+    of the openstack and qt communities. IEEE Transactions            study. In: First International Symposium on Empirical
+    on Software Engineering (2020)                                    Software Engineering and Measurement (ESEM 2007),
+40. Hong, Y., Tantithamthavorn, C., Thongtanunam, P.,                 pp. 364–373. IEEE (2007)
+    Aleti, A.: Commentfinder: a simpler, faster, more accu-       55. Nagelkerke, N.J., et al.: A note on a general definition of
+    rate code review comments recommendation. In: Pro-                the coefficient of determination. Biometrika 78(3), 691–
+    ceedings of the 30th ACM Joint European Software En-              692 (1991)
+    gineering Conference and Symposium on the Foundations         56. Osborne, J.W., Waters, E.: Four assumptions of multiple
+    of Software Engineering, pp. 507–519 (2022)                       regression that researchers should always test. Practical
+41. Huang, Y., Jia, N., Chen, X., Hong, K., Zheng, Z.: Code           assessment, research, and evaluation 8(1), 2 (2002)
+    review knowledge perception: Fusing multi-features for        57. Pandya, P., Tiwari, S.: Corms: A github and gerrit based
+    salient-class location. IEEE Transactions on Software             hybrid code reviewer recommendation approach for mod-
+    Engineering pp. 1–1 (2020). DOI 10.1109/TSE.2020.                 ern code review. In: Proceedings of the 30th ACM Joint
+    3021902                                                           European Software Engineering Conference and Sympo-
+42. Jiarpakdee, J., Tantithamthavorn, C., Treude, C.: Autos-          sium on the Foundations of Software Engineering, ES-
+    pearman: Automatically mitigating correlated software             EC/FSE 2022, p. 546–557. Association for Computing
+    metrics for interpreting defect models. In: 2018 IEEE             Machinery, New York, NY, USA (2022)
+24                                                                                                           Turzo and Bosu
+
+
+58. Panichella, S., Zaugg, N.: An empirical investigation of     74. Thongtanunam, P., McIntosh, S., Hassan, A.E., Iida, H.:
+    relevant changes and automation needs in modern code             Review participation in modern code review. Empirical
+    review. Empirical Software Engineering 25(TBD), TBD              Software Engineering 22(2), 768–817 (2017)
+    (2020)                                                       75. Thongtanunam, P., Pornprasit, C., Tantithamthavorn,
+59. Paul, R., Turzo, A.K., Bosu, A.: Why security defects go         C.: Autotransform: automated code transformation to
+    unnoticed during code reviews? a case-control study of           support modern code review process. In: Proceedings
+    the chromium os project. In: 2021 IEEE/ACM 43rd In-              of the 44th International Conference on Software Engi-
+    ternational Conference on Software Engineering (ICSE),           neering, pp. 237–248 (2022)
+    pp. 1373–1385. IEEE (2021)                                   76. Thongtanunam, P., Tantithamthavorn, C., Kula, R.G.,
+60. Pinto, G., Steinmacher, I., Gerosa, M.A.: More common            Yoshida, N., Iida, H., Matsumoto, K.i.: Who should re-
+    than you think: An in-depth study of casual contributors.        view my code? a file location-based code-reviewer recom-
+    In: 2016 IEEE 23rd international conference on software          mendation approach for modern code review. In: 2015
+    analysis, evolution, and reengineering (SANER), vol. 1,          IEEE 22nd International Conference on Software Analy-
+    pp. 112–123. IEEE (2016)                                         sis, Evolution, and Reengineering (SANER), pp. 141–150.
+61. Qualtrics:                  Question                types.       IEEE (2015)
+    https://www.qualtrics.com/support/survey-                    77. Tufan, R., Pascarella, L., Tufanoy, M., Poshyvanykz, D.,
+    platform/survey-module/editing-questions/question-               Bavota, G.: Towards automating code review activities.
+    types-guide/question-types-overview/                             In: 2021 IEEE/ACM 43rd International Conference on
+62. Rahman, M.M., Roy, C.K., Collins, J.A.: Correct: code            Software Engineering (ICSE), pp. 163–174. IEEE (2021)
+    reviewer recommendation in github based on cross-            78. Tufano, R., Masiero, S., Mastropaolo, A., Pascarella, L.,
+    project and technology experience. In: Proceedings of            Poshyvanyk, D., Bavota, G.: Using pre-trained models to
+    the 38th International Conference on Software Engineer-          boost code review automation. In: Proceedings of the
+    ing Companion, pp. 222–231 (2016)                                44th International Conference on Software Engineering,
+63. Rahman, M.M., Roy, C.K., Kula, R.G.: Predicting use-             pp. 2291–2302 (2022)
+    fulness of code review comments using textual features       79. Yamane, T.: Statistics: an introductory analysis-3 (1973)
+    and developer experience. In: 2017 IEEE/ACM 14th In-         80. Zaidman, A., Van Rompaey, B., Van Deursen, A., De-
+    ternational Conference on Mining Software Repositories           meyer, S.: Studying the co-evolution of production and
+    (MSR), pp. 215–226. IEEE (2017)                                  test code in open source and industrial developer test
+64. Rigby, P.C., Bird, C.: Convergent contemporary software          processes through repository mining. Empirical Software
+    peer review practices. In: Proceedings of the 2013 9th           Engineering 16, 325–364 (2011)
+    Joint Meeting on Foundations of Software Engineering,        81. Zanaty, F.E., Hirao, T., McIntosh, S., Ihara, A., Mat-
+    pp. 202–212 (2013)                                               sumoto, K.: An empirical study of design discussions in
+65. Rigby, P.C., Storey, M.A.: Understanding broadcast               code review. In: Proceedings of the 12th ACM/IEEE In-
+    based peer review on open source software projects. In:          ternational Symposium on Empirical Software Engineer-
+    2011 33rd International Conference on Software Engi-             ing and Measurement, pp. 1–10 (2018)
+    neering (ICSE), pp. 541–550. IEEE (2011)                     82. Zanjani, M.B., Kagdi, H., Bird, C.: Automatically rec-
+66. Rong, G., Zhang, Y., Yang, L., Zhang, F., Kuang, H.,             ommending peer reviewers in modern code review. IEEE
+    Zhang, H.: Modeling review history for reviewer recom-           Transactions on Software Engineering 42(6), 530–543
+    mendation: A hypergraph approach. In: Proceedings of             (2015)
+    the 44th International Conference on Software Engineer-
+    ing, ICSE ’22, p. 1381–1392. Association for Computing
+    Machinery, New York, NY, USA (2022)
+67. Sadowski, C., Söderberg, E., Church, L., Sipko, M., Bac-
+    chelli, A.: Modern code review: a case study at google.
+    In: Proceedings of the 40th International Conference on
+    Software Engineering: Software Engineering in Practice,
+    pp. 181–190 (2018)
+68. Sarker, J., Turzo, A.K., Bosu, A.: A benchmark study
+    of the contemporary toxicity detectors on software en-
+    gineering interactions. arXiv preprint arXiv:2009.09331
+    (2020)
+69. Sarle, W.: Sas/stat user’s guide: The varclus procedure.
+    sas institute. Inc., Cary, NC, USA (1990)
+70. Snow, J., Mann, M.: Qualtrics survey software: handbook
+    for research professionals. Qualtrics Labs, Inc (2013)
+71. Tao, Y., Kim, S.: Partitioning composite code changes to
+    facilitate code review. In: 2015 IEEE/ACM 12th Working
+    Conference on Mining Software Repositories, pp. 180–
+    190. IEEE (2015)
+72. Thongtanunam, P., Hassan, A.E.: Review dynamics and
+    their impact on software quality. IEEE Transactions on
+    Software Engineering 47(12), 2698–2712 (2020)
+73. Thongtanunam, P., McIntosh, S., Hassan, A.E., Iida, H.:
+    Investigating code review practices in defective files: An
+    empirical study of the qt system. In: 2015 IEEE/ACM
+    12th Working Conference on Mining Software Reposito-
+    ries, pp. 168–179. IEEE (2015)
+

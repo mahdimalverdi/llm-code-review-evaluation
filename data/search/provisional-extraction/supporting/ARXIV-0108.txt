@@ -1,0 +1,292 @@
+                                              Tokenomics: Quantifying Where Tokens Are Used in Agentic
+                                                               Software Engineering
+                                                                           Mohamad Salim                                                                    Jasmine Latendresse
+                                                        Data-driven Analysis of Software (DAS) Lab                                             Data-driven Analysis of Software (DAS) Lab
+                                                                   Concordia University                                                                   Concordia University
+                                                                    Montreal, Canada                                                                        Montreal, Canada
+                                                                mo_alim@live.concordia.ca                                                        jasmine.latendresse@mail.concordia.ca
+
+                                                                SayedHassan Khatoonabadi                                                                         Emad Shihab
+                                                        Data-driven Analysis of Software (DAS) Lab                                             Data-driven Analysis of Software (DAS) Lab
+arXiv:2601.14470v1 [cs.SE] 20 Jan 2026
+
+
+
+
+                                                                   Concordia University                                                                   Concordia University
+                                                                    Montreal, Canada                                                                       Montreal, Canada
+                                                         sayedhassan.khatoonabadi@concordia.ca                                                         emad.shihab@concordia.ca
+
+                                         Abstract                                                                                        Keywords
+                                         LLM-based Multi-Agent (LLM-MA) systems are increasingly ap-                                     Large Language Models, Software Engineering for AI, Multi-Agent
+                                         plied to automate complex software engineering tasks such as re-                                Systems, Tokenomics
+                                         quirements engineering, code generation, and testing. However,
+                                                                                                                                         ACM Reference Format:
+                                         their operational efficiency and resource consumption remain poorly
+                                                                                                                                         Mohamad Salim, Jasmine Latendresse, SayedHassan Khatoonabadi, and Emad
+                                         understood, hindering practical adoption due to unpredictable costs
+                                                                                                                                         Shihab. 2026. Tokenomics: Quantifying Where Tokens Are Used in Agentic
+                                         and environmental impact. To address this, we conduct an analysis                               Software Engineering. In Proceedings of Make sure to enter the correct con-
+                                         of token consumption patterns in an LLM-MA system within the                                    ference title from your rights confirmation email (MSR ’26). ACM, New York,
+                                         Software Development Life Cycle (SDLC), aiming to understand                                    NY, USA, 5 pages. https://doi.org/XXXXXXX.XXXXXXX
+                                         where tokens are consumed across distinct software engineering ac-
+                                         tivities. We analyze execution traces from 30 software development
+                                         tasks performed by the ChatDev framework using a GPT-5 rea-                                     1    Introduction
+                                         soning model mapping its internal phases to distinct development                                Large-scale software engineering increasingly explores LLM-Based
+                                         stages (Design, Coding, Code Completion, Code Review, Testing,                                  Multi-Agent (LLM-MA) systems to automate complex tasks across
+                                         and Documentation) to create a standardized evaluation framework.                               the Software Development Life Cycle (SDLC) [3, 7]. These LLM-MA
+                                         We then quantify and compare token distribution (input, output,                                 frameworks simulate human teams (e.g., product managers, archi-
+                                         reasoning) across these stages.                                                                 tects, developers, testers) using specialized Large Language Model
+                                            Our preliminary findings show that the iterative Code Review                                 (LLM) agents that collaborate to design, code, and verify software.
+                                         stage accounts for the majority of token consumption for an average                             In principle, LLM-MA systems can improve autonomy and robust-
+                                         of 59.4% of tokens. Furthermore, we observe that input tokens con-                              ness by dividing work across agents [3]. Prior work highlights that
+                                         sistently constitute the largest share of consumption for an average                            LLM-MA systems encourage divergent thinking [6], enhance rea-
+                                         of 53.9%, providing empirical evidence for potentially significant                              soning and factuality [1], and scale to problems beyond single-agent
+                                         inefficiencies in agentic collaboration. Our results suggest that the                           capacity [3]. For Software Engineering (SE), this suggests LLM-MA
+                                         primary cost of agentic software engineering lies not in initial code                           systems could automate end-to-end workflows, from requirements
+                                         generation but in automated refinement and verification. Our novel                              to testing, in a unified manner [4, 10].
+                                         methodology can help practitioners predict expenses and optimize                                   Recent studies have begun to analyze the behavior and efficiency
+                                         workflows, and it directs future research toward developing more                                of these systems. The AGENTTAXO framework [14] provided a
+                                         token-efficient agent collaboration protocols.                                                  taxonomy for dissecting token distribution in general LLM-MA sys-
+                                                                                                                                         tems, introducing the concept of a "communication tax" to describe
+                                                                                                                                         the overhead from inter-agent interactions. In addition, the MAST
+                                                                                                                                         taxonomy of failures revealed that many issues in LLM-MA systems
+                                                                                                                                         stem from systemic design and coordination challenges, such as
+                                         Permission to make digital or hard copies of all or part of this work for personal or
+                                         classroom use is granted without fee provided that copies are not made or distributed           step repetition or incomplete verification, rather than individual
+                                         for profit or commercial advantage and that copies bear this notice and the full citation       LLM limitations [9]. While this prior work establishes essential tax-
+                                         on the first page. Copyrights for components of this work owned by others than the              onomies for understanding token distribution and systemic failure
+                                         author(s) must be honored. Abstracting with credit is permitted. To copy otherwise, or
+                                         republish, to post on servers or to redistribute to lists, requires prior specific permission   modes, it analyzes agent behavior in a general context. A significant
+                                         and/or a fee. Request permissions from permissions@acm.org.                                     knowledge gap exists regarding the resource efficiency of these sys-
+                                         MSR ’26, Rio de Janeiro, Brazil                                                                 tems when applied specifically to the unique, multi-stage SE work-
+                                         © 2026 Copyright held by the owner/author(s). Publication rights licensed to ACM.
+                                         ACM ISBN 978-x-xxxx-xxxx-x/YYYY/MM                                                              flows [11]. The ultimate question for practical adoption—"Where
+                                         https://doi.org/XXXXXXX.XXXXXXX                                                                 do the tokens go?"—remains unanswered in the SE domain.
+MSR ’26, April 13–14, 2026, Rio de Janeiro, Brazil                       Mohamad Salim, Jasmine Latendresse, SayedHassan Khatoonabadi, and Emad Shihab
+
+
+   Thus, in this paper, we introduce the term "tokenomics" as the         Table 1: Details of the GPT-5 model used in the experiments.
+study of operational efficiency and resource consumption in LLM-
+MA systems. To our knowledge, this is the first study to conduct                     Parameter               Value
+an empirical analysis of tokenomics in an SE context that examines
+                                                                                     Model Version           gpt-5-2025-08-07
+execution traces of an SE-focused LLM-MA system through the                          Temperature             1.0 (default value; immutable)
+lens of the SDLC. To guide our study, we focus on the following                      Context Window          400,000 tokens
+fundamental research question: What are the token consump-                           Max Output Tokens       128,000 tokens
+tion patterns of LLM-MA systems for software development                             Knowledge Cutoff        Sep 30, 2024
+tasks?
+   To answer this, we analyze the distribution of token consumption
+across distinct development stages, which we derive by mapping             2.3    Analysis Pipeline
+the internal phases of the multi-agent framework ChatDev [10].
+                                                                          To analyze the collected data, we designed and implemented a
+ChatDev simulates a virtual software company where multiple
+                                                                          multi-step pipeline, illustrated in Figure 1.
+agent roles (e.g., programmer, tester) collaborate through multi-
+                                                                          Trace Collection. We instrumented ChatDev to log the complete
+turn dialogues to complete the SDLC. Answering this question is
+                                                                          execution trace for each of the 30 tasks, capturing every LLM call,
+the first step towards building economically and environmentally
+                                                                          including the prompt, response, and associated token counts (input,
+sustainable agentic SE systems.
+                                                                          output, reasoning).
+   This paper contributes an empirical analysis, a curated dataset
+                                                                          Phase Mapping. A core methodological contribution of our work
+of 30 execution traces, and a complete replication package.1
+                                                                          is the mapping of ChatDev’s internal, framework-specific phases
+                                                                          to universally understood development stages. This abstraction
+2     Study Design                                                        allows for generalizable analysis and can be extended to other SE
+The goal of our study is to empirically investigate the distribution      LLM-MA frameworks. The mapping used is detailed in Table 2.
+of token consumption within an LLM-MA system as it performs               Token Aggregation. Using this mapping, we wrote Python scripts
+end-to-end software development tasks. To achieve this, we se-            to parse the traces collected and aggregate token counts for each
+lected ChatDev [10] as our initial system for analysis. We make           of the development stages across all 30 runs, calculating totals and
+this choice because its "chat chain" architecture represents a clear,     breaking them down by input, output, and reasoning tokens.
+sequential waterfall model (design → coding → testing), making
+its phases distinct and well-suited for mapping to software develop-       3     Study Results
+ment stages. In addition, this framework is one of the most popular        In this section, we present the results of our research question. We
+and highly cited open source frameworks [2, 11, 13].                       present its motivation, the approach to answer the question, and
+                                                                           the results.
+2.1     Dataset Curation
+                                                                           3.1    RQ: What are the token consumption
+We executed ChatDev [10] on 30 distinct software development
+tasks, with the prompts sourced from the ProgramDev Dataset [9],                  patterns of LLM-MA systems for software
+which was used in the foundational MAST study [9]. The selected                   development tasks?
+prompts range from simple algorithms (e.g., Fibonacci number gen-         Motivation. Understanding the token consumption patterns, or
+eration) to more complex applications (e.g., a chess game), ensuring      "tokenomics," of agentic SE systems is critical for their practical
+task diversity. Recent work suggests that the number of reasoning         and sustainable adoption. High token usage translates directly to
+tokens allocated by a model can serve as a proxy for task com-            increased financial costs, energy consumption, and environmen-
+plexity [12]. Our dataset exhibits a wide range in reasoning tokens       tal impact. By identifying where tokens are consumed within the
+consumed across the 30 tasks (from 17,280 to 40,000 tokens), which        SDLC, we can create a "cost map" that enables practitioners to
+suggests a sufficient diversity in task complexity for this study.        predict expenses and optimize workflows. While prior work has an-
+                                                                          alyzed general MAS behavior, there is a clear gap in understanding
+2.2     Model Selection                                                   these efficiency patterns specifically within the context of software
+                                                                          development [11], which this RQ aims to address.
+The GPT-5 reasoning model was selected as the backbone for all
+                                                                          Approach. To answer this question, we analyze the aggregated
+agents. This decision was based on the popularity and recency of the
+                                                                          token data from the study pipeline described in Section 2. We focus
+model, its suitability for agentic use cases, and its strong reasoning
+                                                                          on two primary dimensions:
+capabilities, which are in line with the expectations of autonomous
+agents [3]. As detailed in Table 1, the model version used is gpt-5-       (1) The distribution of total tokens across the mapped development
+2025-08-07. The temperature parameter is not supported for this                stages (Design, Coding, etc.)
+model, so the default value 1.0 was used.                                  (2) The ratio of input, output, and reasoning tokens within each
+                                                                               stage.
+                                                                           Finding 1: The Code Review Stage Dominates Token Con-
+                                                                           sumption. Our analysis reveals a highly uneven distribution of
+1 https://zenodo.org/records/17430187                                      token usage across the development process. As shown in Figure 2,
+Tokenomics: Quantifying Where Tokens Are Used in Agentic Software Engineering                                      MSR ’26, April 13–14, 2026, Rio de Janeiro, Brazil
+
+
+
+
+                                                     Figure 1: Overview of our analysis pipeline.
+
+Table 2: Mapping of ChatDev’s internal phases to distinct software development stages. The mapping is based on the descriptions
+of each phase provided in the framework’s documentation.
+
+ Development Stage      ChatDev Phases                                                   Description
+ Design                 DemandAnalysis, LanguageChoose                                   These initial phases focus on understanding requirements and making
+                                                                                         high-level technical decisions.
+ Coding                 Coding                                                           This phase is directly involved in writing the initial source code.
+ Code Completion        CodeComplete                                                     This phase completes any placeholder or incomplete code files left from
+                                                                                         the Coding phase.
+ Code Review            CodeReview                                                       This phase involves an iterative dialogue between a programmer and code
+                                                                                         reviewer agent to review and modify/refine code.
+ Testing                Test                                                             This phase explicitly focuses on dynamic system testing to locate and fix
+                                                                                         executability bugs.
+ Documentation          EnvironmentDoc, Reflection, Manual                               These final phases generate user manuals and document required
+                                                                                         environment dependencies.
+
+
+
+a clear hierarchy of token consumption emerges. In the figure, the              Table 3: Phase-by-phase token ratio breakdown for ChatDev
+"n" value denotes the number of tasks (out of 30) where a specific              with GPT-5 Reasoning across 30 tasks.
+phase was executed. This value is not always "30", as the agents
+within the multi-agent system autonomously decide which phases                    Development Stage        Avg Input %      Avg Output %        Avg Reasoning %
+to execute, and not all phases are needed for every task. The error               Design                        60.4               3.6                 36.0
+bars represent ±1 standard deviation, indicating the variability in               Coding                         6.9              58.0                 35.1
+                                                                                  Code Completion               47.7              41.7                 10.5
+token consumption for each phase. The Code Review phase is                        Code Review                   51.4              24.7                 23.9
+the largest consumer, responsible for an average of 59.4% of                      Testing                       60.8              20.7                 18.4
+tokens across all 30 tasks. The Code Completion phase, which oc-                  Documentation                 80.2               8.3                 11.5
+curred in 6 of the 30 tasks, was also costly, averaging 26.8% of tokens           Overall (per task)            53.9              24.4                 21.6
+in those runs. These two refinement-focused stages are followed
+by Documentation (avg. 20.1%) and Testing (avg. 10.3%), the latter
+of which occurred in 12 of the 30 tasks. In contrast, initial Coding
+(avg. 8.6%) and Design (avg. 2.4%) are remarkably inexpensive. This             This also suggests that the communication tax may be an inher-
+suggests that the primary cost of agentic software engineering lies             ent characteristic of conversational multi-agent architectures, a
+not in initial code generation but in the iterative, conversational             phenomenon which future work should investigate further.
+process of refinement and verification.                                         Finding 3: Software Development Stages Exhibit Distinct To-
+Finding 2: Token Consumption is Dominated by Input To-                          kenomic Profiles. A deeper look at the token ratios per phase,
+kens. Across all phases except the Coding phase, we observe a                   detailed in Table 3, reveals unique patterns for different software
+consistent pattern where input tokens far exceed output and                     engineering activities. The Coding phase is a notable outlier, be-
+reasoning tokens. On average, the overall token usage for each                  ing output-heavy (58% output vs. 6.9% input). This is intuitive, as
+task analyzed is composed of 53.9% input tokens, 24.4% output                   it involves generating verbose source code from a more concise
+tokens, and 21.6% reasoning tokens. This approximate 2:1 ratio                  design specification. In contrast, verification phases like Code Re-
+of input to output tokens provides strong empirical evidence                    view, and documentation phases are input-heavy (51.4% and 80.2%
+for the "communication tax" identified in prior work [14], where                input, respectively). These phases consume large amounts of ex-
+agents repeatedly pass large contexts during their collaborative                isting code as context to produce small, analytical outputs. These
+dialogue. This highlights a significant inefficiency in current agent           distinct profiles provide a "cost map" for different engineering activ-
+collaboration protocols, where the majority of the tokens are spent             ities, enabling practitioners to better predict expenses and identify
+on communicating context rather than generating novel output.                   opportunities for process optimization.
+MSR ’26, April 13–14, 2026, Rio de Janeiro, Brazil                        Mohamad Salim, Jasmine Latendresse, SayedHassan Khatoonabadi, and Emad Shihab
+
+
+                                                                           insight can inform design decisions, such as integrating a "human-
+                                                                           in-the-loop" checkpoint before the Code Review phase to prevent
+                                                                           costly iterative loops [8], thereby maximizing both economic and
+                                                                           computational efficiency.
+                                                                              For the research community, our results present a clear chal-
+                                                                           lenge and a potential solution. The challenge is to design more
+                                                                           token-efficient collaboration protocols for verification and
+                                                                           refinement, moving beyond naive full-context passing. In ad-
+                                                                           dition, there is a clear need for a standardized, comprehensive
+                                                                           evaluation framework [5]. This framework can serve as a com-
+                                                                           mon ground to benchmark and compare the efficiency of different
+                                                                           LLM-MA architectures (e.g., ChatDev’s hierarchical, conversational
+                                                                           workflow vs. MetaGPT’s SOP-based assembly line) in future work,
+                                                                           providing a "Rosetta Stone" to translate framework-specific opera-
+                                                                           tions into universal software engineering activities.
+
+                                                                            5    Threats to Validity
+                                                                           There are a few important limitations to our work that need to
+                                                                           be considered when interpreting our findings. Firstly, our analy-
+Figure 2: Average token usage by phase across all 30 tasks                 sis is based on a single LLM-MA system (ChatDev) and a single
+for ChatDev with GPT-5 Reasoning. Error bars represent ±1                  LLM (GPT-5 Reasoning Model). The observed token consumption
+standard deviation. Note that not all phases occurred in every             patterns may differ in other LLM-MA architectures or with other
+task (e.g., Code Completion n=6, Testing n=12).                            LLMs that have different token efficiencies [14]. Secondly, the 30
+                                                                           software development tasks, while diverse, may not represent all
+                                                                           possible software development scenarios and complexities. The size
+ Answer to RQ: With the ChatDev LLM-MA system, token con-                  of the curated dataset is a direct consequence of the current lack
+ sumption is heavily concentrated in the Code Review stage of the          of public, large-scale benchmarks for SE-specific agent traces [15],
+ SDLC. Moreover, token consumption is dominated by input tokens,           which makes data curation a time-consuming and costly process.
+ reflecting a potentially significant communication tax, with dif-         Thirdly, some development stages were executed in only a small
+ ferent development stages exhibiting unique tokenomic profiles            subset of the 30 tasks. For instance, the Code Completion (𝑛 = 6)
+ corresponding to the nature of the software engineering task (e.g.,       and Testing (𝑛 = 12) phases were triggered infrequently by the
+ planning, reasoning, or verification).                                    agentic system. The conclusions drawn about the tokenomic pro-
+                                                                           files of these specific stages are based on a small sample, which may
+4    Discussion                                                            not be representative and may limit the generalizability of those
+Our preliminary results offer an initial "cost map" of agentic soft-       particular findings. Finally, our proposed mapping of ChatDev’s
+ware development, with several implications for practitioners and          internal phases to software development stages is an abstraction.
+researchers.                                                               While we believe it is a logical and useful one for creating a stan-
+   The immense token cost of the Code Review phase can be inter-           dardized evaluation framework, it represents one of several possible
+preted as the "Cost of Conversation." This is a direct consequence         mappings of the agent’s activities.
+of the inherent conversational architecture of LLM-MA systems,
+where agents iteratively pass the full code context back and forth          6    Conclusion and Future Work
+to refine it. This suggests that current agentic collaboration              This work-in-progress paper sets out to answer "where do the tokens
+protocols for verification are highly inefficient, consuming                go?" in agentic software engineering. Our preliminary empirical
+vast resources to perform tasks that might involve minor cor-               study using the ChatDev framework reveals that the answer is
+rections. This aligns with findings from the MAST taxonomy [9],             not straightforward. The costs are not evenly distributed but are
+where failures related to verification and step repetition are com-         overwhelmingly concentrated in the iterative, conversational phase
+mon, suggesting that high token usage may be a symptom of the               of code review. We also found that input tokens, comprising the
+agentic system’s attempt to overcome these inherent coordination            "communication tax," form the bulk of the token usage, highlighting
+challenges through brute-force dialogue.                                    a key area for future optimization.
+   For practitioners, our findings provide a basis for cost prediction         This study lays the groundwork for a comprehensive research
+and process optimization. The distinct tokenomic profiles imply that        agenda. Future work should focus on:
+the cost of an agent-driven project can be estimated based on
+the type of work required. For example, greenfield projects with            (1) Expanding our dataset with more tasks to ensure better gener-
+heavy initial coding will have a different cost structure than projects         alizability.
+focused on refactoring and debugging existing code, which will be           (2) Extending the analysis to other LLMs to understand model-
+dominated by the expensive, input-heavy code review cycle. This                 specific effects.
+Tokenomics: Quantifying Where Tokens Are Used in Agentic Software Engineering                                                MSR ’26, April 13–14, 2026, Rio de Janeiro, Brazil
+
+
+(3) Extending the analysis to other LLM-MA systems to perform                                 Conference on Empirical Methods in Natural Language Processing. 17889–17904.
+    a comparative study of how architectural differences impact                           [7] Ruofan Lu, Yichen Li, and Yintong Huo. 2025. Exploring Autonomous Agents:
+                                                                                              A Closer Look at Why They Fail When Completing Tasks. arXiv preprint
+    tokenomics.                                                                               arXiv:2508.13143 (2025).
+(4) Investigating the relationship between token consumption pat-                         [8] Satyam Kumar Navneet and Joydeep Chandra. 2025. Rethinking Auton-
+                                                                                              omy: Preventing Failures in AI-Driven Software Engineering. arXiv preprint
+    terns and failure modes.                                                                  arXiv:2508.11824 (2025).
+(5) Further developing and validating our development stage map-                          [9] Melissa Z Pan, Mert Cemri, Lakshya A Agrawal, Shuyi Yang, Bhavya Chopra,
+    ping as a robust, universal framework for benchmarking SE                                 Rishabh Tiwari, Kurt Keutzer, Aditya Parameswaran, Kannan Ramchandran,
+                                                                                              Dan Klein, Joseph E. Gonzalez, Matei Zaharia, and Ion Stoica. 2025. Why Do
+    agent efficiency.                                                                         Multiagent Systems Fail?. In ICLR 2025 Workshop on Building Trust in Language
+                                                                                              Models and Applications. https://openreview.net/forum?id=wM521FqPvI
+References                                                                               [10] Chen Qian, Wei Liu, Hongzhang Liu, Nuo Chen, Yufan Dang, Jiahao Li, Cheng
+                                                                                              Yang, Weize Chen, Yusheng Su, Xin Cong, et al. 2024. ChatDev: Communicative
+ [1] Yilun Du, Shuang Li, Antonio Torralba, Joshua B Tenenbaum, and Igor Mordatch.            Agents for Software Development. In Proceedings of the 62nd Annual Meeting
+     2024. Improving factuality and reasoning in language models through multiagent           of the Association for Computational Linguistics (Volume 1: Long Papers). 15174–
+     debate. In Proceedings of the 41st International Conference on Machine Learning.         15186.
+     11733–11763.                                                                        [11] Rennai Qiu, Chen Qian, Ran Li, Yufan Dang, Weize Chen, Cheng Yang, Yingli
+ [2] Taicheng Guo, Xiuying Chen, Yaqi Wang, Ruidi Chang, Shichao Pei, Nitesh V                Zhang, Ye Tian, Xuantang Xiong, Lei Han, et al. 2025. Co-Saving: Resource
+     Chawla, Olaf Wiest, and Xiangliang Zhang. 2024. Large language model based               Aware Multi-Agent Collaboration for Software Development. arXiv preprint
+     multi-agents: a survey of progress and challenges. In Proceedings of the Thirty-         arXiv:2505.21898 (2025).
+     Third International Joint Conference on Artificial Intelligence. 8048–8057.         [12] Parshin Shojaee, Iman Mirzadeh, Keivan Alizadeh, Maxwell Horton, Samy Bengio,
+ [3] Junda He, Christoph Treude, and David Lo. 2025. LLM-Based Multi-Agent Systems            and Mehrdad Farajtabar. 2025. The illusion of thinking: Understanding the
+     for Software Engineering: Literature Review, Vision, and the Road Ahead. ACM             strengths and limitations of reasoning models via the lens of problem complexity.
+     Transactions on Software Engineering and Methodology 34, 5 (2025), 1–30.                 arXiv preprint arXiv:2506.06941 (2025).
+ [4] Sirui Hong, Mingchen Zhuge, Jonathan Chen, Xiawu Zheng, Yuheng Cheng,               [13] Lei Wang, Chen Ma, Xueyang Feng, Zeyu Zhang, Hao Yang, Jingsen Zhang,
+     Jinlin Wang, Ceyao Zhang, Zili Wang, Steven Ka Shing Yau, Zijuan Lin, Liyang             Zhiyuan Chen, Jiakai Tang, Xu Chen, Yankai Lin, et al. 2024. A survey on large
+     Zhou, Chenyu Ran, Lingfeng Xiao, Chenglin Wu, and Jürgen Schmidhuber.                    language model based autonomous agents. Frontiers of Computer Science 18, 6
+     2024. MetaGPT: Meta Programming for A Multi-Agent Collaborative Frame-                   (2024), 186345.
+     work. In The Twelfth International Conference on Learning Representations. https:   [14] Qian Wang, Zhenheng Tang, ZICHEN JIANG, Nuo Chen, Tianyu Wang, and
+     //openreview.net/forum?id=VtmBAGCN7o                                                     Bingsheng He. 2025. AgentTaxo: Dissecting and Benchmarking Token Distribu-
+ [5] Yubo Li, Xiaobin Shen, Xinyu Yao, Xueying Ding, Yidi Miao, Ramayya Krishnan,             tion of LLM Multi-Agent Systems. In ICLR 2025 Workshop on Foundation Models
+     and Rema Padman. 2025. Beyond single-turn: A survey on multi-turn interactions           in the Wild. https://openreview.net/forum?id=0iLbiYYIpC
+     with large language models. arXiv preprint arXiv:2504.04717 (2025).                 [15] Bingyu Yan, Zhibo Zhou, Litian Zhang, Lian Zhang, Ziyi Zhou, Dezhuang Miao,
+ [6] Tian Liang, Zhiwei He, Wenxiang Jiao, Xing Wang, Yan Wang, Rui Wang, Yujiu               Zhoujun Li, Chaozhuo Li, and Xiaoming Zhang. 2025. Beyond self-talk: A
+     Yang, Shuming Shi, and Zhaopeng Tu. 2024. Encouraging Divergent Thinking in              communication-centric survey of llm-based multi-agent systems. arXiv preprint
+     Large Language Models through Multi-Agent Debate. In Proceedings of the 2024             arXiv:2502.14321 (2025).
+

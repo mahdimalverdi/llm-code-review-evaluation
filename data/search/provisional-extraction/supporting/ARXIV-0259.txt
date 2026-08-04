@@ -1,0 +1,1461 @@
+                                         Noname manuscript No.
+                                         (will be inserted by the editor)
+
+
+
+
+                                         More Than React: Investigating The Role of Emoji
+                                         Reaction in GitHub Pull Requests
+
+                                         Dong Wang     · Tao Xiao · Teyon Son ·
+                                         Raula Gaikovina Kula · Takashi Ishio ·
+                                         Yasutaka Kamei · Kenichi Matsumoto
+
+
+
+
+                                         Received: date / Accepted: date
+arXiv:2307.07111v1 [cs.SE] 14 Jul 2023
+
+
+
+
+                                         Abstract Open source software development has become more social and
+                                         collaborative, evident GitHub. Since 2016, GitHub started to support more
+                                         informal methods such as emoji reactions, with the goal to reduce comment-
+                                         ing noise when reviewing any code changes to a repository. From a code review
+                                         context, the extent to which emoji reactions facilitate a more efficient review
+                                         process is unknown. We conduct an empirical study to mine 1,850 active repos-
+                                         itories across seven popular languages to analyze 365,811 Pull Requests (PRs)
+                                         for their emoji reactions against the review time, first-time contributors, com-
+                                         ment intentions, and the consistency of the sentiments. Answering these four
+                                         research perspectives, we first find that the number of emoji reactions has a
+                                         significant correlation with the review time. Second, our results show that a PR
+                                         submitted by a first-time contributor is less likely to receive emoji reactions.
+                                         Third, the results reveal that the comments with an intention of information
+                                         giving, are more likely to receive an emoji reaction. Fourth, we observe that
+                                         only a small proportion of sentiments are not consistent between comments
+                                         and emoji reactions, i.e., with 11.8% of instances being identified. In these
+                                         cases, the prevalent reason is when reviewers cheer up authors that admit
+                                         to a mistake, i.e., acknowledge a mistake. Apart from reducing commenting
+                                         noise, our work suggests that emoji reactions play a positive role in facilitating
+                                         collaborative communication during the review process.
+
+                                         Keywords Emoji Reaction, Code Reviews, Mining Software Repositories
+
+                                           Corresponding author - Dong Wang
+                                         Kyushu University, Japan.
+                                         E-mail: d.wang@ait.kyushu-u.ac.jp
+                                         Tao Xiao, Teyon Son, Raula Gaikovina Kula, Takashi Ishio, Kenichi Matsumoto
+                                         Nara Institute of Science and Technology, Japan.
+                                         E-mail: {tao.xiao.ts2,son.teyon.sr7,raula-k,ishio,matumoto}@is.naist.jp
+                                         Yasutaka Kamei
+                                         Kyushu University, Japan. E-mail: kamei@ait.kyushu-u.ac.jp
+2                                                                   Dong Wang     et al.
+
+
+1 Introduction
+
+In the past few years, open source software development has become more
+social and collaborative. Known as social coding, open source development
+promotes formal and informal collaboration by empowering the exchange of
+knowledge between developers (Dabbish et al., 2012). GitHub, one of the most
+popular social coding platforms, attracts more than 72 million developers col-
+laborating across 233 million repositories.1 Since 2016, GitHub introduced a
+new social function called “reaction” for developers to quickly express their
+feeling in an issue report and a pull request (PR). Especially for discussing a
+PR, we find that2 :
+        “In many cases, especially on popular projects, the result is a long thread
+        full of emoji and not much content, which makes it difficult to have
+        a discussion. With reactions, you can now reduce the noise in these
+        threads” - GitHub
+    In the context of code review, we assume that a thread full of emoji re-
+actions may also have ulterior intentions (e.g., confusion or conflicts) during
+the code review process. For instance, Ebert et al. (2019) pointed out that
+confusion delays the merge decision decreases review quality, and results in
+additional discussions. Hirao et al. (2020) found that patches can receive both
+positive and negative scores due to the disagreement between reviewers, which
+leads to conflicts in the review process. Figure 1 depicts two typical cases where
+the emoji reactions occur. Figure 1(a) shows the case where the reaction does
+reduce unnecessary commenting in the thread. The example illustrates how
+Author B reduces the commenting by simply reacting with a quick expression
+of approval through THUMBS UP . In contrast, as shown in Figure 1(b), there
+exists a case where the emoji usage has an ulterior intention and does not re-
+duce comments in the discussion thread. In detail, Contributor D uses three
+positive emoji reactions (THUMBS UP , HOORAY , and HEART ) to represent
+the appreciation to this PR. Later the contributor goes on to provide detailed
+comments on the PR. We posit that the intention of the emoji reaction was to
+express appreciation for the PR, and did not reduce the amount of commenting
+in the threads.
+    As per our registered report (Son et al., 2021), positive emoji reactions are
+been widely used in PRs and do not always reduce the commenting noise. We
+now execute the study protocols to address four research questions, using a
+statistical sample of 1,850 repositories with 365,811 PRs across seven popular
+languages. The goal of the study is to investigate the role of emoji reactions
+in the context of code review from different perspectives. RQ1 is from the
+view of the review process, while RQ2 is from the human (i.e., contributor)
+perspective. Finally, RQ3 and RQ4 take a deeper analysis of the context of
+the comments between the review team. We now present the details of each
+research question below:
+    1   https://github.com/search,2021
+    2   https://tinyurl.com/3rpdr6dp
+Title Suppressed Due to Excessive Length                                            3
+
+
+             Contributor A
+
+
+
+
+                             Author B reacted with thumbs up emoji
+                        Author B
+
+
+
+
+                    (a) Example of emoji reaction reduce commenting noise.
+
+                              Author C
+
+
+
+
+                                           Contributor D reacted with
+                                                  hooray emoji
+
+
+         Contributor D reacted with                 Contributor D reacted with
+             thumbs up emoji                               heart emoji
+                                                                   ...
+                                                                   ... 7 comments
+                                                                   ...
+                         Contributor D
+
+
+                               @Author C
+
+
+
+                                         Author C
+
+
+
+            (b) Example of emoji reaction does not reduce commenting noise.
+
+Fig. 1 Examples of emoji reactions used in GitHub.
+
+
+
+ – RQ1: Does the emoji reaction used in the review discussion cor-
+   relate with review time?
+   Motivation. Prior studies (Baysal et al., 2016; Kononenko et al., 2018)
+   have widely analyzed the impact of technical and non-technical factors on
+   the review process (e.g., review outcome, review time). However, little is
+   known about whether or not the emoji reaction can be correlated with the
+   review time. It is possible that emoji reaction may shorten the review time,
+   as it could reduce the noise during the review discussions. Thus, our moti-
+   vation for the first research question is to explore the correlation between
+   the emoji reaction used in the review discussion and review time.
+ – RQ2: Does a PR submitted by a first-time contributor receive
+   more emoji reactions?
+   Motivation. We find that the emoji reaction might be used to express ap-
+   preciation for submitting a PR. Our motivation for this research question
+   is to understand if contributors that have never submitted to the project
+   before receive more emoji reactions. Furthermore, answering this research
+4                                                            Dong Wang     et al.
+
+
+   question will provide insights into a potent ulterior motive for an emoji
+   reaction. Our hypothesis is that H1: PRs submitted by first-time contrib-
+   utors receive more emoji reactions. We assume that existing contributors
+   could express positive feelings to attract newcomers to the project.
+ – RQ3: What is the relationship between the intention of comments
+   and their emoji reaction?
+   Motivation. As shown in Figure 1, emoji reactions may not always reduce
+   the commenting noise. Hence, our motivation for the third research ques-
+   tion is to explore the relationship between the intention of comments and
+   their emoji reactions. Our hypothesis is that (H2): There is a significant
+   relationship between comment intentions and emoji reaction kinds. We as-
+   sume that a specific comment intention may explain the ulterior purpose
+   of reacting with an emoji reaction.
+ – RQ4: Is emoji reaction consistent with comment sentiment?
+   Motivation. The RQ3 results reveal that specific sentiments of the emoji
+   (i.e., THUMBS UP ) are widely used in PRs. Inspired by this, our motivation
+   for this research question is to investigate whether there is any inconsis-
+   tency between sentiments of the comments and sentiments of the emoji
+   reactions. Furthermore, we manually check the reasons why inconsistency
+   happened. We believe answering RQ4 would help newcomers better under-
+   stand the emoji usage in the PR discussion. Our hypothesis is that (H3):
+   There is a significant relationship between comment sentiments and emoji
+   reaction sentiments. We assume that a specific comment sentiment may
+   explain the ulterior purpose of reacting with an emoji.
+
+    Our results of each research question are summarized as follows. For RQ1,
+our regression model shows that the number of emoji reactions has a significant
+correlation with the review time and furthermore PRs with emoji reactions
+overall tend to take a longer review time than PRs with no emoji reactions.
+For RQ2, the quantitative results show that a PR submitted by a first-time
+contributor is less likely to receive emoji reactions, being 10.4% of PRs. For
+RQ3, we observe that the PR comments with the intention of information giv-
+ing are more likely to receive emoji reactions. Moreover, the positive THUMBS
+UP (67.2% on average) is widely used, while the negative emoji reactions are
+rarely used (0.5% to 1.5%). For RQ4, our results show that Positive–Negative
+pair-wise of sentiment inconsistency accounts for 11.8% and the most frequent
+inconsistency reason is to acknowledge a mistake. These results suggest that
+the usage of emoji reactions might be a sign of an already positive environment
+and could have the potential to reduce toxicity. Our study demonstrates the
+crucial role that emoji reactions play in facilitating collaborative communica-
+tion during the review process.
+    The remainder of this paper is organized as follows. Section 2 describes
+the dataset preparation. Section 3 presents the results of our empirical study,
+including the approaches for research questions, while Section 4 discusses the
+findings and their implications. Section 5 discloses the threats to validity and
+Section 6 presents the related work. Section 7 discusses the deviations between
+Title Suppressed Due to Excessive Length                                                           5
+
+
+the execution and the registered report. Finally, we conclude the paper in
+Section 8.
+
+
+2 Dataset Preparation
+
+In this section, we present our dataset that was collected for our experiments.
+
+Studied Repositories. We expand on our studied dataset from the active
+software development repositories shared by Hata et al. (2019). Specifically,
+each repository has more than 500 commits and at least 100 commits during
+the most active two-year period. In total, 25,925 repositories were contained
+across seven popular languages (i.e., C, C++, Java, JavaScript, Python, PHP,
+and Ruby). Since we focus on the pull request, we did further filtering to collect
+the repository candidates that actively perform code review activities. To do
+so, we automatically examined repositories whether they have at least 100 PRs
+after the GitHub emoji reaction was introduced to the community (Mar. 10,
+2016), relying on GitHub GraphQL API.3 After this, 6,695 repositories met
+the selection criteria.
+    However, it is impossible to retrieve the PR metadata for all these reposi-
+tories due to the limited time-frame and the restriction of GitHub API down-
+loading. We then draw a representative repository sample, taking the seven
+popular languages into account. With a confidence level of 95% and a confi-
+dence interval of 5,4 1,850 representative repositories were finally selected as
+shown in Table 1 (i.e., 217 C repositories, 258 C++ repositories, 290 Java
+repositories, 310 JavaScript repositories, 246 PHP repositories, 300 Python
+repositories, and 229 Ruby repositories.)
+
+Data Collection and Cleaning. For the selected 1,850 repositories, we then
+used GraphQL API to retrieve all PRs that were submitted between January
+2020 and April 2022. We argue that the more recent PRs, the more emojis
+will be reacted to PR comments. Sufficient metadata was collected including
+PR title, PR status, PR author, created time, closed time, and comments.
+ 3   https://docs.github.com/en/graphql
+ 4   https://www.surveysystem.com/sscalc.htm
+
+
+
+Table 1 Summary of Studied Dataset Statistics. E.R. refers to Emoji Reaction.
+
+              # Repos.   # PRs     # PRs with E.R.    # PR Comments     # PR Comments with E.R.
+ C                 217    50,847      7,330 (14.4%)          177,540               11,377 (6.4%)
+ C++               258    70,877     10,920 (15.4%)          253,062               18,804 (7.4%)
+ Java              290    69,473       6,853 (9.9%)          219,477               11,102 (5.1%)
+ JavaScript        310    36,135      4,467 (12.4%)           82,623                6,591 (8.0%)
+ Python            300    53,996      5,893 (10.9%)          158,535                8,967 (5.7%)
+ PHP               246    49,680      9,165 (18.4%)          207,345               15,871 (7.7%)
+ Ruby              229    34,803      4,832 (13.9%)           89,996                7,906 (8.8%)
+ Total           1,850   365,811     49,460 (13.5%)         1,188,578              80,618 (6.8%)
+6                                                              Dong Wang     et al.
+
+
+For each comment in a PR, we collected its commenters and emoji reactions.
+In all, 554,112 PRs with 1,697,305 comments were retrieved from these 1,850
+repositories across seven languages.
+    We then did two filters to ensure the quality of the studied PRs. First,
+we excluded PRs that were labeled as open status, since we can not calculate
+the review time of these PRs. The second filter is to exclude the PRs that
+were submitted by bots. To do so, we referred to the work of Golzadeh et al.
+(2022), which systematically compares the performance of the existing bot
+detection techniques, and we leveraged the combination of two bot detection
+techniques with the highest precision known as “bot” suffix and list of bots.
+“bot” suffix refers to the technique that relies on the presence of the string
+“bot” at the end of the author’s name, which has notably been used by other
+researches (Dey et al., 2020; Saadat et al., 2021). The list of bots denotes
+the technique that relies on a predefined list of ground-truth bots manually
+identified by Golzadeh et al. (2021). After the cleaning, 365,811 PRs were left
+with 1,188,578 PR comments. As shown in Table 1, 13.5% of PRs across seven
+languages contain at least one emoji reaction. 80,618 PR comments are reacted
+with emojis, accounting for 6.8%.
+
+
+3 Empirical Results
+
+In this section, we present the results for each of our research questions as well
+as their motivations and approaches.
+
+
+3.1 Review Time and Emoji Reactions (RQ1)
+
+Approach. To answer RQ1, we perform a statistical analysis to investigate
+the correlation between the PR review time and the emoji reaction kinds,
+using a non-linear regression model. Align with the prior work (Wang et al.,
+2021b,a; Kononenko et al., 2018), several confounding factors are taken into
+account. Similarly, the goal of our statistical analysis is not to predict the
+review time but to understand the associations between the emoji reaction
+and the review time. The review time is defined as the time interval between
+pull request creation date and closed date, in hours, referring to the work of
+Maddila et al. (2019).
+   Explanatory Variables. Table 2 presents the 14 studied explanatory vari-
+ables that are used in our non-linear regression model. Since we investigate
+the effect of the emoji reaction, we introduce two related variables: With
+emoji reaction (Whether or not a PR contains any emoji reactions, binary)
+and # Emoji reactions (The number of emoji reactions in a PR). Previ-
+ous research suggests a group of different metrics that can affect code review
+time (Kononenko et al., 2018; Wang et al., 2021b) and we select 12 variables
+that are governed by our ability to accurately calculate their value from the
+data. For the PR purpose, similar to the prior work (Thongtanunam et al.,
+Title Suppressed Due to Excessive Length                                              7
+
+
+Table 2 The studied explanatory variables in RQ1.
+
+    Confounding variables      Description
+    # Added lines              The number of added LOC by a PR.
+    # Deleted lines            The number of deleted LOC by a PR.
+    PR size                    The total number of added and deleted LOC by a PR.
+    Purpose                    The purpose of a PR, i.e., bug, document, feature.
+    Language                   The repository language that a PR belongs to.
+    # Files                    The number of files changed by a PR.
+    # Commits                  The number of commits involved in a PR.
+    Description length         The length of a PR description.
+    PR author experience       The number of prior PRs that were submitted by the
+                               PR author.
+    # Comments                 The number of comments left on a PR.
+    # Author comments          The number of comments left by the PR author.
+    # Reviewer comments        The number of comments left by the reviewers who
+                               participate in the discussion.
+    # Reviewers                The number of developers who participate in the dis-
+                               cussion.
+    Emoji reaction variables   Description
+    With emoji reaction        Whether or not a PR contains any emoji reactions
+                               (binary).
+    # Emoji reactions          The number of emoji reactions in a PR.
+
+
+
+
+2017; McIntosh et al., 2014), a PR is classified as documentation if the de-
+scription contains ‘doc’, ‘copyright’, or ‘license’ words, while a PR is classified
+as bug fixing if the description contains ‘fix’, ‘bug’, or ‘defect’ words. The rest
+of the PRs are classified as feature introduction.
+    Model Construction. To reduce the potential threat resulting from the im-
+balanced data, we randomly select 49,460 PRs without any emoji reactions,
+which are equal to the number of PRs with emoji reactions (as shown in Ta-
+ble 1). That is, a total of 98,920 PRs are used in our model construction. To
+analyze the association between the emoji reaction and review time, we adopt
+the Ordinary Least Squares (OLS) multiple regression model. This regres-
+sion model allows us to fit the nonlinear relationship between the dependent
+variables and the explanatory variables. We carefully follow the construction
+approach provided by Harrell Jr. et al. (1984) and Mcintosh et al. (2016), con-
+sisting of five steps. In step (I) Estimating budget for degrees of freedom, as
+                                                                      n
+suggested by Harrell Jr. et al. (1984), we spend no more than 15         degrees of
+freedom in our OLS model, where n refers to the number of studied PRs in
+the dataset. In step (II) Normality adjustment, we analyze whether the distri-
+bution of review time is skewed using the skewness and kurtosis function of
+the moments R package, since OLS expects that the dependent variables are
+normally distributed. If the review time is skewed, we use a log transforma-
+tion to lessen the skew so as to better fit OLS (Mcintosh et al., 2016). In step
+(III) Correlation and redundancy analysis, similar to the prior work, we use
+the Spearman rank correlation (ρ) to assess the correlation between each pair
+of variables, since highly correlated explanatory variables could interfere with
+8                                                              Dong Wang     et al.
+
+
+each other and further lead to spurious conclusions. We repeat the process un-
+til the Spearman correlation coefficient values of all pairs of variables are less
+than 0.7. In addition, to ensure that each studied variable provides a unique
+signal, we use the redun function of the rms R package to detect redundant
+variables and remove them from the model. In step (IV) Allocating degrees of
+freedom, we rely on the spearman2 function of the rms R package to calculate
+the Spearman multiple ρ2 between the explanatory and dependent variables,
+and effectively allocate degrees of freedom to the remaining variables. To avoid
+the over-fitting issue, we only allocate three to five degrees of freedom to those
+variables with high ρ2 values. In step (V) Fitting OLS models, similar to the
+work (Mcintosh et al., 2016), we use restricted cubic splines to fit our mod-
+eled dataset. We assign the allocated degrees of freedom to each explanatory
+variable, using the rcs function of the rms R package. Last, we adopt the ols
+function to construct the model.
+     Model Analysis. After the model construction, we analyze the model to
+assess its goodness and examine the relationship between the review time and
+the emoji reaction. Similar to the prior work (Mcintosh et al., 2016; Wang
+et al., 2021b), we analyze the model using the following three steps: (I) As-
+sessing model stability, (II) Estimating the power of explanatory variables, and
+(III) Examining relationship. In step (I), we use an adjusted R2 value (Hastie
+et al., 2009) to evaluate our model. In order to avoid the overfitted model,
+we apply the bootstrap validation approach to estimate the optimism of the
+adjusted R2 . Finally, we subtract the average R2 optimism from the initial
+adjusted R2 value to obtain the optimism-reduced adjusted R2 . In step (II),
+we estimate the power of explanatory variables and their corresponding sig-
+nificance, using Wald χ2 maximum likelihood tests provided by the anova
+function. In step (III), we examine the direction of the relationship between
+the explanatory variables (especially emoji reaction related variables) and the
+review time, using the Predict function of the rms package.
+Results. We now discuss the RQ1 results in the view of model construction
+and model analysis.
+    Model Construction. Table 3 shows the model performance and statistics of
+the studied variables that are adopted in the regression model. In the correla-
+tion and redundancy analysis, we remove those explanatory variables that are
+highly correlated with one another (ρ value is greater than 0.7), i.e., PR size,
+#Added lines, # Comments, # Reviewers, and With Emoji Reaction. For the
+remaining explanatory variables, we do not find any redundant variable, i.e.,
+the variable that has a fit with an R2 greater than 0.9. We then carefully allo-
+cated the degrees of freedom to the surviving variables, based on their potential
+for sharing a nonlinear relationship with the dependent variable. As shown in
+the table, 24 degrees of freedom were spent on our constructed models.
+    Model Analysis. We first examine the goodness of our model fit. Table 3
+shows that the model achieves an adjusted R2 score of 0.2830. Similar to the
+prior work (Kononenko et al., 2018), such an adjusted R2 score is acceptable as
+our model is supposed to be explanatory not for the predictive purpose. After
+Title Suppressed Due to Excessive Length                                            9
+
+
+Table 3 PR review time model statistics (RQ1). Among studied emoji reaction variables,
+# Emoji Reactions have a significant correlation with PR review time.
+                                  PR Review Time
+               Adjusted R2                           0.2830
+               Optimism-reduced adjusted R2          0.2826
+               Overall Wald χ2                       17,690
+               Spent Degrees of Freedom                24
+               Confounding Variables           Overall    Nonlinear
+                                       D. F.
+               PR Size                                  †
+                                       χ2
+                                       D. F.
+               # Added lines                            †
+                                       χ2
+                                       D. F.         1
+               #Deleted lines                                     -
+                                       χ2       2.0∗∗∗
+                                       D. F.         2
+               Purpose                                            -
+                                       χ2      15.3∗∗∗
+                                       D. F.         1
+               # Files                                            -
+                                       χ2          1.5
+                                       D. F.         1
+               Language                                           -
+                                       χ2     950.6∗∗∗
+                                       D. F.         2            1
+               # Commits
+                                       χ2    2960.0∗∗∗ 2950.5∗∗∗
+                                       D. F.         2            1
+               Description length
+                                       χ2    1338.4∗∗∗     954.0∗∗∗
+                                       D. F.         1
+               PR author Exp.                                     -
+                                       χ2      46.9∗∗∗
+                                       D. F.
+               # Comments                               †
+                                       χ2
+                                       D. F.         2            1
+               # Author comments
+                                       χ2    1518.4∗∗∗        790.0
+                                       D. F.         3            2
+               # Reviewer comments
+                                       χ2    3349.9∗∗∗ 2761.4∗∗∗
+                                       D. F.
+               # Reviewers                              †
+                                       χ2
+               Emoji Reaction Variables        Overall    Nonlinear
+                                       D. F.
+               With emoji reaction                      †
+                                       χ2
+                                       D. F.         2            1
+               # Emoji reactions
+                                       χ2     624.1∗∗∗     622.0∗∗∗
+              †: This explanatory variable is discarded during variable cluster-
+             ing analysis | ρ |≥0.7
+              -: This explanatory variable is not allocated with nonlinear de-
+             grees of freedom
+              ∗ ∗ ∗: The explanatory power of this variable is statistically dif-
+             ferent, with p<0.001
+
+
+
+applying the bootstrap validation approach, we observe that the optimism of
+an adjusted R2 is 0.0004, indicating that the constructed model does not have
+an overestimation issue and is stable to provide meaningful insight.
+    We now discuss the explanatory power of the focused variable (i.e., Emoji
+Reaction Variables) and describe the relationship between this variable and the
+review time. With Emoji Reactions variable was removed due to its high cor-
+relation with another variable. For the # Emoji Reactions variable, as shown
+10                                                                                        Dong Wang   et al.
+
+
+
+
+                               30
+         Review Time (Hours)
+
+
+
+
+                               20
+
+
+
+
+                               10
+
+
+
+
+                                    0   20   40   60     80    100     120    140   160   180   200
+                                                   The number of Emoji reactions
+
+
+
+Fig. 2 The nonlinear relationship between the likelihood that the review time is taken for
+a PR and the number of Emoji reactions (RQ1).
+
+
+
+
+in the table, we find that it has a significant correlation with the PR review
+time, with p-value <0.001. However, according to the Wald χ2 values, we ob-
+serve that the explanatory power of the number of emoji reactions is not as
+large as the explanatory powers of the other dominant confounding variables.
+The larger the χ2 of an explanatory variable is, the larger the contribution
+that the variable makes to the model. Specifically, the Wald χ2 value of the
+# Emoji Reactions variable is 624.1, while the Wald χ2 values of the # Re-
+viewer Comments, # Commits, # Author Comments, Description Length are
+3349.9, 2960.0, 1518.4, and 1338.4, respectively. Figure 2 depicts the nonlinear
+relationship between the number of emoji reactions and the review time. As
+we can see, the number of emoji reactions shares a positive relationship when
+the number of emoji reactions is less than three. But a negative relationship
+is observed if the number of emoji reactions is greater than three. Based on
+the overall likelihood, the result suggests that compared to the PRs with no
+emoji reactions, it tends to take a relatively longer time for PRs with emoji
+reactions to be closed.
+
+
+
+     RQ1: Does the emoji reaction used in the review discussion correlate
+     with review time?
+     Findings from the non-linear regression models indicate that the num-
+     ber of emoji reactions has a significant correlation with the review time.
+     In other words, PRs with emoji reactions are likely to have a longer
+     review time when compared to those that do not.
+Title Suppressed Due to Excessive Length                                              11
+
+
+3.2 First-time Contributors and Emoji Reactions (RQ2)
+
+Approach.To answer RQ2, we perform a quantitative analysis to investigate
+to what extent are PRs submitted by first-time contributors. The first-time
+contributor in our study is defined as a contributor who has never submitted
+any PRs to the project. Below we describe our approach in detail.
+    Proportion of PRs submitted by first-time contributors. We use the dataset
+of PRs that contain at least one emoji reaction (i.e., 49,460 PRs as shown in
+Table 1). We notice that a PR author is able to react emojis to comments. Since
+we focus on the emoji reactions that are received from developers (not the PR
+author), we first remove the emoji reactions that are from the PR author. In
+the end, 36,902 PRs remained. According to the explanatory variable (# PR
+author experience) from RQ1, the dataset then is split into two groups: one
+group is labeled as the first-time contributor where the count of # PR author
+experience is 0, the other group is labeled as the non first-time contributor
+where the count of # PR author experience is greater than 0. Afterward,
+we calculate the proportion of the PRs submitted by first-time contributors
+and non first-time contributors, respectively.
+    To validate the proposed hypothesis (H1): PRs submitted by first-time con-
+tributors receive more emoji reactions., we use the one proportion Z-test (Pa-
+ternoster et al., 1998). One proportion Z-test compares an observed proportion
+to a theoretical one when the categories are binary.
+
+Results. Table 4 presents the proportion of PRs that contain emoji reac-
+tions (excluding the cases where the emojis are reacted by the PR authors)
+submitted by first-time contributors and non first-time contributors. As shown
+in the table, PRs submitted by non first-time contributors are more likely to
+receive emoji reactions, accounting for 89.6% of the instances. On the other
+hand, only 10.4% of PRs submitted by first-time contributors received emoji
+reactions.
+    Significant Testing. The statistical test (Z-test) reveals that there is a sig-
+nificant difference between the proportion of PRs that receive emoji reactions
+submitted by the first-time contributors and the non first-time contributors,
+with a p-value <0.001. This result indicates that the proposed hypothesis
+“(H1): PRs submitted by first-time contributors receive more emoji reactions.”
+is not established.
+
+
+Table 4 The proportion of PRs containing emoji reactions submitted by first-time contrib-
+utors and non first-time contributors (RQ2).
+
+            PRs that contain emoji reactions         Percent (%)
+            By first-time contributors               3,855 (10.4%)
+            By non first-time contributors          33,065 (89.6%)
+            Total PRs                                       36,920
+12                                                               Dong Wang      et al.
+
+
+     RQ2: Does a PR submitted by a first-time contributor receive more
+     emoji reactions?
+
+     A PR submitted by a first-time contributor is less likely to receive emoji
+     reactions (i.e., 10.4% of all PRs by first-contributors). Statistically, the
+     hypothesis that PRs submitted by first-time contributors receive more
+     emoji reactions is not established.
+
+
+
+3.3 Comment Intentions and Emoji Reactions (RQ3)
+
+Approach. To answer RQ3, we conduct a quantitative analysis to investi-
+gate the PR comments that contain emoji reactions in two aspects: (I) the
+popularity of the comment intentions that contain emoji reactions, and (II)
+association mining between emoji reaction kinds, and between comment in-
+tentions and emoji reaction kinds.
+    Popularity of comment intentions with emoji reactions. To categorize the
+intentions of the comments, we use the taxonomy of intentions proposed by
+Huang et al. (2018). They manually categorized 5,408 sentences from issue
+reports of four projects on GitHub to generalize the linguistic pattern for
+category identification. The definitions of intentions are described as follows:
+ – Information Giving (IG): Share knowledge and experience with other peo-
+   ple, or inform other people about new plans/updates (e.g., “The typeahead
+   from Bootstrap v2 was removed.”).
+ – Information Seeking (IS): Attempt to obtain information or help from
+   other people (e.g., “Are there any developers working on it?”).
+ – Feature Request (FR): Require to improve existing features or implement
+   new features (e.g., “Please add a titled panel component to Twitter Boot-
+   strap.”).
+ – Solution Proposal (SP): Share possible solutions for discovered problems
+   (e.g., “I fixed this for UI Kit using the following CSS.”).
+ – Problem Discovery (PD): Report bugs, or describe unexpected behaviors
+   (e.g., “the firstletter issue was causing a crash.”).
+ – Aspect Evaluation (AE): Express opinions or evaluations on a specific as-
+   pect (e.g., “I think BS3’s new theme looks good, it’s a little flat style.”).
+ – Meaningless (ML): Sentences with little meaning or importance (e.g., “Thanks
+   for the feedback!”).
+To facilitate the automation, they proposed a convolution neural network
+(CNN) based classifier with outstanding performance, which represents the
+state-of-the-art in the area of automatic intention mining.
+    Satiny Check. To ensure that their automatic classifier is reliable enough
+to be used, we conducted a satiny check. To do so, we first randomly selected
+30 comment samples and ran the automation to label these comments into the
+above seven intentions. Then, the first two authors opened up a discussion to
+Title Suppressed Due to Excessive Length                                     13
+
+
+manually check whether the labeled intentions of the comments are correct or
+not, referring to the golden datasets from Huang et al. (2018). After the check,
+we observe that 24 samples out of 30 samples (80%) are correctly labeled by
+the automatic classifier. We argue that this classifier is reliable enough to be
+used, since the average accuracy obtained in the original work in the context
+of issue comments is around 0.83. Encouraged by the satiny check results, we
+will use the CNN based classifier to automatically label the intention of the
+comments that have emoji reactions.
+    After automatically labeling the intentions of comments, we group all the
+comments into seven intention categories and count their popularity. Then,
+for each intention category, we calculate the occurrence of the emoji reaction
+kinds (i.e., , , , , , , , , and ). Note that when we calculate the
+occurrence, we did not take into account how many times an emoji reaction
+kind occurs in a comment. For instance, supposing that a comment is reacted
+with THUMPS UP by five developers and HEART by two developers, in
+this case, we count the occurrence of THUMPS UP and HEART as one,
+respectively.
+    To validate the proposed hypothesis (H2): There is a significant relation-
+ship between comment intentions and emoji reaction kinds, we perform two
+significant tests. First, we inspect whether or not the classified intentions of
+comments are normally distributed, using the Shapiro-Wilk test with alpha =
+0.05 (Shapiro and Wilk, 1965), a widely used normality test. Second, for the
+relationship significance between comment intentions and emoji reactions, we
+use the Pearson’s Chi-Squared test (Pearson, 1900), which is commonly used
+for testing relationships between one or more categorical variables.
+    Association Mining. To further explore the association (a) between emoji
+reaction kinds, and (b) between comment intentions and emoji reaction kinds,
+we leverage a rule-based machine learning method, widely known as the as-
+sociation rule technique (Agrawal et al., 1993). Association rule mining is a
+technique to discover patterns of co-occurrence in a (large) dataset, by identi-
+fying entities that frequently appear together in a group, which is commonly
+used in SE community (Prana et al., 2019; Li et al., 2021). To do so, we use
+the association rules function of the mlxtend Python package.
+
+Results. Popularity of the comment intentions. Figure 3 presents the inten-
+tion distribution of the PR comments that have emoji reactions. As shown
+in the figure, we observe that the information giving category is the most
+common intention, 25.0% being identified by the SOTA intention classifier.
+This result indicates that developers tend to react to comments which share
+knowledge and experience with other people, or inform other people about
+new plans/updates, using emojis. The second most frequent intention to re-
+ceive emoji reactions is aspect evaluation (i.e., comments that express opinions
+or evaluations on a specific aspect), accounting for 19.4%. The least common
+intentions include information seeking and feature request, being 10.2% and
+8.9%, respectively.
+14                                                                                       Dong Wang             et al.
+
+
+       information giving                                                                              25.0%
+
+
+       aspect evaluation                                                             19.4%
+
+
+      problem discovery                                           13.0%
+
+
+       solution proposal                                          13.0%
+
+
+                    others                                10.6%
+
+
+     information seeking                                 10.2%
+
+
+          feature request                         8.9%
+
+
+                             0           5000               10000                15000               20000
+                                                 Number of PR Comments
+Fig. 3 Intentions of the PR comments that have emoji reactions (RQ3).
+
+
+Table 5 The distribution of emoji reaction kinds across the comment intentions (RQ3).
+
+
+      Information Giving      63.6%    11.2%    10.7%       6.3%       2.6%       3.0%        1.4%    1.0%
+      Information Seeking     70.6%     9.2%     6.5%        3.8%      3.4%       4.6%        1.0%    0.8%
+      Aspect Evaluation      74.4%      7.7%     5.7%        3.5%      2.4%       3.5%       1.5%     1.1%
+      Feature Request         68.6%    10.8%     8.0%        5.4%      2.7%       2.7%        1.2%    0.8%
+      Problem Discovery       67.1%     9.8%     8.6%        5.3%     3.9%        2.7%        1.1%   1.3%
+      Solution Proposal       67.6%    10.4%     9.1%        5.2%      2.4%       3.0%        1.2%    0.9%
+      Others                  58.4%   14.5%    13.9%         5.1%      1.5%      5.5%         0.5%    0.5%
+
+
+
+Table 6 Association rules at the emoji reaction level (RQ3).
+
+      Rule                                                                 Support           Confidence
+      { (EYES),     (HEART),     (ROCKET)} ⇒ { (HOORAY)}                      0.0017                 0.86
+      { (EYES),     (HEART),     (ROCKET)} ⇒ { (THUMBS UP)}                   0.0016                 0.82
+      { (EYES),     (HEART),     (HOORAY)} ⇒ { (THUMBS UP)}                   0.0016                 0.82
+
+
+Table 7 Association rules at the intention level (RQ3).
+
+             Rule                                                   Support        Confidence
+             {aspect evaluation} ⇒ { (THUMBS UP)}                         0.16                0.80
+             {information giving} ⇒ { (THUMBS UP)}                        0.18                0.72
+
+
+
+    To complement the insights, we also investigate how frequently each kind
+of emoji reaction is used across the eight comment intentions. Table 5 shows
+the related results. In general, we observe that positive emoji reactions are
+frequently used ( , , ) when compared to negative emoji reactions ( ,
+  ). For instance, the usage frequency of THUMPS UP on average reaches
+up to 67.2% across seven intentions, while the usage frequency of THUMPS
+DOWN on average is only 0.9%. Upon a look at the emoji reaction kinds, we
+find that each emoji reaction kind tends to be used with specific intentions.
+For THUMPS UP , as highlighted in blue, it is most frequently used in
+Title Suppressed Due to Excessive Length                                       15
+
+
+the aspect evaluation intention (74.4%). For HEART , HOORAY , and
+LAUGH , they are likely to be used in Others intention (sentences with little
+meaning or importance, e.g., “Thanks for the feedback!”), i.e., 14.5%, 13.9%,
+and 5.5%, respectively. The EYES        is commonly used in problem discovery
+intention (3.9%).
+    Significant Testing. First of all, the Shapiro-Wilk test suggests that the
+classified intentions of comments are normally distributed, with alpha = 0.12
+(greater than 0.05). The Pearson’s Chi-Squared test confirms that there is a
+significant relationship between comment intentions and emoji reactions, i.e.,
+p-value <0.001, indicating that the hypothesis (H2) is established.
+    Association mining. We apply the association rule mining at two levels:
+between emoji reaction kinds, and between emoji reaction kinds and comment
+intentions. With regard to the extracted rules at the emoji reaction level, we
+only consider rules with the support of at least 0.0013 (i.e., the rule must apply
+to at least six emoji reaction kinds) and the confidence of at least 0.8, similar
+to the prior work (Prana et al., 2019). Table 6 shows the three extracted
+association rules at the emoji reaction level. For example, the comment is
+reacted by the group of { , , } is likely to contain , with the confidence
+of 0.86. In terms of the intention level, we set the support of at least 0.15
+and the confidence of at least 0.7. Table 7 shows the two extracted association
+rules at the intention level. We observe that the comment intentions of aspect
+evaluation or information giving are likely to be reacted with (THUMBS UP),
+the confidence being 0.80 and 0.72, separately.
+
+   RQ3: What is the relationship between the intention of comments and
+   their emoji reaction?
+
+   We find that PR comments with the intention of information giving
+   are more likely to receive emoji reactions (i.e., 25.0%). Our statistical
+   test suggests that there is a significant relationship between comment
+   intentions and emoji reactions. Moreover, the positive THUMBS UP
+   (67.2% on average) is widely used, while negative emojis (between 0.5%
+   to 1.5%) are rarely used.
+
+
+
+3.4 Consistency of Emoji Sentiments (RQ4)
+
+Approach. To answer RQ4, we conduct a mixed analysis (qualitative and
+quantitative) to investigate the PR comments that contain emoji reactions in
+terms of (I) frequency of sentiment consistency between emoji reactions and
+comments, and (II) reasons behind the inconsistency. Below, we describe the
+approach of two aspects in detail.
+    Frequency of sentiment consistency. To investigate the sentiment consis-
+tency, first we need to label the sentiment of emoji reactions and the sentiment
+of comments, separately. For the sentiment of emoji reactions, we refer to our
+preliminary study in the registered report and we classify the sentiments of the
+16                                                             Dong Wang     et al.
+
+
+emoji reactions into the following four types: Positive, Negative, Neutral,
+and Mixed. Positive refers to the single usage or the combination usage of
+THUMBS UP , LAUGH , HOORAY , HEART , and ROCKET reactions. Negative
+denotes to the single usage or the combination usage of THUMBS DOWN ,and
+CONFUSED reactions. Neutral represents the usage of EYES reaction. Mixed
+refers to the combination usage of the four categories mentioned above. For
+the sentiment of comments, we use SentiStrength-SE (Islam and Zibran, 2018),
+a state-of-the-art sentiment analysis tool that utilizes domain dictionary and
+heuristics for software engineering text. In our study, input is the PR comment
+that contains emoji reactions and output is a sentiment score ranging from -5
+(very negative) to 5 (very positive). Note that, to reduce the potential threat
+due to false positives, we exclude the PR descriptions that contain emoji re-
+actions. After we obtain the sentiment labels for the emoji reactions and the
+comments, we then map them into the level of a PR comment and count the
+frequency of the possible patterns (e.g., Positive-Positive, Positive-Neutral,
+Positive-Negative, and so on).
+    To validate the proposed hypothesis (H3): There is a significant relation-
+ship between comment sentiments and emoji reaction sentiments, similar to
+RQ3, we perform the Pearson’s Chi-Squared test to confirm if a significant
+relationship exists or not.
+    Reasons behind the inconsistency. To investigate the reasons of the incon-
+sistency between the sentiment of emoji reaction and PR comment, we perform
+a manual coding. In this study, we focus on the inconsistency in terms of the
+positive and negative aspects. It refers to the case where the sentiment of the
+emoji reaction is positive while the sentiment of the comment is negative, or
+vice versa. Since there is no specifically available reason taxonomy to refer to,
+we apply an open coding approach (Charmaz, 2014) to classify randomly sam-
+pled comments in inconsistent cases. To discover as complete of a list of reasons
+as possible, we strive for theoretical saturation (Eisenhardt, 1989) to achieve
+analytical generalization. Similar to the prior work (Xiao et al., 2021), we ini-
+tially set our saturation criterion to 50. Then the first two authors continue to
+code randomly selected inconsistent comments until no new codes have been
+discovered for 50 consecutive comments. If the new codes occur, we performed
+another pass over all of the comments to correct miscoded entries and tested
+the level of agreement of our constructed codes, since codes that emerge late in
+the process may apply to earlier reviews. The third author joins the open dis-
+cussion when disagreements occur and validates the suggested codes. Finally,
+we reach saturation after coding 100 samples.
+
+Results. Frequency of sentiment consistency. Figure 4 shows the pair-wise dis-
+tribution between the sentiments of emoji reactions and comments. As shown
+in the figure, we observe that the major pair-wise is Positive-Neutral (i.e., Pos-
+itive emoji reaction and Neutral comment), accounting for 52.7%. The second
+most frequent pair-wise is Positive-Positive, being 31.1%. At the same time, we
+find that the proportion of Positive-Negative (i.e., Positive emoji reaction and
+Negative comment) pair-wise is not high as expected, 11.6% being identified,
+Title Suppressed Due to Excessive Length                                                      17
+
+
+                                                                                         50
+                                Negative   0.2     0.3              0.2       11.6
+                                                                                         40
+            Comment sentiment
+
+                                                                                         30
+                                 Neutral   0.7     0.9              1.3       52.7
+                                                                                         20
+
+                                Positive   0.3     0.2              0.4       31.1       10
+                                           Mixed
+
+
+
+
+                                                   Negative
+
+
+
+
+                                                                    Neutral
+
+
+
+
+                                                                              Positive
+                                                        Emoji reaction
+Fig. 4 Pair-wise between emoji reactions and comment sentiments (RQ4). The annotations
+in the plot are in the form of %.
+
+
+
+
+ranked as the third most common pair-wise. Conversely, the Negative-Positive
+(i.e., Negative emoji reaction and Positive comment) accounts for only 0.2%.
+    Significant Testing. The Pearson’s Chi-Squared test suggests that there
+is a significant relationship between comment sentiments and emoji reaction
+sentiments, i.e., p-value <0.001, indicating that our proposed hypothesis (H3)
+is established.
+    Reasons behind sentiment inconsistency. Nine reasons are identified from
+our open coding process (i.e., 100 samples). Table 8 presents the frequency
+of these reasons, with their representative samples. We find that Acknowledge
+a mistake is the most common reason behind sentiment inconsistency, ac-
+counting for 22%. The following reason is Acknowledge a proposal, being 15%
+classified. The rare reasons include Irony and Disagree with optimistic proposal
+(i.e., 1% for them, respectively). On the other hand, we observe that the rate
+of False-Positive is relatively high, accounting for 23%. False-Positive refers to
+those cases, where the sentiments of comments are not correctly labeled by
+the tool after the manual validation.
+
+
+   RQ4: Is emoji reaction consistent with comment sentiment?
+
+   Results indicate that a high percent of emoji sentiments are consis-
+   tent with their comments, with only 11.8% (i.e., 11.6% + 0.2%) being
+   inconsistent. The statistical test confirms that there is a significant re-
+   lationship between comment sentiments and emoji reaction sentiments.
+   We then identify nine reasons behind these inconsistencies (acknowl-
+   edgments, confirmations, counters, irony, etc.). A positive acknowledg-
+   ment of a negative mistake is the most frequent reason (i.e., 22%).
+18                                                                                         Dong Wang    et al.
+
+
+Table 8 Frequency of reasons behind sentiment inconsistency (RQ4).
+
+     Reason                                                  Representative example                  # Cases
+     Acknowledge a mistake                       “Oops - pushed to wrong branch... undoing                22
+                                                 now!!”
+     Acknowledge a proposal                      “I don’t really like this solution. The join             15
+                                                 will not correctly set-up the model graph, so
+                                                 the best solution in my opinion is to write:
+                                                 @code...”
+     Counter a pessimistic opinion               “Faker is a dev dependency, and would fail to            13
+                                                 run in production. I afraid that developer may
+                                                 start using this method beyond seeders”
+     Confirm a proposal                          “Sorry about the last minute change, but I re-           11
+                                                 alized that client-side could also benefit from
+                                                 richer exception messages. I’d appreciate if re-
+                                                 viewers can take a look at the following commit
+                                                 58acdbc”
+     Acknowledge a pessimistic outcome           “Sorry @username - this is way out of the areas           8
+                                                 of anything I have knowledge of”
+     Confirm request for a pessimistic outcome   “Thanks for the PR! So, the change is that:               3
+                                                 @code... but this is probably there to prevent
+                                                 bad things to happen like a sql injection, no?
+                                                 PS: I can’t easily read the diff on github, dunno
+                                                 why, if some other staff member can explain
+                                                 why, it’s very annoying (seems related to co-
+                                                 dacy)”
+     Counter an optimistic proposal              “@username... How good a reason is depends                1
+                                                 not only on the severity of the issue but also
+                                                 on the importance of the data we update or
+                                                 not update. @explanation...”
+     Irony                                       “Worst Translation Ever”                                  1
+     Others                                                                                                3
+     False-Positive                              Comment sentiments are not correctly labeled             23
+                                                 by the tool.
+
+
+
+
+4 Discussion
+
+We now discuss the implications of our empirical findings, provide possible
+suggestions to facilitate code review and social communication, and outline
+the limitations and potential research topics.
+
+Implications for project development on GitHub. Developers on GitHub
+should be aware that using an emoji reaction is correlated with the review
+process. Our RQ1 results indicate that emoji reactions have a statistical cor-
+relation with review time, and PRs with emoji reactions overall tend to take
+a longer review time than the ones with no emoji reactions. It is important
+to note that we do not claim causality, as there could be other confounding
+factors that play a role in the regression models. We speculate that PRs with
+emoji reactions are likely to include complex contexts that require further dis-
+cussions and may be involved more participants compared to the ones that
+do not contain emojis. Usually, simple PRs are handled quickly, even when
+they do not have reactions. Hence, such a finding does not imply that emoji
+reactions have a negative effect on review efficiency as the efficiency could be
+affected by the nature of PRs. Potential reasoning may be related to the find-
+ings observed in the context of issue reports. Prior work (Borges et al., 2019)
+reported that issues with reactions usually take more time to be handled and
+have longer discussions, especially for those complex bugs and enhancements.
+Title Suppressed Due to Excessive Length                                      19
+
+
+Furthermore, due to longer discussions, cognitive loads combined with textual
+and visual expressions may increase. For example, Tigwell and Flatla (2016);
+Bai et al. (2019) pointed out that the difference in how emoji are understood
+could bring ambiguities in the interpretation of communication, and leads to
+inefficiency.
+    The usage of emoji reactions signals an already friendly environment on
+GitHub. This is evident by RQ3, where positive emoji reactions are commonly
+used during PR comments across different intentions, especially THUMBS UP
+being 67.2% on average (Table 5). Negative emoji reactions are rarely used,
+only ranging from 0.5% to 1.5%. Our RQ3 results suggest that contributors
+tend to react to those comments with positive emojis that share knowledge
+and require opinion expressions or evaluations. Specifically, We find that those
+intentions of information giving and aspect evaluation are more likely to receive
+emoji reactions (25.0% and 19.4%, respectively, shown in Figure 3).
+    Emoji reactions on GitHub have the potential to reduce toxicity. During the
+reason analysis behind the sentiment inconsistency (RQ4), results show that
+in most cases, emoji reactions are used as a kind of encouragement to react
+to negative comments. Even in cases where the reaction is not consistent with
+the sentiment of the comment, as shown in Table 8, the most prevalent reason
+is to acknowledge a mistake by replying to a negative comment with a positive
+emoji reaction. This indicates that emoji reactions can reduce or counter neg-
+ative sentiments, and potentially lighten tense situations. The negative effect
+of toxicity in open-source projects is widely studied. Literature shows evi-
+dence that some newcomers disengage due to negative interactions (Qiu et al.,
+2019), and frequent contributors often suffer from stress and burnout facing
+toxic interactions (Raman et al., 2020). Along the same line to support social
+communication, our study results prove the positive role of emoji reactions
+play in the collaboration environment.
+
+Suggestions. We provide several possible suggestions for the stakeholders.
+On the one hand, contributors should not be afraid of expressing negative or
+contentious comments, as emoji reactions have the potential to diffuse any tox-
+icity and can lighten the tense situation. Especially for newcomers, they should
+not expect immediate emoji reactions as a sign of hostility. Instead, emoji re-
+actions could be considered an indicator of familiarity and positiveness in the
+environment. On the other hand, in addition to diffusing tense situations, re-
+viewers are encouraged to keep using emoji reactions to properly express their
+sentiments in order to construct a friendly and positive interaction with re-
+view participants. In terms of governance and maintaining consistency, GitHub
+projects are encouraged to document, broadcast, and mentor the proper usage
+of emoji reactions for the sustained livelihood of Open Source projects.
+
+Limitations and potential research topics. Our research foresees research
+directions for code review efficiency, the health of communication channels,
+and the attraction, onboarding, and sustainability of contributions to Open
+Source Software. To address the limitation of the statistical models, future
+20                                                            Dong Wang     et al.
+
+
+work should further investigate the causality of the relationship between emoji
+reactions and review time to understand whether or not the longer time has
+some negative or positive effects on the project. RQ2 results show that non
+first-time contributors are more likely to receive emoji reactions, hence future
+work could further explore what features will contribute to this. Several studies
+demonstrated that the usage of emojis could be affected by developer gender,
+age, and cultural difference (Guntuku et al., 2019; Herring and Dainas, 2020).
+Therefore, another potential direction is to look into whether such factors play
+a role in the usage of emojis within the scope of code review.
+
+
+5 Threats to Validity
+
+In this section, we disclose the threats to the validity of our study.
+
+External validity. This validity refers to the generalization ability of our
+results. We conduct an empirical study on 1,850 GitHub repositories across
+seven popular languages. The threat may occur due to the number of studied
+repositories and the choice of languages. To relieve this threat, we construct
+a representative dataset, with a confidence level of 95% and a confidence in-
+terval of 5, by taking each language-based repository population into account.
+Meanwhile, these seven popular languages are commonly studied in the prior
+study (Hata et al., 2019). We believe that our study on these 1,850 repositories
+is sufficient enough to shed light on the role of the emoji reactions in the code
+review process.
+
+Construct validity. This validity denotes the degree to which our measure-
+ments capture. We summarize four threats. The first threat may exist in the
+bot removal in the data preparation process. We rely on the combination of
+two bot detection techniques (“bot” suffix and list of ground-truth bots). It
+is reasonable that we can not ensure we are able to remove all the GitHub
+bots. However, the highest accuracy of these two bot detection techniques is
+recognized in the latest research. Second, identifying the purpose of PRs in
+RQ1 may introduce a potential threat. The purposes in fact would not only
+include documentation, bug fixing, and feature introduction but also include
+others like refactoring activity. However, there is no reliable method to au-
+tomatically identify this activity. Hence, along the same line as the existing
+work (Thongtanunam et al., 2017; McIntosh et al., 2014; Wang et al., 2021b),
+we decided to adopt the same automated identification method. Third, other
+diversity-related factors (e.g., gender, age, and culture differences) could po-
+tentially influence the findings on the usage of emoji reactions in RQ3 and
+RQ4. Thus, future work should further investigate the effect of these factors
+in the context of code review. The last threat could exist in our RQ4 quali-
+tative analysis to categorize the reasons behind the sentiment inconsistency.
+To mitigate this threat, we performed an open coding to ensure all the po-
+tential codes, carefully following the guidelines provided by the literature. For
+instance, we reached saturation until no new codes emerged (i.e., 100 samples).
+Title Suppressed Due to Excessive Length                                       21
+
+
+Internal validity. Internal validity refers to the approximate truth about
+inferences. Two potential threats are concluded. The first threat may occur,
+resulting from the selected classifier or tool. In RQ3, to label the comment
+intention, we use the automatic classifier, which is considered as SOTA in
+the context of intention mining. The comment intention could be mislabeled
+due to the classifier uncertainty. Thus, to mitigate this threat, we performed
+a satiny check on 30 samples and the accuracy was promising, i.e., 80%. In
+RQ4, the comment sentiment could as well be mislabeled since we rely on the
+SentiStrength-SE tool. However, the SentiStrength-SE tool is recognized as
+one of the SOTA sentiment tools and is widely adopted in the SE domain.
+The second threat could exist in the selection of statistical significance testing
+techniques. To validate the establishment of our three proposed hypotheses,
+we apply several kinds of significance testing techniques (i.e., Z-test, Pearson’s
+Chi-Squared test). The casual-effect may vary on the selection of these tech-
+niques. We are however confident, as these techniques are commonly used in
+empirical studies.
+
+
+6 Related Work
+
+This section situates this study with respect to the related work, including the
+effect of non-technical factors in code review, and modern communication in
+software development.
+
+
+6.1 Effect of Non-technical Factors in Code Review
+
+Software code review is established as one of the best practices to improve soft-
+ware quality (Rigby and Storey, 2011). Tool-based code reviews, a lightweight
+variation of traditional code reviews, have been widely studied in the last
+decade. A number of studies point out that the effect of tool-based review is
+not only affected by technical factors, but also by non-technical factors (Baysal
+et al., 2013; Baysal et al., 2016). In terms of developer participation, McIntosh
+et al. (2014) reported that developer participation in code review is also asso-
+ciated with the incidence of post-release defects. Similarly, Kononenko et al.
+(2015) found that personal metrics and participation metrics shared a rela-
+tionship with the quality of the review process. Review comment is one of
+the main building blocks and is crucial to the review quality (Sadowski et al.,
+2018). Jiang et al. (2013) showed that the amount of discussion is a significant
+indicator of whether a patch will be accepted for integration into the Linux
+kernel. El Asri et al. (2019) empirically studied the impact of sentiment em-
+bodied within developers’ comments and they observed that the reviews with
+negative comments on average took more time to complete than the reviews
+with positive/neutral comments. Hirao et al. (2020) studied divergent review
+scores in the review discussion and suggested that divisive patches are often
+integrated through discussion, integration timing, and careful revision. Zhang
+22                                                            Dong Wang     et al.
+
+
+et al. (2022) conducted an empirical study to systematically investigate the
+factors that affect pull request latency. They found that comments have a
+significant impact on the latency of pull requests.
+    With the wider usage of emoji reactions in the code review (i.e., pull re-
+quests), we argue that as a non-technical factor, emoji reactions may also have
+an effect on the review process.
+
+
+
+6.2 Modern Communication in Software Development
+
+For purposes of collaboration and communication between developers, commu-
+nication channels (e.g., issue reports, mailing lists, pull requests, and GitHub
+discussions) are integrated or supplemented in development tools (Chui et al.,
+2012; Tantisuwankul et al., 2019). Various non-textual information is embed-
+ded in these communication channels to enrich the knowledge sharing between
+developers. Nayebi (2020) showed that the increasing trend of image usage and
+images facilitated Q&A communication in Stack Overflow. Recent studies also
+investigate the usage of these visual contents in terms of issue reports (Agrawal
+et al., 2022; Kuramoto et al., 2022). Link sharing is also another common mod-
+ern communication strategy. Hata et al. (2019) investigated the characteristics
+and phenomenons of links in source code comments and found that referenc-
+ing links is prevalent in source code comments (e.g., software homepages, and
+articles or tutorials). Wang et al. (2021b) observed that the practice of link
+sharing has a significant correlation with the code review time. Fu et al. (2022)
+found that code snippets are not frequently used in code review, however, code
+snippets with the aim of suggestion are actively accepted by the patch author.
+    Developers also use emojis, visual symbols in computer mediated commu-
+nication, to represent their opinions (Bai et al., 2019). The prior work has
+shown that emoji use in the East and the West reveals recognizable normative
+and culture specific patterns (Guntuku et al., 2019). Claes et al. (2018) also
+observed that various types of emojis can be used in two studied issues trackers
+and from different developers (i.e., western developers use more emojis than
+eastern developers) at different times (e.g., negative emojis are used during
+weekends). Herring and Dainas (2020) pointed out that females use emoji and
+emoticons more frequently than males do. Borges et al. (2019) explored the us-
+age of GitHub reactions in issues reports. They found that the usage of emoji
+reactions is increasingly growing and furthermore emoji reactions make more
+discussion for bug and enhancement issue reports. To support visual represen-
+tations of sentiments, Venigalla and Chimalakonda (2021) proposed a plugin
+namely StackEmo to augment comments on Stack Overflow with emojis. Chen
+et al. (2021) learned representations of SE-related texts through emoji predic-
+tion by leveraging Tweets and GitHub posts containing emojis. Rong et al.
+(2022) discovered the usage of emojis in software development. Their results
+showed that emojis tend to be used during every phase of a conversation on
+GitHub regardless of the developers’ roles.
+Title Suppressed Due to Excessive Length                                     23
+
+
+   Although the phenomenon of emoji usage in textual content has been com-
+monly addressed, it is still unclear what is the role of the emoji as a reaction
+during the software development (i.e., code review process). Our study would
+complement the knowledge lying in the context of modern communication.
+
+
+
+
+7 Deviations from the Registered Report
+
+Our study requires unavoidable deviations from the research protocol (Son
+et al., 2021) that we have carefully documented below:
+
+1. Studied Repository Dataset. Due to the restriction of GitHub API down-
+   loading within our given time-frame, we decided to select a representative
+   sample of the studied repositories instead of the full dataset. Hence, we
+   constructed a representative repository dataset that contains 1,850 repos-
+   itories across seven languages, instead of the 25,925 repositories outlined
+   in the protocol. As described in the data collection (Section 3), this is a
+   statistical sample that was systematically collected.
+2. Research Approach. We outline three deviations related to the methodol-
+   ogy, and have a minimal effect on the results. First, in the explanatory
+   variable selection (RQ1), we added another two variables (i.e., Language
+   and Description length) that show the effect in the prior work. Meanwhile,
+   we removed the variable “commit size” and instead we introduced another
+   two related variables “# Added lines” and “#Deleted lines”. In addition,
+   we altered the calculation of the dependent variable “Review time” by
+   taking into account the PR closed time. Second, in the proportion of PRs
+   submitted by the first-time contributors (RQ2), we did not follow a control
+   study where we planned to construct a balanced control group. Instead, we
+   divided all PRs that contain emoji reactions into the ones by first-time con-
+   tributors and the other ones by non first-time contributors. Third, during
+   the manual classification of reasons behind sentiment inconsistency (RQ3),
+   we did not calculate the Kappa score as the open coding process does not
+   require it (Hirao et al., 2019; Xiao et al., 2021).
+3. Hypothesis Testing. While conducting the experiments, we realized that
+   the hypotheses and corresponding statistical tests reported in the protocol
+   were not appropriate from RQs2–4. For RQ2, the result was in the form of
+   binary categories, thus we changed to use the one proportion Z-test. For
+   RQ3, we changed the prior hypothesis (H2) to the hypothesis “There is
+   a significant relationship between comment intentions and emoji reaction
+   kinds”. To validate it, we used the Pearson’s Chi-Squared test. For RQ4,
+   we changed the hypothesis (H3) to the hypothesis “There is a significant
+   relationship between comment sentiments and emoji reaction sentiments”.
+   Similarly, we adopted the Pearson’s Chi-Squared test to validate it.
+24                                                           Dong Wang     et al.
+
+
+8 Conclusion
+
+In this work, we conducted an empirical study on 1,850 repositories to in-
+vestigate the role of emoji reactions in GitHub pull requests. Specifically, we
+analyzed the following four aspects: (i) the correlation between the emoji re-
+actions and the review time, (ii) whether first-time contributors being likely
+to receive emoji reactions, (iii) relationship between the comment intentions
+and emoji reactions, and (iv) consistency between comment sentiments and
+emoji reaction sentiments.
+    The results show that (i) the number of emoji reactions have a significant
+correlation with the review time; (ii) a PR submitted by a first-time contrib-
+utor is less likely to receive emoji reactions; (iii) the PR comments with the
+intention of information giving are more likely to receive emoji reactions; and
+(iv) Positive–Negative inconsistency pair-wise accounts for 11.8%, and to ac-
+knowledge a mistake is the most common reason of sentiment inconsistency.
+These empirical results highlight the role of emoji reactions play in collabora-
+tive communication and specifically suggest that the usage of emoji reactions
+signals an already positive environment on GitHub and it has the potential to
+reduce toxicity. Future research directions include a deeper study of investi-
+gating the causality of emoji reactions and understanding the reasons why it
+takes a longer time to complete the review, and analyzing the diversity-related
+perspectives of emoji reactions in the scope of code review.
+
+
+
+
+Acknowledgements This work is supported by Japanese Society for the Pro-
+motion of Science (JSPS) KAKENHI Grant Numbers 18H04094 and 20K19774
+and 20H05706.
+
+Data Availability The datasets generated during and/or analysed during
+the current study are available in the GitHub repository, https://github.
+com/NAIST-SE/EmojiReaction_PR.
+
+
+
+
+Declarations
+
+Conflict of Interests The authors declare that Raula Gaikovina Kula and
+Yasutaka Kamei are members of the EMSE Editorial Board. All co-authors
+have seen and agree with the contents of the manuscript and there is no finan-
+cial interest to report.
+Title Suppressed Due to Excessive Length                                    25
+
+
+References
+
+Agrawal R, Imieliński T, Swami A (1993) Mining association rules between
+  sets of items in large databases. In: Proceedings of the 1993 ACM SIGMOD
+  international conference on Management of data, pp 207–216
+Agrawal V, Lin YH, Cheng J (2022) Understanding the characteristics of visual
+  contents in open source issue discussions: A case study of jupyter notebook.
+  In: The International Conference on Evaluation and Assessment in Software
+  Engineering 2022, Association for Computing Machinery, p 249–254, DOI
+  10.1145/3530019.3534082
+Bai Q, Dan Q, Mu Z, Yang M (2019) A systematic review of emoji: Current
+  research and future perspectives. Frontiers in psychology 10:2221
+Baysal O, Kononenko O, Holmes R, Godfrey MW (2013) The influence of
+  non-technical factors on code review. In: 2013 20th Working Conference on
+  Reverse Engineering (WCRE), pp 122–131
+Baysal O, Kononenko O, Holmes R, Godfrey MW (2016) Investigating Techni-
+  cal and Non-technical Factors Influencing Modern Code Review. Empirical
+  Software Engineering p 932–959
+Borges H, Brito R, Valente MT (2019) Beyond textual issues: Understanding
+  the usage and impact of github reactions. In: Proceedings of the XXXIII
+  Brazilian Symposium on Software Engineering, pp 397–406
+Charmaz K (2014) Constructing Grounded Theory. SAGE
+Chen Z, Cao Y, Yao H, Lu X, Peng X, Mei H, Liu X (2021) Emoji-powered
+  sentiment and emotion detection from software developers’ communica-
+  tion data. ACM Transactions on Software Engineering and Methodology
+  (TOSEM) 30(2):1–48
+Chui M, Manyika J, Bughin J (2012) The social economy: Unlocking value
+  and productivity through social technologies. Tech. rep., McKinsey Global
+  Institute
+Claes M, Mäntylä M, Farooq U (2018) On the use of emoticons in open source
+  software development. In: Proceedings of the 12th ACM/IEEE International
+  Symposium on Empirical Software Engineering and Measurement, pp 1–4
+Dabbish L, Stuart C, Tsay J, Herbsleb J (2012) Social coding in github: trans-
+  parency and collaboration in an open software repository. In: Proceedings
+  of the ACM 2012 conference on computer supported cooperative work, pp
+  1277–1286
+Dey T, Mousavi S, Ponce E, Fry T, Vasilescu B, Filippova A, Mockus A (2020)
+  Detecting and characterizing bots that commit code. In: Proceedings of the
+  17th international conference on mining software repositories, pp 209–219
+Ebert F, Castor F, Novielli N, Serebrenik A (2019) Confusion in code reviews:
+  Reasons, impacts, and coping strategies. In: 2019 IEEE 26th International
+  Conference on Software Analysis, Evolution and Reengineering (SANER),
+  pp 49–60
+Eisenhardt KM (1989) Building theories from case study research. Academy
+  of management review
+26                                                            Dong Wang     et al.
+
+
+El Asri I, Kerzazi N, Uddin G, Khomh F, Idrissi MJ (2019) An empirical
+   study of sentiments in code reviews. Information and Software Technology
+   114:37–54
+Fu L, Liang P, Zhang B (2022) Understanding code snippets in code reviews:
+   A preliminary study of the openstack community. In: 2022 IEEE/ACM 30th
+   International Conference on Program Comprehension (ICPC), IEEE
+Golzadeh M, Decan A, Legay D, Mens T (2021) A ground-truth dataset and
+   classification model for detecting bots in github issue and pr comments.
+   Journal of Systems and Software 175:110911
+Golzadeh M, Decan A, Chidambaram N (2022) On the accuracy of bot detec-
+   tion techniques. In: International Workshop on Bots in Software Engineering
+   (BotSE). IEEE
+Guntuku SC, Li M, Tay L, Ungar LH (2019) Studying cultural differences in
+   emoji usage across the east and the west. In: Proceedings of the international
+   AAAI conference on web and social media, vol 13, pp 226–235
+Harrell Jr FE, Lee KL, Califf RM, Pryor DB, Rosati RA (1984) Regres-
+   sion modelling strategies for improved prognostic prediction. Statistics in
+   Medicine pp 143–152
+Hastie T, Tibshirani R, Friedman J (2009) The Elements of Statistical Learn-
+   ing: Data Mining, Inference, and Prediction. Springer
+Hata H, Treude C, Kula RG, Ishio T (2019) 9.6 million links in source code
+   comments: Purpose, evolution, and decay. In: Proceedings of the 41st In-
+   ternational Conference on Software Engineering, IEEE Press, ICSE ’19, p
+   1211–1221
+Herring SC, Dainas AR (2020) Gender and age influences on interpretation of
+   emoji functions. ACM Transactions on Social Computing 3(2):1–26
+Hirao T, McIntosh S, Ihara A, Matsumoto K (2019) The review linkage graph
+   for code review analytics: a recovery approach and empirical study. In: Pro-
+   ceedings of the 2019 27th ACM Joint Meeting on European Software Engi-
+   neering Conference and Symposium on the Foundations of Software Engi-
+   neering, pp 578–589
+Hirao T, McIntosh S, Ihara A, Matsumoto K (2020) Code reviews with diver-
+   gent review scores: An empirical study of the openstack and qt communities.
+   IEEE Transactions on Software Engineering
+Huang Q, Xia X, Lo D, Murphy GC (2018) Automating intention mining.
+   IEEE Transactions on Software Engineering 46(10):1098–1119
+Islam MR, Zibran M (2018) Sentistrength-se: Exploiting domain specificity
+   for improved sentiment analysis in software engineering text. J Syst Softw
+   145:125–146
+Jiang Y, Adams B, German DM (2013) Will my patch make it? and how fast?
+   case study on the linux kernel. In: 2013 10th Working Conference on Mining
+   Software Repositories (MSR), IEEE, pp 101–110
+Kononenko O, Baysal O, Guerrouj L, Cao Y, Godfrey MW (2015) Investigating
+   code review quality: Do people and participation matter? In: 2015 IEEE
+   international conference on software maintenance and evolution (ICSME),
+   IEEE, pp 111–120
+Title Suppressed Due to Excessive Length                                        27
+
+
+Kononenko O, Rose T, Baysal O, Godfrey M, Theisen D, de Water B (2018)
+  Studying pull request merges: A case study of shopify’s active merchant. In:
+  2018 IEEE/ACM 40th International Conference on Software Engineering:
+  Software Engineering in Practice Track (ICSE-SEIP), pp 124–133
+Kuramoto H, Kondo M, Kashiwa Y, Ishimoto Y, Shindo K, Kamei Y, Ubayashi
+  N (2022) Do visual issue reports help developers fix bugs?:-a preliminary
+  study of using videos and images to report issues on github. In: 2022
+  IEEE/ACM 30th International Conference on Program Comprehension
+  (ICPC), IEEE, pp 511–515
+Li W, Meng N, Li L, Cai H (2021) Understanding language selection in multi-
+  language software projects on github. In: 2021 IEEE/ACM 43rd Interna-
+  tional Conference on Software Engineering: Companion Proceedings (ICSE-
+  Companion), IEEE, pp 256–257
+Maddila C, Bansal C, Nagappan N (2019) Predicting pull request completion
+  time: a case study on large scale cloud services. In: Proceedings of the 2019
+  27th acm joint meeting on european software engineering conference and
+  symposium on the foundations of software engineering, pp 874–882
+McIntosh S, Kamei Y, Adams B, Hassan AE (2014) The impact of code review
+  coverage and code review participation on software quality: A case study of
+  the qt, vtk, and itk projects. In: Proceedings of the 11th Working Conference
+  on Mining Software Repositories, p 192–201
+Mcintosh S, Kamei Y, Adams B, Hassan AE (2016) An empirical study of
+  the impact of modern code review practices on software quality. Empirical
+  Software Engineering p 2146–2189
+Nayebi M (2020) Eye of the mind: Image processing for social coding. In: 2020
+  IEEE/ACM 42nd International Conference on Software Engineering: New
+  Ideas and Emerging Results (ICSE-NIER), IEEE, pp 49–52
+Paternoster R, Brame R, Mazerolle P, Piquero A (1998) Using the correct sta-
+  tistical test for the equality of regression coefficients. Criminology 36(4):859–
+  866
+Pearson K (1900) X. on the criterion that a given system of deviations from
+  the probable in the case of a correlated system of variables is such that it
+  can be reasonably supposed to have arisen from random sampling. The Lon-
+  don, Edinburgh, and Dublin Philosophical Magazine and Journal of Science
+  50(302):157–175
+Prana GAA, Treude C, Thung F, Atapattu T, Lo D (2019) Categorizing the
+  content of github readme files. Empirical Software Engineering 24(3):1296–
+  1327
+Rigby PC, Storey MA (2011) Understanding Broadcast Based Peer Review on
+  Open Source Software Projects. In: Proceedings of the 33rd International
+  Conference on Software Engineering, pp 541–550
+Rong S, Wang W, Mannan UA, de Almeida ES, Zhou S, Ahmed I (2022)
+  An empirical study of emoji use in software development communication.
+  Information and Software Technology 148:106912
+Saadat S, Colmenares N, Sukthankar G (2021) Do bots modify the workflow of
+  github teams? In: 2021 IEEE/ACM Third International Workshop on Bots
+28                                                           Dong Wang    et al.
+
+
+  in Software Engineering (BotSE), IEEE, pp 1–5
+Sadowski C, Söderberg E, Church L, Sipko M, Bacchelli A (2018) Modern code
+  review: a case study at google. In: Proceedings of the 40th International
+  Conference on Software Engineering: Software Engineering in Practice, pp
+  181–190
+Shapiro SS, Wilk MB (1965) An analysis of variance test for normality (com-
+  plete samples). Biometrika 52(3/4):591–611
+Son T, Xiao T, Wang D, Kula RG, Ishio T, Matsumoto K (2021) More than
+  react: Investigating the role of emojireaction in github pull requests. arXiv
+  preprint arXiv:210808094
+Tantisuwankul J, Nugroho YS, Kula RG, Hata H, Rungsawang A, Leelaprute
+  P, Matsumoto K (2019) A topological analysis of communication channels
+  for knowledge sharing in contemporary github projects. Journal of Systems
+  and Software 158:110416
+Thongtanunam P, Mcintosh S, Hassan AE, Iida H (2017) Review Participation
+  in Modern Code Review. Empirical Software Engineering 22(2):768–817
+Tigwell GW, Flatla DR (2016) Oh that’s what you meant! reducing emoji
+  misunderstanding. In: Proceedings of the 18th international conference on
+  human-computer interaction with mobile devices and services adjunct, pp
+  859–866
+Venigalla ASM, Chimalakonda S (2021) Stackemo: towards enhancing user
+  experience by augmenting stack overflow with emojis. In: Proceedings of
+  the 29th ACM Joint Meeting on European Software Engineering Conference
+  and Symposium on the Foundations of Software Engineering, pp 1550–1554
+Wang D, Ueda Y, Kula RG, Ishio T, Matsumoto K (2021a) Can we benchmark
+  code review studies? a systematic mapping study of methodology, dataset,
+  and metric. Journal of Systems and Software 180:111009
+Wang D, Xiao T, Thongtanunam P, Kula RG, Matsumoto K (2021b) Under-
+  standing shared links and their intentions to meet information needs in mod-
+  ern code review. In: The Journal of Empirical Software Engineering (EMSE),
+  vol 26, p to appear, DOI https://doi.org/10.1007/s10664-021-09997-x
+Xiao T, Wang D, Mcintosh S, Hata H, Kula RG, Ishio T, Matsumoto K (2021)
+  Characterizing and mitigating self-admitted technical debt in build systems.
+  IEEE Transactions on Software Engineering
+Zhang X, Yu Y, Wang T, Rastogi A, Wang H (2022) Pull request latency
+  explained: An empirical overview. Empirical Software Engineering 27(6):1–
+  38
+

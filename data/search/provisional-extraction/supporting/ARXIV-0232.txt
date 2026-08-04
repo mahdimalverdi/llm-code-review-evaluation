@@ -1,0 +1,1355 @@
+                                         An Empirical Study on Code Review Activity Prediction and
+                                         Its Impact in Practice
+                                         DORIANE OLEWICKI, Queen’s University, Canada
+arXiv:2404.10703v2 [cs.SE] 13 May 2024
+
+
+
+
+                                         SARRA HABCHI, Ubisoft, Canada
+                                         BRAM ADAMS, Queen’s University, Canada
+                                         During code reviews, an essential step in software quality assurance, reviewers have the difficult task of
+                                         understanding and evaluating code changes to validate their quality and prevent introducing faults to the
+                                         codebase. This is a tedious process where the effort needed is highly dependent on the code submitted, as well
+                                         as the author’s and the reviewer’s experience, leading to median wait times for review feedback of 15-64 hours.
+                                         Through an initial user study carried with 29 experts, we found that re-ordering the files changed by a patch
+                                         within the review environment has potential to improve review quality, as more comments are written (+23%),
+                                         and participants’ file-level hot-spot precision and recall increases to 53% (+13%) and 28% (+8%), respectively,
+                                         compared to the alphanumeric ordering. Hence, this paper aims to help code reviewers by predicting which
+                                         files in a submitted patch need to be (1) commented, (2) revised, or (3) are hot-spots (commented or revised). To
+                                         predict these tasks, we evaluate two different types of text embeddings (i.e., Bag-of-Words and Large Language
+                                         Models encoding) and review process features (i.e., code size-based and history-based features). Our empirical
+                                         study on three open-source and two industrial datasets shows that combining the code embedding and review
+                                         process features leads to better results than the state-of-the-art approach. For all tasks, F1-scores (median of
+                                         40-62%) are significantly better than the state-of-the-art (from +1 to +9%).
+                                         CCS Concepts: • Software and its engineering → Software maintenance tools.
+                                         Additional Key Words and Phrases: Code review automation, Classification, Text embedding, Large Language
+                                         Models, Review process features.
+                                         ACM Reference Format:
+                                         Doriane Olewicki, Sarra Habchi, and Bram Adams. 2024. An Empirical Study on Code Review Activity
+                                         Prediction and Its Impact in Practice. Proc. ACM Softw. Eng. 1, FSE, Article 99 (July 2024), 23 pages. https:
+                                         //doi.org/10.1145/3660806
+
+                                         1   INTRODUCTION
+                                         In software development, code reviewing is an essential quality assurance step during code integra-
+                                         tion [22, 46]. Developers submit their code for review as a patch. Then, reviewers either validate
+                                         the code change, which is then forwarded to integration, or they provide feedback. The review
+                                         process can go through several iterations, where the reviewer comments on the submission to
+                                         have the developer revise it and submit a new version, referred to as a revision. Eventually, if the
+                                         developer addresses all comments, the patch is accepted, otherwise it is rejected.
+                                            Given the essential role of code reviews in modern development [47], it is crucial to have a high
+                                         code review velocity and effectiveness. Yet, Hong et al. report that developers waited a median of
+                                         15-64 hours for reviewers’ feedback in three open source projects (i.e., Openstack Nova, Openstack
+                                         Authors’ Contact Information: Doriane Olewicki, Queen’s University, Kingston, Canada, doriane.olewicki@queensu.ca;
+                                         Sarra Habchi, Ubisoft, Montreal, Canada, sarra.habchi@ubisoft.com; Bram Adams, Queen’s University, Kingston, Canada,
+                                         bram.adams@queensu.ca.
+
+                                         Permission to make digital or hard copies of all or part of this work for personal or classroom use is granted without fee
+                                         provided that copies are not made or distributed for profit or commercial advantage and that copies bear this notice and
+                                         the full citation on the first page. Copyrights for third-party components of this work must be honored. For all other uses,
+                                         contact the owner/author(s).
+                                         © 2024 Copyright held by the owner/author(s).
+                                         ACM 2994-970X/2024/7-ART99
+                                         https://doi.org/10.1145/3660806
+
+
+                                                                                     Proc. ACM Softw. Eng., Vol. 1, No. FSE, Article 99. Publication date: July 2024.
+99:2                                                                    Doriane Olewicki, Sarra Habchi, and Bram Adams
+
+
+Ironic and Qt Base) [31]. Those numbers were confirmed by our industrial partner company, which
+has similar waiting times. Such long waiting times delay the integration of code and thus the
+projects’ development and release time. Furthermore, other factors can cause review processes to
+take a long time, including the reviewers involved (e.g., availability and experience), the submitted
+code (e.g., patch size and complexity, developers’ experience) and the number of review iterations
+needed [36]. Reviewers are usually developers on the project, who have to split their work time
+between their own development tasks and reviews. Furthermore, they might have to review many
+patches, themselves composed of many files and changes.
+   In order to improve review effectiveness, Hong et al. [31] automate the identification of the
+parts of patches that either need revisions or comments using a Bag-of-Words (BoW) embedding
+and two review process features (i.e., number of lines added and removed). As BoW embeddings
+do not represent the order of words such as Large Language Model (LLM) embeddings preferred
+in recent NLP-based tasks [32] do, we suspect that the former do not capture enough context.
+With approaches such as risk/bug prediction using software process features [25, 34, 40], it is also
+unknown how that type of embedding performs in the context of review activities.
+   Furthermore, while all patch revisions are assumed to map to a corresponding review comment,
+revisions could also be triggered by a review comment on a different file or patch, or through
+communication external to the reviewing platform (e.g., in-person), yielding an incomplete ground
+truth. Hence, to be comprehensive, automation should not only target problematic parts of a patch
+requiring either a comment or a revision, but the union of these, which we refer to as hot-spots.
+   Prediction of review activity needs has potential to assist reviewers through multiple use cases,
+such as adding warnings in the code for reviewers to focus on [29] or re-ordering files [33, 44]. In
+this paper, we focused on the latter. In a wizard-of-oz user study with 29 professional developers,
+we find that, inspired by Fregnan et al.’s suggestion to “display first those files that are more
+critical” [23], hot-spot based file re-ordering correlates with improved review comment quality. In
+particular, more review comments were provided (+23%), and those comments were better targeted
+towards known hot-spots (+13% precision and +8% recall) compared to the alphanumeric ordering.
+Even though reviewers would still be required to look at the rest of a patch, automated identification
+of hot-spots would attract the reviewer’s attention earlier to the most critical parts.
+   Hence, in order to improve the file-level prediction of three review tasks (i.e., need for comment,
+need for review, is an hot-spot) in terms of prediction performance and of the computation cost of
+embeddings and model training, our paper studies the impact of text embeddings and of review
+process feature-based embeddings. We focus on file-level prediction due to its natural fit with
+the use case of prioritizing files in a submitted patch. Our empirical evaluation on three large
+open-source datasets and two closed-source datasets addresses the following research questions:
+   RQ1: Which text embeddings of code diffs perform best for review activity prediction?
+Although none of the specific text embedding stands out as the best, we found that applying any
+(or both) of our text embedding modifications, i.e., including removed lines as an additional context
+embedding or using a Large Language Model embedding instead of the Bag-of-Word approach,
+improved the performances in practice. In practice, our approaches report higher AUC in 13 out
+of 15 cases (median of 68-78%, improvement up to +5%) and higher F1-score in 10 out of 15 cases
+(median of 37-57%, improvement up to +4%) than the baseline.
+   RQ2: Which review process features perform best for review activity prediction? Closed-
+source datasets show no significant differences between the best text embedding and review process
+feature embedding (median F1-score 37-56%, with an improvement in practice of +2 to +8%), thus
+matching performance while reducing the embedding dimensionality. On the other hand, for open-
+source datasets, feature-based embeddings perform similarly to better than the best text embedding
+in 5 out of 9 cases (median F1-score of 50-58%, improvement up to +4%) and lower in the other 4
+
+Proc. ACM Softw. Eng., Vol. 1, No. FSE, Article 99. Publication date: July 2024.
+An Empirical Study on Code Review Activity Prediction and Its Impact in Practice                                    99:3
+
+
+cases (median F1-score 36-56%, lower by -2 to -15%). This shows that text embeddings have value
+as they capture relevant code/text information, not represented in the feature-based embeddings.
+We also find that the size-based features are the most important features for all datasets, as they
+bring information about the changed file (e.g., size, number of changes) but also context about the
+full patch size. The history-based features, though less important, also improve performance.
+   RQ3: How does the combination of review process features with text embeddings
+perform for review activity prediction? Compared to the state-of-the-art, our proposal of
+combining text embedding with review process features improved significantly the F1-score (median
+of 40-62%) for all datasets and all tasks, improving the results by up to +9%.
+   Finally, through an additional empirical analysis we confirm the user study’s promise of hot-spot
+based file re-ordering, as our model predictions push +9-50% more hot-spots forward into the first
+half/quarter of file patches shown to reviewers compared to alphanumerical order.
+   This paper’s contributions are:
+
+    • A user study evaluating hot-spot-based file re-ordering;
+    • An empirical study of review activity prediction per-project and at file-level on 5 large
+      datasets (including 2 closed-sources);
+    • 3 types of review activity labels: revised, commented, and hot-spot (either of the prior);
+    • A comparison of text embeddings from a Large Language Model and Bag-of-Words embedding,
+      as well as the inclusion of only added lines or also including removed lines;
+    • Analysis of lightweight review process features;
+    • A replication package with the open-source dataset [4].
+
+
+2   BACKGROUND AND RELATED WORK
+For years, the software engineering domain has proposed approaches to help developers in tasks
+such as defect prediction [12, 40, 41], code recommendation [51], and others [6, 17, 35, 42, 60]. In
+the last 10 years, the focus has moved towards helping reviewers as well, regarding subjects such as
+reviewer recommendation [45, 52, 53], code change ordering [10], code diff quality [31, 37], review
+comment recommendation [26, 30, 37, 50, 54, 55], review comment evaluation [13, 21? ] and code
+refinement [37, 54, 55]. In this paper, we focus on the subject of code diff quality, by identifying
+code submissions needing review activity (i.e., revisions and/or comments). Bosu et al. reported
+that 34.50% of code review comments from five major Microsoft projects that they studied are not
+“useful”, i.e., did not lead to code modification, thus arguing the need for code review evaluation [13].
+However, we consider that any review activity has a high value. Submission of a revision indicates
+that the code needed to be modified due to an issue (e.g., bug or efficiency) or did not follow some
+code convention of the team. Review comments have also value as they might indicate unclarity in
+the code (e.g., the nomenclature is not clear), the need for changes in another part of the submission,
+or the need for a future code submission treated separately. As both revisions and comment have
+value, we also want to predict "hot-spots" as changes that requires any of those review activities.
+   Li et al. explored code diff quality in order to identify parts of the code change that need review
+comments [37]. Their approach uses a Text-To-Text Transfer Transformer (T5) that takes as input
+the code change and returns a probability that the code change needs a comment. Their T5 is
+pre-trained on a dataset composed of on code diffs. Hong et al. proposed the “RevSpot" approach to
+predict problematic lines, i.e., lines that will be commented on by the reviewer or revised [31]. Their
+approach uses input based on code vocabulary and they train classification models such as Random
+Forest and Naive Bayes. This simpler training approach has the advantage of being less costly,
+
+
+                                         Proc. ACM Softw. Eng., Vol. 1, No. FSE, Article 99. Publication date: July 2024.
+99:4                                                                    Doriane Olewicki, Sarra Habchi, and Bram Adams
+
+
+whereas fine-tuning a T5 model is known to be computationally expensive. The classification-
+based approach reports similar results on the "commented" prediction task, indicating that the
+computational effort of fine-tuning an LLM might not be relevant for this task.
+   We also explore in this paper the use of Large Language Model (LLM) encoders for text embed-
+ding. LLM are models trained to solve Natural Language tasks. They distinguish themselves from
+Language Models (LM) due to the size large number of parameters if the LLM models [32]. The
+need for large models comes from the observation that the more parameters are added, the better
+the LM model performs [59]. LLMs are used in three main types of architectures: encoder-only,
+encoder-decoder and decoder-only. Encoder-only architectures take text as input and generate an
+embedding, i.e., an abstracted representation of the code in the form of a vector capturing the text’s
+semantics [20]. Encoder-decoder architectures take text as input, then generate an intermediate
+embedding state that is itself fed as input to the decoder [27, 56]. The intermediate state is used as
+a way to represent the connection between various inputs and outputs. This type of architecture is
+usually used for translation tasks or question-answering. Finally, the decoder-only architectures
+use a decoder to generate text, usually in a sequential prediction paradigm. This type of model has
+been vastly popularized over the last few years with GPT models [43] and ChatGPT [1].
+   LLMs have been used in the context of Software Engineering for multiple tasks, such as code
+synthesis/generation [7, 61], review automation [37, 54, 55], and code fuzzing [19]. In this paper,
+we focus on the encoder-only type of task, as we use the LLM as a text embedding approach. The
+advantage of this is that we can use a pre-trained LLM model as a zero-shot encoder, where we
+do not fine-tune the LLM. The embedding is then used as input to a classifier, easier to train, thus
+giving a more cost-effective and lower computation-time training approach. Previous studies have
+found "simpler" approaches such as classification models to be similar, and sometimes even better,
+than Deep Learning (DL) approaches in the context of software engineering tasks in terms of both
+performance [24, 28] and speed [39], which motivates our use of classifiers on top of a zero-shot
+LLM embeddings instead of fine-tuning a LLM encoder-decoder model.
+   Other past works regarding bug prediction [25], risk prediction [40, 49] and quality assurance [34]
+have shown good performance by using software process features. Those features range from
+size-based features (e.g., number of lines added, removed), contextual features (e.g., size of the
+patch), and history-based features (e.g., number of times a file was changed, number of participants
+on a file), to experience-based features (e.g., experience of developers/reviewers). However, review
+process prediction tasks have not considered exploring those types of features yet, apart from Hong
+et al. considering only the two following features: number of lines added and the number of lines
+removed [31]. Exploring review process features approaches is thus one of the goals of this paper.
+
+3      MOTIVATIONAL USE CASE
+By default, most review tools list the changed files of a patch in alphanumeric order, even though
+previous work argues that this might be suboptimal, especially for long code submissions [8, 9]. Yet,
+it is common, especially in closed-source datasets, to have many file changes in a patch, making the
+review process more difficult and time consuming. Case in point, across the five datasets studied in
+section 5, we observed that 38-68% of patches are composed of more than 2 files, while in the two
+closed-source datasets, 25-30% of patches have more than 5 files.
+    Baum et al. established principles for code change ordering to help reviewers become more
+effective [10], while Li et al. [37] and Hong et al. [31] predict submission (patch) parts that need
+either review comments or a revision, yet neither of them explore or discuss the use of code diff
+quality as a way to prioritize the code change order. Fregnan et al.’s user study indicated that the
+earlier a file is shown in a patch, the more likely it is to be commented on [23], hence suggesting to
+prioritize files that need review activity to the beginning of a patch.
+
+Proc. ACM Softw. Eng., Vol. 1, No. FSE, Article 99. Publication date: July 2024.
+An Empirical Study on Code Review Activity Prediction and Its Impact in Practice                                      99:5
+
+
+  In this motivation section, we empirically evaluate the impact of changed file reordering on
+the review process, through a user study that assumes the availability of models able to perfectly
+predict review hot-spots (i.e., any file requiring a comment or revision). If successful, this motivates
+the need for improving current review activity prediction models.
+
+3.1    User study set-up
+We carried out a wizard-of-oz user study [18] to compare hot-spot-based ordering of a patch’s
+changed files to the typical alphanumeric ordering 1 . The wizard-of-oz design means that we used
+knowledge about the actual hot-spots in the oracle (obtained similarly as in Section 4.1), which is
+useful to evaluate the promise of hot-spot prioritization for file reordering in optimal conditions
+compared to the alphanumeric ordering used by most review tools [23]. The user study was held on
+the premises of our industrial partner, and involved 29 developers with an average experience at the
+company of 6 years, knowledgeable both in developing and reviewing for the studied closed-source
+project, which is actively developed by more than 800 developers, with 3-4k patches per month.
+    We structure the study as an A/B study according to which each participant is asked to review two
+patches, one patch ordered alphanumerically ("Alph"), and one patch ordered based on hot-spots
+("Hot"). We paired up participants such that each pair had to review the same two patches (P1,P2),
+but with different file ordering to control for learning bias. For example, the first participant of the
+pair would see P1-Alph followed by P2-Hot, while the second would see P1-Hot then P2-Alph. To
+increase the variety of patches, each pair of participants would work on different sets of patches.
+    In terms of participant recruitment in the project under study, we selected amongst the top 50%
+most active reviewers in the last 6 months who also have been relatively active in the last month
+(i.e., amongst top 40-50% reviewers). The latter choice aimed to find participants experienced in
+performing reviews, but not overloaded, in order to improve the chances of them participating.
+We then created pairs of participants that have worked on the same subsystems. For each pair, we
+also identified a fallback option, i.e., a third participant that could be invited if one of the original
+participants in the pair is unavailable or unresponsive. The sets were constructed in such a way
+that all three participants had worked on common subsystems of the studied project.
+    Each set was then associated with two patches (from the participants’ common subsystems) that
+none of the participants had submitted or reviewed before. We selected only patches of exactly five
+files, similar to Fregnan et al. [23]. This choice is motivated by the need for patches large enough
+to observe the impact of ordering files while keeping the review effort manageable to attract more
+participants. The selected patches were not older than 2 months prior to the study, had received
+reviews, and needed at least one later revision or involved at least one thread of review comments.
+    The user study was performed via a mock online review platform. The main page explained to
+participants that they should not access any other platform to help them perform the review, and
+provided access to the 2 patches to review. The actual review pages had a user interface mimicking
+the review tool used at the company, but customized to allow us to change the file ordering. We
+also incorporated back-end logic to monitor the start and end time of reviews and to record when
+each changed file was visible on the screen during the review.
+    The user study happened over the span of 15 work days, during which we contacted 16 pairs
+(i.e., 32 participants for 16 patches) via our industrial partner’s internal chat application. 11 spare
+participants from the invited pairs’ corresponding set had to be contacted. Out of the 43 contacted
+participants, 29 performed the study, yielding 55 reviews in total (28 with alphanumeric ordering
+and 27 for hot-spot-based ordering, thus, not all participants did both reviews). 20 patches were
+reviewed with both ordering setups. The recruitment message mentioned that the participation
+1 The study was approved by an ethical board. The certificate number is not disclosed to respect double-blind.
+
+
+
+                                           Proc. ACM Softw. Eng., Vol. 1, No. FSE, Article 99. Publication date: July 2024.
+99:6                                                                    Doriane Olewicki, Sarra Habchi, and Bram Adams
+
+
+would take around 20 minutes (although most people took longer) and provided a link to our custom
+review platform. While the participants were aware of the study being about review processes,
+they were not explicitly told that we explored the impact of file re-ordering. Participants were not
+offered any compensation for participation, but they participated during their work hours.
+
+3.2    Results
+Table 1 shows that the median duration of individual reviews was 11.4 minutes for both
+orderings, without significant difference in distribution (Mann-Whitney test: p-val= .39).
+Analyzing the review duration came with some challenges, as variations in duration can come from
+many factors (e.g., participants’ review habits, distraction by other tasks). 4 reviews took more
+than an hour, yet manual checking of the recorded review events (i.e., opening/closing of files and
+insertion of review comments) revealed gaps of more than 40min of inactivity for all 4 data points.
+We thus ignored those data points for the duration analysis. When aggregating the duration per
+patch, 8 patches out of 17 required a longer duration using hot-spot-based ordering compared to
+9/17 patches taking longer for alphanumeric.
+   The order in which reviewers opened changed files tends to follow the provided order.
+Table 1 shows the median/average ranking position of the five (ordered) files of each patch in
+terms of when a file is opened for the first time. For instance, if in at least half of the patches for a
+particular ordering file F1 is opened first, its median ranking position would be 1. We can see that
+both the median and average ranking increase with the file number, except for file F5 (hot-spot
+based). The latter exception seems to be due to some reviewers starting to opening files from the
+end, and other reviewers opening a C++ file’s corresponding header file before opening other files.
+The average ranking values show that the order can still vary a lot, depending on the reviewers’
+experience with the given files, the types of files and their review habits.
+   Across patches, we observe an average of 2.9 comments for hot-spot-based compared to
+2.3 for alphanumeric (+23%) order. Table 2 shows that the total amount of submitted comments
+on the hot-spot-based ordering is 77 comments, 12 comments more than the alphanumeric ordering,
+even though one additional alphanumeric patch was reviewed. Among both sets of comments, 83%
+of the comments seem to be actionable, while the rest comprise comprehension questions.
+   Hot-spot-based ordering gathers 80% of review comments on the first 3 files, compared
+to only 58% for alphanumeric ordering. This is somehow expected, as the hot-spots historically
+observed in our datasets by definition are a good indication of where comments are needed.
+   The participants’ review comments on hot-spot ordered patches show an increase in
+precision (+13%) and recall (+8%) for finding hot-spots. By analyzing if the comments (1) are
+equivalent to ground truth comments or (2) pinpoint the location of a later revision, we found that
+40 comments (51%) of the hot-spot-based ordering identified actual hot-spots compared to only 27
+(41%) of the alphanumeric order. On average, 1.5 comments per patch found a hot-spot in the case
+of hot-spot-based ordering compared to 1 per patch for the baseline (+54%).
+   It should be noted that two participants indicated to us that they felt “something wrong” with the
+(hot-spot based) file ordering. In 3 out of the 27 reviews with hot-spot-based ordering that included
+C++ code, a participant initially missed the header file (extension “.h”), wrote a comment about it
+missing, then canceled the comment after seeing the missing file later in the ordering. This shows
+us that certain files forcibly should be shown together even when using hot-spot-based ordering.
+ File ordering has an impact on the review process. While there is no impact on review
+ duration, the hot-spot-based ordering correlates with more comments (+23%) targeted at
+ parts of the code known to need revising or commenting (+13% precision and +8% recall).
+ This implies that it is important to improve prediction models of review hot-spots.
+
+Proc. ACM Softw. Eng., Vol. 1, No. FSE, Article 99. Publication date: July 2024.
+An Empirical Study on Code Review Activity Prediction and Its Impact in Practice                                    99:7
+
+
+Table 1. User study’s patch run-through analysis: depending on the ordering approach, we report the number
+of patches reviewed, the median (Med.) and Average (Ave.) duration of the review, and the median and average
+ranking position of the files’ initial opening during the reviews.
+
+                              #Patches                  Ranking position of files’ first opening
+      Ordering                   Duration                   Median                   Average
+                         Tot.
+                               Med. Ave.             F1 F2 F3 F4 F5 F1 F2 F3 F4 F5
+ Hot-spot-based          27    11.4m 13.6m           1   2.5 3    4    3    2.26 2.96 3.14 3.26 3.30
+     Alpha               28    11.4m 10.4m           1   2   3    3.5 4     2.25 2.92 2.93 3.21 3.42
+
+Table 2. User study’s review comment analysis: depending on the ordering approach, we report the total
+number of comments, the comments’ position (files F1 to F5 or general Gen), the number of comments that
+found hot-spots, and the number of hot-spot files that were commented on.
+
+                                    #Comments                                    #Hot-spot files commented
+    Ordering                       Position                       Found
+                 Tot.                                                            Tot. Precision            Recall
+                         F1 F2 F3 F4 F5 Gen                      Hot-spot
+ Hot-spot-               36% 32% 12% 5% 6% 5%                      51%                   53%                28%
+                 77                                                                23
+  based                  (28) (25) (10) (4) (5) (5)                (40)               (out of 43)        (out of 80)
+  Alpha-                 27% 15% 16% 23% 15% 1%                    41%                   40%                20%
+                 65                                                                18
+ numeric                 (18) (10) (11) (15) (10) (1)              (27)               (out of 44)        (out of 88)
+
+
+4     METHODOLOGY FOR EMPIRICAL STUDY OF HOT-SPOT PREDICTION
+Based on the findings of our user study that file re-ordering during review activities is helpful,
+we want to explore how to improve the models for the three common review activity prediction
+tasks (i.e., reviewed, commented, hot-spot). In particular, we empirically evaluate prediction models
+using different variations of two kinds of embeddings (i.e., text-based and feature-based) on 5 large
+datasets, amongst which 2 closed-source datasets.
+
+4.1    Labeling
+During review activities, reviewers comment on a patch, i.e., a code submission. Those patches
+involve one to several commits, where the first commit is the initial submission and the follow-up
+commits are revisions. Each commit contains changed files, which are composed of code line
+additions and/or deletions. Line modifications are lines that receive both a deletion and addition.
+Most diff tools will show the before and after versions of the file.
+    Our review activity prediction tasks extend existing code diff quality prediction works [31, 37] in
+order to highlight changed files that most likely should be commented on or revised. Past approaches
+have used a binary labeling based on if the changed file was commented on or revised [31, 37].
+Some works have also addressed the question of identifying useful comments, as they consider
+that commented changes that do not lead to revisions are not useful [13]. However, we consider
+such comments to still have value, as they can lead to future code submission or discussions.
+    Hence, in this paper, we consider similar labels ("commented" and "revised") as prior works,
+but also define a "hot-spot" label, which indicates whether a code change has any review activity
+(i.e., comment, revisions, or both). This is because, while comments are meant to lead to revisions,
+and revisions to be caused by comments, review comments might indicate the need for revisions
+elsewhere in the patch or changes in future independent patches. Furthermore, we observe that
+10-17% of patches across our datasets contain changes that are revised, while never commented,
+
+                                         Proc. ACM Softw. Eng., Vol. 1, No. FSE, Article 99. Publication date: July 2024.
+99:8                                                                    Doriane Olewicki, Sarra Habchi, and Bram Adams
+
+
+                                       Table 3. Label descriptions (file-level).
+
+ Label              Description
+ Commented          Changed file receiving a review comment on any of its lines.
+ Revised            Changed file for which at least one of its lines will be revised in a future patch.
+ Hot-spot           Changed file that is either commented, revised, or both.
+
+
+                               Table 4. The revision activity in the studied datasets.
+
+                                          #Patches                                    #Changed files
+ Project      Period         All      Com- Revi-               Hot-           All     Com- Revi-            Hot-
+                                      mented sed               spot                   mented sed            spot
+ Base          2 years      5,390     32%      31%             42%          18,950    13%    18%            23%
+ Ironic        3 years      1,050     45%      38%             53%           4,193    16%    26%            31%
+ Nova          3 years      3,678     54%      42%             63%          11,997    26%    30%            43%
+ Closed1       5 years     34,511     43%      49%             63%         270,396    10%    25%            28%
+ Closed2       6 years     40,236     45%      49%             64%         390,075    9%     24%            27%
+
+
+
+typically because of a review comment made on another file or outside the reviewing platform. If
+considering only patches that were commented on, those cases would thus be missed, hence the
+importance of considering hot-spot prediction. The labels’ definitions can be found in Table 3. This
+labeling is done at a file-level granularity, following Hong et al.’s approach [31].
+
+4.2    Datasets
+In this paper, we use three open source datasets and two closed source datasets provided by our
+industrial partner (different from the dataset used in the user study). The open source datasets we
+consider are those of Hong et al. [31], i.e., Qt Base (Base), Openstack Ironic (Ironic), Openstack Nova
+(Nova), which were used for commented and revisioned prediction tasks [31, 55]. We then used
+Gerrit’s API to gather extra information about the changed files, i.e., author id, reviewer ids, and
+full file diff (since their replication package only has the added lines), needed for our embeddings.
+   The closed-source datasets were provided by our industrial partner, and contain reviews of two
+projects developed over the course of 5-6 years that used a traditional review process. Though we
+are not able to share these datasets, we are interested in showing those results as the datasets are
+much larger, go over longer periods and contain a denser review activity, as shown in Table 4.
+   More information on the datasets can be found in Table 4, which only considers the initial
+commit of each patch and its related changed files. In the context of review activity prediction,
+we make predictions on the initial commits only. Although the follow-up commits/revisions are
+necessary in our dataset for labeling, they are not part of the training or test datasets. The frequency
+of the three labels at the file and patch levels shows that open-source projects tend to have smaller
+patches in terms of changed files as they have on average 3-4 times more changed files than patches.
+Closed-source datasets, on the other hand, have 9-10 times more changed files than patches, thus
+larger patches. Also, as the patches are larger, closed-source datasets also report slightly lower
+review comment ratio (9-10% compared to 13-26% for open-source). For all datasets, we observe
+that the granularity of file changes compared to patches makes the labels more imbalanced.
+
+Proc. ACM Softw. Eng., Vol. 1, No. FSE, Article 99. Publication date: July 2024.
+An Empirical Study on Code Review Activity Prediction and Its Impact in Practice                                                 99:9
+
+                                                                                                       Timeline
+                                    Timeline
+                                                                                                    (6month-splits)
+
+
+                                  Train           Valid Test                                Train   Valid Test
+              Open-source        (80%)            10% 10%                   Closed-source     1      1     1
+                                                                                                      Train Valid Test
+                                                                                                         2     2   2
+                                                                                                                      ...
+
+                              Fig. 1. Data split for open- and closed-source datasets.
+
+
+                File change
+                Code (text)                                      Embedded
+                                  Text embedding
+                lines added                                        add
+                                     approach
+                                                                                        Combination:
+                Code (text)                                      Embedded
+                                  (BoW or LLM)                                                                 Final embedding
+              lines removed                                       remove               Concatenation of
+                                                                                     targeted embeddings
+                   Meta-           Review process              Review process
+                information      feature embedding                features
+
+
+
+
+Fig. 2. Embedding approach. The file change is composed of lines added, lines removed and meta-information
+about the submission (e.g., timestamp, author and reviewer ids, patch id). The combination will concatenate
+the targeted embeddings, i.e., the text embedding, features, or both. The final embedding for each file is 1D.
+
+
+4.3   Data splitting
+As shown in Table 4, the open- and closed-source datasets have different sizes, as the open-source
+datasets have 4k to 18k changed files, whereas the closed-source datasets have 270k to 390k. Since
+we are considering, among others, Bag-of-Words embedding approaches, training on the full closed-
+source datasets is not feasible, as the vocabulary of the corpora is too large to maintain. For this
+reason, we need different data-splitting approaches for both sources of data. However, both splitting
+approaches respect the data’s timeline: changed files present in the test have to be posterior in time
+to all the changed files in the training set in order not to contaminate the training set, same as for
+the validation set. Both splitting approaches are shown in Figure 1.
+   In the case of the open-source datasets, we split each dataset along its timeline into a training set
+validation set and test set of size 80%-10%-10% respectively, similarly to Hong et al.’s approach [31].
+   In the case of the closed-source datasets, we split each dataset into 6-month periods. Closed1 has
+10 such periods and Closed2 has 12. From preliminary analysis, we observed that a 6-month period
+size still allows us to apply the Bag-of-Words approach while keeping a reasonable vocabulary size.
+Then, we apply a sliding window where we train on a period and validating on the first half of
+the following period and test the second half. Each training yields an individual model, giving 9
+trained models for the Closed1 dataset and 11 for Closed2.
+
+4.4   Embeddings
+In the context of this paper, we consider two types of text embeddings, i.e., Bag-of-Words (BoW)
+and Large-Language Model (LLM) encoding, and several review process feature sets.
+   Figure 2 illustrates the embedding process. For each changed file, we generate all the embeddings,
+both text and feature-based. At the combination stage, we choose which embeddings to consider,
+text, feature-based or both. In the case of text embeddings, we have the choice between only
+considering added lines or also removed lines. In the latter case, added and removed lines are still
+embedded separately and concatenated at the combination stage. For RQ1, we only consider the
+
+                                               Proc. ACM Softw. Eng., Vol. 1, No. FSE, Article 99. Publication date: July 2024.
+99:10                                                                   Doriane Olewicki, Sarra Habchi, and Bram Adams
+
+
+text embeddings ("embedded add" and "embedded remove"), and we don’t take into account any
+review process features. RQ2 considers only the review process features, but the specific features
+selected depend on the chosen feature setup. For RQ3, both text embeddings and review process
+features are considered together and combined using a concatenation approach. In each case, the
+final embedding of a file is a one-dimensional vector.
+4.4.1 Bag-of-Words. The BoW approach represents each input as a vector of word frequency where
+each column represents a word in the corpus vocabulary and the value in the vector at that column
+indicates the number of occurrences of the word in the input. Considering code changes as input,
+we have to clean the input in this context, since the source code of changes have many symbols
+that are not text. We follow the state-of-the-art’s approach [31] for code pre-processing, which only
+considers alphanumeric terms. Numbers are also replaced by a token "<NUMBER>". Still following
+this approach, we do not perform any stemming, lowercase or lemmatization transformation as
+such approaches are valuable for natural languages used by humans but do not make sense in the
+case of code. Regarding the BoW computation itself, we use the Countvectorize function of the
+Scikit-Learn Python library [2]. The Countvectorize function is trained on the training set, then
+is applied to the test set for each data split. Words that appear in the test set but not in the training
+set will thus not be included in the bag of words. To reduce the vocabulary size, we remove words
+that appear only in one single changed files in the corpus as well as words that are too common
+(i.e., appear in more than 50% of the changed file corpus).
+4.4.2 Large-Language Model encoding. To work with LLM models, the Hugging Face community
+provides many pretrained models available to use as-is [3]. We selected Bloom from Big Science,
+an LLM trained on many programming languages (e.g., Java, C++, Python), who’s direct use is text
+generation and exploring charateristics of language [11]. The advantage of Bloom is that it provides
+a condensed version of the model that still provides good results for NLP tasks. We do use big
+science/bloom-560m in the context of this paper, which is about 4 GB compared to the normal
+version of Bloom, which is about 375 GB. Also, it counts more than 1.4M downloads in the month
+of August 2023, making it the most popular LLM pre-trained on programming languages at the
+time of our empirical study. To obtain the encoding, we used SentenceTransformer, a Hugging
+Face Python library [5]. For the encoding step, we do not clean the code, as Bloom is trained on
+raw code.
+4.4.3 Review process features. software tasks such as risk prediction [40, 49] and bug prediction [25,
+34] have been shown to use software process features for their training and getting respectable
+performance. Based on their example and inspired by their features, we defined review process
+features following two main categories: size-related features and historical features.
+   The count features refer to metrics considering the size of the changed file targeted by the
+prediction, as well as contextual features regarding the size of the changed files’ patch. Historical
+features refer to the past activities that happened surrounding the targeted file, but also the
+experience of the code’s author and of the patch’s reviewers known at the time of the prediction.
+The definitions of our features can be found in Table 5. Those features are generated on each
+individual dataset, based on the timestamps of the patch submission.
+
+4.5     Classification
+Similar to Hong et al. [31], we considered Random Forest (RF), Naive Bayes (NB), Nearest Neighbors,
+Logistic Regression, Decision Trees, and off-the-shelf LLMs (bloom560m) to classify the changed
+files as "revised", "commented" and/or "hot-spots" as three separated tasks. From preliminary
+analysis on those classifiers, we narrowed down the list to Random Forest and Naive Bayes, as they
+
+Proc. ACM Softw. Eng., Vol. 1, No. FSE, Article 99. Publication date: July 2024.
+An Empirical Study on Code Review Activity Prediction and Its Impact in Practice                                               99:11
+
+
+Table 5. Description of review process features generated at the file-level granularity. <LAB> refers to the
+different labels we consider.
+
+                                Feature name                 Description
+                      1)        c_add                        # lines added in the file.
+                      2)        c_rem                        # lines removed in the file.
+                      3)        c_unchanged                  # lines unchanged shown in the file. For Gerrit, at most 10
+                                                             lines of context are shown above and under changed lines as
+                                                             context. In the tool used by our industrial collaborators, the
+ Count
+
+
+
+
+                                                             context is at most 5 lines.
+                      4)        c_add_rev                    # lines added in the patch of the file.
+                      5)        c_rem_rev                    # lines removed in the patch of the file.
+                      6)        c_unchanged_rev              # lines unchanged in the patch of the file.
+                                                               𝑐_𝑎𝑑𝑑
+                      7)        r_add_rev                    𝑐_𝑎𝑑𝑑_𝑟𝑒𝑣
+                                                               𝑐_𝑟𝑒𝑚
+                      8)        r_rem_rev                    𝑐_𝑟𝑒𝑚_𝑟𝑒𝑣
+                                                               𝑐_𝑢𝑛𝑐ℎ𝑎𝑛𝑔𝑒𝑑
+                      9)        r_unchanged_rev              𝑐_𝑢𝑛𝑐ℎ𝑎𝑛𝑔𝑒𝑑_𝑟𝑒𝑣
+                      10)       file_exp                     # past and current patches that included changes to this file
+                                                             (min = 1).
+ File’s history
+
+
+
+
+                      11)       dir_exp                      # past and current patches that included changes to this file’s
+                                                             directory (min = 1).
+                      12- 14)   r_<LAB>_file                 File’s average <LAB> ratio before the current patch (default: 0,
+                                                             value between 0 and 1).
+                      15- 17)   r_<LAB>_dir                  The directory of the file’s average <LAB> ratio before the
+                                                             current patch (default: 0, value between 0 and 1).
+                      18)       auth_exp                     # past and current patches submitted by the author (min = 1).
+                      19)       authfile_exp                 # past and current patches in which the current file was sub-
+                                                             mitted by the author(min = 1).
+ Author’s history
+
+
+
+
+                      20)       authdir_exp                  # past and current patches in which the current file’s directory
+                                                             was submitted by the author (min = 1).
+                      21- 23)   r_<LAB>_author               Author’s average <LAB> ratio before the current patch (default:
+                                                             0, value between 0 and 1).
+                      24- 26)   r_<LAB>_authfile             Author’s average <LAB> ratio on the current file before the
+                                                             current patch (default: 0, value between 0 and 1).
+                      27- 29)   r_<LAB>_authdir              Author’s average <LAB> ratio on the current file’s directory
+                                                             before the current patch (default: 0, value between 0 and 1).
+                      30)       max_reviewers_exp            Maximum # past and current patches reviewed by one of the
+ Reviewers’ history
+
+
+
+
+                                                             reviewers out of all this patch’s reviewers (min = 1).
+                      31)       mean_reviewers_exp           Average # past and current patches reviewed by one of the
+                                                             reviewers out of all this patch’s reviewers (min = 1).
+                      32- 34)   r_<LAB>_max_ reviewers       Maximum Reviewers’s <LAB> rate before the current patch
+                                                             (default: 0, value between 0 and 1).
+                      35- 37)   r_<LAB>_mean_ reviewers      Average Reviewers’s <LAB> rate before the current patch (de-
+                                                             fault: 0, value between 0 and 1).
+
+
+performed better in terms of AUC and F1-score for our task, regardless of the used embeddings.
+This confirmed Hong et al.’s observation [31] that Random Forest gives the best AUC for their
+task, followed in most cases by Naive Bayes. During preliminary analysis, we used the off-the-shelf
+Bloom LLM classifier, yet this did not perform as well as the considered ML models. As all the
+datasets are imbalanced considering the changed file granularity, we consider the SMOTE data
+sampling approach during training [15, 57]. Models are trained on a per-project basis.
+
+                                                     Proc. ACM Softw. Eng., Vol. 1, No. FSE, Article 99. Publication date: July 2024.
+99:12                                                                   Doriane Olewicki, Sarra Habchi, and Bram Adams
+
+
+   In the end, we have thus two different models (RF and NB) with and without the SMOTE sampling
+approach (models with SMOTE will be referred to as RFs and NBs), making 4 options for model
+selection. Each model is trained on a specific label (i.e., commented, revised or hot-spot), thus
+needing 12 trained models in total for each dataset-split and each setup of embeddings.
+
+4.6     Evaluation
+We empirically evaluate the models for the three tasks using three open-source and two closed-
+source datasets. To do the evaluation, we report AUC, as Hong et al. [31]. We also report metrics used
+                                                                                           √
+for imbalanced labeled datasets: F1-score (F1 = 𝑝𝑟𝑒 −1 2+𝑟𝑒𝑐 −1 ) and Geometric Mean (GM = 𝑝𝑟𝑒 · 𝑟𝑒𝑐),
+which are computed based on the precision (pre = 𝑇 𝑃𝑇+𝐹    𝑃                          𝑇𝑃
+                                                             𝑃 ) and recall (rec = 𝑇 𝑃 +𝐹 𝑁 ). Those metrics
+need a threshold to define when the prediction is considered as true or false. We choose a threshold
+that maximizes the F1-score on the validation sets, as it captures best imbalance of the datasets [14].
+   In Machine Learning based approaches, it is best to train and test models several times to verify
+the robustness to randomness in the approaches or data splits. For the closed-source datasets,
+we mentioned in Section 4.3 how the dataset is split into several periods and thus runs. For the
+open-source datasets, as they are smaller than the closed-source datasets, only one data split is
+done, following the process explained in Section 4.3. However, each embedding setup and model is
+run 5 times, with a different seed in each iteration. That seed is used in the model (e.g., random
+forest takes a random seed) and in the SMOTE sampling when used.
+   For all the datasets, out of the different models (i.e., RF, RFs, NB, and NBs), we report the model
+with the highest median F1-score on the validation set, as that is the metric we want to optimize. The
+results shown in the tables are the metrics for the run with median F1-score for a given embedding
+setup and its best model.
+
+4.7     Statistical tests
+As mentioned in the previous section, we run each setup at least 5 times per dataset for each label
+and the median results are shown in the different tables. Hence, we need to perform statistical tests
+to validate whether or not the differences observed are significantly different.
+   Since we have a limited number of runs, we decided to group the runs into sub-categories of
+datasets: open-source datasets (i.e., Base, Ironic and Nova), closed-source datasets (i.e., Closed 1
+and 2) and all datasets. When comparing two setups for a given label, we take all the runs of that
+setup for all the datasets in the subcategory. We apply a Wilcoxon paired test [16] with 𝛼-value =
+.01. We calculate the Cliff’s Delta effect to evaluate the impact of the significant differences [38].
+   As an example, let us consider the comparison of two setups for the one label and the sub-category
+open-source datasets. Each dataset in that case has 5 runs of the best model, i.e., runs B1-5 for
+Base, I1-5 for Ironic and N1-5 for Nova. For each setup, we align the runs into a vector yielding one
+vector by setup of the form [𝐵1 − 𝐵5 𝐼 1 − 𝐼 5 𝑁 1 − 𝑁 5], in this case of length 15. Then, we perform
+the pairwise test between both vectors where a p-value inferior to .01 is reported as significantly
+different, in which case we also compute the effect size on the same vectors.
+
+5     RQ1: WHICH TEXT EMBEDDINGS OF CODE DIFFS PERFORM BEST FOR REVIEW
+      ACTIVITY PREDICTION?
+5.1     Motivation
+In their paper, Hong et al. explore the use of the Bag-of-Words (BoW) to embed code changes [31].
+Contrary to previous work using full-code changes to perform prediction [58], they only consider
+added lines of a code change. This choice has the advantage of not having removed or unchanged
+
+Proc. ACM Softw. Eng., Vol. 1, No. FSE, Article 99. Publication date: July 2024.
+An Empirical Study on Code Review Activity Prediction and Its Impact in Practice                                   99:13
+
+
+lines contaminating the text embedding, as those lines could appear as noise in the training.
+However, the prediction will thus have less context since only the added lines are considered.
+   Furthermore, the BoW approach, though easy to implement and easily explainable, presents
+several disadvantages. First, this approach does not scale with large datasets as the size of the
+vocabulary increases exponentially with the corpus size. Secondly, BoW does not capture the
+essence of source code, as the order of words does not impact the embedding. It captures the
+number of occurrences of words and thus the size of the code as well.
+   On the other hand, LLM pre-trained encoders are made to represent input data in a representative
+way, as to capture the underlying structure and semantics of the code. Also, the input encoding
+is a fixed-size embedding. However, the difficulty with these approaches is that models are more
+difficult to explain based on their feature importance, as the abstraction of the original input into
+the encoded output is not understandable to humans.
+
+5.2   Approach
+In RQ1, we explore how text embeddings impact the review activity predictions at file-level.
+Following the findings of Hong et al. [31], we will explore both (1) keeping only the added lines of
+a code change and (2) consider embedding removed lines in addition to the add lines. Among the
+different variations of each text embedding, we will identify the best embedding for a given dataset
+and label as "Best text" embedding.
+   Table 6 shows the results of both considered embeddings, BoW and LLM encoding, with the
+variations considering only added lines (+) or both added lines and removed lines (+/-). We per-
+formed a statistical pairwise test using Wilcoxon Test, comparing "BoW +" embedding to each
+text embedding for each sub-category of datasets (i.e., open-source, closed-source, or both), as
+mentioned in Section 4.7.
+
+5.3   Results
+Compared to "BoW +", no specific text embeddings report significant differences in F1-
+score across all datasets, for any labels (p-value = .012 to .441). The only case that returned
+significant improvement with small effect size is "LLM +/-" compared to "BoW +" for the label "hot-
+spot" (p-value = .001), with an improvement of up to +4%. Also, we notice a significant improvement
+with small effect regarding AUC with embedding "BoW +/-" for all datasets on labels "commented"
+and "revised" (p-value = .0).
+   However, when comparing the "Best text" embedding with the "BoW +", the F1-score is
+found to be significantly better with small effect size for labels "revised" (p-value = .007)
+and "hot-spot" (p-value = .007). Out of those 10 cases (5 datasets × 2 labels), 8/10 cases show
+higher F1-score (from +2 to +4%), 1/10 case show no effect and one got lower results (-1%). The
+label "commented" does not perform significantly better (p-value = .021). It at least matches in 3/5
+datasets (up to +2%) and is lower in two cases (-1%). Also, out of the 15 cases, 8/15 cases got higher
+F1-score results than the baseline for "LLM +/-", 10/15 cases for "LLM +" and 6/15 for "BoW +/-".
+   We thus conclude that in general, none of the text embedding stands out in all cases, although in
+practice, choosing the right variations improves F1-score in 10/15 cases. The scalability of BoW
+still stands, as the vocabulary quickly explodes as the corpus increases in size.
+   For BoW, we found that 95-99% of the feature importance is focused on 1-5% of top
+features, compared to 50% of feature importance focused on 20-40% of top features for the
+LLM embedding. We apply a feature importance analysis using Python’s feature_importances_,
+which measures the percentage of feature importance of each individual feature. Comparison of
+the "BoW +" and "LLM +" embeddings shows that due to the very large size of the embedding
+outputs of BoW, the classifier will only focus on a low number of features, with the majority of
+
+                                         Proc. ACM Softw. Eng., Vol. 1, No. FSE, Article 99. Publication date: July 2024.
+99:14                                                                   Doriane Olewicki, Sarra Habchi, and Bram Adams
+
+
+Table 6. Results for RQ1: text embeddings for the code review activity prediction task at file-level. The results
+shown are returned for the best model ("mod") across each variation of text embedding. Blue cells indicate
+the maximum values for each metric per dataset and per label.
+
+             Text               Commented                        Revised                         Hot-spot
+            Embed      auc f1    gm pre rec mod        auc f1    gm pre rec mod         auc f1   gm pre rec mod
+            BoW +      67 38     63 27 63 RF           67 42     59 40 44 RFs           66 49    62 42 59 RFs
+            BoW +/-    68 40     64 30 58 RFs          67 44     62 37 55 RFs           67 50    62 41 63 RFs
+ Base
+
+
+
+
+            LLM +      69 39     65 28 69 RFs          68 46     62 42 51 RFs           68 51    64 44 60 RFs
+            LLM +/-    69 40     65 28 69 RFs          68 46     63 39 52 RFs           69 52    63 44 61 RFs
+            BoW +      77 46     67 39 53 RFs          70 53     66 41 81 RFs           71 57    63 45 82 RF
+ Ironic
+
+
+
+
+            BoW +/-    78 45     69 36 62 RFs          69 50     64 42 68 RFs           71 57    64 47 76 RF
+            LLM +      78 45     66 39 52 RFs          67 52     63 38 75 RFs           70 58    65 47 76 RFs
+            LLM +/-    78 40     61 40 45 RFs          67 51     62 37 77 RFs           70 58    66 48 76 RFs
+            BoW +      75 54     67 56 52 RFs          72 48     66 37 69 RFs           72 57    46 42 91 RFs
+ Nova
+
+
+
+
+            BoW +/-    75 55     68 58 53 RFs          73 50     67 41 67 RFs           72 57    48 42 90 RFs
+            LLM +      78 55     67 57 51 RFs          75 50     68 40 69 RFs           76 57    35 40 98 RF
+            LLM +/-    78 53     66 59 48 RFs          75 51     67 41 73 RFs           76 57    37 41 97 RFs
+            BoW +      74 38     62 31 48 RFs          70 46     65 37 60 RFs           67 51    63 41 67 RFs
+ Closed1
+
+
+
+
+            BoW +/-    74 36     65 28 50 RFs          71 44     64 37 57 RFs           68 51    61 40 73 RFs
+            LLM +      75 37     62 29 53 RFs          72 47     66 36 70 RFs           65 55    55 42 79 RF
+            LLM +/-    74 37     63 27 54 RFs          72 45     64 38 63 RFs           69 53    63 41 68 RFs
+            BoW +      72 32     60 26 43 RFs          70 39     63 34 49 RFs           67 48    61 36 77 RFs
+ Closed2
+
+
+
+
+            BoW +/-    75 32     64 23 50 RFs          71 40     65 32 60 RFs           67 47    63 36 72 RFs
+            LLM +      72 32     62 23 49 RFs          70 41     61 30 61 RFs           66 49    58 40 69 RFs
+            LLM +/-    77 32     58 24 42 RFs          73 40     65 28 66 RFs           72 51    65 40 72 RFs
+
+
+stored features not playing an important role in the prediction. More details on feature importance
+can be found in the replication package [4].
+ RQ1: Compared to Bag-of-Words applied only on added lines, adding the removed
+ lines and/or using the Large Language Model embedding significantly improved the
+ F1-score for labels "revised" (up to +3%) and "hot-spot" (up to +5%) at file-level. The
+ label "commented" has no significant improvement using the new text embeddings.
+
+6          RQ2: WHICH REVIEW PROCESS FEATURES PERFORM BEST FOR REVIEW
+           ACTIVITY PREDICTION?
+6.1         Motivation
+The state-of-the-art approach only considers two basic software process features, i.e., number of
+lines add and removed, which were able to improve the performance of commented and revised
+prediction tasks [31]. We thus want to evaluate how review process features in general, such as
+size-related features, but also features based on the history of the file, the author and the reviewers,
+perform compared to text embeddings, inspired by other software processes that have used similar
+features in the past [34, 49].
+
+6.2         Approach
+In Table 7 we report the results of different combinations of features:
+           • "Add/Rem": this set of features refers to the features used by Hong et al. in their approach [31],
+             i.e., "c_add" and "c_rem" in Table 5.
+
+Proc. ACM Softw. Eng., Vol. 1, No. FSE, Article 99. Publication date: July 2024.
+An Empirical Study on Code Review Activity Prediction and Its Impact in Practice                                     99:15
+
+
+Table 7. Results for RQ2: software review process features embeddings on the code review activity prediction
+tasks at file-level. The results are returned for the best model ("mod") for each setting of text embedding. Blue
+cells indicate the maximum values for each metric per dataset and per label.
+
+               Text               Commented                      Revised                            Hot-spot
+             Embed       auc f1    gm pre rec mod      auc f1    gm pre rec mod           auc f1    gm pre rec mod
+            Best text    68 40     64 30 58 RFs        68 46     63 39 52 RFs             69 52     63 44 61 RFs
+            Add/Rem      59 33     58 25 50 RF         65 44     61 34 66 RF              64 50     55 36 81 RF
+ Base
+
+
+
+
+            Count        65 36     59 24 73 RF         65 42     60 38 49 RF              66 50     58 37 78 RFs
+            Hist         62 33     39 20 93 RFs        63 43     59 32 70 RF              60 47     25 31 97 RF
+            All          73 40     65 28 74 RFs        74 50     65 49 51 RFs             73 54     66 45 70 RFs
+            Best text    77 46     67 39 53 RFs        70 53     66 41 81 RFs             70 58     65 47 76 RFs
+            Add/Rem      53 30     53 20 68 RF         61 45     43 31 90 RFs             62 51     37 36 92 RFs
+ Ironic
+
+
+
+
+            Count        65 36     62 27 55 RF         61 44     58 38 49 RFs             63 52     56 40 72 RFs
+            Hist         57 30     49 20 71 RFs        70 53     65 40 84 RFs             67 55     61 44 78 RFs
+            All          67 36     62 25 67 RF         68 51     65 43 64 RFs             69 56     62 45 80 RFs
+            Best text    75 55     68 58 53 RFs        75 51     67 41 73 RFs             76 57     37 41 97 RFs
+            Add/Rem      63 40     39 26 88 RF         65 45     63 36 64 RFs             67 56     34 40 95 RFs
+ Nova
+
+
+
+
+            Count        68 47     62 34 78 RFs        72 48     65 35 73 RF              68 58     54 44 86 RF
+            Hist         60 30     47 32 28 RFs        56 38     56 29 57 RF              58 41     53 49 36 RFs
+            All          70 40     17 25 100 RFs       69 47     62 45 45 RFs             67 55     10 38 100 RF
+            Best text    74 38     62 31 48 RFs        72 47     66 36 70 RFs             65 55     55 42 79 RF
+            Add/Rem      63 24     59 19 56 RF         67 39     60 29 64 RF              60 48     49 36 73 RF
+ Closed1
+
+
+
+
+            Count        74 36     64 28 50 RFs        75 47     68 35 64 RF              68 55     60 40 82 RF
+            Hist         59 25     53 16 83 RFs        58 38     47 24 83 RF              59 47     42 32 83 RF
+            All          77 37     66 32 52 RF         75 48     69 35 67 RFs             69 56     64 43 78 RFs
+            Best text    77 32     58 24 42 RFs        70 41     61 30 61 RFs             72 51     65 40 72 RFs
+            #Add/Rem     67 24     60 17 46 RF         65 35     61 23 64 RF              59 45     45 29 84 RFs
+ Closed2
+
+
+
+
+            Count        79 34     67 26 52 RF         72 42     66 32 62 RFs             68 49     63 36 77 RFs
+            Hist         59 18     52 11 60 RFs        63 34     55 22 79 RF              61 45     45 32 87 RF
+            All          81 37     69 29 56 RF         76 45     68 35 64 RFs             74 53     67 41 76 RFs
+
+
+           • "Count": described in the "Count" section of Table 5.
+           • "Hist": described in the File’s , Author’s and Reviewers’ history sections of Table 5.
+           • "All feat": all the aforementioned review process features, thus all features in Table 5.
+   In RQ2, we only consider review process features, excluding any text embedding, as this is the
+topic of RQ3. However, we will also report in the table the best results of text embedding from RQ1
+as "Best text", per dataset and predicted label in order to see how feature-based performs compared
+to text embeddings, which (theoretically) have more specific information about the file’s content.
+Again we will define a best setup "Best feat" as being the local best feature-based embedding for
+each dataset and label. We also applied statistical tests to compare the "Best text" embedding with
+the feature-based embedding.
+
+6.3         Results
+For the open-source datasets, the "Best feat" embedding reports no significant difference
+regarding the F1-score for labels "revised" and "hot-spots" (p-value = .804 and .389), thus
+managing to perform as well as the (supposedly richer) text embeddings. We can note
+that for 3/6 cases, at least one of the feature-based approaches improves F1-score compared to
+"Best text" (up to +4% F1-score). Out of the 6 cases, "All feat" reports better F1-score than the "Best
+
+                                           Proc. ACM Softw. Eng., Vol. 1, No. FSE, Article 99. Publication date: July 2024.
+99:16                                                                   Doriane Olewicki, Sarra Habchi, and Bram Adams
+
+
+text" in 2/6 cases and "Count" reports a better F1-score in 1/6 cases. The F1-scores for the label
+"commented" are significantly lower with medium effect (p-value = .007). In 4 out of 9 open-source
+cases, the "Best text" embedding performs better than the feature-based embeddings (+2 to +12%
+F1-score). This is expected, as the text embedding has more specific information than the high-level
+information of the feature-based embeddings.
+   For the closed-source datasets, the "Count" embedding is not significantly different
+from the "best text" embedding for any label with respect to F1 score (p-value = .355 to
+.966). Statistically, the text embedding and the "Count" perform similarly though having access to
+different types of information, the "Count" approach being less computationally expensive as the
+embedding size is much smaller. In practice, we observe that in those 6 cases (2 datasets × 3 labels),
+"Count" reports at least as well in F1-score to "best text" in 4/6 cases (up to +2%) and lower in the
+last 2 cases (up to -3%).
+   Similarly, for the closed-source datasets, "All feat" does not report significantly different
+F1-score for any label compared to "best text" (p-value = .034 to .393). It reports significantly
+different AUC for labels "revised" (p-value = .0) and "hot-spot" (p-value = .003) with large effect in
+both cases. We observe that "All feat" gets a better F1-score in 5/6 cases ( +1 to +5%), -1% in the
+last case, and it reports better AUC in all 6 cases (+2 to +6%). Furthermore, "All feat" compared to
+"Count" reports significantly better F1-score with small effect regarding the label "commented"
+(p-value = .0) and not significantly different for the labels "revised" (p-value = .014) and "hot-spot"
+(p-value = .032). However, "All feat" improves F1-score compared to "Count" in all 6 cases, with +1
+to +4%. In practice, adding the history-based features does improve F1-score and performs better
+than "Best text".
+   Through these results, we observe that in the case of open-source datasets, the review process
+feature-based approach does not consistently perform as well as the "Best text" embedding, though
+the F1-score reported by the best feature embeddings per dataset and label improved performance in
+4/9 cases (up to +12%). Regarding closed-source datasets, the "All feat" embedding performs as well
+as the "Best text" embedding, while reducing the computational effort of model training thanks to
+the reduced dimensionality. Looking at feature importance per feature category of Table 5, we found
+that all datasets benefit most from the "Add/Rem" and "Count" categories, whose features each
+represent 2 to 13% of the overall feature importance. This indicates that those features regarding
+the size of changed files have the most value, including also the contextual features regarding the
+full patch size. More details on feature importance can be found in the replication package [4].
+ RQ2: In the closed-source projects, considering all review process features performs
+ as good as the best text embeddings at file-level in terms of F1-score, while reducing
+ the computational effort as the embedding is of lower dimensionality. For open-source
+ datasets, the best feature embedding per dataset and label matches the F1-score of text
+ embeddings, although no specific feature-based embedding is consistently as good. All
+ datasets benefit the most from size-based features.
+
+7     RQ3: HOW DOES THE COMBINATION OF REVIEW PROCESS FEATURES WITH
+      TEXT EMBEDDINGS PERFORM FOR REVIEW ACTIVITY PREDICTION?
+7.1     Motivation
+Hong et al. propose in their paper a review activity prediction approach using a BoW embedding
+in addition to features measuring the number of lines added and removed to a file [30]. In RQ1 and
+RQ2, we explored how text embeddings and review process feature embeddings perform separately
+on the three tasks and what they capture about the code submission. In this question, we combine
+both types of embeddings to find the best embedding, compared to the state-of-the-art.
+
+Proc. ACM Softw. Eng., Vol. 1, No. FSE, Article 99. Publication date: July 2024.
+An Empirical Study on Code Review Activity Prediction and Its Impact in Practice                                   99:17
+
+
+7.2   Approach
+We combine each text embedding with each review process feature embedding presented in the
+previous RQs. The results are shown in Table 8. Each project is presented with three comparisons:
+the baseline (state-of-the-art [31], i.e., BoW embedding with "Add/Rem" features), "Best text" (from
+RQ1), and "Best feat" (from RQ2). We report two main combinations: first, "Heavy combo" which
+refers to our most "heaviest" embedding compared to the baseline, i.e., the one considering the
+"LLM +/-" text embedding and "All feat" feature-based embedding. Then, we also report "Best
+combo", which reports the combination with the best F1-score per dataset and label. The lines
+directly following "Best combo" report the specific combination chosen (i.e., the name of the text
+and review process feature embeddings used).
+
+
+7.3   Results
+For closed-source datasets, "Heavy combo" improves significantly the F1-score compared to
+the baseline regarding labels "revised" (p-value = .002 with medium effect) and "hot-spots"
+(p-value = .004 with large effect). Out of those 4 cases (2 datasets × 2 labels), the improvement
+on F1-score is +3 to +6%. In the case of the label "commented", "Heavy combo" performs better
+for Closed2 (+4%) and lower for Closed1 (-3%). In all 6 cases, the AUC is improved (+3 to +8%).
+Furthermore, the "Heavy combo" is also the "Best combo" in the case of the label "revised".
+   For open-source datasets, "Heavy combo" is not significantly different than the baseline
+regarding F1-score for any label (p-value = .048 to .421). In practice, it improves F1-score in
+5/9 cases (+1 to +6 %) and AUC in 7/9 cases (+1 to +5%), but not significantly.
+   For all datasets, "Best combo" performs +1 to +9% better regarding F1-score than the
+baseline, with medium effect for labels "commented" and "revised" (p-value = .0) and
+large effect for large "hot-spot" (p-value = .0). "Best feat" significantly improves the F1-score
+for labels "revised" (p-value = .0 medium effect) and "hot-spot" (p-value = .004 small effect), with
+improvement up to +8% for "revised" and +6% for "hot-spot" compared to the baseline.
+   Table 8 shows the different embedding choices for the best combinations of text-embedding and
+feature embedding regarding F1-score. We observe that out of the 15 cases, the best setup chosen
+involved BoW in 6/15 cases and LLM in the other 9. The text embedding including both added and
+removed lines was chosen in 9/15 cases and only the added lines in 6/15 cases. Overall, the classic
+text embedding "BoW +" was chosen only twice. It should also be noted that in 3/15 cases, the "Best
+feat" embedding got the best results, which indicates that in those cases, combining features with
+the text embedding did not even improve performance, making the lower-dimensionality review
+process feature-only approach the most performant.
+   Regarding the feature embedding choice for "Best Combo", "Add/Rem", the simpler embedding,
+was never chosen, "Count" was chosen 3/15 times, "Hist" was chosen 4/15 times, and "All feat" was
+chosen 8/15, making the latter the most popular feature-embedding.
+   Though the "Heavy combo" embedding is not unanimous, as it improved F1-score for 10/15
+cases, the new review process features and text embeddings variations that we consider are worth
+exploring as their best combination ("Best combo") improves F1-score in all cases.
+ RQ3: The Best combination of embeddings improves significantly the F1-score (+1 to
+ +9%) for all datasets and labels at file-level. Though combining LLM embeddings and
+ all process features is the most common best combination, there is no consensus on
+ the best combination. The heavy combination reports significantly higher F1-score for
+ closed-source datasets regarding the labels "revised" and "hot-spots", and in practice
+ improves the F1-score in 10 out of 15 cases across all datasets.
+
+
+                                         Proc. ACM Softw. Eng., Vol. 1, No. FSE, Article 99. Publication date: July 2024.
+99:18                                                                   Doriane Olewicki, Sarra Habchi, and Bram Adams
+
+
+Table 8. Results for RQ3: combining the text embeddings with software meta-features embeddings for the
+code review activity prediction task at file-level. The results are returned for the best model ("mod") for each
+setting of text embedding. Blue cells indicate the maximum values for each metric per dataset and per label.
+
+               Text            Commented                          Revised                        Hot-spot
+              Embed      auc f1 gm pre rec mod            auc f1 gm pre rec mod          auc f1  gm pre rec mod
+           Baseline      68 39 62 29 52 RFs               67 42 59 40 42 RFs             66 50   62 41 65 RFs
+           Best text     68 40 64 30 58 RFs               68 46 63 39 52 RFs             69 52   63 44 61 RFs
+           Best feat     73 40 65 28 74 RFs               74 50 65 49 51 RFs             73 54   66 45 70 RFs
+ Base
+
+
+
+
+           Heavy combo   71 40 64 28 66 RFs               70 47 64 40 59 RFs             70 52   61 39 78 RFs
+           Best combo    73 41 65 29 71 RFs               70 47 64 40 59 RFs             71 53   62 40 76 RFs
+                               BoW +/- & All                    LLM +/- & All                   LLM + & All
+           Baseline      79 46 69 37 58 RFs               71 51 65 41 69 RFs             72   57 65 47 74 RF
+           Best text     77 46 67 39 53 RFs               70 53 66 41 81 RFs             70   58 65 47 76 RFs
+ Ironic
+
+
+
+
+           Best feat     65 36 62 27 55 RF                70 53 65 40 84 RFs             69   56 62 45 80 RFs
+           Heavy combo   79 44 63 41 47 RFs               67 48 60 36 74 RF              73   58 67 53 67 RFs
+           Best combo    78 47 70 38 64 RFs               75 54 67 51 54 RFs             73   60 69 52 70 RFs
+                              LLM + & Count                    BoW +/- & Hist                  LLM +/- & Hist
+           Baseline      77 56 68 60 52 RFs               71 47 65 38 62 RFs             73   57 49 42 88 RFs
+           Best text     75 55 68 58 53 RFs               75 51 67 41 73 RFs             76   57 37 41 97 RFs
+ Nova
+
+
+
+
+           Best feat     68 47 62 34 78 RFs               72 48 65 35 73 RF              68   58 54 44 86 RF
+           Heavy combo   78 46 56 31 93 RF                76 53 69 46 64 RFs             75   56 28 39 99 RF
+           Best combo    82 61 73 59 63 RFs               76 53 69 46 64 RFs             75   62 69 63 63 RFs
+                               BoW + & Hist                     LLM +/- & All                  BoW +/- & Hist
+           Baseline      73 38 63 32 49 RFs               71 45 63 37 66 RFs             67   50 61 39 74 RFs
+           Best text     74 38 62 31 48 RFs               72 47 66 36 70 RFs             65   55 55 42 79 RF
+ Closed1
+
+
+
+
+           Best feat     77 37 66 32 52 RF                75 48 69 35 67 RFs             69   56 64 43 78 RFs
+           Heavy combo   78 35 66 26 56 RFs               75 50 68 40 74 RFs             70   53 64 43 70 RFs
+           Best combo    79 41 67 32 52 RFs               75 50 68 40 74 RFs             70   59 64 45 80 RFs
+                             BoW +/- & Count                    LLM +/- & All                   LLM + & All
+           Baseline      73 33 59 27 38 RFs               70 41 63 37 56 RFs             66   48 61 36 74 RF
+           Best text     77 32 58 24 42 RFs               70 41 61 30 61 RFs             72   51 65 40 72 RFs
+ Closed2
+
+
+
+
+           Best feat     81 37 69 29 56 RF                76 45 68 35 64 RFs             74   53 67 41 76 RFs
+           Heavy combo   81 37 67 29 55 RFs               76 45 68 35 64 RFs             73   54 65 41 78 RFs
+           Best combo    81 40 68 33 54 RFs               76 45 68 35 64 RFs             75   54 67 42 79 RFs
+                              BoW + & Count                     LLM +/- & All                   LLM + & All
+
+
+
+8          DISCUSSION
+8.1         Hot-spot detection for file re-ordering
+To evaluate the impact of hot-spot prediction-based file ordering (instead of a wizard-of-oz setting,
+using the ground truth), we took patches with at least 2 changed files and at least one of the files
+labeled as hot-spot, then made model predictions using RQ3’s heavy combination. We ordered
+each patch’s changed files based on their predicted probability of hot-spotness. We compute the
+average Recall@k (= 𝑇 𝑃𝑇+𝐹𝑃 𝑁 ) across patches, where 𝑇 𝑃 are the true positive cases in the top 𝑘, and
+(𝑇 𝑃 + 𝐹 𝑁 ) is the total number of hot-spots (maxed at 𝑘). k is chosen depending on the size of the
+patch (𝑠𝑖𝑧𝑒), so Recall@50% means k = 𝑠𝑖𝑧𝑒                                   𝑠𝑖𝑧𝑒
+                                           2 and Recall@25% means k = 4 . Table 9 compares the
+recall of our ordering with the alphanumeric order, i.e., the default ordering used by review tools, on
+patches of different sizes. Our prediction-based empirical analysis shows that hot-spot-based
+file ordering performs consistently better than alphanumeric ordering in all datasets and
+
+Proc. ACM Softw. Eng., Vol. 1, No. FSE, Article 99. Publication date: July 2024.
+An Empirical Study on Code Review Activity Prediction and Its Impact in Practice                                   99:19
+
+
+Table 9. Ordering based on hot-spot prediction. We report the "Alph" (alphabetic) ordering, and "Ours" our
+ordering, based on hot-spot prediction. "%patch" reports the percentage of patches with the range of file
+changes. The blue cells indicate the best results by dataset and by metric.
+
+                 Size 2 to 4                     Size 5 to 9                            Size 10 and more
+ Dataset     %       Rec@50%          %        Rec@50%       Rec@25%            %        Rec@50%      Rec@25%
+             patch Alph Ours          patch   Alph Ours Alph Ours               patch   Alph Ours Alph Ours
+ Base        30     72      81        7       72    81      55   70             3       67     78    60   64
+ Ironic      50     82      82        14      61    90      44   94             5       68     77    63   74
+ Nova        48     69      86        11      71    89      53   69             7       51     73    31   62
+ Closed1     38     61      78        18      55    71      45   64             12      52     69    38   59
+ Closed2     35     67      79        14      57    73      48   69             11      54     71    42   62
+
+
+
+for different patch sizes. Specifically, Table 9 reports a Recall@50% of 71-90% for patches of size
+5 to 9, and 69-78% for patches of size 10 and more. Compared to the alphanumeric order, this is an
+improvement of respectively +9 to +29% and +9 to +22%. When looking at only the top Recall@25%,
+our ordering still performs better than the alphanumeric ordering in all cases, improving the results
+from +13 to +50% for size 5 to 9, and +4 to +31% for patch sizes over 10.
+   In future work, we consider evaluating the use of this hot-spot prediction for file ordering in a
+set-up similar to the user study of Section 3, but with a larger scale and over a longer period.
+
+8.2    Computation time
+One of our motivations for evaluating embeddings is that past work reports that simpler approaches
+sometimes work better in the case of software engineering prediction tasks [30]. The use of
+feature-based approaches, and thus low dimensionality representations, has the advantage of low
+storage complexity and lower computational effort for training. Text embedding, on the other
+hand, depending on the approach, can be quite expensive to compute and store, and also increases
+the training effort. For the example of BoW, the size of the vocabulary explodes with the size of
+the corpus increasing. LLM encoding approaches usually embed the text into lower dimensions
+compared to BoW (e.g., around 2k for Bloom).
+   While our RQ1 results observed that no specific text-embedding stands out in terms of prediction
+performance, LLM embeddings report much longer embedding times. In particular, LLM embeddings
+take .3 seconds per embedding, leading to 1-2 hours of embedding for open-source and 35-48 hours
+for closed-source datasets. In contrast, BoW embedding the full datasets could be done in 4-12
+seconds for open-source and around 5 minutes for the closed-source projects. Even if two days
+of training might not be an issue if a model is kept up for 6 months, we did not perform any data
+drift analysis to find the optimal retraining frequency, and hence the potential impact of longer
+embedding time. Model training on the other hand takes longer with BoW, where the longest
+training reported for a period was 64 minutes for the BoW embedding and 12 minutes for the LLM
+embedding, thus 5 times shorter. We recommend being mindful of the effort needed for each type
+of encoding, since LLM embeddings require consequently more time overall.
+
+9     THREATS TO VALIDITY
+Internal validity. Review tools can only capture so much, as offline review activities can happen
+as well. In the case of our industrial partner, developers have reported chatting via other tools or
+doing life reviews in person, which is not captured by their review tool. In this study, we thus only
+focus on what has been recorded in the review tools and aim at predicting those review activities.
+
+                                         Proc. ACM Softw. Eng., Vol. 1, No. FSE, Article 99. Publication date: July 2024.
+99:20                                                                   Doriane Olewicki, Sarra Habchi, and Bram Adams
+
+
+   Construct validity. We optimize the results around F1-score, as F1-score is a metric that captures
+both the recall and precision of the model, which represents best the model’s performance with
+unbalanced datasets. Results could vary slightly if optimized around another metric.
+   We chose to evaluate the review activity task at file-level, as it is the granularity that is neces-
+sary for the use case we considered, file-ordering. Future work could consider the impact of the
+granularity on the prediction, which is outside the scope of this paper.
+   We used a zero-shot LLM-encoder as to reduce the computational effort. Fine-tuning the LLMs,
+though being computationally expensive, could improve the embedding and thus the results. How-
+ever, past work has studied LLM fine-tuning for "commented" prediction [37] and reported similar
+results to other Bag-of-Words embeddings [31]. Larger LLMs might lead to better embeddings, even
+though the smaller bloom-560m has been reported as more performant than bigger counterparts in
+some other use-cases [48], hence it is not uncommon in research to leverage smaller models. As a
+compromise, we considered bloom-560m as a lower bound of the LLM embedding approach.
+   We worked on a per-project basis for embedding, training and evaluation, which is the default
+approach in this domain [30, 37, 54]. An early bootstrap option, when data is not yet available,
+might be to initially train on similar datasets (e.g., same coding languages).
+   External validity. The LLM field proposes newly trained/updated LLMs regularly. We recom-
+mend considering recent LLMs for text embeddings to stay on top of the newest findings in case of
+replication, which could yield better results. The version of Bloom we used is from May 2023.
+   Regarding our user study with 29 professionals, the participants only had to review two patches.
+A large-scale user study over a longer period would be necessary to evaluate the extent to which
+the hot-spot-based ordering approach can impact the reviews, especially when reviewers start to
+become aware of the underlying ranking heuristics.
+
+10      CONCLUSION
+In this paper, we explored different approaches for embedding code changes to predict review
+activities. This was motivated by the results of a user study involving 29 professional developers
+showing how ordering files in patches by prioritizing files that need review activity improves the
+review process. Indeed, we observe that such ordering approach lead to more review comments
+(+23%), that targeted parts needing revisions or comments (+13% precision and +8% recall), thus
+the need for an efficient review automation prediction approach. While previous work used a
+Bag-of-Word approach on the added lines and additional features (i.e., #lines added and #lines
+removed) [31], we proposed variations to that embedding.
+   First, we improve the textual embedding part by considering embedding the removed lines as a
+contextual embedding and also considering LLM embeddings. Though no specific text embedding
+stands out in our empirical study on 3 open-source and 2 open-source projects, adding any of our
+variations improved results compared to the BoW on the added lines in terms of F1-score in 13/15
+cases (up to +5%). Then, we propose review process feature embeddings, using size- and history-
+based features. In practice, this performed at least as good as the textual embeddings in 10/15 cases
+regarding F1-score, while being less computationally expensive. Especially closed-source datasets
+did not show significant difference between text embeddings and the feature-based approaches.
+Finally, when combining the text and feature-based embeddings, our approach reports a median
+F1-score of 40-62%, improving the performance significantly with medium to large effect compared
+to the baseline in all cases (up to +9% F1-score) with the best combination approach for all tasks.
+   Hence, we recommend future work on these types of tasks to consider our text embeddings and
+review process feature embeddings, as they correlate with significant performance improvements.
+We observed that hot-spot prediction as file-ordering approach reports upto +29% recall in the first
+half of patches compared to the default alphanumeric ordering.
+
+Proc. ACM Softw. Eng., Vol. 1, No. FSE, Article 99. Publication date: July 2024.
+An Empirical Study on Code Review Activity Prediction and Its Impact in Practice                                       99:21
+
+
+REFERENCES
+ [1] [n. d.]. ChatGPT introduction. https://openai.com/blog/chatgpt. Accessed: 2023-09-24.
+ [2] [n. d.]. CountVectorizer Python library. https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.
+     text.CountVectorizer.html. Accessed: 2023-09-24.
+ [3] [n. d.]. Hugging Face website. https://huggingface.co/. Accessed: 2023-09-24.
+ [4] [n. d.]. Replication package. https://zenodo.org/records/10783562. Accessed: 2023-09-28.
+ [5] [n. d.]. Sentence Transformer. https://huggingface.co/sentence-transformers. Accessed: 2023-09-24.
+ [6] John Anvik, Lyndon Hiew, and Gail C Murphy. 2006. Who should fix this bug?. In Proceedings of the 28th international
+     conference on Software engineering. 361–370.
+ [7] Jacob Austin, Augustus Odena, Maxwell Nye, Maarten Bosma, Henryk Michalewski, David Dohan, Ellen Jiang, Carrie
+     Cai, Michael Terry, Quoc Le, et al. 2021. Program synthesis with large language models. arXiv preprint arXiv:2108.07732
+     (2021).
+ [8] Mike Barnett, Christian Bird, João Brunet, and Shuvendu K Lahiri. 2015. Helping developers help themselves: Automatic
+     decomposition of code review changesets. In 2015 IEEE/ACM 37th IEEE International Conference on Software Engineering,
+     Vol. 1. IEEE, 134–144.
+ [9] Tobias Baum and Kurt Schneider. 2016. On the need for a new generation of code review tools. In Product-Focused
+     Software Process Improvement: 17th International Conference, PROFES 2016, Trondheim, Norway, November 22-24, 2016,
+     Proceedings 17. Springer, 301–308.
+[10] Tobias Baum, Kurt Schneider, and Alberto Bacchelli. 2017. On the optimal order of reading source code changes for
+     review. In 2017 IEEE international conference on software maintenance and evolution (ICSME). IEEE, 329–340.
+[11] BigScience. May 2021 - May 2022. BigScience Language Open-science Open-access Multilingual (BLOOM) Language
+     Model. International (May 2021 - May 2022).
+[12] Markus Borg, Oscar Svensson, Kristian Berg, and Daniel Hansson. 2019. Szz unleashed: an open implementation of the
+     szz algorithm-featuring example usage in a study of just-in-time bug prediction for the jenkins project. In Proceedings
+     of the 3rd ACM SIGSOFT International Workshop on Machine Learning Techniques for Software Quality Evaluation. 7–12.
+[13] Amiangshu Bosu, Michaela Greiler, and Christian Bird. 2015. Characteristics of useful code reviews: An empirical
+     study at microsoft. In 2015 IEEE/ACM 12th Working Conference on Mining Software Repositories. IEEE, 146–156.
+[14] Zachary Chase Lipton, Charles Elkan, and Balakrishnan Narayanaswamy. 2014. Thresholding classifiers to maximize
+     F1 score. arXiv e-prints (2014), arXiv–1402.
+[15] Nitesh V Chawla, Kevin W Bowyer, Lawrence O Hall, and W Philip Kegelmeyer. 2002. SMOTE: synthetic minority
+     over-sampling technique. Journal of artificial intelligence research 16 (2002), 321–357.
+[16] Jack Cuzick. 1985. A Wilcoxon-type test for trend. Statistics in medicine 4, 1 (1985), 87–90.
+[17] Daniel Alencar Da Costa, Shane McIntosh, Weiyi Shang, Uirá Kulesza, Roberta Coelho, and Ahmed E Hassan. 2016. A
+     framework for evaluating the results of the szz approach for identifying bug-introducing changes. IEEE Transactions
+     on Software Engineering 43, 7 (2016), 641–657.
+[18] Nils Dahlbäck, Arne Jönsson, and Lars Ahrenberg. 1993. Wizard of Oz studies: why and how. In Proceedings of the 1st
+     international conference on Intelligent user interfaces. 193–200.
+[19] Yinlin Deng, Chunqiu Steven Xia, Haoran Peng, Chenyuan Yang, and Lingming Zhang. 2022. Fuzzing deep-learning
+     libraries via large language models. arXiv preprint arXiv:2212.14834 (2022).
+[20] Jacob Devlin, Ming-Wei Chang, Kenton Lee, and Kristina Toutanova. 2018. Bert: Pre-training of deep bidirectional
+     transformers for language understanding. arXiv preprint arXiv:1810.04805 (2018).
+[21] Vasiliki Efstathiou and Diomidis Spinellis. 2018. Code review comments: language matters. In Proceedings of the 40th
+     International Conference on Software Engineering: New Ideas and Emerging Results. 69–72.
+[22] Michael Fagan. 2002. A history of software inspections. Software pioneers: contributions to software engineering (2002),
+     562–573.
+[23] Enrico Fregnan, Larissa Braz, Marco D’Ambros, Gül Çalıklı, and Alberto Bacchelli. 2022. First come first served: the
+     impact of file position on code review. In Proceedings of the 30th ACM Joint European Software Engineering Conference
+     and Symposium on the Foundations of Software Engineering. 483–494.
+[24] Wei Fu and Tim Menzies. 2017. Easy over hard: A case study on deep learning. In Proceedings of the 2017 11th joint
+     meeting on foundations of software engineering. 49–60.
+[25] Emanuel Giger, Marco D’Ambros, Martin Pinzger, and Harald C Gall. 2012. Method-level bug prediction. In Proceedings
+     of the ACM-IEEE international symposium on Empirical software engineering and measurement. 171–180.
+[26] Anshul Gupta and Neel Sundaresan. 2018. Intelligent code reviews using deep learning. In Proceedings of the 24th ACM
+     SIGKDD International Conference on Knowledge Discovery and Data Mining (KDD’18) Deep Learning Day.
+[27] Kai Han, An Xiao, Enhua Wu, Jianyuan Guo, Chunjing Xu, and Yunhe Wang. 2021. Transformer in transformer.
+     Advances in Neural Information Processing Systems 34 (2021), 15908–15919.
+
+
+
+                                            Proc. ACM Softw. Eng., Vol. 1, No. FSE, Article 99. Publication date: July 2024.
+99:22                                                                    Doriane Olewicki, Sarra Habchi, and Bram Adams
+
+
+[28] Vincent J Hellendoorn and Premkumar Devanbu. 2017. Are deep neural networks the best choice for modeling source
+     code?. In Proceedings of the 2017 11th Joint Meeting on Foundations of Software Engineering. 763–773.
+[29] Austin Z Henley, Kıvanç Muçlu, Maria Christakis, Scott D Fleming, and Christian Bird. 2018. Cfar: A tool to increase
+     communication, productivity, and review quality in collaborative code reviews. In Proceedings of the 2018 CHI Conference
+     on Human Factors in Computing Systems. 1–13.
+[30] Yang Hong, Chakkrit Tantithamthavorn, Patanamon Thongtanunam, and Aldeida Aleti. 2022. CommentFinder: a
+     simpler, faster, more accurate code review comments recommendation. In Proceedings of the 30th ACM Joint European
+     Software Engineering Conference and Symposium on the Foundations of Software Engineering. 507–519.
+[31] Yang Hong, Chakkrit Kla Tantithamthavorn, and Patanamon Pick Thongtanunam. 2022. Where Should I Look at?
+     Recommending Lines that Reviewers Should Pay Attention To. In 2022 IEEE International Conference on Software
+     Analysis, Evolution and Reengineering (SANER). IEEE, 1034–1045.
+[32] Xinyi Hou, Yanjie Zhao, Yue Liu, Zhou Yang, Kailong Wang, Li Li, Xiapu Luo, David Lo, John Grundy, and Haoyu
+     Wang. 2023. Large Language Models for Software Engineering: A Systematic Literature Review. arXiv preprint
+     arXiv:2308.10620 (2023).
+[33] Yuan Huang, Nan Jia, Xiangping Chen, Kai Hong, and Zibin Zheng. 2018. Salient-class location: Help developers
+     understand code change in code review. In Proceedings of the 2018 26th ACM Joint Meeting on European Software
+     Engineering Conference and Symposium on the Foundations of Software Engineering. 770–774.
+[34] Yasutaka Kamei, Emad Shihab, Bram Adams, Ahmed E Hassan, Audris Mockus, Anand Sinha, and Naoyasu Ubayashi.
+     2012. A large-scale empirical study of just-in-time quality assurance. IEEE Transactions on Software Engineering 39, 6
+     (2012), 757–773.
+[35] Dongsun Kim, Yida Tao, Sunghun Kim, and Andreas Zeller. 2013. Where should we fix this bug? a two-phase
+     recommendation model. IEEE transactions on software Engineering 39, 11 (2013), 1597–1610.
+[36] Oleksii Kononenko, Olga Baysal, and Michael W Godfrey. 2016. Code review quality: How developers see it. In
+     Proceedings of the 38th international conference on software engineering. 1028–1038.
+[37] Zhiyu Li, Shuai Lu, Daya Guo, Nan Duan, Shailesh Jannu, Grant Jenks, Deep Majumder, Jared Green, Alexey Svy-
+     atkovskiy, Shengyu Fu, et al. 2022. Automating code review activities by large-scale pre-training. In Proceedings of the
+     30th ACM Joint European Software Engineering Conference and Symposium on the Foundations of Software Engineering.
+     1035–1047.
+[38] Guillermo Macbeth, Eugenia Razumiejczyk, and Rubén Daniel Ledesma. 2011. Cliff’s Delta Calculator: A non-parametric
+     effect size program for two groups of observations. Universitas Psychologica 10, 2 (2011), 545–555.
+[39] Suvodeep Majumder, Nikhila Balaji, Katie Brey, Wei Fu, and Tim Menzies. 2018. 500+ times faster than deep learning:
+     A case study exploring faster methods for text mining stackoverflow. In Proceedings of the 15th International Conference
+     on Mining Software Repositories. 554–563.
+[40] Mathieu Nayrolles and Abdelwahab Hamou-Lhadj. 2018. Clever: Combining code metrics with clone detection
+     for just-in-time fault prevention and resolution in large industrial projects. In Proceedings of the 15th international
+     conference on mining software repositories. 153–164.
+[41] Doriane Olewicki, Sarra Habchi, Mathieu Nayrolles, Mojtaba Faramarzi, Sarath Chandar, and Bram Adams. 2024. On
+     the Costs and Benefits of Adopting Lifelong Learning for Software Analytics - Empirical Study on Brown Build and
+     Risk Prediction. In Proceedings of the 46th International Conference on Software Engineering: Software Engineering in
+     Practice.
+[42] Doriane Olewicki, Mathieu Nayrolles, and Bram Adams. 2022. Towards language-independent brown build detection.
+     In Proceedings of the 44th International Conference on Software Engineering. 2177–2188.
+[43] OpenAI. 2023. GPT-4 Technical Report. arXiv:2303.08774 [cs.CL]
+[44] Goran Petrović and Marko Ivanković. 2018. State of mutation testing at google. In Proceedings of the 40th international
+     conference on software engineering: Software engineering in practice. 163–171.
+[45] Mohammad Masudur Rahman, Chanchal K Roy, and Jason A Collins. 2016. Correct: code reviewer recommendation in
+     github based on cross-project and technology experience. In Proceedings of the 38th international conference on software
+     engineering companion. 222–231.
+[46] Peter Rigby, Brendan Cleary, Frederic Painchaud, Margaret-Anne Storey, and Daniel German. 2012. Contemporary
+     peer review in action: Lessons from open source development. IEEE software 29, 6 (2012), 56–61.
+[47] Caitlin Sadowski, Emma Söderberg, Luke Church, Michal Sipko, and Alberto Bacchelli. 2018. Modern code review: a
+     case study at google. In Proceedings of the 40th international conference on software engineering: Software engineering in
+     practice. 181–190.
+[48] Arushi Sharma, Abhibha Gupta, and Maneesh Bilalpur. 2023. Argumentative Stance Prediction: An Exploratory Study
+     on Multimodality and Few-Shot Learning. arXiv preprint arXiv:2310.07093 (2023).
+[49] Emad Shihab, Ahmed E Hassan, Bram Adams, and Zhen Ming Jiang. 2012. An industrial study on the risk of software
+     changes. In Proceedings of the ACM SIGSOFT 20th International Symposium on the Foundations of Software Engineering.
+
+
+Proc. ACM Softw. Eng., Vol. 1, No. FSE, Article 99. Publication date: July 2024.
+An Empirical Study on Code Review Activity Prediction and Its Impact in Practice                                       99:23
+
+
+     1–11.
+[50] Jing Kai Siow, Cuiyun Gao, Lingling Fan, Sen Chen, and Yang Liu. 2020. Core: Automating review recommendation for
+     code changes. In 2020 IEEE 27th International Conference on Software Analysis, Evolution and Reengineering (SANER).
+     IEEE, 284–295.
+[51] Watanabe Takuya and Hidehiko Masuhara. 2011. A spontaneous code recommendation tool based on associative
+     search. In Proceedings of the 3rd International Workshop on search-driven development: Users, infrastructure, tools, and
+     evaluation. 17–20.
+[52] Patanamon Thongtanunam, Raula Gaikovina Kula, Ana Erika Camargo Cruz, Norihiro Yoshida, and Hajimu Iida.
+     2014. Improving code review effectiveness through reviewer recommendations. In Proceedings of the 7th International
+     Workshop on Cooperative and Human Aspects of Software Engineering. 119–122.
+[53] Patanamon Thongtanunam, Chakkrit Tantithamthavorn, Raula Gaikovina Kula, Norihiro Yoshida, Hajimu Iida, and
+     Ken-ichi Matsumoto. 2015. Who should review my code? a file location-based code-reviewer recommendation approach
+     for modern code review. In 2015 IEEE 22nd International Conference on Software Analysis, Evolution, and Reengineering
+     (SANER). IEEE, 141–150.
+[54] Rosalia Tufano, Simone Masiero, Antonio Mastropaolo, Luca Pascarella, Denys Poshyvanyk, and Gabriele Bavota.
+     2022. Using pre-trained models to boost code review automation. In Proceedings of the 44th International Conference on
+     Software Engineering. 2291–2302.
+[55] Rosalia Tufano, Luca Pascarella, Michele Tufano, Denys Poshyvanyk, and Gabriele Bavota. 2021. Towards automating
+     code review activities. In 2021 IEEE/ACM 43rd International Conference on Software Engineering (ICSE). IEEE, 163–174.
+[56] Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N Gomez, Łukasz Kaiser, and Illia
+     Polosukhin. 2017. Attention is all you need. Advances in neural information processing systems 30 (2017).
+[57] Juanjuan Wang, Mantao Xu, Hui Wang, and Jiwu Zhang. 2006. Classification of imbalanced data by using the SMOTE
+     algorithm and locally linear embedding. In 2006 8th international Conference on Signal Processing, Vol. 3. IEEE.
+[58] Supatsara Wattanakriengkrai, Patanamon Thongtanunam, Chakkrit Tantithamthavorn, Hideaki Hata, and Kenichi
+     Matsumoto. 2020. Predicting defective lines using a model-agnostic technique. IEEE Transactions on Software Engineering
+     48, 5 (2020), 1480–1496.
+[59] Jason Wei, Yi Tay, Rishi Bommasani, Colin Raffel, Barret Zoph, Sebastian Borgeaud, Dani Yogatama, Maarten Bosma,
+     Denny Zhou, Donald Metzler, et al. 2022. Emergent abilities of large language models. arXiv preprint arXiv:2206.07682
+     (2022).
+[60] Xin Xia and David Lo. 2017. An effective change recommendation approach for supplementary bug fixes. automated
+     software engineering 24 (2017), 455–498.
+[61] Daoguang Zan, Bei Chen, Fengji Zhang, Dianjie Lu, Bingchao Wu, Bei Guan, Wang Yongji, and Jian-Guang Lou. 2023.
+     Large language models meet NL2Code: A survey. In Proceedings of the 61st Annual Meeting of the Association for
+     Computational Linguistics (Volume 1: Long Papers). 7443–7464.
+
+Received 2023-09-28; accepted 2024-04-16
+
+
+
+
+                                            Proc. ACM Softw. Eng., Vol. 1, No. FSE, Article 99. Publication date: July 2024.
+

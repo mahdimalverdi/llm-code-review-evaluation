@@ -1,0 +1,1658 @@
+                                                                                                                                                                                          1
+
+
+
+
+                                                        Understanding Code Understandability
+                                                           Improvements in Code Reviews
+                                         Delano Oliveira, Reydne Santos, Benedito de Oliveira, Martin Monperrus, Fernando Castor, and Fernanda
+                                                                                        Madeiral
+
+                                               Abstract—Context: Code understandability plays a crucial role in software development, as developers spend between 58% and 70%
+                                               of their time reading source code. Improving code understandability can lead to enhanced productivity and save maintenance costs.
+                                               Problem: Experimental studies aim to establish what makes code more or less understandable in a controlled setting, but ignore that
+                                               what makes code easier to understand in the real world also depends on extraneous elements such as developers’ background and
+                                               project culture and guidelines. Not accounting for the influence of these factors may lead to results that are sound but have little
+arXiv:2410.21990v2 [cs.SE] 12 Nov 2024
+
+
+
+
+                                               external validity. Goal: We aim to investigate how developers improve code understandability during software development through
+                                               code review comments. Our assumption is that code reviewers are specialists in code quality within a project. Method and Results: We
+                                               manually analyzed 2,401 code review comments from Java open-source projects on GitHub and found that over 42% of all comments
+                                               focus on improving code understandability, demonstrating the significance of this quality attribute in code reviews. We further explored
+                                               a subset of 385 comments related to code understandability and identified eight categories of code understandability concerns, such
+                                               as incomplete or inadequate code documentation, bad identifier, and unnecessary code. Among the suggestions to improve code
+                                               understandability, 83.9% were accepted and integrated into the codebase. Among these, only two (less than 1%) ended up being
+                                               reverted. We also identified types of patches that improve code understandability, ranging from simple changes (e.g., removing unused
+                                               code) to more context-dependent improvements (e.g., replacing method calling chains by existing API). Finally, we investigated the
+                                               potential coverage of four well-known linters to flag the identified code understandability issues. These linters cover less than 30% of
+                                               these issues, although some of them could be easily added as new rules. Implications: Our findings motivate and provide practical
+                                               insight for the construction of tools to make code more understandable, e.g., understandability improvements are rarely reverted and
+                                               thus can be used as reliable training data for specialized ML-based tools. This is also supported by our dataset, which can be used to
+                                               train such models. Finally, our findings can also serve as a basis to develop evidence-based code style guides. Data Availability: Our
+                                               data is publicly available at https://codeupcrc.github.io.
+
+                                               Index Terms—Code understandability, code understandability smells, code review
+
+                                                                                                                        ✦
+
+                                         1    I NTRODUCTION
+
+                                         R    EADING code is the main activity of software develop-
+                                              ers [1], with studies [2], [3] estimating that developers
+                                         spend between 58% and 70% of their time understanding
+                                                                                                                                Laboratory studies on code understandability have as
+                                                                                                                            their main advantage the possibility to account for and
+                                                                                                                            control extraneous factors and objectively establish relation-
+                                         source code. That means that easy-to-read code can save                            ships between independent and response variables. How-
+                                         time and money in software development. Code under-                                ever, they are not able to account for elements such as
+                                         standability is the extent to which a developer can compre-                        project culture and guidelines, and developers’ background,
+                                         hend and make sense of source code. It covers a number of                          which directly impact how developers understand code.
+                                         aspects, such as naming, commenting, and structuring [4].                          Not accounting for the influence of these factors may lead
+                                         Empirical studies, e.g., [5], [6], [7], [8], [9], have compared                    to results that are sound but have little external validity.
+                                         several different ways of writing code to find which factors                       In this paper, our motivation is to unveil what developers
+                                         impact code understandability, e.g., abbreviated vs. com-                          care about regarding code understandability and how they
+                                         plete word identifier names [10].                                                  improve it, in a real-world setting. Our key insight is that
+                                                                                                                            this knowledge is available through publicly available code
+                                         Delano Oliveira is with the Federal University of Pernambuco, 50732-970
+                                         Recife, Brazil, and the Federal Institute of Pernambuco, 55540-000 Palmares,       reviews in open-source software, where code reviewers act
+                                         Brazil (e-mail: delanohelio@gmail.com).                                            as project specialists in code quality.
+                                         Reydne Santos and Benedito de Oliveira are with the Federal Univer-                    Code review is a process in software development where
+                                         sity of Pernambuco, 50732-970 Recife, Brazil (e-mail: rbs8@cin.ufpe.br;
+                                                                                                                            developers read and comment on code written by fellow
+                                         bfao@cin.ufpe.br).
+                                         Martin Monperrus is with the KTH Royal Institute of Technology, 114 28             developers in the same project [11], [12], [13]. In a typical
+                                         Stockholm, Sweden (e-mail: monperrus@kth.se).                                      code review scenario, code changes are proposed through
+                                         Fernando Castor is with the University of Twente, 7522 NB Enschede, The            pull requests (e.g., in projects hosted on GitHub) and
+                                         Netherlands, and the Federal University of Pernambuco, 50732-970 Recife,
+                                         Brazil (e-mail: f.castor@utwente.nl).                                              then reviewed by developers who suggest improvements.
+                                         Fernanda Madeiral is with the Vrije Universiteit Amsterdam, 1081 HV                Once the concerns are addressed and the improvements
+                                         Amsterdam, The Netherlands (e-mail: fer.madeiral@gmail.com).                       are performed, the pull request is approved for integration
+                                         Manuscript received 28 August 2023; revised 8 August 2024; accepted 16             into the codebase. These suggestions might concern several
+                                         August 2024. Recommended for acceptance by K. Blincoe
+                                         (Corresponding author: Delano Oliveira.)                                           code quality aspects, including understandability. In this
+                                         Digital Object Identifier no. 10.1109/TSE.2024.3453783                             paper, we examine code understandability improvements
+                                                                                                                                            2
+
+grounded on real comments about code quality made dur-
+ing code review. More specifically, we investigate (i) what
+code understandability issues are reported by developers
+during code review, and (ii) what changes developers apply
+to address those concerns.
+    Our methodology is founded on systematic manual
+analysis of comments written by developers during code
+review in OSS repositories. We selected 363 Java open-
+source projects from GitHub that have an active code re-
+view process. In the context of pull requests on GitHub,
+                                                                         Fig. 1: Inline code review suggestion to replace an if
+developers can write general or inline comments. The latter
+                                                                         statement by a ternary expression [14].
+are associated with specific lines of the source code under
+review. Because we want to identify where the reviewers’                 1%). The remaining 2.8% of patches had their code removed
+concerns reside and what source code changes were ap-                    or replaced with a different solution. Finally, an examination
+plied to address these concerns, we exclusively focused                  of four popular linters shows that they can detect less than
+on inline code review comments in this study1 . We selected              30% of the analyzed code understandability issues. Some
+a representative sample of 2,401 code review comments                    additional cases could be supported by the definition of new
+for our study. We first manually analyzed all those code                 rules, whereas others would require them to also interact
+review comments and identified the ones concerning code                  with natural language text (e.g., to detect typos). Our study
+understandability. From this process, we identified 1,012                provides practical guidance for the construction of tools to
+code review comments related to code understandability                   make code more understandable, e.g., some improvements
+improvements. Then, we analyzed these comments and the                   that could be automated are currently not available in any of
+corresponding remediation changes that developers made                   four popular linters, and understandability improvements
+to improve code understandability.                                       are rarely reverted and thus can be used as reliable training
+    We found that more than 42% of all analyzed code                     data for specialized ML-based tools. This is also supported
+review comments suggest code understandability improve-                  by our dataset, which can be used to train such mod-
+ments in scopes such as executable source code, code                     els. Finally, our findings can serve as a basis to develop
+comments, and text literals. This finding highlights the                 evidence-based code style guides. More broadly, this is a
+significance of improving code understandability during                  step in helping developers focus on more critical tasks
+code review, as suggested by Bacchelli and Bird [11] and                 during code review, such as verifying the correctness of code
+Sadowski et al. [12]. We also analyzed in more depth a                   or identifying security vulnerabilities.
+random sample of 385 code review comments suggesting
+                                                                         Data Availability. The resulting dataset of inline code re-
+code understandability improvements. We identified and
+                                                                         view comments, which contains a classification of devel-
+labeled the concerns related to code understandability, here-
+                                                                         opers’ intention with a focus on code understandability
+after referred to as “understandability smells”, that were
+                                                                         improvements and the resulting patches created to address
+mentioned by reviewers in our sample of 385 code review
+                                                                         them, is publicly available at https://codeupcrc.github.io.
+comments. We discover eight categories of code understand-
+ability smells (e.g., INCOMPLETE OR INADEQUATE CODE
+DOCUMENTATION , BAD IDENTIFIER , UNNECESSARY CODE )                      2     BACKGROUND
+in 16 places in the source code (e.g., Method, Call, Literal,            This section provides a brief overview of the two concepts
+Class). Out of these code review comments, 3.9% (323)                    that underpin our investigation: code review and code un-
+of the suggestions made by the reviewers were accepted,                  derstandability.
+indicating that developers generally agree with suggestions
+for improving code understandability. In addition, we per-               2.1    Code Review
+formed a fine-grained analysis of actual improvements (the               Code review is an assessment of source code to identify
+323 accepted code review comments) and identified differ-                a variety of quality issues, such as defects, security vul-
+ent types of patches that improve code understandability                 nerabilities, poor understandability, and bad design. In col-
+(e.g., modify an identifier to express the meaning or type of            laborative development platforms, code review takes place
+an element, remove non-referred constants and other code                 when source code changes are proposed to a project by a
+elements, add or remove horizontal spacing). While some                  developer, the submitter. Then, the proposed changes are
+of these patches can be automatically detected and fixed by              reviewed by other developers, the reviewers, who provide
+linters (e.g., unused variables), others are more challenging            comments with, for instance, suggestions or requests for
+to identify as they relate to natural language components                improvements that the submitter should apply to the code.
+(e.g., incomplete code documentation) or are dependent                   Submitters and reviewers interact until the reviewers con-
+on the context of the project and code style choices (e.g.,              sider that the proposed code changes are good enough to be
+using boolean expressions instead of equivalent functional               integrated into the codebase (else the proposed changes are
+methods). Furthermore, 97.2% of the applied patches for                  rejected).
+code review comments were integrated into the codebase                       GitHub, the most popular collaborative software devel-
+of the project and they are very rarely reverted (less than              opment platform2 , allows code review in the context of
+
+ 1. Hereafter, we use the term code review comment for simplification.       2. https://github.blog/2023-01-25-100-million-developers-and-counting/
+                                                                                                                                    3
+
+pull requests. Pull request reviewers can provide general
+code review comments in the body of the pull request
+timeline or inline code review comments that are specific to
+source code lines of the changed files. Inline comments are
+about fine-grained, localized reviewers’ concerns, because
+they explicitly point to specific source code lines where the
+concerns lie. Figure 1 shows an example of an inline code
+review comment. The source code lines highlighted in green
+represent a change proposed to a GitHub project through a
+pull request. A reviewer wrote an inline comment associated
+with line 190, suggesting the replacement of the if block by
+a ternary expression. In such a case, the reviewer’s concern     Fig. 2: Inline code review suggestion to replace a ternary
+is explicitly about readability.                                 expression by an if statement [22].
+    In this paper, we leverage code review comments to
+                                                                     Many factors in the source code can affect code under-
+investigate the reviewers’ concerns related to code under-
+                                                                 standability, such as the number of identifiers, size of a
+standability and how the submitters address these concerns.
+                                                                 line of code, and nesting [20], [21]. However, the definition
+Because we want to examine the solutions developers adopt
+                                                                 of whether a change is an understandability improvement
+at a fine level of granularity, e.g., the replacement of an if
+                                                                 depends on the developer’s background (e.g., skill and
+statement by a ternary expression (Figure 1), we focus on
+                                                                 experience) [15]. Also, we could consider this can be affected
+inline code review comments (we use the term code review
+                                                                 by the developer’s goals (e.g., implementing a new feature,
+comment for simplification). Since code reviewers are qual-
+                                                                 writing tests, and fixing a bug). In the literature, for exam-
+ity gatekeepers in software development, we hypothesize
+                                                                 ple, Gopstein et al. [18] found that subjects misunderstand
+that, if code understandability is an important concern in
+                                                                 the output of a code snippet when it contains ternary/con-
+practice, there are code review comments about it.
+                                                                 ditional expression (e.g., a?b:c) instead of an if statement.
+                                                                 In a similar study, Langhout and Aniche [9] did not find
+2.2   Code Understandability                                     that the ternary operator causes misunderstanding. In a
+Legibility and readability are both important factors for        study by Medeiros et al. [7], the practitioners answered
+making code easy to read, but understandability is the           that ternary/conditional expression does not influence code
+ultimate goal. Legibility refers to how easily individual        understandability positively or negatively.
+code elements can be distinguished from each other, while            The perception of what understandability improvement
+readability refers to how easily developers can compre-          is depends on the context in the real world. During code
+hend the code as a whole [4]. Ultimately, understandabil-        review, reviewers suggest source code changes to improve
+ity encompasses both legibility and readability and refers       code understandability, but the development team can in-
+to how easily developers can extract relevant information        fluence what is considered an improvement. For instance,
+from the source code, including non-functional parts, such       in Figure 1, a reviewer suggested replacing an if statement
+as documentation, to perform software development or             by a ternary expression to improve code understandability.
+maintenance tasks [15]. In this work, we are interested in       In Figure 2, which refers to another open-source project,
+understandability.                                               a reviewer suggested replacing a ternary expression by an
+    In the literature, many studies have evaluated how to        if statement to improve understandability. These two code
+improve code legibility and readability [7], [8], [16], [17],    reviewers suggest the opposite operations, both concerning
+[18], [19]. All these studies are based on an informal notion    understandability. This means they perceive understand-
+of understandability improvement. A code understandability       ability improvements (in the context of the usage of if
+improvement is a refactoring that, when applied to a pro-        statements vs. ternary expression) in a different way.
+gram, makes its source code better at communicating to the           Style guides (a.k.a. code conventions) also are adopted
+developer what it does, according to one of more quality         to improve code understandability in the real world. Smith
+criteria [4].                                                    et al. [23] defined that “code conventions are a body of advice on
+    A basic example of this type of change is renaming.          lexical and syntactic aspects of code, aiming to standardize low-
+Renaming a program element, in general, is not a functional      level code design under the assumption that such a systematic
+correction and does not change the functionality of the          approach will make code easier to read, understand, and main-
+program. However, a change to the name of a program              tain”. However, the recommendations proposed by different
+element may make it clearer for other humans, by better          style guides are not only about understandability and can
+communicating purpose or rationale. The main motivation          also be divergent. For example, while the Google Java Style
+for renaming is to improve code understandability, although      Guide3 suggests the use of braces even when the block is
+there are some exceptions where renaming is not motivated        empty or contains only a single statement (e.g., if (a)
+by understandability, such as when it matches a reflection       {b+c}), the Linux Kernel Coding Style4 disagrees with it
+pattern. Moreover, certain aspects of source code are perti-     for single statements (e.g., if (a) b+c). This suggests that
+nent to understandability by nature, specifically documen-       some code alternatives that make source code more under-
+tation and formatting. Although disregarded by compilers,          3. https://google.github.io/styleguide/javaguide.html
+these elements are deliberately integrated into the source         4. https://www.kernel.org/doc/html/v4.10/process/coding-style.
+code to assist developers in comprehending the code.             html
+                                                                                                                                     4
+
+standable are, to some extent, in the eye of the beholder,        of code understandability improvement is inferred from
+e.g., they depend on the experience and context of the            the comment text, code snippet, and the code improve-
+developer. However, there is insufficient empirical evidence      ment itself. We also provided a description of why we
+of which code alternatives are preferred during software          considered each code review comment to be related to code
+development considering code understandability to support         understandability. In the sample, we found a total of 50
+the creation of a style guide. In this study, we investigate      explicit comments and 335 implicit comments related to
+those code alternatives to further help developers choose the     code understandability.
+best practices and tool builders to create automated support      Novelty: Previous studies [26], [27], [28] explored the
+based on empirical evidence from software development             projects’ files histories to identify code understandability
+teams. We do so in the context of code review, where              improvements based on state-of-the-art metrics or commit
+developers are quality gatekeepers who review and discuss         messages that reported an understandability improvement
+changes until they consider the code is good to be merged         explicitly. We evaluate 2,401 code review comments and
+into their projects.                                              identify suggestions by code quality specialists (reviewers)
+                                                                  to improve source code understandability. Unlike previous
+3     S TUDY DESIGN                                               work [29], we also examine when the intention to improve
+This section presents the research questions we aim to            code understandability is implicit.
+answer (Section 3.1), the data collected for the study (Sec-
+                                                                  RQ2. What are the main issues pertaining to code understand-
+tion 3.2), and the process for identifying code review com-
+                                                                  ability in code review?
+ments that suggest understandability improvements (Sec-
+tion 3.3).                                                        Motivation: Identifying the typical understandability issues
+                                                                  reported by reviewers can guide researchers and tool
+                                                                  builders when designing and training machine learning-
+3.1   Research Questions
+                                                                  based tools to improve understandability. Additionally, this
+RQ1. How often do reviewers ask for code understandability        knowledge can contribute to the development of code re-
+improvements in code review comments?                             view checklists [30] to make the process more systematic
+Motivation: While code reviews are commonly employed to           and efficient to address code understandability concerns in
+enhance code quality [11], [12], there is a lack of information   a structured manner [31].
+regarding the prevalence of code review comments focus-           Method: We selected 385 code review comments randomly
+ing on code understandability. If a substantial portion of        from the 1,012 reviews that were related to code understand-
+code review comments involves understandability improve-          ability improvements and were classified in Section 4.1. This
+ments, it may be advantageous to prioritize automation            sample size of code review comments is a representative
+strategies tailored to address this specific area. Furthermore,   sample with a confidence level of 95% and a margin of error
+not every improvement targets executable source code and          of 5% of the unlimited population, according to Cochran’s
+it may be useful to quantify the extent to which other scopes,    formula [32]. We then identified the issues that triggered
+such as code comments and string literals, are targeted. Such     the suggestions for change (the what) and grouped them
+targeted approaches could lead to significant time and effort     into categories that we called understandability smells. For
+savings.                                                          example, in one code review [key=821], the reviewer asked
+Method: We analyzed a representative sample of code review        to remove three code elements because they were constants
+comments to determine the rate at which reviewers suggest         that were not being used, i.e., UNNECESSARY CODE (the
+code understandability improvements. In this direction, we        “what”). Also, we identified the type of code element tar-
+manually classified 2,401 code review comments selected as        geted for improvement (the “where”) using Spoon [33],
+explained in Section 3.2, assessing whether each comment          a well-established open-source library for analyzing Java
+pertains to improving code understandability. Furthermore,        source code. Three authors examined the sample of 385
+we categorized the associated scopes of these comments            code review comments. They described the issue presented
+(e.g., documentation, executable source code, string literals).   in each comment and identified where the issue occurred
+Each code review comment was classified by two authors of         in the code. The same authors then discussed the issues
+this paper. We calculated the Kappa coefficient [24] to assess    and grouped similar comments together. Afterwards, the
+the agreement between their evaluation. We found k = 0.59,        groups were refined, and categories were established during
+which is considered a moderate agreement strength [25].           meetings involving at least five authors.
+For every case where there was a disagreement, three                  We used the nodes of Spoon’s AST to group constructs
+or more authors engaged in discussion to reach a final            related to each issue pointed out by code reviewers into
+classification. Besides this classification, we also verify the   categories. For example, we group the nodes CtIf and
+scope to which each comment refers, i.e., where in the            CtSwitch into the Conditional category5 . We considered
+source file the reviewer has identified an opportunity to         the most specific AST node to which an understandability
+improve understandability (e.g., source code and Javadoc).        smell is associated to determine where it happens. For exam-
+Additionally, we randomly selected and classified 385 code        ple, in a code review [key=123], a reviewer requested using
+review comments related to code understandability. We             an alternative method invocation to evaluate an expression
+distinguished between explicit comments, which indicate
+                                                                     5. The CtIf node refers to an ’if’ statement in the AST, while the
+that the improvement suggestion is motivated by code un-          CtSwitch node refers to a ’switch’ statement. Both are conditional
+derstandability, and implicit comments, where the intention       statements in the Java language.
+                                                                                                                                   5
+
+in an if statement, and we categorize the most specific node       accepting a suggestion, given it is a code understandability
+identified by Spoon, CtInvocation, as a Call. However,             improvement.
+in other scenarios, the understandability smell consists of        Novelty: Brown and Parnin [34] investigated the acceptabil-
+a set of nodes, and we considered the node that is the             ity of GitHub suggested changes, a special kind of code review
+closest parent of all other nodes. For instance, in another        comment where reviewers recommend a specific change
+code review [key=1878], the reviewer asked to rewrite part         to the code line or lines. However, as far as we know,
+of the method’s body, and the AST was composed by several          no study evaluated how developers addressed reviewer’s
+nodes such as an invocation and an if statement. In this           suggestions for code understandability improvements.
+case, the closest parent of those nodes is a Method, repre-
+sented by CtMethod in Spoon. We also categorized under-            RQ4. What code changes are found in understandability improve-
+standability smells as Method when the reviewer requested          ments?
+renaming the method, adding Javadoc to it, or moving it.           Motivation: There are multiple studies [7], [8], [16], [17], [18],
+In two code review comments where the reviewers pointed            [19], [35] that empirically evaluated the impact of different
+out multiple issues in different parts of the source code, we      ways of writing code on understandability in a lab setting.
+classified the “what” and “where” exclusively based on the         However, understandability strongly depends on the con-
+location where the code review comment was marked. For             text where the code must be understood, e.g., due to the
+example, in a code review comment in the class declaration         experience of the readers. This RQ aims to help developers
+where the reviewer asked to “remove the Db [from class name]       and researchers to know what makes the code more under-
+and name attributes from the annotation” [key=1772], the code      standable in practice. Information about typical real-world
+review comment is at the line of the class declaration and         understandability improvements can help us establish what
+we considered that this (Class) is the place where the issue       kinds of tools can address each scenario (linters, more in-
+was pointed out.                                                   depth static analysis, LLM-based, etc.).
+Novelty: Previous studies [26], [27], [28] classified the issues   Method: We took as a starting point the set of code reviews
+related to code understandability in terms of software main-       examined for RQ2 and RQ3. For this question, we focused
+tenance types and rules of static analysis tools. However,         on the code review comments where the recommendation
+their classification is limited to these terms, which do not       made by the reviewer was accepted, and a patch was
+capture the actual code understandability issues. In this          applied as a consequence. We analyzed the code change
+work we examined code review comments, as in the work of           applied in each patch to resolve the problem raised by
+Dantas et al. [29], but take two complementary perspectives:       the reviewer. The sample was divided among the three
+coarser-grained, by eliciting the high-level issues that trig-     primary authors, who described the improvements made
+ger improvements, and finer-grained, by examining which            in response to the reviewer’s comments. We then organized
+source code elements are connected to these issues.                these different types of changes into categories based on
+                                                                   the understandability smells identified in RQ2. Finally, we
+RQ3. How likely are understandability improvement comments         discussed how the improvements could be organized in
+to be accepted?                                                    meetings with at least four of the authors.
+Motivation: Analyzing the odds of developers accepting             Novelty: As with RQ2, we adopted a bottom-up approach
+comments when they suggest understandability improve-              where we identify code understandability improvements
+ments highlights the importance or lack thereof of this kind       in terms of the fine-grained refactorings that developers
+of comment. It might provide evidence of cases where new           perform. Previous studies [26], [27] employed a top-down
+tools could be created or not for automatically addressing         approach, classifying the understandability smells in terms
+the identified problems.                                           of software maintenance types and rules of static analysis
+Method: We aimed to investigate if recommendations for             tools.
+improving code understandability are more likely to be
+                                                                   RQ5. To what extent are accepted code understandability improve-
+accepted than code reviews that do not address code un-
+                                                                   ments reverted?
+derstandability. To achieve this, we took the pool of 385
+code reviews that were analyzed for RQ2 and added an-              Motivation: Understanding the frequency at which code
+other random sample of 385 code reviews that suggest               understandability improvement patches are reverted after
+changes unrelated to code understandability. The sample            being applied during the code review process is essential
+was divided among the three first authors. In the first step,      for assessing the subjectivity of code understandability im-
+the authors searched for revisions in the part of the code         provements. Frequent reversions of such patches may indi-
+where the reviewer left their comments, looking at each            cate a high level of ambiguity and variability in the percep-
+new version of the file in the pull request. Eventually, it        tion of code understandability, which can lead to challenges
+was necessary to look at other parts of the code that were         when utilizing this data to train machine learning systems,
+indicated by the review comments. In the second step, the          potentially resulting in suboptimal performance [36].
+authors determined whether the reviewer comments were              Method: For this RQ, we employed the same set of code re-
+addressed (accepted) by the developers in any of those             view comments that were analyzed for RQ4, i.e., comments
+revisions. We classified improvement suggestions in reviews        about understandability where the recommendation made
+as either accepted or not accepted based on whether or not         by the reviewer was accepted and a patch was applied. We
+we find the code changes as suggested by the reviewer.             manually searched subsequent versions of the files modified
+We calculated the odds ratio to determine the likelihood of        in that patch to determine whether the patch had been
+                                                                                                                                       6
+
+reverted. We considered that a reversion happens when                  3.2   Data Collection
+(i) a reviewer suggests improving code understandability,
+(ii) that suggestion is accepted, and a patch is submitted             To answer our research questions, we selected open-source
+as a consequence, incorporating said suggestion, and (iii)             projects with a code review process active in GitHub, i.e.,
+subsequently, a new patch is submitted, undoing the under-             projects where new pull requests are created frequently.
+standability improvement. In this process, we account for              Our focus is on the code review comments made by project
+renamed files and cases where portions that were affected              contributors regarding the code changes submitted through
+by the patch were moved to other parts of the system, e.g., a          these pull requests. Furthermore, those projects must be
+different file. If the latest version of the file still includes the   non-trivial software systems, e.g., applications, infrastruc-
+patch that was introduced as a response to the suggestion              ture components, libraries, frameworks, with many contrib-
+for improvement, we considered that it was not reverted.               utors.
+If the file as a whole or the element (method, class, etc.)                 We started out by using SEART [48] to search for project
+where the modification was performed is deleted, we also               candidates because it offers appropriate search criteria.
+considered that the change was not reverted since we cannot            In SEART, we considered the following criteria: (i) Java
+ascertain whether the deletion is connected to said change.            projects, (ii) at least ten stars (fixed by SEART), (iii) at least
+                                                                       one pull request, (iv) at least ten contributors, and (v) not
+Novelty: Kalliamvakou et al. [37] explored the integration
+                                                                       a fork repository. We selected projects with ten or more
+rate of proposed changes in GitHub pull requests into the
+                                                                       contributors because we need a number of contributors that
+codebase, while Shimagaki et al. [38] assessed the frequency
+                                                                       justifies the code review process. These criteria contribute to
+of commits that were subsequently reverted in project his-
+                                                                       filtering out personal projects [37]. SEART returned a list of
+tories. However, a gap remains in the existing literature, as
+                                                                       9,735 projects.
+no study specifically examines the adoption and reversion
+                                                                            Next, we filtered the projects to select only those where
+of code understandability improvements within the context
+                                                                       code changes submitted by developers are regularly re-
+of code reviews and the history of the codebase.
+                                                                       viewed by other contributors. Thus, we selected projects
+RQ6. Do linters contain rules to detect the identified code under-     with at least one pull request per month in 2020 that
+standability smells?                                                   include one or more inline code review comments. These
+                                                                       requirements ensure that code reviews are commonplace
+Motivation: Linters are widely used in real-world software             and happen at the level of source code lines. Given that our
+development [39], [40], [41]. Furthermore, they are capable            search was conducted in October 2021, we focused on pull
+of detecting several typical problems in source code. It is            requests submitted during the year 2020. With this filter, we
+then worth investigating the extent to which they capture              kept 389 projects.
+the code understandability issues that code reviewers point
+                                                                            We further refined this set by removing projects where
+out. Ideally, reviewers should not have to worry about
+                                                                       we can not identify the pull requests that were merged
+problems that an automated tool can capture.
+                                                                       since merging a pull request is a clear criterion to determine
+Method: We investigated the coverage of the code under-                whether said pull request was accepted. Merging can be
+standability smells identified in our study by rules imple-            done manually through git commands on the local repos-
+mented in Spotbugs [42], PMD [43], SonarQube [44], and                 itory and then pushing to the remote. Alternatively, it can
+Checkstyle [45]. These four tools have the highest number              be done by using the merge button directly on the GitHub
+of rules [41], are widely used by practitioners [40], and have         platform. Pull requests with automated merging have a
+been studied by researchers [46]. Together, they have a total          clear indication of this event on the pull request’s timeline,
+of 1,315 rules. We manually checked each observation of an             with its status updated to ”merged.” However, identifying
+understandability smell against each tool to determine if it           projects with manual merging can be challenging as it
+could detect it.                                                       requires the use of heuristics to determine the commit that
+    We utilized the set of code review comments that were              merged the pull request, as explained by Kalliamvakou et
+previously analyzed for RQ4, which are about understand-               al. [37]. We identified eight projects (e.g., apache/gobblin
+ability smell instances. For each understandability smell,             and openjdk/skara) where the pull requests are not merged
+we manually inspected the descriptions of the rules imple-             automatically and decided to remove them. After perform-
+mented in linters to find one that could detect the smell.             ing these filtering steps, we kept 381 projects with an active
+In the end, we calculated the coverage of understandability            code review process that integrates their code changes in
+smells by computing the number of instances that could be              their main branch through GitHub.
+detected by at least one of the linters.                                    Then, we performed a fine-grained filtering of these 381
+Novelty: Previous work [29] investigated the extent to which           projects. We manually analyzed each one and evaluated
+SonarQube can detect code understandability issues in code             whether it is mainly composed of code. As a result, we
+reviews by running this tool. In contrast, we manually                 excluded eight projects that do not fit our software cri-
+analyzed the applicability of every rule implemented by                teria, such as those classified as documentation. Also, we
+four different linters. The issues reported by linters depend          constrained our investigation to projects where most code
+on how they are configured [47], as linters sometimes have             review comments are written in English. We removed seven
+contradicting rules, e.g., SonarQube includes a rule Close             projects where most code review comments are not in En-
+curly brace and the next ”else” [..] should be on two different        glish. In addition, one project (returntocorp/semgrep) did
+lines but also one that ends with ...on the same line. A manual        not primarily use Java, and another (apollographql/apollo-
+analysis can capture these inconsistencies.                            android) was transitioning from Java to Kotlin. As a result,
+                                                                                                                                       7
+
+TABLE 1: Descriptive statistics for the code review com-
+ments, discussions, and source code lines associated to these
+comments and discussions, for the sample of code reviews
+in the 363 selected projects.
+                        Mean     Std    Min   25%   50%    75%     Max
+# comments/project        6.6     2.3     1     5      7      8       15
+# chars/comment         120.2   216.9     0    30     72    148   44,043
+# chars/line of code     53.0    95.9     0    30     49     72   22,382
+# chars/discussion      224.2   435.7     0    50    115    247   45,101 Fig. 3: Example of comment comprised solely of images [51].
+# comments/discussion     1.9     1.2     1     1      2      2       43
+
+
+we removed both. Finally, the code review comments in one
+project (fisco-bcos/web3sdk) are all made by bots, such as
+“sonarcloud”. This project was also removed, leaving us with
+a final total of 363 projects6 .
+    The selected 363 projects comprise more than 349,000
+code review comments made in 2020. We downloaded these
+code review comments using the GitHub GraphQL API7 .                     Fig. 4: Example of a suggested change to preserve the
+Since we need to manually evaluate and classify the code                 function but change the logic [52].
+review comments, we extracted a statistically representative
+                                                                         to the comment, the source code, and the patch (when
+sample. We chose a confidence level of 95% and a margin of
+                                                                         available). We first checked whether the suggestion does
+error of 2%, resulting in a sample size of 2,401 code review
+                                                                         not change the functionality of the code. For example, in
+comments for an unlimited population size. We employed
+                                                                         Figure 7, the reviewer asks the author of the pull request
+a stratified random sampling [49] strategy, as the resulting
+                                                                         to pass another object to the function contains instead
+sample can be more representative of the investigated pop-
+                                                                         of the variable eol. We first evaluated whether the sug-
+ulation of code review comments than if we just employed
+                                                                         gestion changes the function of the code snippet to which
+simple random sampling [50, Chapter 11], where projects
+                                                                         the suggestion refers because it could indicate that the
+with few code review comments might not be represented.
+                                                                         reviewer is suggesting a correction or different functionality.
+We randomly selected code review comments from the
+                                                                         When we look at the patch, we confirm that the suggestion
+projects in proportion to the total number of code review
+                                                                         is behavior-preserving, i.e., the old and the new versions
+comments each project has. As a result, the minimum num-
+                                                                         produce the same result given the same input. Thus we
+ber of code review comments per project is 1, the maximum
+                                                                         consider it as an understandability improvement. However,
+is 15, and the median is 7. The complete list of analyzed
+                                                                         we found some comments where the logic of the source
+comments can be browsed at https://codeupcrc.github.io.
+                                                                         code changed, but the function is the same. For instance,
+Table 1 presents descriptive statistics of these code review
+                                                                         in Figure 4, the reviewer suggests changing how a list is
+comments and their associated discussions. The table indi-
+                                                                         processed in the stream, but the expected result of the
+cates that, in some cases, code review comments can be zero
+                                                                         stream is preserved. We also consider these cases to be
+characters. These comments comprise only images (Figure 3
+                                                                         potential understandability improvements.
+presents an example), bullet points without accompanying
+text, emojis, or are simply empty.                                            In summary, we classified a code review comment
+                                                                         as suggesting an understandability improvement if it fits
+                                                                         within one of the following cases: (i) the intent to improve
+3.3   Identifying Understandability Improvements
+                                                                         understandability is explicit in the text, (ii) it is a comment
+To answer the research questions of this study, we first clas-           about aspects that do not affect the compilation or the execu-
+sified whether code review comments suggest understand-                  tion of the program, i.e., code comments or code formatting,
+ability improvements or not. In this classification process,             (iii) the refactoring that it suggests is motivated mainly by
+we need to identify the intention of the reviewer based                  improving understandability, as discussed by Fowler [53],
+on their comment. Sometimes, this intention is clear and                 or (iv) it does not explicitly state its intent, but it makes
+explicit in the comment text. For example, in Figure 5,                  a suggestion that is very similar to a comment where the
+the reviewer asked to rename a local variable because “it                intent is explicit, i.e., the suggestions for improvement re-
+will help code more readable down into method [...]”. However,           quire the same change, e.g., in an explicit code review com-
+other comments are terse, and the intent is not explicitly               ment, the type Boolean is replaced by boolean to ensure
+stated. For example, in Figure 6, the reviewer asks to rename            consistency [key=1201], similarly, in an implicit code review
+deadBrokers to deadBrokersWithUnknownCapacity but the in-                comment, the type LinkedList is replaced by ArrayList
+tention is not explicit. Although the reviewer does not write            [key=1089] for the same reason. In a code review comment,
+it, the most likely motivation is that the new name helps                the reviewer could suggest an improvement that impacts
+developers better understand the purpose of this variable.               multiple factors, such as performance and understandabil-
+     When the inline comment is not enough, it is necessary              ity. We also consider those types of improvements that
+to consider more information in the context, i.e., the replies           impact understandability. Each comment, including those
+  6. The list of selected projects can be found at https://codeupcrc.
+                                                                         where the reviewer explicitly mentioned that it pertains
+github.io/projects.html                                                  to understandability or those that are naturally about un-
+  7. https://docs.github.com/en/graphql                                  derstandability (as described in Section 2.2), was classified
+                                                                                                                                    8
+
+by at least two authors. Conflicts between answers were
+resolved through meetings involving at least five authors. In
+the meetings, we analyzed the conflicts through discussion
+sessions and resolutions were achieved by consensus. When
+consensus could not be achieved, the code review comment
+was discarded and a new one was selected for labeling.
+In the remainder of this section, we explain the types of
+comments that required additional analysis.                           Fig. 5: The reviewer explicitly asks for understandability
+        3.3.0.1 Ambiguous intention comments: There are               improvement [63].
+scenarios where it is impossible to discern the intention of
+the reviewer. For example, in a comment [54], the reviewer
+suggested “better to use putString”. This suggestion can be
+related to improving code understandability or improving
+performance. There is no evidence of any intention, neither
+in replies nor patches. If we cannot establish intention with
+some confidence, we discard the comment.
+        3.3.0.2 Repetition comments: Similarly, in other
+                                                                      Fig. 6: The reviewer implicitly asks for understandability
+code review comments, we find tiny comments, e.g.,
+                                                                      improvement [64].
+“ditto” [55] and “same here” [56], that do not bring any
+information about the reviewer’s intention. It would be
+necessary to look at another code review comment to get
+the context of the comment, and looking for the original
+comment could be time-consuming. Since these comments
+account for approximately 1% of our sample, we decided
+to disregard them. However, we kept them in the dataset
+labeled as “Discard” for future research.
+        3.3.0.3 Question comments: Sometimes reviewers
+use the code review comments to ask questions to the PR
+author. On the one hand, there are clarifying questions                   Fig. 7: The intention of the comment is ambiguous [65].
+where reviewers attempt to understand the purpose of the
+code snippet under review (e.g., “Why is this needed?” [57],          gestions based on linters to improve understandability. For
+“Why protected?” [58]). In those scenarios, we considered             example, the bot named codeclimate created the following
+that the comment does not suggest an understandabil-                  code review comment [62]: “Method buildMenu has 59 lines
+ity improvement. On the other hand, we found scenar-                  of code (exceeds 30 allowed). Consider refactoring”. Although
+ios where reviewers suggested understandability improve-              the suggestion of the code review comment is related to
+ments through questions. For example, in a code review                understandability improvement, we discarded these code
+comment, the reviewer asked “wrong indent?” [59]. This                review comments because there was not an evaluation by a
+suggestion, phrased as a question, indicates a problem with           human specialist (i.e., a reviewer). Previous work [39] has
+how the code is formatted. This kind of code review ques-             shown that many recommendations made by linter bots are
+tion is considered related to understandability improve-              ignored by reviewers.
+ments. Previous work [60] has shown that comments with
+different purposes are often phrased as questions.                    4     R ESULTS
+        3.3.0.4 Multi-purpose comments: In other code re-
+                                                                      4.1 How often do reviewers ask for code understand-
+views, the reviewers suggested changes with multiple pur-
+                                                                      ability improvements in code review comments? (RQ1)
+poses. In one example [61], the reviewer commented: “[...]
+Suggested change if (path.contains("b/")) { → if                      Table 2 presents the results of our manual classification of
+(path.startsWith("b/")) { for better performance [...]                code review comments in terms of whether they pertain
+and preferably change the name of the urlString variable back         to code understandability or not. Each row indicates the
+to just url” [key=21518 ]. Although the reviewer suggested            number of comments per scope, which can be related to
+a change to improve performance, they also asked to re-               (i) executable source code (C ODE), i.e., excluding comments
+name an identifier intending to improve the code under-               and blank lines and focusing on the instructions that will
+standability. This kind of code review comment was con-               actually be compiled and executed, (ii) high-level API doc-
+sidered related to understandability improvements. In our             umentation (J AVADOC), (iii) regular source code comments
+understanding, it is a single comment suggesting multiple             (C OMMENT), (iv) a string value or expression with strings
+different changes.                                                    (S TRING LITERAL), or (v) O THERS (e.g., annotations). We
+        3.3.0.5 Bot comments: Finally, we found code re-              separated the comments to generate documentation and
+view comments introduced by bots. Some of them are sug-               regular comments because they have different character-
+                                                                      istics. J AVADOC is well structured, has special annotations
+                                                                      to reference specific elements in the documentation, and is
+  8. Hereafter, we use the reference [key=####] to represent a link
+[https://codeupcrc.github.io?key=####], pointing to the code review   used to explain classes, attributes, and methods, often for
+comments in our dataset.                                              readers who are not looking at the code. C OMMENT has
+                                                                                                                                                 9
+
+no prescribed structure and is used to explain the code or            TABLE 2: Classification of the 2,401 code review comments
+the rationale behind it in a more direct manner for readers           in terms of whether they pertain to code understandability
+who are directly looking at a specific part of the code. Also,        or not. The two groups are further divided based on the
+we analyzed S TRING LITERALs separately because these                 scopes to which the code review comments refer. The per-
+literals may give developers hints about program behavior,            centages for each row add up to 100%.
+e.g., in log messages, but they are not comments. Finally,                                              Is it about understandability?
+annotations, log levels, and other special cases are analyzed            Scope                       Yes               No           Discarded
+separately. We did not consider annotations to be part of                C ODE (1,974)          33.49%   (661)   63.93% (1,262)     2.58% (51)
+                                                                         J AVADOC (182)         86.26%   (157)   12.09%    (22)     1.65% (3)
+the executable source code because, according to the Java                C OMMENTS (110)        78.18%    (86)   20.91%    (23)     0.91% (1)
+Language Specification9 , they have “no effect at run time”.             S TRING LITERAL (81)   80.25%    (65)   18.52%    (15)     1.23% (1)
+                                                                         O THER (54)            79.63%    (43)   20.37%    (11)        0% (0)
+    In the analyzed sample, we found out that 1,012 (42.15%)
+of the code review comments include suggestions, requests,               Total (2,401)          42.15% (1,012)   55.52% (1,333)     2.33% (56)
+or discussions about code understandability improvements.
+This amounts to more than two out of every five code                  the documentation is not the target of the discussion but the
+reviews. This result emphasizes that reviewers are worried            code design related to this documentation.
+not only about the correctness and performance of the code                Similarly to J AVADOC, 78.18% (86 out of 110) of the code
+but also whether the developers are following the best                review comments in the scope of C OMMENTS are related
+practices of programming and code understandability. We               to understandability improvements. The reviewers suggest
+check whether comments suggesting code understandabil-                the addition (e.g., “Please add comments where you see fit.”
+ity improvements differ from other comments by comparing              [key=1287]), improvement (e.g., “Nit: Typo shake → sake”
+their sizes. If one kind of comment tends to be significantly         [key=182]), or removal (e.g., “we should remove this comment”
+shorter, this may suggest that developers are willing to              [key=1062]) of comments in the source code. Conversely,
+dedicate less time and effort to it. The 1,012 comments               some of the code review comments that impact comments
+suggesting code understandability improvements tend to                do not relate to understandability improvements. They are
+be shorter (99.21 characters) than those not related to under-        related to comments with tags such as TODO and FIXME.
+standability (117.70 characters). The difference is statistically         In the analyzed code review comments related to S TRING
+significant (Mann-Whitney U, p = 0.000001) but the effect             LITERAL scope, 80.25% (65 out of 81) can be considered
+size is negligible (Cliff’s Delta, -0.12). As for the associated      code understandability improvements. In those code re-
+source code lines, i.e., the lines where the inline code re-          views, the reviewers suggest changes to string literals to
+views were added, the mean character counts are 50.52 and             improve exception messages (e.g., “Can you add what the
+54.15 and the difference is not statistically significant (Mann-      expected and actual partition path was in the exception mes-
+Whitney U, p = 0.07). Overall, we can say that the difference         sage ?” [key=177]), assertion error messages (e.g., “Can
+between comments and source lines of code associated with             you please change this to be cookieMaxAge cannot be zero?”
+understandability improvements and those that are not is              [key=2096]), logging messages (e.g., “I suggest that you
+inconsequential.                                                      can change to logger.error("unknown error", e);”
+    Considering all code review comments analyzed (2,401),            [key=2294]), and other method arguments (e.g., “The number
+the majority of them (82.2%, 1,974 out of 2,401) are in the           of threads...ingest → This property is deprecated since 2.1.0. The
+scope of C ODE. Among the 1,974 code review comments                  number of threads...” [key=60]). In contrast, in the code review
+whose scope is C ODE, 33.49% (661 out of 1,974) are related           comments unrelated to understandability improvements,
+to code understandability improvements. The reviewers in              the string literals are arguments used to send messages to
+these code review comments have asked code submitters                 the end user (e.g., “Let’s change the description to “List of
+to rename identifiers, remove unnecessary code elements,              transports the GAPIC can use...” [key=1008]), the paths of a
+use alternative code constructs, and others. We discuss the           resource on disk (e.g., “I think you have a typo in the filename:
+content of those code review comments in Section 4.2. The             the file is: ClangAnalzer.txt the fileName is: ClangAnalyzer.txt”
+results support other studies [11], [12] that indicate that           [key=1259]), and tags used on the header of a protocol
+improving code quality is one of the main goals of code               (e.g., “TFB → ServiceTalk...” in .addHeader("Server",
+reviews.                                                              "TFB") [key=2157]).
+    When we look only at the code review comments in the                  In the O THER scope, the code review comments are
+scope of J AVADOC, 86.26% (157 out of 182) of them are about          related to annotations and logging (excluding comments
+understandability improvements. Generally, reviewers ask              that directly refer to string literals). From those, 79.63%
+code change submitters to add Javadoc documentation (e.g.,            (43 out of 54) are related to understandability improve-
+“Missing javadoc” [key=747]), improve it (e.g., “@link on this        ments. The reviewers ask code change submitters to change
+and the next line please” [key=802]), or fix the description (e.g.,   (including adding and removing) logs and their config-
+“appear → appears” [key=819]). We found examples of code              uration (e.g., “Do we need this log here or was it just for
+review comments related to Javadoc that do not suggest                debugging?” [key=2372], “Use log.info?” [key=1896]) and
+understandability improvements. For example, the code                 add documentation annotations (e.g., “@PublicAPI instead
+review comment “what if these objects don’t have a common             of @beta” [key=839]). We also found code review com-
+ID or don’t have a common event time?” [key=26] discusses             ments that not support understanding the source code
+the design solution described on the Javadoc. In this case,           where reviewers ask for modifications in annotations that
+                                                                      may be related to bugs (“Does the lazy inject actually work
+  9. https://docs.oracle.com/javase/specs/jls/se12/html/index.html    since AuditEventLoggingFacade is not a lazy bean?”
+                                                                                                                                      10
+
+[key=1545]) or modifications that are related to release              unnecessary comments (e.g., “What does the comment mean?
+notes (“An entry in CHANGES NEXT RELEASE describing                   Or can it be removed?” [key=321]). Furthermore, the review-
+the fix...should be included” [key=2161]), for example.               ers indicated incorrect or missing documentation about the
+                                                                      status of methods using the Java annotation @Deprecated.
+ Answer to RQ1. We found that 42.15% (1,012/2,401) of the             More than half (45/86 = 52.3%) of the occurrences of this
+ selected discussions are related to code understandability
+ improvements. Among them, 65.31% (661/1,012) are about               understandability smell are related to Method (39 in decla-
+ executable source code, almost 24,01% (157+86 out of 1,012)          ration clause and six in body block) and about 17.4% (15/86)
+ are related to comments, and more than 10.67% (65+43 out of          are related to Class. We find more understandability smells
+ 1,012) are related to literal strings, annotations, and others.      about code documentation in these places because, in Java,
+ Approximately one out of every three code review comments            code documentation is frequently written in methods and
+ that refer to executable source code is about understandabil-        classes.
+ ity. Furthermore, four out of five code review comments that
+                                                                          The second most popular understandability smell is B AD
+ refer to elements other than executable code in a program
+ source file pertain to understandability improvements.               IDENTIFIER , which appears in 20.3% (78 out of 385) of the
+                                                                      code review comments. The reviewers pointed out concerns
+ Implications. In previous research [27], [28], the researchers       related to the content of the identifier name and its style.
+ identified ways to improve code understandability at the             A good identifier can help better communicate the content
+ level of files by analyzing commit messages. Our findings            or its functionality, e.g., the variable n that represents the
+ suggest that researchers and developers can also learn from          person’s name is better represented by identifier name. We
+ code reviews to improve code understandability at the level          highlight code review comments indicating typos in the
+ of source code snippets. Moreover, our results demonstrate           identifier names (e.g., “Typo in variable name” [key=811]);
+ that automated tools that enhance code understandability             parameter names in upper case (e.g., “Would ... making ... the
+ can have a significant impact in reducing developers’ ef-            MBI parameter in createPatientResource() lowercase? Might get
+ fort during code reviews. Additionally, our work makes it            mistaken for constants...” [key=579]); method names that do
+ clear that improving code understandability requires tools           not explain functionality (e.g., “This method actually returns
+ that work with both programming language and natural                 the Requirements class, not the annotation, so better call it
+ language elements.                                                   getArtifactRequirements()” [key=535]); and variable
+                                                                      names incompatible with their type (e.g., “Rename the field as
+                                                                      well? Since it’s now an executor and not a handler...” [key=340]).
+4.2 What are the main issues pertaining to code under-                Most of the occurrences of this kind of understandability
+standability in code review? (RQ2)                                    smell are in Method (32 in the declaration clause and two in
+Table 3 shows the frequency of the understandability smell            the body block), Attribute (14), Variable (11), and Class (10).
+(rows) found in our sample and where they are in the                      Another understandability smell is COMPLEX , LONG ,
+source code (columns), with each cell matching the under-             OR INADEQUATE LOGIC . The reviewers pointed out con-
+standability smell in a specific place in the source code.            cerns about complex and long alternatives to writing ex-
+We try to keep the names of the understandability smells              pressions, code constructs, and other statements. For in-
+as self-explanatory as possible. Therefore, we sometimes              stance, the boolean expression map.keySet().size()
+employ longish names such as “Incomplete or inadequate code           > 0 could be replaced by a unique method invocation,
+documentation”, instead of more typical smell names such              !map.isEmpty(). We find this category in 18.2% (70/385)
+as “Shotgun surgery” and “Comments” [53]. We categorized              of the observations in our sample. The reviewers have
+eight kinds of understandability smells found in 16 places            identified redundant method calls (e.g., “Looks like it could
+in the source code. More specifically, we encountered the             be simplified” [key=83]); and long method implementation
+following places (with the number of occurrences in paren-            (e.g., “Maybe you can refactor this logic into a different method,
+theses): Method (130), Call (55), Literal (40), Class (36),           it makes this method quite large...” [key=1413]). We also found
+Attribute (29), Conditional (27), Variable (22), Parameter            comments suggesting that anonymous inner classes are too
+(11), Import (8), Operation (7), Try-Catch (7), Loop (5),             verbose (e.g., “With a lambda, this would be slightly shorter”
+Annotation (5), Interface (1), Object (1), Package (1). The           [key=58]); and complex if-else implementation with re-
+categories with less than 10 instances of understandability           peated code (“I think a better way to write this method is: [du-
+smells were grouped under Others in the table.                        plicate code within if-else out of if-else statement]” [key=1878]).
+    The most prevalent understandability smell is I NCOM -            Moreover, reviewers indicated concerns related to using API
+PLETE OR INADEQUATE CODE DOCUMENTATION, which ap-                     classes, such as using a class as type instead of its primitive
+pears in 22.3% (86 out of 385) of the code review comments.           type (e.g., “Why Boolean and not boolean?” [key=1201]).
+It groups the cases where the concerns are in documentation           This smell is more frequent in Call (27), Methods (eleven in
+and code comments. There are comments where review-                   the body and two in the declaration clause), and Condition-
+ers point out concerns related to Javadoc, inline code                als (nine).
+comments, and Java annotations. In general, the reviewers                 U NNECESSARY CODE occurs in 13.2% (51 out of 385)
+indicated missing documentation (e.g., “Add a comment indi-           of the code review comments in our sample. This under-
+cating whether start/end are inclusive or exclusive” [key=2020]);     standability smell involves snippets of source code that
+incorrect documentation (e.g., “Minor: which is available...”         can be safely removed without altering the functionality
+[key=1115]); incorrect placement of documentation (e.g.,              of the code. This goes beyond simpler scenarios, such as
+“Think you may have intended to have the below comment here           textually duplicated or dead code. For example, in the
+too, or only here since it’s the first occurrence” [key=1724]); and   code snippet V1=2; V1+=1; V1=1, the two first state-
+                                                                                                                                                                                                    11
+
+TABLE 3: The frequency of understandability smells found by reviewers and where they are in the source code. For the code
+elements marked with an asterisk, the understandability smells were found in their declaration, access, or implementation.
+                                                                                                                                            l                           *
+                                                                                                                      te
+                                                                                                                         *             na               e*            er
+                                                                        d*               al                        bu               tio               bl           et               s
+                                                                      ho       ll      er            s            i               di              ria          ra
+                                                                                                                                                                  m            er              al
+                                                                 et                   t           as         tt r              n                                             th            t
+Understandability smells                                        M            Ca     Li          Cl       A                   Co                 Va           Pa             O           To
+I NCOMPLETE OR INADEQUATE CODE DOCUMENTATION                    45             4      1          15       3                        9             3            0              6           86
+B AD IDENTIFIER                                                 34             0      0          10      14                        0             11           9              0           78
+C OMPLEX , LONG , OR INADEQUATE LOGIC                           13            27      0           2       3                        9             4            1             11           70
+U NNECESSARY C ODE                                              17             8      1           2       8                        3             3            0              9           51
+I NCONSISTENT OR DISRUPTED FORMATTING                           17             4      1           7       1                        6             0            0              6           42
+W RONG , MISSING , OR INADEQUATE STRING EXPRESSION OR LITERAL    0             1     29           0       0                        0             0            0              1           31
+I NADEQUATE LOGGING AND MONITORING                               3            11      1           0       0                        0             1            0              2           18
+M ISSING CONSTANT USAGE                                          1             0      7           0       0                        0             0            1              0            9
+Total                                                           130           55     40          36      29                       27             22           11            35          385
+
+
+ments do not influence the final value of V1 but may still                                string messages (e.g., “... iterable, not iterator...” [key=2365]);
+impose a cognitive load on the reader and, in the worst                                   different styles of string message (e.g., “not supported sounds
+case, may cause her to misjudge the final value of V1.                                    a bit better than ”unsupported”” [key=2287]); and missing
+Among other elements, the reviewers identified unused                                     string messages (e.g., “Maybe an explanation here would be
+imports, classes, methods, variables, and constants (e.g.,                                nice?” [key=1345]). Moreover, the reviewers pointed out
+“unused constant” [key=816]); and commented out source                                    the string value in a parameter that does not match the
+code (e.g., “commented code” [key=1074]). Other concerns                                  code conventions (e.g., “Suggested change @Column(name
+are related to redundant code, such as unnecessary use of                                 = "END_TEXT") → @Column(name = "end_text")”
+this (e.g., “nit: this. is redundant here” [key=1871]); unnec-                            [key=1418]); and a typo in a string value (“Suggested
+essary intermediate variable (e.g., “Could be better to have                              change        operationId = "aproveInboxItemById"
+the full clientSession.newRequest()...execute()                                           →          operationId = "approveInboxItemById"”
+to avoid having loadCsv variable” [key=1561]); and seman-                                 [key=1642]). By definition, all comments where this smell
+tically duplicate method (e.g., “Is this necessary given that                             manifests pertain to concerns found in existing literals
+super.getDependencies does the same?” [key=1741]). We en-                                 during code review. There are two exceptions to this
+counter this smell more often in Method (17 – twelve in                                   pattern: when the smell is found in a throw invocation
+the declaration clause and five in the body block), Call (8),                             without a literal, and when the format method is used to
+and Attribute (8). These three comprise more than half of                                 construct a string. In the first case, we identify the Try-Catch
+the instances in this category.                                                           node as the source of the smell, and in the second case, we
+    In 10.9% (42/385) of the code review comments the                                     consider the Call node.
+reviewers identified INCONSISTENT OR DISRUPTED FORMAT-                                        The instances of the INADEQUATE LOGGING AND MONI -
+TING . This understandability smell is linked to spaces,                                  TORING smell account for 4.7% (18/385) of the code review
+braces, parentheses, and formatting styles. The formatting                                comments. This comprises scenarios related to the logs and
+elements can help the reader to identify and delimiter                                    exceptions statements. These statements communicate to
+the elements in source code, e.g., the use of curly braces                                developers information about system behavior at run time,
+({}) to define the scope of a block. This includes com-                                   e.g., for debugging and monitoring purposes. This informa-
+ments that identified missing vertical and horizontal space                               tion can also help developers to make sense of the code
+(e.g., “more spaces please” [key=683]); missing parentheses                               functionality around these statements. In these comments,
+to make expression evaluation order explicit (e.g., “Sug-                                 reviewers indicated concerns about the usage of logs and
+gested change ...requiresMaintenance() && null                                            exceptions, such as missing log (“should we log this? just to
+!= u.getTech() → ...requiresMaintenance() &&                                              make investigation easier” [key=1135]); unnecessary log (“In
+(null != u.getTech())” [key=1453]); and missing                                           my opinion, we do not need this log. WDYT?” [key=2337]);
+brackets and line breaks. The reviewers also pointed out                                  incoherent log levels (e.g., “...this is currently logging every
+extraneous vertical and horizontal spaces and parentheses                                 second in test. Can this be changed to debug?” [key=574]); and
+(e.g., “A little too many parens here” [key=1446]). Additionally,                         throwing exceptions of generic types (e.g., “This is not a very
+we run into comments that indicate code formatting that                                   good exception, let’s tell the developer what is wrong in each case
+does not match formatting guidelines, e.g., in if statements,                             and how they could fix it” [key=919]). Most of the instances
+“IF statement should be on it’s own line” [key=2024]). These                              of this understandability smell are related to Call (11/18)
+cases of inadequate formatting are most frequently 57.1%                                  statements. This smell does not cover issues with text literals
+(24/42) found in Method (17 – seven in the declaration                                    used as log messages, as they are instances of the W RONG ,
+clause and ten in the body) and Class (7).                                                MISSING , OR INADEQUATE STRING EXPRESSION OR LITERAL
+    We find in 8.1% (31/385) of our sample code review                                    smell.
+comments related to W RONG , MISSING , OR INADEQUATE                                          Finally, 2.3% (9/385) of the code review comments are
+STRING EXPRESSION OR LITERAL. This understandability                                      about M ISSING CONSTANT USAGE. Constants are often used
+smell pertains to concerns regarding natural language                                     to indicate the purpose of literals with a specific meaning
+string messages such as those used as arguments in                                        in a program, e.g., using a constant named PI instead of
+exceptions or logs, as well as scenarios involving the style                              its actual value. Therefore, one of their goals is to improve
+and typographical correctness of string values. In these                                  understandability. In these code reviews, the reviewers
+comments, the reviewers indicated incorrect words in                                      pointed out the direct use of literal values (e.g., “It would
+                                                                                                                                          12
+
+be better to declare this Strings as constants” [key=2163]),       TABLE 4: Frequency of accepted vs. not accepted code
+even when there are constants available (e.g., “...You should      review suggestions with and without understandability im-
+also be able to reuse the constants declared at the beginning      provements
+of ConflictsWithScrutinizer” [key=1687]). By defi-                                                        Understandability Improvement
+                                                                     Contingency table (770)
+nition, reviewers found these understandability smells in                                                 Presence              Absence
+Literals.                                                            Acceptability
+                                                                                              Accepted        323                  254
+                                                                                           Not accepted        62                  131
+ Answer to RQ2. In our representative sample of 385 code re-
+ views, we found eight categories of understandability smells.
+ M ISSING OR INADEQUATE CODE DOCUMENTATION (86), B AD
+ IDENTIFIER (78), and C OMPLEX , LONG , OR INADEQUATE
+ LOGIC (70) comprise more than 60% of the understandability        they did not agree with the reviewer’s suggestion. Instead,
+ smells in our sample. They are related to 16 source code          they implemented what they believed was the best alter-
+ element types. The three most frequent places, i.e., Method       native without any discussion. For instance, in one code
+ (130), Call (55), and Literal (40), account for more than 58%     review, the reviewer suggested “rename module_uuid to
+ of the code reviews.                                              assembly_uuid” [key=1935], but the developer renamed
+ Implications. We discovered a variety of issues affecting         it to assemblyId. Also, in eight of the analyzed code
+ code understandability and grouped them into understand-          reviews developers answered that they accepted the sug-
+ ability smells. Automated solutions to improve code under-        gestion, but we cannot find any change, even when the
+ standability must deal with these different kinds of issues,      developer answered “changed” [key=1601]. In 25 instances
+ with varying levels of context dependence, and tackling           of suggestions of code understandability improvements
+ multiple modalities: source code as well as unstructured          that were not accepted, the developers argued in favor
+ and structured natural language. The results suggest that         of their alternative. For example, during a code review, a
+ tools based on LLMs have to be trained in these different         reviewer suggests initializing a boolean attribute with the
+ languages, as some smells manifest only in Java source            value false [key=854], but the developer argues that it is
+ code (e.g., U NNECESSARY CODE) whereas others occur in            redundant because the default value of a boolean variable is
+ natural language text or identifiers, e.g., B AD IDENTIFIER and   already false.
+ I NCOMPLETE OR INADEQUATE CODE DOCUMENTATION.
+                                                                       Developers have given a similar level of attention to
+                                                                   the understandability smells. For example, there were 71
+4.3 How likely are understandability improvement com-
+                                                                   patches aiming to address B AD IDENTIFIER (Table 5 provides
+ments to be accepted? (RQ3)
+                                                                   the data for the remaining smells) and 78 instances of that
+To answer this question, we analyzed a set of 385 code re-         smell (the rightmost column of Table 3). This means that
+view comments related to code understandability improve-           91% of the instances of this smell resulted in an accepted
+ments (the same set analyzed in Section 4.2) and added             patch with an improvement, the highest percentage among
+another random sample of 385 code review comments not              the understandability smells. Overall, 83.9% (323/385) of
+related to code understandability. The code review com-            the code review comments triggered code understandability
+ments were classified based on two properties: (i) whether         improvements. For M ISSING CONSTANT USAGE, the percent-
+they suggested an improvement for understandability, and           age was 66.7% (6/9), the lowest among the smells and the
+(ii) whether the suggested changes were accepted or not.           most distant from the mean of 82.13%. Calculation of the
+The results of this classification are presented in Table 4.       odds ratio considering the groups where this latter smell
+This contingency table allows us to investigate the odds           was fixed vs. not fixed and where any other smell was fixed
+of accepting a code review comment, given that it is an            vs. not fixed suggests that the difference is not statistically
+understandability improvement.                                     significant (OR=0.37, p=0.15).
+     We verified whether code review comments that include
+suggestions for improving code understandability are more
+likely to be accepted by developers than comments that do           Answer to RQ3. Code review comments that suggest under-
+                                                                    standability improvements are significantly more likely to be
+not include such suggestions. Our analysis revealed that            accepted than comments that do not address understandabil-
+code review comments that suggest understandability im-             ity improvements. The majority (83.9%) of the suggestions
+provements are more likely to be accepted than comments             for code understandability improvements in code review
+that do not address understandability: the odds ratio is 2.69,      comments were accepted. Less than 1% acknowledged the
+with a confidence interval [1.71, 4.22] for a 99% confidence        need for improvement but applied another solution. How-
+level. We also performed a Chi-Square test to evaluate              ever, in 16.1% of the cases, the pull request authors did not
+                                                                    accept the suggestion. In addition, the smells received similar
+the relationship between these two variables and found a
+                                                                    levels of attention, in terms of the percentage of instances for
+significant correlation between them. In fact, suggestions for      which an understandability improvement was accepted.
+improving code understandability were found to be signifi-
+cantly more likely to be accepted than comments unrelated           Implications. Developers typically accept suggestions for
+to understandability (χ2 (1, N = 440) = 32.9, p < 0.01).            improving code understandability during the code review
+     Additionally, we conducted a detailed analysis of the          process. These suggestions and the changes related to them
+code reviews that suggested improvements in understand-             can be valuable and trustworthy data for devising automated
+ability. We observed that in three instances where un-              approaches to improve code understandability. For example,
+derstandability improvements were suggested, the devel-             they can support few-shot learning when leveraging LLMs
+opers accepted that the code needed improvement, but                to make code more readable.
+                                                                                                                                13
+
+4.4 What code changes are found in understandability               Complex, long, or inadequate logic. 54 patches extracted,
+improvements? (RQ4)                                                moved, or replaced complex, lengthy, or inconsistent
+                                                                   code in an attempt to simplify it. Among these, five
+We examined 323 code review comments from the results              patches extracted parts of a method to reduce its length
+of our analysis in Section 4.3 to assess improvements in           (e.g., extracting a method). Also, developers applied
+code understandability. We sorted and categorized the im-          16 patches that replaced a usage of an external API or
+provements made to address the understandability smells            adopted an external API to simplify complex code, such
+in these reviews, and the results are presented in Table 5.        as replacing a chain of method invocations by a unique
+The patches are organized based on the understandability           API method invocation [key=1700]. In 14 other scenarios,
+smells presented in Section 4.2, e.g., U NNECESSARY CODE           developers replaced expressions in source code by an
+and B AD IDENTIFIER. The similar patches in each category          alternative that better communicates the functionality of
+were organized in groups, e.g., ,→ Unused code. In Ta-             the code, e.g., replacing boolean expression by a call to
+ble 5, an arrow (,→) represents a group and its name is            method isEmpty() [key=626]. Additionally, developers
+underlined. We also combined the patches based on the              applied patches that replace the use of a construct in
+action taken by the developer and we created a second              eight cases, such as replacing an anonymous inner class
+level of indentation on the table to avoid repetition of text,     by a lambda [key=1971] or replacing a lambda with
+e.g., explain the functionality of a method. Patches appear-       conditional by an if statement [key=1892]. Finally, the
+ing three or more times are marked with the clubsuit symbol        developers applied five patches to organize the use of APIs
+(♣) to indicate their higher frequency. In the remainder of        in a source code file, such as expanding imports instead
+this section, we discuss the understandability improvements        of using wildcards [key=2203], and adding an import
+that were applied for each understandability smell.                statement to avoid the use of the fully-qualified name of
+                                                                   a class ( TileSourceManager.TileSourceTemplate
+Incomplete or inadequate code documentation. We found
+71 patches that added, removed, enhanced, or fixed Javadoc
+                                                                   template        →     import ...TileSourceManager;
+                                                                   private TileSourceTemplate template
+and code comments in the source code. The majority of them
+                                                                   [key=1779]).
+(15) are patches that improved the grammar or fixed a typo
+in existing Javadoc (e.g., “memory which available” → “mem-        Unnecessary Code. A total of 43 patches eliminated code
+ory which is available’ [key=1115]). Also nine patches added       that has no impact on the execution. Patches that removed
+Javadoc documentation to a method or class where it was            unused code include 24 instances of code elements that
+absent (e.g., methods [key=756] and classes [key=2244]). In        are not being referred to (e.g., “unused constant.”) and five
+other patches related to Javadoc, the developers enhanced          instances of commented out code [key=444]. Also, the devel-
+the description of code elements (e.g., “Time spent for waiting    opers applied patches that removed duplicated code (e.g.,
+a task to be completed.” → “This time spent while waiting          equivalent methods [key=325]) or processing (e.g., iteration
+for the task to be completed is being recorded in this counter.”   happening twice on the same list [key=536]) 13 times, and
+[key=151]) and added tags and hyperlinks (e.g., “@link             different constants with value null [key=949]. There are
+JobModel” [key=294]). In terms of changes applied to code          also two patches that inline temporary variables [key=1561].
+comments, there are patches that added code comments to
+explain the choice of an attribute type [key=2180], removed        Inconsistent or disrupted formatting. 37 patches organized
+TODO code comments for completed tasks [key=2387], and             and standardized code formatting. These patches manage
+transformed a code comment into Javadoc [key=1625]. Fi-            the use of formatting characters such as space and braces, as
+nally, four patches added or removed annotation related to         well as formatting styles. In 26 of the patches, the developers
+documentation, e.g., Deprecated [key=2263].                        added space between different code elements (e.g., horizontal
+                                                                   space [key=493] and vertical space [key=2050]); and removed
+Bad identifier. 71 patches changed an identifier to                space between related code statements (e.g., for declaration
+better communicate what it means in the source                     and the first statement of the block [key=1660]) or extra space
+code. These patches involved changes regarding both                between code elements in the same expression (e.g., between
+the content and style of the identifiers. To address               the point and the invoked method in an expression [key=1754]).
+concerns related to the content of the identifiers, the            Additionally, developers added other structuring characters
+majority (50) of the patches focused on clarifying                 (e.g., braces and parentheses) to highlight the region of a
+their meaning (e.g., String getDates → String                      code element (e.g., block [key=1078] or operand [key=1453]).
+getDateRange [key=1042]) and expressing the identifier’s           Finally, in eight cases developers changed the order or
+type (e.g., RequestExecutor requestHandler →                       moved code elements aiming to apply a formatting style,
+RequestExecutor requestExecutor                [key=340]).         such as keeping the code elements in their own lines (e.g.,
+Additionally,    eleven   patches    fixed  typos    (e.g.,        body of if statement in its own line [key=2024]) and arranging
+verifyEntityTypeMigrationInValidEntities                           method declarations [key=1860].
+→ verifyEntityTypeMigrationInvalidEntities
+[key=1107]) and four adjusted the identifiers to adhere            Wrong, missing, or inadequate string expression or literal.
+to the conventions adopted by the project (e.g., boolean           26 patches addressed concerns related to incorrect, missing,
+isActive → boolean active [key=453]). Furthermore,                 or inadequate string expressions or literals. These patches
+we observed six patches that aimed to improve the style            involve adding, fixing, extending, or changing strings to
+of the identifiers, such as converting them to lowercase           better suit the code context and improve code understand-
+[key=579] or camelcase [key=1753].                                 ability. In six of these patches, the developers replaced
+                                                                                                                                                                          14
+
+    TABLE 5: Understandability smell categories and the im-                               Continued from the previous column
+
+    provement patches found in the 323 accepted code reviews.                             Category ,→ Group or type of improvement patches (# found)
+    The patches with three or more instances are marked with                              Unnecessary code (43)
+    the symbol ♣. In the PDF version, each patch links to an                              ,→ Unused code: (24)
+                                                                                            – Remove non-referred constant, import, class, method, or variable (19) ♣
+    example.                                                                                – Remove commented out code statements (5) ♣
+                                                                                          ,→ Redundant code: (19)
+                                                                                            – Remove duplicated code or processing (13) ♣
+Category ,→ Group or type of improvement patches (# found)
+                                                                                            – Remove null constants (1)
+Incomplete or inadequate code documentation (71)                                            – Remove type parameter for inferrable type (1)
+,→ Changes related to Javadoc: (50)                                                         – Remove this (1)
+                                                                                            – Remove imported type from fully qualified names (1)
+  – Add new Javadoc block to describe the functionality of a code element (9) ♣
+                                                                                            – Inline temporary (2)
+  – Add new tag and hyperlink to existing Javadoc (3) ♣
+  – Add text to existing Javadoc to                                                       Inconsistent or disrupted formatting (37)
+     - explain the functionality of a method (5) ♣                                        ,→ Space usage: (26)
+     - explain internal implementation details of a method (2)                              – Add or remove horizontal spacing (13) ♣
+     - improve explanation about code element (2)                                           – Add or remove vertical spacing (13) ♣
+     - explain reason for deprecation (1)                                                 ,→ Formatting element visibility: (3)
+  – Change text in existing Javadoc to
+                                                                                            – Add braces in a single statement block (2)
+     - improve grammar or fix a typo (15) ♣
+                                                                                            – Add parentheses to compound logical expressions (1)
+     - improve explanation about functionality of a method (6) ♣
+                                                                                          ,→ Formatting style: (8)
+     - update copyright (3) ♣
+     - better explain the purpose of an annotation (1)                                      – Add line break to a long statement line (1)
+     - fix the name of a code element to which it refers (1)                                – Remove parentheses in logical expression operands and move them to separated lines (1)
+     - make it more concise (1)                                                             – Change order of boolean expression operands to make null the second one (1)
+  – Move a tag of documentation to the conventional place (1)                               – Move code elements to their own line (3) ♣
+,→ Changes related to code comments: (17)                                                   – Move catch declaration to the same line of its associated try’s closing block brace (1)
+                                                                                            – Move methods to be in call ordering (1)
+  – Add code comment to
+     - explain an expression (3) ♣                                                        Wrong, missing, or inadequate string expression or literal (26)
+     - explain each part of a test (2)                                                    ,→ Add a message to an exception (2)
+     - explain the type of an attribute (1)                                               ,→ Replace use of the format method by string concatenation (1)
+  – Remove TODO code comment for tasks that have already been performed (2)               ,→ Changes related to a natural language string literal: (18)
+  – Remove a useless code comment (2)                                                       – Fix an incorrect string literal (6) ♣
+  – Change code comment to better explain the associated code element (5) ♣                 – Replace a string literal by a different meaning or a synonymous (6) ♣
+  – Change text in code comment to fix typo (1)                                             – Extend a string literal (3) ♣
+  – Transform a code comment into Javadoc documentation (1)                                 – Change literal to adhere to project standards (3) ♣
+,→ Add or remove annotation related to documentation (4) ♣                                ,→ Changes related to a string magic value: (5)
+Bad identifier (71)                                                                         – Fix an incorrect value (2)
+,→ Changes related to content: (65)                                                         – Change magic value to adhere to project standards (3) ♣
+  – Modify an identifier to express the meaning or type of an element (50) ♣              Inadequate logging and monitoring (15)
+  – Modify an identifier to fix a typo (11) ♣                                             ,→ Add logging code (3) ♣
+  – Modify an identifier to be consistent with a convention (4) ♣                         ,→ Remove log (6) ♣
+,→ Changes related to style: (6)                                                          ,→ Change log settings (5) ♣
+  – Change the style of an identifier to be camelCase, capitalized, or lowercase (6) ♣    ,→ Change generic exception to a specific (1)
+Complex, long, or inadequate logic (54)                                                   Missing constant usage (6)
+,→ Extract method (6) ♣                                                                   ,→ Replace hardcoded value by a new constant (4) ♣
+,→ Extract variable (1)                                                                   ,→ Use a constant from a library (2)
+,→ Rewrite the code to avoid semantic duplicate method call (3) ♣
+,→ Move the code element to consistent place (1)
+,→ Changes related to usage of APIs: (16)
+  – Replace method calling chain by existing API (6) ♣                                   set min... → Can’t set min... [key=1149]) and string value
+  – Use a different type to be consistent with other parts of the code (5) ♣
+  – Replace usage of an external API by an internal one (2)
+                                                                                         (aproveInboxItemById → approveInboxItemById [key=1642]).
+  – Replace a set of statements by direct method in existing API (2)                     Additionally, developers changed five direct string values
+  – Replace Lists.newArrayList by Arrays.asList (1)                                      to adhere to project standards [key=2318] or fix values
+,→ Changes related to expressions: (14)
+  – Replace an expression by an alternative expression (5) ♣                             [key=39] to alternatives that adhere to project standards.
+  – Replace call to static method by instance method call (3) ♣
+  – Replace boolean expression by an alternative direct method (2)                       Inadequate logging and monitoring. Developers have fixed
+  – Replace the use of a parameter by an expression with another parameter (1)           concerns related to logging and exceptions in 15 patches.
+  – Replace indirect expression in parameter by direct value (1)
+  – Replace an expression that creates object by existing attribute (1)                  In these patches, the developers added new logging in-
+  – Invert the boolean expression to simplify it (1)                                     structions in three instances to facilitate the understanding
+,→ Changes related to constructs: (8)
+  – Replace an imperative logic by functional (3) ♣
+                                                                                         of the execution of a method or statement (e.g., adding
+  – Replace anonymous inner class or method calling chain by lambda (3) ♣                logging after processing a list [key=1135]), and removed
+  – Replace the while and switch structure by an alternative switch with default (1)     unnecessary logging in six instances (e.g., removing log for
+  – Replace short-circuit in stream by an alternative reducing operation (1)
+,→ Changes related to imports: (5)                                                       local debugging with System.out.println [key=1021]).
+  – Expand the imports (3) ♣                                                             Moreover, developers changed logging levels (e.g., from fine
+  – Remove the library name reference in fully qualifier name (2)
+                                                                                         to finest [key=1751]) and simplified parameters of formatted
+                                                         Continued on the next column    text when logging (use direct value instead of variable
+                                                                                         [key=1173]). Additionally, in one case [key=919], a patch
+                                                                                         replaced RuntimeException by a more specific type,
+    a natural language string literal by an alternative with
+                                                                                         EncodingException.
+    a different meaning (e.g., assertEquals(“not equals”... → as-
+    sertEquals(“Expected and actual values should be the same!”...                       Missing constants. In six patches developers created
+    [key=786]); or a synonym (...are unsupported → ...not sup-                           new constants or used available ones to replace literals.
+    ported [key=2287]). Furthermore, in six other patches devel-                         They created new constants to replace literal arguments
+    opers fixed incorrect words in string expressions (Can not                           in four instances (e.g., bodyParams.put("username",
+                                                                                                                                     15
+
+user) → bodyParams.put(PARAM_USERNAME, user)                      TABLE 6: Out of the 323 accepted patches addressing un-
+[key=2163]) and replaced literals by library constants in two     derstandability smells, the frequencies of patch merging,
+[key=590].                                                        reversion within the pull request where it was accepted,
+                                                                  permanence in the code based until the last version of the
+ Answer to RQ4. We found 323 patches where developers             file, and reversion at any point in the history of the project.
+ added, removed, changed, replaced, and moved code ele-                                               .
+ ments to improve code understandability. The most common         Patch status (# analyzed patches)                Yes          No
+ type of understandability improvement was modifying an
+ identifier to express the meaning of a code element (50).        Patch merged (323)                            314 (97.2%)    9 (2.8%)
+ This was followed by removing unused constants, imports,         Patch reverted in the pull request (9)          0    (0%)    9 (100%)
+ classes, methods, or variables (19), changing text in existing   Patch in the last version of the file (314)   260 (82.8%)   54 (17.2%)
+                                                                  Patch reverted in the codebase history (54)     2 (3.7%)    52 (96.3%)
+ Javadoc to improve grammar or fix a typo (15), and removing
+ duplicate code or processing (13).
+                                                                  that contained the patch, e.g., the patch included the dep-
+ Implications. These results show that there is considerable      recated annotation and deprecated methods were deleted
+ variation in understandability improvements: some can be         [key=2263]. Still, in 18 patches, the developers deleted the
+ easily supported by linters (e.g., removing unused elements)     entire patched file, e.g., AssemblyJsonServlet.java deleted
+ whereas others require approaches that may be challenging        [key=1935]. Finally, the patches were reverted and kept
+ even considering recent advances in machine learning (e.g.,      reverted until the latest version of the codebase in two of
+ removing functionally equivalent code that is not textually      these 54 observations. One such case involved the removal
+ similar). They emphasize how diverse tools can be employed       of an unnecessary class [key=2073], but the file was added
+ to address the different understandability smells.               back into the codebase and later renamed.
+                                                                      As a corollary result of this analysis, we observe that
+                                                                  most of the analyzed patches implementing code under-
+4.5 To what extent are accepted code understandability            standability improvements (97.2%) were integrated into the
+improvements reverted? (RQ5)                                      codebase, whereas Kalliamvakou et al. [37] reported only
+We analyzed whether or not developers kept the 323                44% of pull requests in GitHub (in general) being merged.
+patches analyzed in Section 4.4 throughout the history of         This stark difference may highlight the high acceptance rate
+the patched files. We observed that none of the patches           of the reviewers’ suggestions for code understandability
+implementing code understandability improvements were             improvements. It must be taken with a grain of salt, though,
+reverted in the pull requests where they were applied.            as the study of Kalliamvakou et al. was published in 2014.
+However, we came across seven instances where there are           In addition, only two out of 323 patches were reverted and
+commits with reversions that were undone in subsequent            maintained their reversion in the latest codebase version.
+commits of improvement patches in the same pull request.
+                                                                   Answer to RQ5. After analyzing the history of 323 patches,
+For example, in one case [key=1471] the improvement patch          we discovered that 80.5% (260 out 323) were present in the
+followed a suggestion to remove @Deprecated, but in the            latest version of the codebase, while the remaining ones
+following commit this annotation was added again and,              were either removed or replaced by alternative solutions.
+later, in subsequent commit, it was removed as suggested           Additionally, we observed that none of the patches were
+initially by reviewer. Also, we discover that 97.2% of the im-     reverted during the pull request. Finally, we found two cases
+provement patches were successfully merged. The remain-            that were removed later during the history of the codebase.
+ing patches (nine) involved code snippets that were super-         Implications. The results in this section suggest that under-
+seded by subsequent commits within the same pull request.          standability improvements tend to be stable, i.e., it is unlikely
+For example, a patch added Javadoc to a method and later           that an improvement will later disappear within a project.
+both the method and the associated Javadoc were removed            Thus, training machine learning models to identify code
+[key=1338], a method named inAppDisplayhold was re-                understandability smells and improving their understand-
+named to displayPaused in a patch and later renamed to             ability, one of the goals of code reviews, may yield better
+autoDisplayPaused [key=1203], or the patched file was              results than automating code the whole spectrum of code
+removed entirely [key=416].                                        review activities, including the identification of code with
+    We also evaluate whether the (314) patches implement-          poor understandability and the refactoring of these instances
+ing suggested understandability improvements and inte-             into more readable code. [66], [67].
+grated into the codebase were reverted at some point in the
+history of the project after the original pull request and the
+associated code review were closed. Out of the total 314          4.6 Do linters contain rules to detect the identified code
+patches, 82.8% (260/314) are present in the latest version of     understandability smells? (RQ6)
+the codebase, although in 20 cases, the developers renamed        We investigated the coverage of the code understandability
+or moved the patched files. However, we cannot find the           smells identified in our study by rules implemented in
+patch in the last version of the codebase in 54 patches.          Spotbugs, PMD, SonarQube, and Checkstyle. To investigate
+Among these, the developers replaced the patch with an al-        if any of these linters’ rules can flag the 323 understandabil-
+ternative solution in ten observations. For instance, a subse-    ity smells presented in Section 4.4, we manually checked
+quent patch changed a snippet with functional implementa-         each observation of an understandability smell against each
+tion (commit a0c1cbf9746ed9486f08ce4aa2376828e846c786)            tool to determine if it could detect it. For example, for an
+by an alternative imperative implementation [key=1453].           observation of U NNECESSARY CODE related to the use of
+In 24 patches, the developers removed the code snippet            import clauses, we inspected the rules UnnecessaryImport,
+                                                                                                                                     16
+
+Unnecessary imports should be removed, and UnusedImports in           TODO code comments, e.g., Track uses of “TODO” tags
+PMD, SonarQube, and Checkstyle respectively, which could              (SonarQube). Many instances of these smells require an
+detect the unused import pointed out by the reviewer. There           in-depth understanding of the associated elements, e.g., to
+is no rule to detect this particular instance of U NUSED CODE         produce an identifier that better represents the purpose of a
+in Spotbugs. We also considered occurrences where it may              method or to improve an explanation about an element. At
+be necessary to configure a rule for the linter to detect it.         the same time, the most common change applied to Javadoc
+For instance, the rule MissingJavadocMethod of Checkstyle             documentation in our study is fixing typos (Table 5), which
+needs configuring the scope to warn about missing Javadoc             could be automated.
+in methods with “package” visibility (otherwise, it only                  Among the remaining 234 out of 323 instances of un-
+reports issues with “public” ones). Table 7 presents the              derstandability smells, we identify occurrences that could
+number of occurrences of each understandability smell that            be covered by the investigated linters by performing small
+each linter could detect. The rows represent each type of             adaptations to existing rules. For example, the linters could
+understandability smell, while the columns correspond to              cover the missing parentheses (e.g., key=1453) by creating an
+each linter. The column Coverage presents the number of               inverse rule to the UselessParentheses rule of PMD or “Unnec-
+instances of each smell that can be identified by at least one        essaryParentheses” rule of Checkstyle. This new rule could
+linter.                                                               suggest the inclusion of additional parentheses in boolean
+     Our analysis indicates that 89 out of 323 occurrences            expressions to highlight evaluation order. Additionally, the
+of understandability smells can be detected by any of the             linters could identify opportunities to use primitive types
+linters. This highlights wasted human effort, as automated            instead of the corresponding boxed types (e.g., key=1201).
+tools could be pointing these issues out. On the one hand,            As another example, the linters could detect when an
+Checkstyle and Sonarqube are responsible for detecting                exception is created without a message (e.g., key=1345).
+more than half of detectable occurrences. On the other hand,          However, other instances of understandability smells would
+Spotbugs detects only seven occurrences overall, where six            require more sophisticated analyses. For example, to detect
+are related to UNNECESSARY CODE. Furthermore, we did                  the occurrences of incomplete documentation, unnecessary
+not find rules that could detect the occurrences related              logging messages, confusing string messages, inadequate
+to W RONG , MISSING , OR INADEQUATE STRING EXPRESSION                 use of method call chains, and missing logging, it would
+OR LITERAL , either because the tools do not inspect string           be necessary to understand the context of the source code,
+literals or because they are natural language text.                   the culture of the project, the intention of the developers,
+     The understandability smell that can be more often               predict the system behavior at run time, or to work with
+detected in our dataset by the linters is I NCONSISTENT OR            both Java and natural languages.
+DISRUPTED FORMATTING . Rules such as NeedBraces (Check-
+style), Lines should not be too long (SonarQube), and Use-             Answer to RQ6. We found 89 out of 323 occurrences of un-
+lessParentheses (PMD) can detect the majority (67.6%) of the           derstandability smells that could be detected by the linters.
+                                                                       Some of the remaining 234 occurrences of understandability
+occurrences of this smell. Additionally, these tools acknowl-          smells could be detected by creating new rules in these
+edge that different projects have different styles. For exam-          linters, while other occurrences require a deeper and context-
+ple, in a code review comment, the reviewer suggested that             dependent analysis that goes beyond what linters typically
+“bracket [left curly brace] should be on the next line” [key=1487],    do.
+i.e., the left curly brace should be in beginning a new line           Implications. The four linters combined have rules to cover
+instead of the end of current statement line. Accounting for           less than 30% of the instances of understandability smells
+the possibility of some projects using left curly braces at the        from our dataset. This suggests that developers waste effort
+end of the current line, SonarQube contains rules for both             during code reviews by alluding to issues that existing au-
+cases, An open curly brace should be located at the beginning of       tomated tools could detect. Among the cases that the linters
+a line and An open curly brace should be located at the end of a       cannot detect, many of them require an in-depth “under-
+line.                                                                  standing” of the program under analysis or the context in
+     The two most popular understandability smells, B AD               which it is inserted. In particular, current linters are unable
+IDENTIFIER and I NCOMPLETE OR INADEQUATE CODE DOC -
+                                                                       to cope with code understandability issues related to natural
+UMENTATION , are the second and fourth less detectable
+                                                                       language. Some of these cases present opportunities to de-
+by linters, respectively. The majority of the occurrences              vise new tools, e.g., to better summarize the intent of a code
+of these understandability smells are associated with                  element or to give it a more illustrative name. Others could
+natural language text (e.g., typo in identifier and is-                be addressed by simple improvements to current linters, e.g.,
+sue in content of Javadoc). The cases of B AD IDENTI -                 pointing out typos in documentation, identifiers, and string
+FIER detected by the linters are those related to style
+                                                                       literals. This also applies to rules related to other aspects,
+(e.g., parameters starting with capital letter [key=579]). In          such as messages in exceptions and the use (or not) of boxed
+these cases, rules such as FormalParameterNamingConventions            types.
+(PMD), Nm: Field names should start with a lower case let-
+ter (NM FIELD NAMING CONVENTION) (Spotbugs), and
+LocalVariableName (Checkstyle) can be used to detect them.
+In the case of I NCOMPLETE OR INADEQUATE CODE DOC -                   5   T HREATS TO VALIDITY
+UMENTATION , there are only rules for missing documen-
+tation, e.g., CommentRequired (PMD); missing or incorrect             In this section, we discuss the threats to the validity of our
+order of tags in Javadoc, e.g., WriteTag (Checkstyle); and            study.
+                                                                                                                                         17
+                        TABLE 7: The frequency of understandability smells that are covered by linters.
+    Understandability smells (# occurrences)                             Spotbugs        PMD      SonarQube    Checkstyle   Coverage
+    I NCOMPLETE OR INADEQUATE CODE DOCUMENTATION (71)                    0 (0.0%)    10 (14.1%)    7 (9.9%)    14 (19.7%)   14 (19.7%)
+    B AD IDENTIFIER (71)                                                 1 (1.4%)     6 (8.5%)     3 (4.2%)     5 (7.0%)     7 (9.9%)
+    C OMPLEX , LONG OR INADEQUATE LOGIC (54)                             0 (0.0%)     8 (14.8%)   11 (20.4%)    7 (13.0%)   16 (29.6%)
+    U NNECESSARY C ODE (43)                                              6 (14.0%)   11 (25.6%)   18 (41.9%)    7 (16.3%)   22 (51.2%)
+    I NCONSISTENT OR DISRUPTED FORMATTING (37)                           0 (0.0%)     3 (8.1%)    14 (37.8%)   25 (67.6%)   25 (67.6%)
+    W RONG , MISSING , OR INADEQUATE STRING EXPRESSION OR LITERAL (26)   0 (0.0%)     0 (0.0%)     0 (0.0%)     0 (0.0%)     0 (0.0%)
+    I NADEQUATE LOGGING AND MONITORING (15)                              0 (0.0%)     2 (13.3%)    2 (13.3%)    0 (0.0%)     2 (13.3%)
+    M ISSING CONSTANT USAGE (6)                                          0 (0.0%)     0 (0.0%)     3 (50.0%)    3 (50.0%)    3 (50.0%)
+    Total (323)                                                          7 (2.2%)    40 (12.4%)   58 (18.0%)   61 (18.9%)   89 (27.6%)
+
+Selection of projects. We constructed our dataset by mining               set of 1,315 rules to find the ones that could identify the
+software repositories from GitHub. However, researchers                   smell. Some of these rules can be configured to detect a
+must be cautious about potential pitfalls [37]. To ensure                 smell, and we considered all possible configurations. How-
+data quality, we applied filters to exclude personal projects,            ever, we decided not to include rules that relied on regex
+repositories with small contributor groups, and forked                    patterns due to their specificity. It is important to note that
+repositories. Moreover, we utilized a heuristic to select                 there may be some rules that we missed during this process,
+projects with an active code review process during a specific             which could result in some issues being classified as not
+period. Also, we manually analyzed each remaining repos-                  covered by linters.
+itory to guarantee the relevance of the dataset, excluding
+                                                                          Code review bots. During the code review process for pull
+non-software repositories. Additionally, some projects may
+                                                                          requests, we came across bots that inspect the source code,
+have configured an ASAT (Automated Static Analysis Tool)
+                                                                          i.e., bots that work as linters. These bots, like vaadin-bot
+to prevent certain issues related to code understandability
+                                                                          and codeclimate, identify potential issues based on pre-
+from being introduced into the codebase. However, since we
+                                                                          configured rules. For instance, vaadin-bot10 found a dep-
+did not assess whether any project adopted this approach, it
+                                                                          recated method annotation and suggested removing it in
+is possible that some understandability smells may not have
+                                                                          the future, while codeclimate11 commented on a method
+been identified by our study.
+                                                                          that exceeded the allowed number of lines and suggested
+Size of the sample of code review comments. Before                        refactoring. Codacy, Lint-staged, and Prettier are ex-
+analyzing our sample of 2,401 code review comments to                     amples of popular bots that review the source code search-
+determine whether they are about code understandability                   ing for violations of their pre-configured rules. We decided
+improvements, we explored various natural language pro-                   not to investigate these bots specifically, considering that
+cessing techniques, such as LDA, GSDMM, LSA, and LDA                      their rules are similar to the linters studied previously. For
+Guided, to extract topics and create clusters for both un-                example, codeclimate leverages SonarJava12 , also used by
+derstandability and non-understandability improvements.                   SonarQube, to verify Java programs.
+Unfortunately, we encountered challenges in obtaining sat-                External Validity. This study focused exclusively on open-
+isfactory results due to two main reasons: (i) our training               source projects, and as such, the findings may not be fully
+sample was relatively small, both in terms of the number of               representative of all software development contexts. To ad-
+comment instances and the length of their text, and (ii) there            dress this concern, we made efforts to include a diverse
+were significant similarities between comments related and                range of software projects in our analysis. Nonetheless, it
+unrelated to code understandability. This problem has been                is essential to acknowledge that the identified code un-
+reported by previous work as well [68], [69].                             derstandability smells and corresponding understandability
+Manual analysis and subjectivity. We conducted a study                    improvements might not be universally applicable across all
+where we manually evaluated 2,401 code review comments.                   programming languages, frameworks, development envi-
+Manual categorization may result in bias due to different                 ronments, or development teams. Furthermore, a limitation
+interpretations by human coders. Some comments that were                  inherent to using GitHub is that many engineered projects
+analyzed lack precision and clarity. This could affect the                in the platform are mostly developer-centric, e.g., libraries,
+validity of any analysis or decision-making based on the                  frameworks, etc. This means that many sub-domains, such
+text. Additionally, it is possible that there is overlap between          as games and mobile apps, are under-represented. Addi-
+different smells. In these cases, we analyze the reviewers’               tionally, our study focused on code reviews conducted in
+comments to understand the intent of the proposed change.                 2020, which may have been impacted by COVID-related
+Each comment was independently classified by at least two                 issues. Therefore, it is unclear how much we can generalize
+authors, and whenever a disagreement was encountered,                     the findings. In our analysis, we did not take into account
+up to five discussed the classification. We also held sessions            the experience level of the developers and reviewers. This
+to discuss dubious comments and to align the classification               means that we may have factored in the opinions of in-
+process. Furthermore, we analyzed the source code to which                experienced individuals. However, we carefully selected a
+each comment refers and subsequent changes to it that may                 diverse sample group that included many developers and
+have been triggered by the comment.
+    We also conducted a manual analysis of rules in four                    10. https://github.com/vaadin/flow/pull/8409#discussion
+                                                                          r429865662
+linters that could potentially detect understandability smells              11. https://github.com/triplea-game/triplea/pull/7241#
+highlighted by reviewers. For each instance of an under-                  discussion r460364607
+standability smell that we analyzed, we searched through a                  12. https://docs.codeclimate.com/docs/sonar-java
+                                                                                                                                18
+
+reviewers. This helped to minimize the impact of this issue.     in the other. The practitioners also considered improv-
+                                                                 ing understandability with descriptive names. Sharif and
+                                                                 Maletic [73] and Binkley et al. [74] investigated the effect
+6   R ELATED W ORK                                               of the style of the identifier (underscore and camel case) on
+                                                                 code understandability. Sharif and Maletic found that the
+In this section, we examine related work. We start by
+                                                                 use of an underscore to separate parts of an identifier im-
+contrasting the understandability smells and improvements
+                                                                 proves understandability, whereas Binkley et al. found out
+we have identified in practice with recommendations and
+                                                                 that camel case works better. For practitioners in Java, using
+experimental results reported in the literature (Section 6.1).
+                                                                 the camel case style for non-constant identifiers improves
+This helps us identify mismatches and accordance between
+                                                                 code understandability.
+research and practice, as well as research gaps. We then
+review previous work discussing models to assess code            U NNECESSARY CODE. Gopstein et al. [18] and Torres et
+understandability (Section 6.2), following up with papers        al. [35] investigated whether the presence of dead, unreach-
+that have investigated manifestations of confusion and reac-     able, or repeated code (e.g., v1 = 1; v1 = 2), leads to
+tions to lack of necessary information during code reviews       misunderstanding in C and JavaScript programs, respec-
+(Section 6.3).                                                   tively. Both studies found that the presence or absence of
+                                                                 this pattern did not significantly impact code understand-
+                                                                 ability. In contrast, practitioners seem to believe this is an
+6.1 Coding alternatives for understandability: literature
+                                                                 important issue in practice: 13.3% of all the 323 analyzed
+vs. practice
+                                                                 code review comments pertain to UNNECESSARY CODE. The
+We found in the literature many studies about code under-        practitioners removed the unnecessary code, commented
+standability. Among these studies, the researchers investi-      out source code, and duplicated code to improve code
+gated the best code alternatives for code understandability.     understandability.
+Oliveira et al. [70] conducted a systematic literature review
+that categorized and organized studies that used empiri-         I NCONSISTENT OR DISRUPTED FORMATTING. Santos and
+cal evaluation to compare code alternatives for formatting       Gerosa [5], and Sampaio and Barbosa [75] evaluated
+elements. For instance, Gopstein et al. [18], Medeiros et        whether different conventions in terms of vertical and
+al. [7], and Langhout and Aniche [9] examined the im-            horizontal space between the code elements impact code
+pact of explicit block delimiters (i.e., curly braces in Java)   understandability and did not find significant differences.
+compared to the omission of block delimiters when pos-           Conversely, practitioners consider that spacing is an issue
+sible. Furthermore, we found studies that compared other         worth raising during code review. Out of the 323 analyzed
+code elements, such as monolithic expressions compared to        comments, 26 (8%) pertain to spacing. Sometimes, they
+multiple shorter expressions [5]. We aim to compare our          remove space, and others add space. Sykes et al. [76],
+findings from practical experience with what we gathered         Sampaio and Barbosa [75], Gopstein et al. [18], Langhout
+from these studies.                                              and Aniche [9], Torres et al. [35], and Medeiros et al. [7]
+    Our focus in this paper is on understandability improve-     investigated the presence or omission of the block delimiter
+ments, i.e., situations where existing code exhibits an under-   (e.g., curly braces in Java) in blocks with one statement.
+standability smell and is replaced by an alternative solution    Gopstein et al., Torres et al., Langhout and Aniche, and
+that is more understandable. Thus, in this section, we focus     Medeiros et al. found that the presence of the block de-
+on the five understandability smells where, to the best of our   limiter improves code understandability (in C, JavaScript,
+knowledge, alternative solutions were compared in existing       and Java). The other researchers did not find any difference.
+studies from a human-centric perspective, e.g., based on         The practitioners preferred to use block delimiters even in
+the preference or performance of study participants: B AD        a one-statement block. Geffen and Maoz [77] investigated
+IDENTIFIER , U NNECESSARY CODE, I NCONSISTENT OR DIS -           the effect of ordering methods in understanding the code.
+RUPTED FORMATTING , C OMPLEX , LONG , OR INADEQUATE              For some cases ordering considering the order of calling
+LOGIC , and M ISSING CONSTANT USAGE .                            and the connectivity between the methods is the best for
+                                                                 code understandability. The practitioners consider that the
+B AD IDENTIFIER. Chaudhary and Sahasrabuddhe [71] eval-          calling order improves code understandability.
+uated the impact on code understandability of using iden-
+tifier names unrelated to the program domain. This study         C OMPLEX , LONG , OR INADEQUATE LOGIC. Gopstein et
+concluded that the identifier names with meaning related         al. [18], Medeiros et al. [7], Torres et al. [35], Costa et
+to the problem domain facilitate understanding. In this          al. [78], and Langhout and Aniche [9] investigated which
+direction, the practitioners improve the identifier names to     one promotes better understandability: the conditional op-
+better match their intent and type. Santos and Gerosa [5]        erator or if statements, in C, JavaScript, Python, and Java
+compared using fully-qualified names and import clauses          small programs. Gopstein et al. and Medeiros et al. found
+with shorter type names. They found out that participants        that if statements improve code understandability (in C
+preferred to avoid fully-qualified names and add import          programs) whereas Langhout and Aniche, Costa et al., and
+clauses, which is what the practitioners in our study prefer.    Torres et al. did not find a statistically significant difference.
+Schankin et al. [72] investigated whether a more descriptive     The practitioners considered both if statement and ternary
+name (e.g., singleWordParts) is easier to read than a single-    operator to improve code understandability in distinct sce-
+word one (e.g., parts). They found that a descriptive name       narios. Lucas et al. [79] compared the use of lambdas and
+was the best in one scenario, and there was no difference        anonymous inner classes based on the opinions of 28 ex-
+                                                                                                                              19
+
+perienced Java developers. Their results are aligned with             Buse and Weimer [21] proposed a method for measuring
+our findings when examining code review comments: prac-           code understandability (code readability in their paper) based
+titioners prefer lambda expressions. Most of the instances        on human notions of understandability. They collected feed-
+of the C OMPLEX , LONG , OR INADEQUATE understandability          back from 120 human annotators on their understanding
+smell are either too specific to be studied in a more general     of 100 code snippets, correlating this feedback with source
+context, e.g., object creation that can be avoided by using       code features. This data was then used to train a ma-
+an existing attribute, or, to the best of our knowledge, have     chine learning algorithm to classify code understandability.
+not been studied, e.g., using try statements that manage          The resulting model predicted understandability judgments
+resources, instead of try with resources.                         with an 80% success rate. Posnett et al. [80] proposed
+                                                                  a simplification of Buse and Weimer’s [21] model. They
+M ISSING CONSTANT USAGE. Gopstein et al. [18], Langhout
+                                                                  leverage source code size metrics and Halstead metrics [81].
+and Aniche [9], and Torres et al. [35] evaluated the effect
+                                                                  Using the dataset of Buse and Weimer [21] to train and
+of using constant variables instead of direct values on code
+                                                                  evaluate their model, they obtained better results using just
+understandability. They did not find a statistically signifi-
+                                                                  three features in small code snippets: volume, entropy, and
+cant difference. The practitioners created and used constants
+                                                                  number of lines.
+instead of direct values to improve code understandability.
+                                                                      Scalabrino et al. [15] analyzed the correlation between
+                                                                  121 metrics related to code, documentation, and developers
+6.2   Estimating and classifying code understandability           and six different proxies of code understandability, based on
+                                                                  444 human evaluations. The study revealed that none of the
+Piantadosi et al. [26] investigated the frequency, methods,       individual metrics strongly correlated with the proxies for
+and reasons for changes in code understandability (code           code understandability. However, combining multiple state-
+readability in their paper) during the evolution of open-         of-the-art metrics resulted in models that showed a slight
+source software. They built a model to define states (non-        improvement in the regression performance of two proxies,
+existing, other-name, readable, and unreadable) in which          Timed Actual Understandability (Correlation: +0.07; Mean
+a file can be in at a given time. Using this model, they          absolute error: -0.02) and Actual Understandability (Corre-
+analyzed the transitions related to code understandability        lation: +0.02; Mean absolute error: +0.00).
+in the commit history of 25 open-source software projects.            Lavazza et al. [82] evaluated whether code measures are
+By analyzing more than 340,000 understandability transi-          correlated with code understandability. They conducted an
+tions, they discovered that code understandability rarely         empirical study with students who performed maintenance
+changes during the evolution of the project. In a manual          tasks. The results showed that a code comprehensibility
+analysis of 57 understandability transitions, they found that     model cannot rely solely on measures of code structure. The
+improving or decreasing code understandability is mostly          obtained models were not very accurate, with the average
+unintentional.                                                    prediction error being around 30%.
+    Fakhoury et al. [27] investigated whether state-of-the-art        These studies [15], [21], [80], [82] have introduced mod-
+understandability models are able to capture understand-          els to quantitatively estimate the degree of code under-
+ability (readability in their paper) improvements as explicitly   standability or to detect code understandability improve-
+tagged by open source developers in commit messages.              ments [26], [28]. In contrast, our work aims to delve into
+The authors analyzed 548 commits from 63 engineered               the code constructs and practices that enhance code un-
+Java projects that explicitly mention understandability im-       derstandability, specifically exploring code alternatives sug-
+provements in the commit message. They then used three            gested by code quality specialists during software devel-
+state-of-the-art understandability models to measure how          opment. Additionally, we manually identified code under-
+much these commits affected code understandability. They          standability changes using code review comments rather
+found that the models did not capture understandability           than relying on an automatic approach based on metrics or
+improvements in most cases. Additionally, they used static        keywords [26], [27], [28]. Furthermore, we categorized code
+analysis tools to investigate what type of understandability      understandability smells based on the associated issues and
+changes were applied in the commits related and unrelated         solutions instead of categorizing them in terms of software
+to code understandability. They discovered that the former        maintenance types [26] or rules of static analysis tools [27].
+frequently fix concerns related to imports, white spaces, and     Finally, our work acknowledges that different projects have
+braces, whereas the latter tends to introduce them.               different rules, priorities, and development cultures and
+    Roy et al. [28] proposed a model to detect code under-        these differences have an impact on what constitutes read-
+standability (readability in their paper) improvements made       able code.
+by developers in real-world scenarios using commit histo-             Some other studies [83], [84], [85] have proposed tech-
+ries from open-source software projects by extending the          niques for automating assessment through advanced meth-
+dataset of Fakhoury et al. [27]. They also included commits       ods, including convolutional neural networks. Mi et al. [83]
+unrelated to code understandability improvements to create        introduced IncepCRM, a model that autonomously extracts
+an oracle. The authors employed seven source code analysis        multi-scale features from code, aided by human annotations
+tools to collect metrics before and after each commit at          to enhance accuracy. In a distinct approach [84], an 83.8%
+the file level. By comparing these metrics, they identified       accuracy is achieved, surpassing prior machine-learning
+key differences that served as features for their model. The      models. This is realized by transforming source code into
+model achieved a precision of 79.2% and a recall of 67% on        matrices for convolutional neural networks, culminating in
+the test set.                                                     DeepCRM, an architecture of three networks trained on
+                                                                                                                             20
+
+diverse preprocessed data. Similarly, in another study [85],     6.3   Understandability and Code Reviews
+a graph-based method is adopted, parsing source code into
+a graph containing abstract syntax tree (AST), along with        In this section, we present studies that examine code re-
+control and data flow edges, preserving semantic structural      view comments and how developers express confusion in
+insights. This approach attains 72.5% and 88% accuracy in        these comments while reading code. The work by Dantas
+three-class and two-class classifications, respectively. Our     et al. [29] is arguably the one that is the most related
+analysis of inline code reviews, focusing on developers’         to our study. They evaluated code understandability (code
+perspectives regarding code understandability, provides          readability in their paper) improvements in the context of
+valuable insights for the referenced works. The research         pull requests (PRs) and compared them with the rules of
+conducted by Mi et al. [83] could further benefit by incor-      SonarQube. Dantas and colleagues utilized keywords such
+porating insights from our study to refine their IncepCRM        as “readability” and “understandability” and analyzed the
+model. Our findings might aid in identifying specific aspects    context of proposed code changes to identify PRs that
+of code understandability highlighted during reviews, en-        enhance code understandability. The researchers identified
+abling more effective feature extraction for multi-scale rep-    and categorized 284 PRs and found 26 different types of
+resentation. Similarly, the strategy proposed by the author in   code understandability improvements. Among the 284 code
+[84] could gain from our insights by considering the nuances     understandability improvements classified, they found that
+of developer concerns about code understandability in the        26 of them are detected by SonarQube. Differently, our
+design of novel representation strategies. Integrating our       study examined 2,401 code review comments that suggested
+unique dataset and analytical framework could enhance            fine-grained source code improvements. We manually iden-
+these approaches, contributing to advancements in code           tified 1,012 code review comments that suggested code
+understandability evaluation.                                    understandability improvements based on the reviewers’
+                                                                 intent. We classified the understandability smells and their
+     Vitale et al. [86] introduced an approach to improve        solutions, as well as investigated the prevalence of the
+code understandability (code readability in their paper). They   patches applied to improve code understandability. We have
+analyzed the revision history to identify commits aimed          also analyzed whether understandability improvements are
+at improving understandability and collected a dataset of        accepted or not and whether they are reversed. Finally, we
+122k such commits. They used the T5 model to emulate             analyzed the potential of four different linters to detect the
+developers’ actions in enhancing code understandability.         understandability smells.
+Their findings showed that their approach accurately iden-            The work of Pascarella et al. [88] aimed to understand
+tified understandability-improving commits around 86% of         the information necessary for reviewers to conduct a proper
+the time. However, the model’s precision in suggesting           code review. It suggests ways in which research and tool
+actions to improve code understandability ranged between         support can enhance the effectiveness and efficiency of
+21% and 28%. Our findings lay the groundwork for the             developers in their role as reviewers. The study analyzed
+development of such predictive models. For example, we           900 code review comments from three large open-source
+identified understandability smells that are currently not       projects and identified seven primary information needs
+tackled by existing linters and therefore require more pow-      of reviewers, such as understanding the uses of methods
+erful approaches such as the use of LLMs. Furthermore,           and variables declared or modified within the code. In a
+the dataset of understandability smells and improvements         similar vein, Ebert et al. [60] investigated the causes and
+we have produced can be leveraged to fine-tune future            consequences of confusion in code reviews and how devel-
+language models.                                                 opers typically handle such issues. The study involved a
+    More generic LLM models could leverage our insights          survey of 54 valid responses and a manual evaluation of
+to enhance their predictive capabilities. These models could     307 code review comments (both inline and general). The
+refine their feature extraction processes by considering the     authors identified 30 sources of confusion, 14 ways that
+specific factors that developers prioritize for code under-      confusion impacts code review, and 13 coping strategies to
+standability. Incorporating our findings into their frame-       deal with confusion in code reviews. The research revealed
+works could result in more accurate assessments of code          that developers often experience confusion during code
+understandability, aligning more closely with real-world de-     reviews when dealing with long or complex code changes
+veloper concerns. Thus, our work offers a valuable resource      and changes that address multiple issues.
+for improving the effectiveness of broader LLM-based ap-              Our work differs from previous studies because we
+proaches to code evaluation. CodeBERT, introduced in [87]        aim to evaluate how developers improve understandability
+by Zhangyin Feng et al., is designed for tasks like code sum-    through code review comments. Furthermore, the findings
+marization and code-to-text generation. Analyzing inline         of our study can be used as recommendations to developers
+reviews for understandability can offer valuable insights        to improve their source code. This can lead to code that
+into the patterns and priorities developers have regarding       causes less confusion when being reviewed.
+code understandability. By integrating these insights, Code-          Other studies have explored approaches to automate
+BERT’s performance can be enhanced, especially in gen-           code review, in the generation of patches [89], [90] and of
+erating human-readable code summaries and comments.              code review comments [91]. The former approach lever-
+Understanding the understandability aspects developers           ages LLMs and the latter employs information retrieval.
+value most can enable models like CodeBERT to align more         Neither of them attempts to distinguish the purposes of
+closely with human preferences in code generation and            the code review comments. Likewise, the study by Fregnan
+summarization.                                                   et al. [92] evaluated what extent a machine learning-based
+                                                                                                                                        21
+
+technique can automatically classify review changes. The         grants APQ-0399-1.03/17 and APQ/0388-1.03/14, CAPES
+researchers classified 1,504 review changes manually and         grant 88887.136410/2017-00, the Swedish Foundation for
+then evaluated three different machine learning algorithms       Strategic Research (SSF), and the Wallenberg Artificial
+to see if they could classify review changes automatically       Intelligence, Autonomous Systems and Software Program
+at two different levels of detail. Their findings indicate       (WASP) funded by Knut and Alice Wallenberg Foundation.
+that machine learning can be effectively used to classify
+review-induced changes. This paper is complementary to
+these approaches in that it narrows down the scope of
+investigation to code understandability improvements. It         R EFERENCES
+shows the relevance of code review comments aiming to
+improve understandability, highlights the high-level prob-       [1]  J. Siegmund, “Program comprehension: Past, present, and future,”
+                                                                      in 2016 IEEE 23rd International Conference on Software Analysis,
+lems that these comments address, shows how many of the               Evolution, and Reengineering (SANER), vol. 5, 2016, pp. 13–20.
+corresponding improvements materialize, and indicates that       [2] R. Minelli, A. Mocci, and M. Lanza, “I know what you did last
+they are often accepted and rarely reversed. It also provides         summer - an investigation of how developers spend their time,”
+evidence that automating the application of improvements              in 23rd ICPC, 2015.
+                                                                 [3] X. Xia, L. Bao, D. Lo, Z. Xing, A. E. Hassan, and S. Li, “Measuring
+involves a variety of issues, targets different languages,            program comprehension: A large-scale field study with profes-
+natural and artificial, and in some cases can be solved easily        sionals,” IEEE Transactions on Software Engineering, vol. 44, no. 10,
+whereas in others requires a deeper understanding.                    pp. 951–976, 2017.
+                                                                 [4] D. Oliveira, R. Bruno, F. Madeiral, and F. Castor, “Evaluating code
+                                                                      readability and legibility: An examination of human-centric stud-
+7   C ONCLUSION                                                       ies,” in 2020 IEEE International Conference on Software Maintenance
+                                                                      and Evolution (ICSME), 2020, pp. 348–359.
+Code understandability is crucial for efficient software de-     [5] R. M. a. dos Santos and M. A. Gerosa, “Impacts of Coding Practices
+velopment and maintenance, as it reduces the time and                 on Readability,” in ICPC 2018, 2018.
+cost required for these processes. Despite its importance,       [6] S. Fakhoury, D. Roy, Y. Ma, V. Arnaoudova, and O. Adesope,
+improving code understandability is not straightforward,              “Measuring the impact of lexical and structural inconsistencies on
+                                                                      developers’ cognitive load during bug localization,” EmSE, vol. p.
+as the factors influencing it are not fully understood. Pre-          August 2019.
+vious studies comparing different coding approaches have         [7] F. Medeiros, G. Lima, G. Amaral, S. Apel, C. Kästner, M. Ribeiro,
+yielded inconclusive or controversial results. Additionally,          and R. Gheyi, “An investigation of misunderstanding code pat-
+style guides often do not align with experimental findings,           terns in C open-source software projects,” EmSE, vol. 24, no. 4, p.
+                                                                      August 2019.
+leading to differing perceptions among developers.               [8] E. S. Wiese, A. N. Rafferty, and A. Fox, “Linking Code Readability,
+    To address this research gap, this study focused on code          Structure, and Comprehension among Novices: It’s Complicated,”
+review comments in open-source projects, where develop-               in ICSE-SEET 2019.       2019, p.
+ers actively strive to improve code understandability. The       [9] C. Langhout and M. Aniche, “Atoms of confusion in java,” in 2021
+                                                                      IEEE/ACM 29th International Conference on Program Comprehension
+analysis of 2,401 code review comments identified 1,012               (ICPC). IEEE, 2021, pp. 25–35.
+comments related to code understandability improvements.         [10] G. Scanniello and M. Risi, “Dealing with Faults in Source Code:
+This highlights the significance of code review in enhanc-            Abbreviated vs. Full-Word Identifier Names,” in ICSM 2013.
+ing code understandability. A deeper analysis of 385 code             2013, p.
+                                                                 [11] A. Bacchelli and C. Bird, “Expectations, outcomes, and challenges
+review comments identified eight categories of code under-            of modern code review,” in 2013 35th International Conference on
+standability smells, such as INCOMPLETE OR INADEQUATE                 Software Engineering (ICSE), 2013, pp. 712–721.
+CODE DOCUMENTATION and BAD IDENTIFIERS . Developers              [12] C. Sadowski, E. Söderberg, L. Church, M. Sipko, and A. Bacchelli,
+often accepted the suggested improvements and rarely re-              “Modern code review: A case study at google,” in International
+                                                                      Conference on Software Engineering, Software Engineering in Practice
+verted them. The study also explored the types of patches             track (ICSE SEIP), 2018.
+applied to address code understandability smells, where          [13] A. Cunha, T. Conte, and B. Gadelha, “Code review is just
+97.2% of applied patches were integrated into the project’s           reviewing code? a qualitative study with practitioners in
+codebase. Additionally, while some of these issues can be             industry,” in Proceedings of the XXXV Brazilian Symposium
+                                                                      on Software Engineering, ser. SBES ’21. New York, NY,
+readily detected and fixed by linters, others demand more             USA: ACM, 2021, p. 269–274. [Online]. Available: https:
+intricate analysis, considering natural language components           //doi.org/10.1145/3474624.3477063
+and project context.                                             [14] “Pull      request      #10182      -    azure/azure-sdk-for-java,”
+    This study contributes to the understanding of develop-           https://github.com/Azure/azure-sdk-for-java/pull/10182/
+                                                                      #discussion r409002709, accessed: 2023-08-05.
+ers’ concerns and actions regarding code understandability       [15] S. Scalabrino, G. Bavota, C. Vendome, M. Linares-Vasquez,
+during code reviews. The dataset of code review comments              D. Poshyvanyk, and R. Oliveto, “Automatically assessing code un-
+serves as a valuable resource for researchers and developers,         derstandability,” IEEE Transactions on Software Engineering, vol. 47,
+enabling the creation of automated tools to detect and repair         no. 3, pp. 595–613, 2019.
+                                                                 [16] S. N. Woodfield, H. E. Dunsmore, and V. Y. Shen, “The Effect of
+code understandability smells. Such tools would allow de-             Modularization and Comments on Program Comprehension,” in
+velopers to focus on other critical aspects of code review,           ICSE 1981.     1981, p.
+promoting correctness and identifying security vulnerabili-      [17] T. Tenny, “Program Readability: Procedures Versus Comments,”
+ties.                                                                 TSE, vol. 14, no. 9, p. September 1988.
+                                                                 [18] D. Gopstein, J. Iannacone, Y. Yan, L. DeLong, Y. Zhuang, M. K.-C.
+                                                                      Yeh, and J. Cappos, “Understanding Misunderstandings in Source
+ACKNOWLEDGEMENTS                                                      Code,” in ESEC/FSE 2017.        2017, p.
+                                                                 [19] J. C. Hofmeister, J. Siegmund, and D. V. Holt, “Shorter Identifier
+This work was partially supported by INES                             Names Take Longer to Comprehend,” EmSE, vol. 24, no. 1, p.
+(www.ines.org.br), CNPq grant 465614/2014-0, FACEPE                   February 2019.
+                                                                                                                                                      22
+
+[20] S. Scalabrino, G. Bavota, C. Vendome, M. Linares-Vásquez,                   IEEE/ACM International Conference on Software Engineering, ICSE
+     D. Poshyvanyk, and R. Oliveto, “Automatically assessing code                 2015, Florence, Italy, May 16-24, 2015, Volume 1. IEEE Computer
+     understandability: How far are we?” in 2017 32nd IEEE/ACM                    Society, 2015, pp. 598–608.
+     International Conference on Automated Software Engineering (ASE).       [40] C. Vassallo, S. Panichella, F. Palomba, S. Proksch, H. C. Gall, and
+     IEEE, 2017, pp. 417–427.                                                     A. Zaidman, “How developers engage with static analysis tools
+[21] R. P. Buse and W. R. Weimer, “Learning a metric for code readabil-           in different contexts,” Empirical Software Engineering, vol. 25, pp.
+     ity,” IEEE Transactions on Software Engineering, vol. 36, no. 4, pp.         1419–1457, 2020.
+     546–558, 2010.                                                          [41] V. Lenarduzzi, F. Pecorelli, N. Saarimaki, S. Lujan, and F. Palomba,
+[22] “Pull request #571 - twilio/twilio-java,” https://github.com/                “A critical comparison on six static analysis tools: Detection,
+     twilio/twilio-java/pull/571#discussion r489083957,         accessed:         agreement, and precision,” Journal of Systems and Software, vol. 198,
+     2023-08-05.                                                                  p. 111575, 2023.
+[23] M. Smit, B. Gergel, H. J. Hoover, and E. Stroulia, “Code Conven-        [42] “Spotbugs - bug descriptions,” https://spotbugs.readthedocs.io/
+     tion Adherence in Evolving Software,” in Proceedings of the 27th             en/stable/bugDescriptions.html, accessed: 2023-08-05.
+     IEEE International Conference on Software Maintenance (ICSM ’11).       [43] “Pmd - java rules,” https://docs.pmd-code.org/latest/pmd
+     USA: IEEE Computer Society, 2011, p. 504–507.                                rules java.html, accessed: 2023-08-05.
+[24] J. Cohen, “A Coefficient of Agreement for Nominal Scales,”              [44] “Sonarqube - java static code analysis,” https://rules.sonarsource.
+     Educational and Psychological Measurement, vol. 20, no. 1,                   com/java/, accessed: 2023-08-05.
+     pp. 37–46, 1960. [Online]. Available: https://doi.org/10.1177/          [45] “Checkstyle - checks,” https://checkstyle.sourceforge.io/checks.
+     001316446002000104                                                           html, accessed: 2023-08-05.
+[25] B. A. Kitchenham, D. Budgen, and P. Brereton, Evidence-Based Soft-      [46] D. Stefanović, D. Nikolić, D. Dakić, I. Spasojević, and S. Ristić,
+     ware Engineering and Systematic Reviews. Chapman & Hall/CRC,                 “Static code analysis tools: A systematic literature review.” Annals
+     2015.                                                                        of DAAAM & Proceedings, vol. 7, no. 1, 2020.
+[26] V. Piantadosi, F. Fierro, S. Scalabrino, A. Serebrenik, and             [47] K. F. Tómasdóttir, M. F. Aniche, and A. van Deursen, “The adop-
+     R. Oliveto, “How does code readability change during software                tion of javascript linters in practice: A case study on eslint,” IEEE
+     evolution?” Empirical Software Engineering, vol. 25, pp. 5374–5412,          Trans. Software Eng., vol. 46, no. 8, pp. 863–891, 2020.
+     2020.                                                                   [48] O. Dabic, E. Aghajani, and G. Bavota, “Sampling projects in github
+[27] S. Fakhoury, D. Roy, A. Hassan, and V. Arnaoudova, “Improving                for MSR studies,” in 18th IEEE/ACM International Conference on
+     source code readability: Theory and practice,” in 2019 IEEE/ACM              Mining Software Repositories, MSR 2021. IEEE, 2021, pp. 560–564.
+     27th International Conference on Program Comprehension (ICPC),          [49] R. M. Groves, F. J. F. Jr., M. P. Couper, J. M. Lepkowski, E. Singer,
+     2019, pp. 2–12.                                                              and R. Tourangeau, Survey Methodology, 2nd ed. Wiley, 2009.
+[28] D. Roy, S. Fakhoury, J. Lee, and V. Arnaoudova, “A model to detect      [50] S. K. Thompson, Sampling. John Wiley & Sons, 2012, vol. 755.
+     readability improvements in incremental changes,” in 28th ICPC,         [51] “Pull      request       #10940        -   azure/azure-sdk-for-java,”
+     2020, p. 25–36.                                                              https://github.com/Azure/azure-sdk-for-java/pull/10940#
+[29] C. Dantas, A. Rocha, and M. Maia, “How do developers improve                 discussion r423093729, accessed: 2023-08-25.
+     code readability? an empirical study of pull requests,” in 2023         [52] “Pull      request       #3921       -    kitodo/kitodo-production,”
+     IEEE International Conference on Software Maintenance and Evolution          https://github.com/kitodo/kitodo-production/pull/3921#
+     (ICSME), 2023.                                                               discussion r471343349, accessed: 2023-08-05.
+[30] C. Y. Chong, P. Thongtanunam, and C. Tantithamthavorn, “Assess-         [53] M. Fowler, Refactoring: Improving the Design of Existing Code, ser.
+     ing the students’ understanding and their mistakes in code review            Addison-Wesley Signature Series (Fowler). Pearson Education,
+     checklists: An experience report of 1,791 code review checklist              2018. [Online]. Available: https://books.google.com.br/books?
+     questions from 394 students,” in 2021 IEEE/ACM 43rd International            id=2H1 DwAAQBAJ
+     Conference on Software Engineering: Software Engineering Education      [54] “Pull      request      #1488      -     opemedx/edx-app-android,”
+     and Training (ICSE-SEET), 2021, pp. 20–29.                                   https://github.com/openedx/edx-app-android/pull/1488#
+[31] A. Gawande, The Checklist Manifesto: How to Get Things Right.                discussion r537391027, accessed: 2023-08-05.
+     Profile books, 2011.                                                    [55] “Pull request #792 - apache/jena,” https://github.com/apache/
+[32] G. D. Israel et al., “Determining sample size,” 1992.                        jena/pull/792#discussion r486429425, accessed: 2023-08-05.
+[33] R. Pawlak, M. Monperrus, N. Petitprez, C. Noguera, and                  [56] “Pull request #2772 - corfudb/corfudb,” https://github.com/
+     L. Seinturier, “Spoon: A Library for Implementing Analyses                   CorfuDB/CorfuDB/pull/2772#discussion r497201087, accessed:
+     and Transformations of Java Source Code,” Software: Practice                 2023-08-05.
+     and Experience, vol. 46, pp. 1155–1179, 2015. [Online]. Available:      [57] “Pull request #2172 - mapstruct/mapstruct,” https://github.
+     https://hal.archives-ouvertes.fr/hal-01078532/document                       com/mapstruct/mapstruct/pull/2172#discussion r463982271,
+[34] C. Brown and C. Parnin, “Understanding the impact of github                  accessed: 2023-08-05.
+     suggested changes on recommendations between developers,” in            [58] “Pull request #3337 - essentialsx/essentials,” https://github.
+     Proceedings of the 28th ACM Joint Meeting on European Software               com/EssentialsX/Essentials/pull/3337#discussion r441271747,
+     Engineering Conference and Symposium on the Foundations of Software          accessed: 2023-08-05.
+     Engineering, 2020, pp. 1065–1076.                                       [59] “Pull request #12579 - alluxio/alluxio,” https://github.com/
+[35] A. Torres, C. Oliveira, M. V. Okimoto, D. Marcilio, P. Queiroga,             Alluxio/alluxio/pull/12579#discussion r530723377,           accessed:
+     F. Castor, R. Bonifácio, E. D. Canedo, M. Ribeiro, and E. Monteiro,         2023-08-05.
+     “An investigation of confusing code patterns in javascript,” J. Syst.   [60] F. Ebert, F. Castor, N. Novielli, and A. Serebrenik, “An
+     Softw., vol. 203, p. 111731, 2023.                                           exploratory study on confusion in code reviews,” Empirical
+[36] D. D. Nucci, F. Palomba, D. A. Tamburri, A. Serebrenik, and A. D.            Software Engineering, vol. 26, no. 12, January 2021. [Online].
+     Lucia, “Detecting code smells using machine learning techniques:             Available: https://doi.org/10.1007/s10664-020-09909-5
+     Are we there yet?” in 25th International Conference on Software         [61] “Pull     request     #256     -    teamnewpipe/newpipeextractor,”
+     Analysis, Evolution and Reengineering, SANER 2018, Campobasso,               https://github.com/TeamNewPipe/NewPipeExtractor/pull/
+     Italy, March 20-23, 2018. IEEE Computer Society, 2018, pp. 612–              256#discussion r378437693, accessed: 2023-08-05.
+     621.                                                                    [62] “Pull request #7241 - triplea-game/triplea,” https://github.com/
+[37] E. Kalliamvakou, G. Gousios, K. Blincoe, L. Singer, D. M. German,            triplea-game/triplea/pull/7241#discussion r460364607, accessed:
+     and D. Damian, “The promises and perils of mining github,”                   2023-08-05.
+     in Proceedings of the 11th working conference on mining software        [63] “Pull      request      #198      -      opensearch-project/security,”
+     repositories, 2014, pp. 92–101.                                              https://github.com/opensearch-project/security/pull/198#
+[38] J. Shimagaki, Y. Kamei, S. McIntosh, D. Pursehouse, and                      discussion r385993973, accessed: 2023-08-05.
+     N. Ubayashi, “Why are commits being reverted?: a comparative            [64] “Pull request #1066 - linkedin/cruise-control,” https://github.
+     study of industrial and open source projects,” in 2016 IEEE Inter-           com/linkedin/cruise-control/pull/1066#discussion r373266026,
+     national Conference on Software Maintenance and Evolution (ICSME).           accessed: 2023-08-25.
+     IEEE, 2016, pp. 301–311.                                                [65] “Pull      request       #12004        -   openliberty/open-liberty,”
+[39] C. Sadowski, J. van Gogh, C. Jaspan, E. Söderberg, and C. Win-              https://github.com/OpenLiberty/open-liberty/pull/12004#
+     ter, “Tricorder: Building a program analysis ecosystem,” in 37th             discussion r424729743, accessed: 2023-08-05.
+                                                                                                                                                        23
+
+[66] R. Tufano, L. Pascarella, M. Tufano, D. Poshyvanyk, and G. Bavota,          [87] Z. Feng, D. Guo, D. Tang, N. Duan, X. Feng, M. Gong,
+     “Towards automating code review activities,” in Proceedings of the               L. Shou, B. Qin, T. Liu, D. Jiang, and M. Zhou, “CodeBERT: A
+     43rd International Conference on Software Engineering, ser. ICSE ’21.            pre-trained model for programming and natural languages,” in
+     IEEE Press, 2021, p. 163–174.                                                    Findings of the Association for Computational Linguistics: EMNLP
+[67] H. Y. Lin and P. Thongtanunam, “Towards automated code re-                       2020. Online: Association for Computational Linguistics, Nov.
+     views: Does learning code structure help?” in 2023 IEEE Interna-                 2020, pp. 1536–1547. [Online]. Available: https://aclanthology.
+     tional Conference on Software Analysis, Evolution and Reengineering              org/2020.findings-emnlp.139
+     (SANER), 2023, pp. 703–707.                                                 [88] L. Pascarella, D. Spadini, F. Palomba, M. Bruntink, and A. Bac-
+[68] F. Ebert, F. Castor, N. Novielli, and A. Serebrenik, “Confusion                  chelli, “Information needs in contemporary code review,” Proceed-
+     detection in code reviews,” in 2017 IEEE International Conference on             ings of the ACM on Human-Computer Interaction, vol. 2, no. CSCW,
+     Software Maintenance and Evolution, ICSME 2017, Shanghai, China,                 pp. 1–27, 2018.
+     September 17-22, 2017. IEEE Computer Society, 2017, pp. 549–553.            [89] R. Tufano, L. Pascarella, M. Tufano, D. Poshyvanyk, and G. Bavota,
+[69] R. Tufano, L. Pascarella, M. Tufano, D. Poshyvanyk, and G. Bavota,               “Towards automating code review activities,” in 2021 IEEE/ACM
+     “Towards automating code review activities,” in 43rd ICSE, 2021,                 43rd International Conference on Software Engineering (ICSE). IEEE,
+     pp. 163–174.                                                                     2021, pp. 163–174.
+[70] D. Oliveira, R. Santos, F. Madeiral, H. Masuhara, and F. Castor, “A         [90] R. Tufano, S. Masiero, A. Mastropaolo, L. Pascarella,
+     systematic literature review on the impact of formatting elements                D. Poshyvanyk, and G. Bavota, “Using pre-trained models
+     on code legibility,” Journal of Systems and Software, p. 111728, 2023.           to boost code review automation,” in Proceedings of the
+                                                                                      44th International Conference on Software Engineering, ser.
+[71] B. D. Chaudhary and H. V. Sahasrabuddhe, “Meaningfulness as a
+                                                                                      ICSE ’22. ACM, 2022, p. 2291–2302. [Online]. Available:
+     Factor of Program Complexity,” in ACM 1980.             1980, p.
+                                                                                      https://doi.org/10.1145/3510003.3510621
+[72] A. Schankin, A. Berger, D. V. Holt, J. C. Hofmeister, T. Riedel,            [91] Y. Hong, C. Tantithamthavorn, P. Thongtanunam, and A. Aleti,
+     and M. Beigl, “Descriptive Compound Identifier Names Improve                     “Commentfinder: A simpler, faster, more accurate code review
+     Source Code Comprehension,” in ICPC 2018.              2018, p.                  comments recommendation,” in Proceedings of the 30th ACM
+[73] B. Sharif and J. I. Maletic, “An Eye Tracking Study on camelCase                 Joint European Software Engineering Conference and Symposium
+     and under score Identifier Styles,” in ICPC 2010.          2010, p.              on the Foundations of Software Engineering, ser. ESEC/FSE
+[74] D. Binkley, M. Davis, D. Lawrie, J. I. Maletic, C. Morrell, and                  2022. ACM, 2022, p. 507–519. [Online]. Available: https:
+     B. Sharif, “The impact of identifier style on effort and compre-                 //doi.org/10.1145/3540250.3549119
+     hension,” EmSE, vol. 18, no. 2, p. April 2013.                              [92] E. Fregnan, F. Petrulio, L. Di Geronimo, and A. Bacchelli, “What
+[75] I. B. Sampaio and L. Barbosa, “Software readability practices and                happens in my code reviews? an investigation on automatically
+     the importance of their teaching,” in 2016 7th International Con-                classifying review changes,” Empirical Software Engineering, vol. 27,
+     ference on Information and Communication Systems (ICICS). IEEE,                  no. 4, p. 89, 2022.
+     2016, pp. 304–309.
+[76] F. Sykes, R. T. Tillman, and B. Shneiderman, “The Effect of
+     Scope Delimiters on Program Comprehension,” Software: Practice
+     and Experience, vol. 13, no. 9, pp. 817–824, 1983. [Online].
+     Available: https://onlinelibrary.wiley.com/doi/abs/10.1002/spe.
+     4380130908
+[77] Y. Geffen and S. Maoz, “On Method Ordering,” in Proceedings of
+     the 24th International Conference on Program Comprehension (ICPC
+     ’16). IEEE, 2016, pp. 1–10.
+[78] J. A. S. da Costa, R. Gheyi, F. Castor, P. R. F. de Oliveira, M. Ribeiro,
+     and B. Fonseca, “Seeing confusion through a new lens: on the
+     impact of atoms of confusion on novices’ code comprehension,”
+     Empir. Softw. Eng., vol. 28, no. 4, p. 81, 2023.
+[79] W. Lucas, R. Bonifácio, E. D. Canedo, D. Marcı́lio, and F. Lima,
+     “Does the introduction of lambda expressions improve the com-
+     prehension of java programs?” in Proceedings of the XXXIII Brazil-
+     ian Symposium on Software Engineering, ser. SBES ’19. ACM, 2019,
+     p. 187–196.
+[80] D. Posnett, A. Hindle, and P. Devanbu, “A simpler model of
+     software readability,” in Proceedings of the 8th working conference
+     on mining software repositories, 2011, pp. 73–82.
+[81] M. H. Halstead, Elements of Software Science (Operating and Pro-
+     gramming Systems Series). USA: Elsevier Science Inc., 1977.
+[82] L. Lavazza, S. Morasca, and M. Gatto, “An empirical study on
+     software understandability and its dependence on code character-
+     istics,” Empirical Software Engineering, vol. 28, no. 6, p. 155, 2023.
+[83] Q. Mi, J. Keung, Y. Xiao, S. Mensah, and X. Mei, “An
+     inception architecture-based model for improving code readability
+     classification,” in Proceedings of the 22nd International Conference on
+     Evaluation and Assessment in Software Engineering 2018, ser. EASE
+     ’18. New York, NY, USA: ACM, 2018, p. 139–144. [Online].
+     Available: https://doi.org/10.1145/3210459.3210473
+[84] Q. Mi, J. Keung, Y. Xiao, S. Mensah, and Y. Gao, “Improving
+     code readability classification using convolutional neural
+     networks,” Information and Software Technology, vol. 104, pp.
+     60–71, 2018. [Online]. Available: https://www.sciencedirect.com/
+     science/article/pii/S0950584918301496
+[85] Q. Mi, Y. Zhan, H. Weng, Q. Bao, L. Cui, and W. Ma, “A graph-
+     based code representation method to improve code readability
+     classification,” Empirical Softw. Engg., vol. 28, no. 4, may 2023.
+     [Online]. Available: https://doi.org/10.1007/s10664-023-10319-6
+[86] A. Vitale, V. Piantadosi, S. Scalabrino, and R. Oliveto, “Using deep
+     learning to automatically improve code readability,” in 2023 38th
+     IEEE/ACM International Conference on Automated Software Engineer-
+     ing (ASE). IEEE, 2023, pp. 573–584.
+

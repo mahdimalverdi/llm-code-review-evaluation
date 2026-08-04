@@ -1,0 +1,1354 @@
+                                                OmniCode: A Benchmark for Evaluating Software Development Agents
+                                         Atharv Sonwane1, * , Eng-Shen Tu2, * , Wei-Chung Lu3, * , Claas Beger1, * , Carter Larsen1 , Debjit Dhar4 ,
+                                          Simon Alford1 , Rachel Chen5 , Ronit Pattanayak1 , Tuan Anh Dang1 , Guohao Chen1 , Gloria Geng1 ,
+                                                                                Kevin Ellis1 , Saikat Dutta1
+                                 1
+                                         Cornell University, 2 Independent contributor, 3 UC Santa Barbara 4 Jadavpur University 5 New York University
+                                                                                      *
+                                                                                        Equal contribution
+
+
+
+                                                                     Abstract                          and improving apps, AI will help us write more
+                                                                                                       comprehensive test suites, perform and respond to
+                                                   LLM-powered coding agents are redefining
+arXiv:2602.02262v3 [cs.SE] 18 May 2026
+
+
+
+
+                                                   how real-world software is developed. To drive      code review suggestions, enforce nuanced program-
+                                                   the research towards better coding agents, we       ming guidelines, and automate many other tasks
+                                                   require challenging benchmarks that can rigor-      that are part of the software development life cycle.
+                                                   ously evaluate the ability of such agents to per-   Research on AI software development demands
+                                                   form various software engineering tasks. How-       good benchmarks, both to measure progress and
+                                                   ever, popular coding benchmarks such as Hu-         to expand the scope of problem statements. How-
+                                                   manEval and SWE-Bench focus on narrowly             ever, AI coding benchmarks today, such as SWE-
+                                                   scoped tasks such as competition programming
+                                                                                                       Bench (Jimenez et al., 2024), CodeContests (Li
+                                                   and patch generation. In reality, software engi-
+                                                   neers have to handle a broader set of tasks for     et al., 2022), and HumanEval (Chen et al., 2021),
+                                                   real-world software development. To address         are too narrow in scope to spur progress on au-
+                                                   this gap, we propose OmniCode, a novel soft-        tomating the full spectrum of software develop-
+                                                   ware engineering benchmark that contains a          ment tasks, instead focusing on isolated tasks such
+                                                   broader and more diverse set of task categories     as competition programming and patch generation.
+                                                   beyond code or patch generation. Overall, Om-
+                                                   niCode contains 1794 tasks spanning three pro-       Current Evaluation Approaches                            OmniCode Evaluation
+                                                   gramming languages – Python, Java, and C++ –                                                                             Task Horizon
+
+                                                   and four key categories: bug fixing, test gener-                   Collected from
+
+                                                   ation, code review fixing, and style fixing. In
+                                                                                                                                         Collected from
+
+
+
+
+                                                                                                                                                          Review Response
+                                                                                                           Works On
+
+
+
+
+                                                   contrast to prior software engineering bench-                                                                                           Bug Repair
+
+                                                   marks, the tasks in OmniCode are (1) manually                      Task Horizon
+
+
+                                                   validated to eliminate ill-defined problems, and                          Evaluates
+
+                                                   (2) synthetically crafted or recently curated to                                                       Test Generation             Code Style Fixing
+
+                                                   avoid data leakage issues, presenting a new
+                                                   framework for synthetically generating diverse      Figure 1: OmniCode synthetically builds multiple tasks
+                                                   software tasks from limited real-world data. We     out of a base dataset to holistically evaluate software
+                                                   evaluate OmniCode with popular agent frame-         engineering agents. Four different types of tasks that
+                                                   works such as SWE-Agent and show that while         we consider: Bug fixing, test generation, responding to
+                                                   they may perform well on bug fixing for Python,     code review, and enforcing style guidelines.
+                                                   they fall short on tasks such as Test Genera-
+                                                   tion and in languages such as C++ and Java.
+                                                   For instance, SWE-Agent achieves a maximum          OmniCode. To address this gap, we introduce a
+                                                   of 25.0% with DeepSeek-V3.1 on C++ Test             new benchmark for evaluating generative AI cod-
+                                                   Generation. OmniCode aims to serve as a             ing assistants, which we call OmniCode. Our new
+                                                   robust benchmark and spur the development           benchmark is based on the insight that software de-
+                                                   of agents that can perform well across differ-      velopment involves a heterogeneous range of tasks
+                                                   ent aspects of software development. Code           and problem-solving activities for which genera-
+                                                   and data are available at https://github.           tive AI can be brought to bear (see Figure 1). We
+                                                   com/seal-research/OmniCode.
+                                                                                                       consider four such software development tasks:
+                                               1   Introduction
+                                                                                                       1. Addressing issues, such as bug fixes and fea-
+                                               The future impact of AI-automated software de-             ture requests. This is a staple of software engi-
+                                               velopment will be far-ranging: beyond building             neering benchmarks (Jimenez et al., 2024; Silva
+   and Monperrus, 2024; Rashid et al., 2025), be-       evaluate another agent, Aider (Aider-AI, 2025)
+   cause it evaluates the ability of an LLM cod-        (with Gemini-2.5-Flash), which is a pipeline-based
+   ing agent to autonomously resolve real-world         agent unlike SWE-Agent. We find that our bench-
+   repository-level issues.                             mark challenges even the most modern systems,
+                                                        but it is not intractable. Specifically, SWE-
+2. Writing software tests. We evaluate the ability      Agent achieves its strongest bug-fixing results with
+   of LLM agents to write their own tests, mea-         Claude-4.6-Sonnet on Python (68.9%) but drops
+   suring progress toward closing the loop of both      sharply on Java (31.2% with DeepSeek-V3.1) and
+   generating and checking patches. We create a         C++ (19.6% with DeepSeek-V3.1). Test genera-
+   dataset of bad patches which implement incor-        tion is the hardest category: the best score across all
+   rect fixes. In addition to passing on the correct    three languages is only 25.0% (DeepSeek-V3.1 on
+   fix, we ensure that the generated tests must fail    C++). On Review-Response, Claude-4.6-Sonnet
+   on the bad patches (emulating mutation test-         reaches 67.9% on Python, while the best Java and
+   ing (Jia and Harman, 2010)), making the evalu-       C++ scores are 44.3% and 22.7% (both DeepSeek-
+   ation of tests more robust.                          V3.1). For Style-Fixing, agents perform well on
+                                                        Python (up to 61.2% with Claude-4.6-Sonnet) but
+3. Responding to code review. Coding agents
+                                                        lag on Java (27.3%) and C++ (35.6%). We also
+   today act in partnership with human engineers,
+                                                        observe that SWE-Agent generally outperforms
+   providing initial drafts of a patch, which a hu-
+                                                        Aider, with Aider performing significantly worse
+   man engineer then critiques. We compile a
+                                                        on C++, scoring 3–5× lower across all four task
+   dataset of partly-correct patches paired with
+                                                        types.
+   code-review feedback on how to best correct
+   them.                                                Contributions. We make the following contribu-
+                                                        tions in this work:
+4. Enforcing style guidelines. Code style is im-        1. We develop OmniCode, a benchmark assessing
+   portant for conforming to project-specific norms        for diverse types of software engineering activi-
+   and ensuring safe coding practices. We task the         ties, comprising 1794 tasks total.
+   agent with fixing selections of style violations.    2. We present strategies for synthetically creating
+   These include functions with high complexity,           diverse interactive tasks to evaluate agents from
+   unsafe direct access of union members or as-            collected static real-world data.
+   signing outputs of functions that return null.       3. We perform empirical evaluation of state-of-the-
+                                                           art LLM-agent systems on the benchmark, re-
+   We build our benchmark by bootstrapping off
+                                                           vealing specific areas where LLM agents fall
+existing benchmarks such as SWE-Bench (Jimenez
+                                                           especially short, particularly in test generation
+et al., 2024) and Multi-SWE-Bench (Zan et al.,
+                                                           and style fixing.
+2025), along with collecting additional issues from
+popular open-source repositories and across three       2   Related Work
+popular languages: Python, Java, and C++. We
+build on top of this real-world data with LLM and       LLM coding benchmarks. Early evaluation of
+tool-based augmentation to create different task        the LLM code synthesis focused on standalone
+types. For supporting test generation, we gener-        programming problems with unit-test-based func-
+ate bad patches with LLMs, and for the review-fix       tional correctness (Chen et al., 2021; Austin et al.,
+tasks we similarly generate possible code reviews       2021; Hendrycks et al., 2021). Work such as
+using LLMs. For style review, we use language-          CodeMind (Liu et al., 2024) benchmarks seman-
+specific style-checking tools to create tasks. In to-   tic reasoning about code behavior, while Co-
+tal, our dataset comprises 494 issues from 28 repos-    CoNUT (Beger and Dutta, 2025) targets structural
+itories and 1794 benchmark tasks in total, with 963     execution of small code blocks across program-
+Python tasks, 418 Java tasks, and 413 C++ tasks.        ming paradigms. SWE-Bench (Jimenez et al.,
+Results. We evaluate the widely used SWE-               2024) introduced the paradigm of benchmark-
+Agent (Yang et al., 2024) with SOTA models span-        ing the ability of LLM agents to resolve real-
+ning a range of providers and sizes (Gemini-2.5-        world GitHub issues, yielding much follow-up
+Flash, Claude-4.6-Sonnet, GPT-5-mini, DeepSeek-         work (Miserendino et al., 2025; Jain et al.; Alei-
+V3.1, and Qwen3-32B) on our dataset. We also            than et al., 2024; Rashid et al., 2025; Zan et al.,
+                                                             Table 1: Combined patch statistics by language
+2024), adding support for more repositories, lan-
+guages and improved data quality by including                   Metric             Python    C++    Java
+more rigorous checks. Multi-SWE-Bench (Zan                      Patch statistics
+et al., 2025) extended the SWE-Bench collection
+                                                                Patches               273     112     109
+paradigm beyond Python to multiple languages, but               Complexity            7.1    47.6    19.2
+restricted to bug-fixing. These bug-fixing bench-               Lines added          16.9   180.7    74.8
+                                                                Lines removed         7.7    82.6    20.3
+marks are related to work from the software en-
+gineering community benchmarking program re-                    Test statistics
+pair tools such as Defects4J (Just et al., 2014) and            Patches               273     112     109
+BugsInPy (Widyasari et al., 2020). Other bench-                 Complexity            7.2    38.0    11.9
+                                                                Lines added          25.2   277.8    72.2
+marks evaluate security-focused tasks, such as Cy-              Lines removed         4.9    17.5     2.0
+berGym (Wang et al., 2026), CVEBench (Zhu et al.,
+                                                                Bad Patch and Review statistics
+2025) and CWE-Bench (Li et al., 2024). While
+                                                                Patches               164      44      79
+these benchmarks focus on bug-fixing or security,               Complexity          2.870   3.641   3.056
+OmniCode introduces pipelines for creating new                  Lines added         3.909   5.455   5.785
+task types to more holistically evaluate software               Lines removed       1.866   2.318   1.861
+                                                                Review size         253.6   319.6   329.0
+development.
+   Recently works such as SWE-Smith (Yang et al.,
+                                                         ties. These developments have rapidly improved
+2025) and BugPilot (Sonwane et al., 2025) have
+                                                         the quality of agents, indicated by their impressive
+shown promise in synthetically generating bugs
+                                                         scores on the SWE-Bench benchmark. We hope
+to create training data for coding agents. Omni-
+                                                         that OmniCode encourages a more well-rounded
+Code makes use of synthetic data in the context of
+                                                         evaluation of such agents.
+evaluation to go beyond bug-fixing. We introduce
+pipelines to augment real-world data to support new      3   Benchmark Construction
+task types such as test generation and responding
+to reviews.                                              OmniCode consists of different task types, the
+                                                         creation of which involves applying various task-
+Test generation. Recently, Mündler et al. pro-
+                                                         specific augmentations to real-world software data.
+posed SWT-Bench (Mündler et al., 2024) that trans-
+                                                         For the bug-fixing, test generation, and review re-
+forms the instances in SWE-Bench to test genera-
+                                                         sponse task types, each instance in our benchmark
+tion tasks. Each task involves generating tests such
+                                                         is based on a pull request that was raised to resolve
+that they fail on the buggy version of code and pass
+                                                         an issue in a GitHub repository. The pull request
+with the fixed version, e.g., the gold patch. TestE-
+                                                         and its associated metadata (such as the issue it
+val (Wang et al., 2024a) is another recent bench-
+                                                         resolved, the patch it introduced) constitute what
+mark for evaluating test generation capabilities of
+                                                         we call a base instance. Using this base instance,
+LLMs, focusing on evaluating single programs in-
+                                                         we can generate the data required to support differ-
+stead of entire repositories. The test generation task
+                                                         ent task types, such as generating bad patches to
+in OmniCode builds on these works while strength-
+                                                         support test generation or code reviews to support
+ening the oracle: its test-generation task evaluates
+                                                         review fixing. For the style fix task type, we create
+candidate tests not only on the gold fix but also
+                                                         instances by running style tools on open source
+against multiple plausible bad patches, reducing
+                                                         repositories.
+the chance that vacuous tests pass trivially and bet-
+ter measuring discriminative power.                      3.1 Collection of real-world data from GitHub
+LLM Agents for code. (Yang et al., 2024)                 We curate a multi-language dataset by collect-
+introduces SWE-Agent, one of the first agent-            ing data from open source GitHub repositories,
+based systems for SWE tasks. Many other such             along with selecting instances from existing bench-
+agents have been proposed since, such as Au-             marks: SWE-Bench-Verified and Multi-SWE-
+toCodeRover (Zhang et al., 2024), Agentless (Xia         Bench. When curating pull requests, we follow a
+et al., 2024), OpenHands (Wang et al., 2024b)            similar selection strategy to (Jimenez et al., 2024),
+and Aider (Aider-AI, 2025). Agents such as QL-           including PRs that (1) resolve an issue and (2) in-
+Coder (Wang et al., 2025) interact with powerful         troduce at least one test. We further filter instances
+static analysis tools to find security vulnerabili-      manually to ensure data quality (see Appendix F
+for details).
+    To enable agents to interact with an instance by
+executing code, we build containerized environ-
+ments for each instance. The environment is made
+                                                                 Gold Patch #1                                          Bad Patch #1-3
+up of the state of the repository at the time of the
+                                                                                 @pytest.mark.test
+
+pull request, as well as dependencies that need to                               def tokenCountTest():
+                                                                                     expected_tokens = 26
+                                                                                     assert
+                                                                                 aggregate_message_count(static_messa
+be installed so that code can be executed properly.                              ges[0]) == expected_tokens
+
+
+
+We manually determine the dependencies required                                           Test Patch
+by inspecting requirements and documentation. To         Figure 2: In the Test Generation task, we evaluate pro-
+verify that the correct dependencies have been iden-     posed test patch against both the ground truth (gold)
+tified, we execute the test suite of the repository to   patch, as well as several meaningful, but incorrect, bad
+check if the tests can be run without errors.            patches. A test is only considered correct if it passes for
+    Our combined dataset of base instances com-          the gold patch, but fails for all bad patches.
+prises 273 Python, 112 C++, and 109 Java in-
+stances (494 in total), spanning 28 diverse reposito-
+ries across machine learning and scientific libraries    based on the issue, which is evaluated against tests
+(e.g., Scikit-learn, Sympy), systems libraries (e.g.,    that transitioned from failing to passing due to the
+Fmt, Simdjson), and large-scale frameworks (e.g.,        ground truth fix, as well as against previously pass-
+Django, Logstash, Jackson, Mockito). Our data            ing tests to ensure no regressions are introduced.
+pipelines are easily extensible to other languages       Our benchmark goes beyond prior work by uni-
+for future work.                                         fying instances from SWE-Bench-Verified, Multi-
+                                                         SWE-Bench, as well as including manually verified
+3.2   Task Details                                       additional instances (details in Appendix F).
+In Table 1, we report quantitative statistics over
+these gold patches to characterize task difficulty       3.2.2   Task: Test Generation
+across languages. Beyond raw patch size, we in-          Writing meaningful tests is a key aspect of software
+troduce a composite complexity metric to better          engineering, and by focusing on this underexplored
+capture structural edit difficulty:                      skill, we aim to evaluate the model’s ability to rea-
+                                                         son about code behavior and generate effective test
+        ∆Files + ∆Hunks + ∆Lines/10.              (1)    cases. To assess the quality of a candidate test for
+   This metric incorporates the files modified, num-     a given issue, we use the ground truth fix for that
+ber of code hunks and lines changed in a diff. It        issue (termed as the gold patch) along with a set
+jointly reflects the breadth of codebase interaction,    of what we define as bad patches. A bad patch is
+edit fragmentation, and textual change magnitude.        a plausible but incorrect attempt at resolving the
+Using this measure, we observe a consistent dif-         issue—one that contains no obvious syntax errors
+ficulty ordering across languages: C++ > Java >          and remains relevant to the problem description.
+Python. This ordering aligns with downstream             This setup presents a more realistic and challeng-
+agent performance trends reported in Section 4.1,        ing evaluation scenario compared to existing ap-
+suggesting that patch complexity is a meaningful         proaches, which typically rely only on the pre- and
+proxy for task difficulty. In the following, we de-      post-PR repository states.
+scribe the details of how each of our four task types       To generate bad patches that are plausible but
+is set up, along with the evaluation procedures.         incorrect, we collect failed attempts from an agent
+                                                         (Agentless (Xia et al., 2024)) tasked with fixing
+3.2.1 Task: Resolving Issues                             issues as usual. A well-generated test should be
+Resolving GitHub issues has become a standard            able to distinguish the correct solution from fail-
+approach for evaluating the capabilities of large        ure modes exhibited by a collection of such failed
+language models (LLMs) in the software engineer-         attempts. Since relying on a single model for this
+ing domain. We use our base instances directly           exercise often results in some instances without
+for this task, following (Jimenez et al., 2024), we      bad patches of this sort, we use a mix of mod-
+provide the issue description and a set of tests that    els (Gemma 2 9B, Qwen2.5 Coder 32B Instruct,
+distinguish between the pre- and post-fix repository     Llama 3 8B Instruct, and GPT-4.1-nano). To en-
+states. The agent is tasked with generating a patch      sure diversity of bad patches for better evaluation
+of generated tests, we aim to generate 3 patches
+for each instance. Some instances have fewer bad                       Initial Incorrect Proposal
+patches due to invalid generations or cases where
+an incorrect fix could not be sampled after repeated
+attempts. Instances with no bad patches are ex-                                                       Code
+cluded from the test generation task.                                                                Reviewer
+   To ensure that generated tests can be evaluated
+thoroughly, it is important to have bad patches that                            Review Report
+cover a diverse set of failure modes. We experiment                             • Empty Content
+                                                                                String looks wrong
+with another approach for generating bad patches,                               • ShareGPT
+prompting an LLM to perturb the correct patch                                   mapping probably
+                                                                                 not needed
+to introduce commonly found bugs. We sample
+multiple completions, filtering to keep patches that
+are actually incorrect. The relevant prompt can be                       Corrected Proposal
+found in Appendix D. We only use this approach
+for Python instances, producing one bad patch for
+each instance using Gemini-2.5-Flash.
+   For this task, the agent is prompted with the is-
+sue text and asked to generate one or more test
+cases to be added to the test suite. The generated          Figure 3: In the task of responding to Code Review,
+tests are then evaluated: if they pass on the ground        an initial incorrect patch is provided, which contains a
+truth patch but fail on all bad patches, they are con-      meaningful attempt at solving a given problem. This at-
+sidered successful. If the set of generated tests do        tempt is then reviewed by a human or an LLM, and a re-
+                                                            view report is generated. Utilizing this report, the LLM
+not meet both criteria, they are considered a failure.
+                                                            is tasked with correcting the initial approach, which is
+We also reuse the bad patches in an additional task         then validated with the normal testing suite.
+related to code review (§ 3.2.3).
+
+3.2.3   Task: Responding to Code Review                     extension of evaluation. In this task, the model is
+Developers often iterate over multiple proposed so-         not expected to fix a functional bug but to resolve
+lutions in a pull request until they fulfill all the nec-   a given set of style issues. This task is particu-
+essary requirements. Often, such incorrect propos-          larly appealing because it can be adapted to user-
+als are met with a corresponding review, explaining         specific needs by incorporating custom guidelines
+inadequacies in approach or implementation. For             or organization-specific rules.
+the code review response task in our benchmark,                We construct a dataset of style errors for all
+we create reviews by prompting an LLM (Gemini-              28 repositories (14 Python, 3 C++, and 11 Java)
+2.5-Flash) with both the bad patch (from the pre-           in OmniCode. We start by using the language-
+vious section), along with the correct patch and            specific tools (pylint for Python, clang-tidy
+problem description, and asking it to come up with          for C++, and PMD for Java) to generate a list of
+instructions for how the bad patch should be fixed.         all style violations in the repository, including er-
+We find that the simple prompt presented in Ap-             rors, warnings, and convention violations. We then
+pendix D produces reviews that are informative but          aggressively prune trivial rules (e.g., missing new-
+do not give away the complete solution on manual            lines or extra whitespaces). The full list of included
+inspection of a subset of generated reviews. During         style violations is present in Appendix D.1 in Ta-
+evaluation, we present the agent with the problem           ble 9 (Python), Table 10 (Java), and Table 11 (C++).
+description, incorrect fix (bad patch), along with          We then group errors by files they occur in and con-
+the review, tasking it with refining the solution.          struct 144 Python, 147 C++, and 124 Java instances,
+                                                            with each instance containing on average ∼ 9 style
+3.2.4   Task: Fixing Code Style Issues                      errors.
+Language models are trained on a wide range of                 During evaluation for each instance, the style
+code – varying not only in functionality but also           errors as given by the linter tool are passed to the
+in quality. So, tasks that assess the ability of mod-       agent, which is tasked with resolving them. Af-
+els to adhere to style guidelines represent a natural       ter applying the patch generated by the agent, we
+        Repo                      Agent                    Agent and adjust the per instance cost limit to $2.0.
+                    !
+                                                           We perform Aider evaluations with Gemini-2.5-
+                    !
+                                                           Flash, setting the timeout to 20 minutes and retry-
+                    !                                      attempts to 3.
+                        ...       ++
+                                  --                       LLMs used. For our main evaluation with
+      Style Check   Problems       Fix
+                                                           SWE-Agent, we choose five state-of-the-art LLMs
+Figure 4: In the Style Fix task, we first create task      from different model families: Gemini-2.5-Flash,
+instances by running a style check tool on the whole       Claude-4.6-Sonnet, DeepSeek-V3.1, GPT-5-mini,
+repository and grouping local issues into instances. The   and Qwen3-32B. For Aider, we only evaluate using
+agent is then tasked with fixing these instances, with     Gemini-2.5-Flash to limit costs.
+the proposed fix being evaluated by running the style
+checker again.                                             4.2   Observed Performance across Tasks
+                                                           We present the results of evaluating SWE-Agent
+re-run the style tool over the whole repository to         with a range of state-of-the-art LLMs in Table 2.
+determine how many of the previous errors were             We find that while a state-of-the-art system like
+resolved and how many new ones were introduced.            SWE-Agent excels on some tasks like Style Fix-
+To ensure that while correcting style issues, the          ing in Python, there are many shortcomings in
+agent does not inadvertently break existing func-          other tasks. We observe that it struggles with
+tionality, we also run the repository’s test suite.        Test-Generation, an essential skill for assisting hu-
+Finally, we compute a Style-Fixing Score for the           mans and self-verification. All LLMs struggle here
+patch as given below —                                     across languages, with the maximum performance
+                                                           across all three languages being 25.0% (DeepSeek-
+                                                        V3.1 on C++). Both tools also suffer disproportion-
+ max resolved − new , 0 , if all tests pass
+ 
+                                                           ately in C++, which correlates with our analysis in
+                original
+                                                          Section 3.2 regarding the complexity of C++ bugs
+ 0,                                  otherwise            over other bugs in our benchmark.
+                                                    (2)    Correlation across tasks types. As reported in
+   Patches that result in test failures are assigned a     Table 4, we find that performance of different mod-
+score of 0. If the existing functionality is preserved,    els on bug-fixing is strongly correlated to review-
+then we compute a metric that measures what pro-           response (pearson coeff = 0.921) and weakly cor-
+portion of the original issues were resolved, penal-       related to test generation (pearson coeff = 0.764).
+izing newly created issues. Instances where more           This does not hold for style-review however (pear-
+issues are introduced than resolved result in a score      son coeff = 0.512), where Gemini-2.5-Flash per-
+of 0. This design ensures the metric is bounded            forms as good as or better than DeepSeek-V3.1 on
+between 0 and 1, taking into account correctness           Style-Fix, despite DeepSeek consistently outper-
+as well as newly created issues.                           forming Gemini on Bug-Fix. We find these obser-
+4     Evaluation of LLM Coding Agents on                   vations to be generally true for Aider, too, albeit
+      OmniCode                                             slightly weaker with further details in Appendix E.
+                                                           Cost-constrained inference. Claude-4.6-Sonnet
+4.1    Experimental Setup                                  leads on Python but trails on Java and C++ (Ta-
+To evaluate our benchmark, we select two state-            ble 2), which we attribute to the fixed $2 per-
+of-the-art agent frameworks: SWE-Agent (Yang               instance budget. On the higher-complexity Java
+et al., 2024) and Aider (Aider-AI, 2025). To enable        and C++ tasks (Table 1), Claude frequently ex-
+agents to interact with the instances, we provide          hausts its budget before emitting a patch (Table 7),
+them with containerized environments as described          and such runs are counted as unresolved. Its lower
+in § 3.1. We pass in the issue description as the          scores reflect the cost–complexity–budget inter-
+initial task statement for Bug-Fixing. For Test-           action rather than weaker problem-solving abil-
+Generation, Review-Response, and Style-Fixing,             ity. Compute the resolve rate for only the in-
+we prepare task-specific prompts that provide con-         stances where patches were generated, discard-
+text and instructions. These are detailed in Ap-           ing instances where the budget was exceeded:
+pendix D. We use the default settings for SWE-             Score = Resolved/PatchesGenerated in Table 8,
+                   Table 2: SWE-Agent Performance on OmniCode across languages and models
+
+          Language    Model                Bug-Fixing    Test-Generation     Review-Response    Style-Fixing
+                      Gemini-2.5-Flash       38.1%           14.0%               29.9%             57.0%
+                      Claude-4.6-Sonnet      68.9%           14.6%               67.9%             61.2%
+          Python      GPT-5-mini             47.3%            6.2%               30.5%             45.9%
+                      DeepSeek-V3.1          56.4%           18.7%               52.2%             54.0%
+                      Qwen3-32B              24.5%            4.0%               17.7%             19.5%
+                      Gemini-2.5-Flash        8.0%           12.2%               13.6%             30.5%
+                      Claude-4.6-Sonnet       8.0%           13.6%                9.1%             35.6%
+          C++         GPT-5-mini             15.2%            6.8%               20.5%             19.5%
+                      DeepSeek-V3.1          19.6%           25.0%               22.7%             18.8%
+                      Qwen3-32B               3.8%            4.5%                4.5%              6.7%
+                      Gemini-2.5-Flash       14.7%            4.9%               31.6%             22.0%
+                      Claude-4.6-Sonnet      15.6%            8.9%               20.3%             27.3%
+          Java        GPT-5-mini             22.0%            2.7%               26.6%             22.1%
+                      DeepSeek-V3.1          31.2%           20.9%               44.3%             23.1%
+                      Qwen3-32B              10.1%            1.3%               15.2%             18.5%
+
+
+Table 3: SWE-Agent vs Aider (using Gemini-2.5-Flash)        Table 5: Style Review Analysis (models from Table 2)
+
+ Language Agent           BF      TG       RR     SF         Language Model           Fix Rate Error Ratio Style-Fix
+             SWE-Agent 38.1% 14.0% 29.9% 57.0%                             Gemini      96.2%         0.377     57.0%
+ Python
+             Aider     32.4% 9.4% 26.8% 48.6%                              Claude      71.6%         0.368     61.2%
+                                                             Python        GPT         65.3%         0.457     45.9%
+             SWE-Agent 8.0% 12.2% 13.6% 30.5%                              DeepSeek    91.5%         0.299     54.0%
+ C++
+             Aider     1.8% 2.3% 4.5% 7.9%                                 Qwen        30.5%         0.891     19.5%
+             SWE-Agent 14.7% 4.9% 31.6% 22.0%
+ Java                                                                      Gemini      75.9%          2.49     30.5%
+             Aider     19.3% 3.9% 25.3% 21.7%
+                                                                           Claude      73.2%          2.13     35.6%
+                                                             C++           GPT         47.3%          2.61     19.5%
+                                                                           DeepSeek    68.0%          2.46     18.8%
+ Table 4: Correlation of Bug-Fixing with other tasks                       Qwen        35.3%          2.87      6.7%
+
+ Language Review vs Bug Test vs Bug Style vs Bug                           Gemini      80.9%          5.17     22.0%
+                                                                           Claude      78.5%          5.22     27.3%
+ Python               0.925        0.702         0.800       Java          GPT         64.1%          5.38     22.1%
+ C++                  0.966        0.733         0.461                     DeepSeek    77.9%          5.46     23.1%
+ Java                 0.871        0.858         0.276                     Qwen        66.0%          5.31     18.5%
+ Average              0.921        0.764         0.512
+
+                                                            and C++ have significantly higher error ratios, re-
+we see Claude-4.6-Sonnet leading across tasks.              flecting the fragility of style-only transformations
+New errors introduced during Style-Fixing.                  in larger codebases. Qualitative analysis of the
+Apart from using Equation 2 as a general met-               Style-Fixing tasks and error types is presented in
+ric that takes code functionality into account, we          Appendix D.2.
+also check how the agents perform on Style-Fixing           Providing Reviews helps solve issues. We hypoth-
+tasks with F ixRate = resolved/original and                 esized that providing structured feedback would
+ErrorRatio = (unresolved + new)/original.                   improve performance on tasks by guiding the agent.
+Based on the results shown in Table 5, we can see           We sampled instances with gold patches of higher
+that while the Fix Rate is relatively high across           complexity to generate reviews via the procedure
+models and languages, this metric alone overstates          in Section 3.2.3 for the Review-Response task.
+the style-fixing reliability of coding agents. The          Comparing performance on this subset, we ob-
+Error Ratio exposes a tendency for style-fixing at-         serve that Review-Response consistently resolved
+tempts to introduce new style errors to the code,           more unique instances than Bug-Fixing (without re-
+particularly for structurally complex languages like        views). For Java, it uniquely resolved 15 instances
+Java and C++. Python shows the lowest error ra-             versus Bug-Fixing’s 4, a pattern that held for C++
+tios, which implies that most fixes resolve style           (4 vs. 2) and Python (22 vs. 20). The seemingly
+violations without substantial side effects. Java           contradictory raw scores in Table 2 for Python
+(56.4% Bug-Fixing vs. 52.2% Review-Response)
+are explained by the non-review instances being
+comparatively easier, with a high 65.1% resolution
+rate.
+
+4.3   Performance Comparison of Agentic and
+      Pipeline-Based Approaches
+We compare a widely used agentic approach (SWE-
+Agent) with a pipeline-based approach (Aider)
+to assess the strengths and weaknesses of both
+paradigms. As shown in Table 3, SWE-Agent con-
+sistently outperforms Aider across most program-        Figure 5: Distribution of patch complexity scores for
+                                                        resolved versus unresolved instances.
+ming languages and task types when evaluated on
+OmniCode using Gemini-2.5-Flash. For Python,
+SWE-Agent achieves higher performance in bug-
+fixing, test-generation, and review-response, re-
+flecting its stronger reasoning and synthesis ca-
+pabilities. In C++, Aider performs substantially
+worse, while SWE-Agent maintains modest but con-
+sistent gains, particularly in test-generation and
+review-response. One potential reason is that C++
+tasks in OmniCode require more interactive reason-
+ing and iterative error analysis, involving multiple
+compile-run cycles and complex dependency han-
+dling. Aider’s pipeline-oriented design may thus
+                                                        Figure 6: Comparing agent performance at test gen-
+struggle with such trial-and-error-intensive work-
+                                                        eration if evaluating with only the gold patch versus
+flows. Overall, these findings indicate that while      using failing bad patches as a criteria too. Including bad
+Aider remains competitive on less interactive or        patches leads to more robust results.
+simpler tasks, SWE-Agent demonstrates greater ro-
+bustness and adaptability to complex, multi-stage
+software engineering problems, particularly those       its but also by unstable patch construction that
+requiring sustained reasoning and integration of        deviates significantly from Gold solutions. We
+feedback. These results highlight OmniCode’s abil-      also report detailed complexity statistics indicating
+ity to differentiate between interaction-intensive      that higher patch complexity consistently correlates
+and procedural tasks, providing a nuanced view of       with lower resolution rates. Overall, these results
+how agentic and pipeline systems handle varying         highlight patch complexity as a key latent difficulty
+levels of task complexity and reasoning demand.         factor in software agent benchmarks—benchmarks
+                                                        dominated by low-complexity fixes may overstate
+4.4   Patch Complexity as a Latent Factor in            agent capability, while higher-complexity instances
+      Agent Performance                                 more reliably expose limitations in long-horizon
+Using the complexity metric (Equation 1), we ana-       reasoning and codebase navigation.
+lyze agent-generated outputs against task difficulty
+and observe a clear separation between resolved         4.5   Impact of including Bad Patches
+and unresolved instances. According to Figure 5,        Tests generated by LLM agents need to be evalu-
+the resolved cases are tightly clustered at low com-    ated for robustness, making sure that they can dis-
+plexity, indicating strong performance on small,        criminate various edge cases. Prior work (Mündler
+localized fixes, while unresolved instances exhibit     et al., 2024) evaluates generated tests solely by re-
+a heavy-tailed distribution with substantially higher   lying on fixed and un-fixed versions for a given
+and more volatile complexity. Aggregate statistics      pull request. OmniCode aims to be more robust in
+for the bug-fixing task as an example (Table 6)         its evaluation by ensuring that the generated tests
+quantitatively confirm this trend and illustrate that   also fail multiple bad patches, which characterize
+failures are characterized not only by larger ed-       different ways in which the bug may be fixed incor-
+                                  Table 6: Bug-Fixing - Avg. Complexity Score.
+
+                                                             Resolved   Resolved Unresolved Unresolved
+                                   Gold Avg Model Avg
+    Model              Language                              Gold Avg Model Avg Gold Avg Model Avg
+                                  Complexity Complexity
+                                                            Complexity Complexity Complexity Complexity
+                       Python            7.07      299.28           5.35        5.28         8.13       484.67
+    Gemini-2.5-Flash   Java             19.24        9.75           6.69       12.32        19.67        19.24
+                       C++              47.55       195.1           8.07        6.28        38.26       252.31
+                      Python             7.07      259.35          5.29         4.08        11.00       941.29
+    Claude-4.6-Sonnet Java              19.24        5.75          5.94         4.28        21.70         7.68
+                      C++               47.55       13.14         11.58        17.18        50.70        12.53
+                       Python            7.07      165.56          4.30         4.05         9.55       390.18
+    GPT-5-mini         Java             19.24      983.12          6.51         4.24        21.95      1186.70
+                       C++              47.55      603.39         18.48        90.91        43.92       767.78
+                       Python            7.07       12.08           5.22        5.35         9.46        21.60
+    Deepseek-v3.1      Java             19.24       12.91           6.47        7.07        26.49        15.84
+                       C++              47.55      104.63           9.21       32.13        54.29       123.18
+                       Python            7.07      464.93           5.77        4.32         7.49       642.09
+    Qwen3-32b          Java             19.24        4.76           5.26         2.7        24.28         5.08
+                       C++              47.55      140.96           5.00        4.75        46.37       148.22
+
+
+
+rectly.                                                     well as improving proficiency at languages beyond
+   To quantify the effects of including bad patches,        Python. Detailed analysis shows how providing
+we compare the agent performance if evaluating              reviews can improve issue resolution and the differ-
+with only the gold patch as the only criteria versus        ences between agentic (SWE-Agent) and pipeline
+including failing of the bad patches as a success           (Aider) based approaches. We hope that our evalu-
+criteria. From Figure 6, we can see that metrics            ation and analysis along with the benchmark itself
+based solely on gold-patch success dramatically             will provide new avenues of improving agents at
+overestimate a model’s testing capability. In the           different aspects of software development.
+analysis of success for Qwen and DeepSeek results,
+test cases would have been accepted at a higher rate
+                                                            6   Limitations and Future Work
+if bad-patch failures were not required (e.g., Qwen
+C++ would be 22.7% instead of 4.5%, Qwen Java
+would be 7.79% instead of 1.3%, DeepSeek C++                Our work broadens the evaluation of LLMs across
+would be 43.8% instead of 25%, and DeepSeek                 diverse software engineering tasks, but it is still far
+Java would be 28.4% instead of 20.9%). This gap             from capturing the full scope of real programming.
+highlights that many generated tests capture super-         In practice, developers work across multiple lan-
+ficial behaviors rather than the underlying program         guages, interact with configuration systems, profile
+semantics. By enforcing that gold patches pass and          and optimize code, and engage in natural language
+all bad patches fail, we obtain a far more realis-          discussions for design and planning. While our
+tic assessment of test quality, one that reflects a         benchmark is a step toward more comprehensive
+model’s ability to differentiate correct logic from         assessment, expanding heterogeneous task cover-
+subtly incorrect implementations, a critical require-       age remains essential.
+ment for trustworthy automated testing.                        We are extending OmniCode along two axes:
+                                                            (1) additional languages beyond Python, Java, and
+5   Conclusion                                              C++, and (2) new task categories such as secu-
+                                                            rity vulnerability remediation and code migration.
+We present a novel benchmark for multi-faceted              Cross-language translation (e.g., C to Rust) is both
+evaluation of coding agents made up of four differ-         challenging and high-impact, while security tasks
+ent tasks across three languages. Our evaluation of         demand deeper system-level reasoning than current
+two agent paradigms with an extensive set of mod-           models reliably exhibit. Increasing diversity along
+els demonstrates various areas for improvement              these dimensions will enable more realistic and
+of current coding agents, including consistent test         robust evaluation of LLMs and agentic systems.
+generation, robust handling of style problems as
+References                                                  Ziyang Li, Saikat Dutta, and Mayur Naik. 2024. Llm-
+                                                              assisted static analysis for detecting security vulnera-
+Aider-AI. 2025. Aider: Ai pair programming in your            bilities.
+  terminal. https://github.com/Aider-AI/
+  aider.                                                    Changshu Liu, Shizhuo Dylan Zhang, and Reyhaneh
+                                                              Jabbarvand. 2024. Codemind: A framework to
+Reem Aleithan, Haoran Xue, Mohammad Mahdi Mo-                 challenge large language models for code reasoning.
+  hajer, Elijah Nnorom, Gias Uddin, and Song Wang.            ArXiv, abs/2402.09664.
+  2024. Swe-bench+: Enhanced coding benchmark for
+  llms. Preprint, arXiv:2410.06992.                         Samuel Miserendino, Michele Wang, Tejal Patwardhan,
+                                                              and Johannes Heidecke. 2025. Swe-lancer: Can fron-
+Jacob Austin, Augustus Odena, Maxwell Nye, Maarten            tier llms earn $1 million from real-world freelance
+   Bosma, Henryk Michalewski, David Dohan, Ellen              software engineering? Preprint, arXiv:2502.12115.
+   Jiang, Carrie J. Cai, Michael Terry, Quoc V. Le, and
+   Charles Sutton. 2021. Program synthesis with large       Niels Mündler, Mark Müller, Jingxuan He, and Martin
+   language models. ArXiv, abs/2108.07732.                    Vechev. 2024. Swt-bench: Testing and validating
+                                                              real-world bug-fixes with code agents. Advances in
+Claas Beger and Saikat Dutta. 2025. Coconut: Struc-           Neural Information Processing Systems, 37:81857–
+  tural code understanding does not fall out of a tree.       81887.
+  In 2025 IEEE/ACM International Workshop on Large
+  Language Models for Code (LLM4Code), pages 128–           Muhammad Shihab Rashid, Christian Bock, Yuan
+  136.                                                       Zhuang, Alexander Buccholz, Tim Esler, Si-
+                                                             mon Valentin, Luca Franceschi, Martin Wistuba,
+Mark Chen, Jerry Tworek, Heewoo Jun, Qiming Yuan,            Prabhu Teja Sivaprasad, Woo Jung Kim, and 1 oth-
+ Henrique Ponde de Oliveira Pinto, Jared Kaplan,             ers. 2025. Swe-polybench: A multi-language bench-
+ Harri Edwards, Yuri Burda, Nicholas Joseph, Greg            mark for repository level evaluation of coding agents.
+ Brockman, Alex Ray, Raul Puri, Gretchen Krueger,            arXiv preprint arXiv:2504.08703.
+ Michael Petrov, Heidy Khlaaf, Girish Sastry, Pamela
+ Mishkin, Brooke Chan, Scott Gray, and 39 others.           André Silva and Martin Monperrus. 2024. Repairbench:
+ 2021. Evaluating large language models trained on            Leaderboard of frontier models for program repair.
+ code. Preprint, arXiv:2107.03374.                            arXiv preprint arXiv:2409.18952.
+
+Dan Hendrycks, Steven Basart, Saurav Kadavath, Man-         Atharv Sonwane, Isadora White, Hyunji Lee, Matheus
+  tas Mazeika, Akul Arora, Ethan Guo, Collin Burns,           Pereira, Lucas Caccia, Minseon Kim, Zhengyan
+  Samir Puranik, Horace He, Dawn Xiaodong Song,               Shi, Chinmay Singh, Alessandro Sordoni, Marc-
+  and Jacob Steinhardt. 2021. Measuring coding chal-          Alexandre Côté, and Xingdi Yuan. 2025. Bugpilot:
+  lenge competence with apps. ArXiv, abs/2105.09938.          Complex bug generation for efficient learning of swe
+                                                              skills. Preprint, arXiv:2510.19898.
+Naman Jain, Manish Shetty, Tianjun Zhang, King Han,
+  Koushik Sen, and Ion Stoica. R2e: Turning any             Claire Wang, Ziyang Li, Saikat Dutta, and Mayur
+  github repository into a programming agent environ-         Naik. 2025. Qlcoder: A query synthesizer for
+  ment. In ICML 2024.                                         static analysis of security vulnerabilities. ArXiv,
+                                                              abs/2511.08462.
+Yue Jia and Mark Harman. 2010. An analysis and sur-
+  vey of the development of mutation testing. IEEE          Wenhan Wang, Chenyuan Yang, Zhijie Wang, Yuheng
+  transactions on software engineering, 37(5):649–           Huang, Zhaoyang Chu, Da Song, Lingming Zhang,
+  678.                                                       An Ran Chen, and Lei Ma. 2024a. Testeval: Bench-
+                                                             marking large language models for test case genera-
+Carlos E Jimenez, John Yang, Alexander Wettig,               tion. arXiv preprint arXiv:2406.04531.
+  Shunyu Yao, Kexin Pei, Ofir Press, and Karthik R
+  Narasimhan. 2024. SWE-bench: Can language mod-            Xingyao Wang, Boxuan Li, Yufan Song, Frank F. Xu,
+  els resolve real-world github issues? In The Twelfth        Xiangru Tang, Mingchen Zhuge, Jiayi Pan, Yueqi
+  International Conference on Learning Representa-            Song, Bowen Li, Jaskirat Singh, Hoang H. Tran,
+  tions.                                                      Fuqiang Li, Ren Ma, Mingzhang Zheng, Bill Qian,
+                                                              Yanjun Shao, Niklas Muennighoff, Yizhe Zhang,
+René Just, Darioush Jalali, and Michael D. Ernst. 2014.       Binyuan Hui, and 5 others. 2024b. Openhands: An
+  Defects4j: a database of existing faults to enable con-     open platform for ai software developers as general-
+  trolled testing studies for java programs. In Interna-      ist agents. In International Conference on Learning
+  tional Symposium on Software Testing and Analysis.          Representations.
+
+Yujia Li, David Choi, Junyoung Chung, Nate Kushman,         Zhun Wang, Tianneng Shi, Jingxuan He, Matthew Cai,
+  Julian Schrittwieser, Rémi Leblond, Tom Eccles,             Jialin Zhang, and Dawn Song. 2026. Cybergym:
+  James Keeling, Felix Gimeno, Agustin Dal Lago, and          Evaluating AI agents’ real-world cybersecurity ca-
+  1 others. 2022. Competition-level code generation           pabilities at scale. In The Fourteenth International
+  with alphacode. Science, 378(6624):1092–1097.               Conference on Learning Representations.
+Ratnadira Widyasari, Sheng Qin Sim, Camellia Lok,         A    Analysis of Bad Patches and Reviews
+  Haodi Qi, Jack Phan, Qijin Tay, Constance Tan,
+  Fiona Wee, Jodie Ethelda Tan, Yuheng Yieh, Brian
+  K. P. Goh, Ferdian Thung, Hong Jin Kang, Thong
+  Hoang, D. Lo, and Eng Lieh Ouh. 2020. Bugsinpy:
+  a database of existing bugs in python programs to
+  enable controlled testing and debugging studies. Pro-
+  ceedings of the 28th ACM Joint Meeting on European
+  Software Engineering Conference and Symposium on
+  the Foundations of Software Engineering.
+
+                                                                 Figure 7: Categorization of bad patches.
+Chunqiu Steven Xia, Yinlin Deng, Soren Dunn, and
+  Lingming Zhang. 2024. Agentless: Demystify-
+  ing llm-based software engineering agents. arXiv
+  preprint arXiv:2407.01489.
+
+
+John Yang, Carlos Jimenez, Alexander Wettig, Kilian
+  Lieret, Shunyu Yao, Karthik Narasimhan, and Ofir
+  Press. 2024. Swe-agent: Agent-computer interfaces
+  enable automated software engineering. Advances in
+  Neural Information Processing Systems, 37:50528–
+  50652.
+
+                                                                 Figure 8: Categorization of bad patches.
+John Yang, Kilian Leret, Carlos E. Jimenez, Alexan-
+  der Wettig, Kabir Khandpur, Yanzhe Zhang, Binyuan
+  Hui, Ofir Press, Ludwig Schmidt, and Diyi Yang.
+  2025. Swe-smith: Scaling data for software engineer-
+  ing agents. Preprint, arXiv:2504.21798.
+
+
+Daoguang Zan, Zhirong Huang, Wei Liu, Hanwu Chen,
+  Linhao Zhang, Shulin Xin, Lu Chen, Qi Liu, Xiao-
+  jian Zhong, Aoyan Li, Siyao Liu, Yongsheng Xiao,
+  Liangqiang Chen, Yuyu Zhang, Jing Su, Tianyu Liu,
+  Rui Long, Kai Shen, and Liang Xiang. 2025. Multi-
+  swe-bench: A multilingual benchmark for issue re-
+  solving. Preprint, arXiv:2504.02605.
+
+
+Daoguang Zan, Zhirong Huang, Ailun Yu, Shaoxin Lin,                Figure 9: Categorization of reviews.
+  Yifan Shi, Wei Liu, Dong Chen, Zongshuai Qi, Hao
+  Yu, Lei Yu, and 1 others. 2024. Swe-bench-java: A
+  github issue resolving benchmark for java. arXiv        To understand the distribution of bad patches gener-
+  preprint arXiv:2408.14354.                              ated by our pipeline, we categorize a sample of 100
+                                                          Python bad patches with results displayed in Fig-
+Yuntong Zhang, Haifeng Ruan, Zhiyu Fan, and Abhik         ure 7. The categorization is performed by prompt-
+  Roychoudhury. 2024. Autocoderover: Autonomous           ing an LLM with descriptions of the category along
+  program improvement. In Proceedings of the 33rd         with the problem description, bad patch, and cor-
+  ACM SIGSOFT International Symposium on Soft-            rect patch for the instance.
+  ware Testing and Analysis, pages 1592–1604.
+                                                             We observe that bad patches are distributed
+                                                          across a range of types, with most of them being
+Yuxuan Zhu, Antony Kellermann, Dylan Bowman,              “Undisciplined”, that is, patches that make more
+  Philip Li, Akul Gupta, Adarsh Danda, Richard Fang,      spurious changes than necessary. There are also a
+  Conner Jensen, Eric Ihli, Jason Benn, Jet Geronimo,     significant number of bad patches in the “Wrong
+  Avi Dhir, Sudhit Rao, Kaicheng Yu, Twm Stone, and
+  Daniel Kang. 2025. Cve-bench: A benchmark for ai
+                                                          Layer “ and “Contract Violation” categories.
+  agents’ ability to exploit real-world web application      Another way to understand bad patches is to cate-
+  vulnerabilities.                                        gorize them according to whether they are “Partial”
+(the attempted fix is partially correct), "Unneces-          IN subqueries, bypassing APIs or type con-
+sary" (the patch makes spurious changes), or “In-            tracts, or hardcoding internals. Also includes
+correct” (the fix approach is incorrect). We observe         changing established behavior (defaults, tu-
+that the majority of bad patches are due to incor-           ple shapes, ordering, observable semantics)
+rect approach at making the fix. These patches are           without justification or migration.
+useful to include in the dataset as they characterize
+probable failure modes that existing tests may not       E. Guard/safety-net removal or inversion
+account for.                                                Description: Removing or flipping checks,
+   To understand the distribution of reviews gener-         caches, or validation that protect correct-
+ated by our pipeline, we categorize a sample of 100         ness/security. Indicators include deleting
+Python reviews with results displayed in Figure 9.          is_active or has_usable_password
+The categorization is performed by prompting an             checks, removing parent_link validation, drop-
+LLM with descriptions of the category along with            ping inverse/caching assignments, or dis-
+the problem description, bad patch, correct patch,          abling/inverting critical conditionals.
+and review for the instance.
+   Descriptions used to categorize bad patches -          F. Edge cases, normalization, and type/repre-
+                                                             sentation assumptions
+ A. Wrong-layer fix / misdiagnosed root cause                Description: Logic fails on uncommon val-
+    Description: The change targets the wrong                ues or conflates representations. Examples:
+    component or symptom instead of the source               treating None as the only “empty” (ignor-
+    of truth. Signals include modifying outputs              ing ”), mishandling NaN/Inf or undefined
+    instead of inputs, tweaking helpers when call            semantics, missing lowercase exponent pars-
+    sites or flags need changes, relying on at-              ing, not rechecking length after mutation,
+    tributes/settings that are never wired, or mak-          confusing PATH vs PATH_INFO/script pre-
+    ing comment-only/no-op changes.                          fixes, or choosing wrappers/proxies that break
+                                                             expected type behavior. Includes overfitted
+ B. Partial fix / incomplete coverage                        regexes/parsers, missing named groups, un-
+    Description: Only a subset of affected paths,            handled array-indexed dispatch, naive SQL
+    formats, or call sites is fixed; others remain           interpolation, missing escaping, off-by-one
+    broken. Typical signs include updating JSON              slices, or wrong encodings/BOM handling.
+    but not XML, adjusting PRAGMA but not
+    SELECT, fixing one code path while an equiv-
+                                                           We perform similar analysis for generated re-
+    alent exists elsewhere, or forgetting to update
+                                                        views and observe that the vast majority of reviews
+    generated/runtime artifacts.
+                                                        are to do with improving functional correctness.
+ C. Process hygiene and change discipline fail-         There are also reviews that discuss “Scope Control”
+    ures                                                and “Architecture”. Descriptions used to categorize
+    Description: The patch mixes unrelated edits        reviews -
+    (scope creep), alters tests to match a broken
+    implementation, includes merge artifacts or          A. Functional correctness (logic, control flow,
+    duplicate code, or introduces syntax/typo/run-          edge cases)
+    time errors (duplicate args, unreachable code).         Description: Ensure the fix implements the
+    These complicate review and often obscure               intended behavior with correct conditions,
+    regressions.                                            boundaries, ordering/precedence, and return
+                                                            values. Catch logic/sign errors, unreachable
+ D. Contract/invariant violations or Abstrac-               code, inverted conditions, and other correct-
+    tion/API misuse                                         ness issues.
+    Description: Changes break explicit or im-
+    plicit invariants or requirements. Examples          B. Scope control and change isolation
+    include violating “single-column subquery,”             Description: Keep the patch tightly focused
+    making non-atomic multi-step writes, chang-             on the reported issue. Revert incidental edits,
+    ing multiplication order in non-abelian con-            avoid broad refactors, and limit changes to the
+    texts, keeping multi-column projections inside          affected component or backend.
+ C. API and data contract adherence                    is often semantically misaligned with the intended
+    Description: Preserve public/internal inter-       behavior. This highlights a core limitation in con-
+    faces, data shapes, and semantics. Avoid           temporary LLMs: difficulty performing deep pro-
+    breaking consumers, changing return types,         gram reasoning across multi-file, real-world reposi-
+    or altering documented behavior without co-        tories. Rather than syntactic invalidity, these fail-
+    ordination.                                        ures reflect conceptual misunderstandings of logic,
+                                                       invariants, and dependencies.
+ D. Design/architecture alignment and plumb-              The second major contributor is localization fail-
+    ing                                                ure, suggesting that agents frequently misinterpret
+    Description: Apply changes in the correct          failing tests, select the wrong regions of code to
+    layer (e.g., model vs. view), respect separa-      modify, or struggle to trace error signals through
+    tion of concerns, and route control flags/s-       complex call chains. While these results parallel
+    tate through the call chain so policies are en-    observations in (Yang et al., 2025), we also quan-
+    forced where needed. Prefer non-breaking or        tify failed tool call submissions, which make up a
+    backward-compatible design alternatives.           significant portion of the errors. These are cases
+ E. Error and exception handling                       where the agent outputs incorrect tool calls that
+    Description: Catch and handle expected fail-       trigger an auto-submission of the current patch it
+    ures at the correct layer; convert errors to ap-   has.
+    propriate no-ops or fallbacks. Avoid swallow-         The remaining categories represent smaller but
+    ing unexpected exceptions or leaking internal      meaningful sources of failure: no patch generated,
+    errors.                                            invalid patches, and empty patches. These typically
+                                                       stem from toolchain integration issues or fragile
+    F. Security and standards/protocol compli-         execution pipelines, where agents fail to reliably
+       ance                                            produce well-formed edits.
+       Description: Use correct security checks (au-      Taken together, these results suggest that the
+       thz/authn, permission models), avoid unsafe     most effective pathways for improving SWE agents
+       operations (escaping, URL handling), and        may need: (1) strengthening semantic reasoning
+       comply with specified protocols.                and behavioral alignment in code modifications,
+                                                       (2) enhancing localization accuracy through richer
+B     Patch Generation Rate and Capability             retrieval and test-feedback interpretation, and (3)
+      Within Budget                                    developing more stable agentic control loops that
+See Table 7 and Table 8.                               prevent failed tool calls or premature termination
+                                                       and ensure patches undergo sufficient validation
+C     Failure Mode Analysis                            before submission. We have included the method-
+                                                       ology of our failure mode categorization in Fig-
+                                                       ure 11.
+
+
+
+
+Figure 10: Distribution of agent failure modes for
+patches generated by SWE-Agent + Gemini-2.5-Flash
+on Bug-Fixing tasks.
+
+  According to Figure 10, the most dominant fail-
+ure mode is incorrect fixes, indicating that—even
+when an agent produces a patch—the modification
+Figure 11: Failure Mode Taxonomy of Agent-Generated Patches.
+                      Table 7: SWE-Agent Patch Generate Rate across models and tasks
+
+        Language    Model               Bug-Fixing   Test-Generation   Review-Response   Style-Fixing
+                    Gemini-2.5-Flash      93.8%          92.0%             92.7%            91.7%
+                    Claude-4.6-Sonnet     94.1%          60.4%             81.7%            70.7%
+        Python      GPT-5-mini            76.2%          64.8%             61.0%            69.3%
+                    DeepSeek-V3.1         96.3%          94.8%             95.1%            93.8%
+                    Qwen3-32B             79.1%          90.8%             78.0%            35.7%
+                    Gemini-2.5-Flash      98.2%          97.7%             77.3%            80.3%
+                    Claude-4.6-Sonnet     61.6%          27.3%             81.8%            35.6%
+        C++         GPT-5-mini            62.5%          54.5%             56.8%            48.3%
+                    DeepSeek-V3.1         96.4%          75.0%             97.7%            85.7%
+                    Qwen3-32B             70.5%          97.7%             88.6%            47.6%
+                    Gemini-2.5-Flash      99.1%          79.2%             93.7%            84.7%
+                    Claude-4.6-Sonnet     27.5%          20.3%             30.4%            75.0%
+        Java        GPT-5-mini            45.9%          45.5%             51.9%            50.0%
+                    DeepSeek-V3.1         93.6%          87.0%             91.1%            91.1%
+                    Qwen3-32B             75.2%          90.9%             77.2%            44.4%
+
+
+
+
+Table 8: SWE-Agent performance on OmniCode across languages and models. These scores reflect the resolution
+rate of generated patches, disregarding instances where patches were not generated.
+
+        Language    Model               Bug-Fixing   Test-Generation   Review-Response   Style-Fixing
+                    Gemini-2.5-Flash      40.6%          15.2%             32.3%           62.2%
+                    Claude-4.6-Sonnet     73.2%          24.2%             83.1%           86.6%
+        Python      GPT-5-mini            62.1%          9.6%              50.0%           66.2%
+                    DeepSeek-V3.1         58.6%          19.7%             54.9%           57.6%
+                    Qwen3-32B             31.0%           4.4%             22.7%           54.6%
+                    Gemini-2.5-Flash       8.1%          12.5%             17.6%            38.0%
+                    Claude-4.6-Sonnet     13.0%          49.8%             11.1%            100%
+        C++         GPT-5-mini            24.3%          12.5%             36.1%            40.4%
+                    DeepSeek-V3.1         20.3%          33.3%             23.2%            21.9%
+                    Qwen3-32B              5.4%           4.6%              5.1%            14.1%
+                    Gemini-2.5-Flash      14.8%           6.2%             33.7%           26.0%
+                    Claude-4.6-Sonnet     56.7%          43.8%             66.8%           36.4%
+        Java        GPT-5-mini            47.9%           5.9%             51.3%           44.2%
+                    DeepSeek-V3.1         33.3%          24.0%             48.6%           25.4%
+                    Qwen3-32B             13.4%           1.4%             19.7%           41.7%
+D    Prompts
+                                        context, incorrect
+                                        modifications, or
+                                        potential bugs) and
+                                        specifies suggestions
+                                        for improving the
+                                        submitted patch so that
+                                         it correctly solves
+                                        the problem statement.
+                                     Avoid referencing the
+                                        correct patch directly.
+
+                                     Problem Statement:
+                                     {{ problem_statement }}
+
+                                     Correct Patch Example:
+                                     {{ correct_patch_example }}
+
+
+                                     Submitted Patch (Bad Patch)
+                                        :
+                                     {{ bad_patch }}
+
+                                     Detailed Review:
+
+
+
+                                   Bad Patch Generation
+
+                                     You are given a production-
+                                        ready source file below.
+                                         Your task:
+                                     1. **Introduce one to two
+                                        subtle, functional bugs
+                                        ** without adding any
+                                        comments
+    Review Generation                2. **Do NOT break
+                                        compilation** and **do
+      You are an experienced            not introduce any
+         software engineer              syntax or spelling
+         tasked with reviewing          errors** or make any
+         code patches.                  code-style changes.
+      Below is a problem             3. **Do NOT change any
+         statement, a correct           import statements**
+         patch example, and a        4. Preserve formatting and
+         submitted patch that is         comments; modify only
+          likely incorrect or           the minimum lines
+         incomplete.                    needed to trigger a
+      Please provide a detailed         logical failure under
+         review of the submitted        certain inputs.
+          patch that identifies      5. Return **only** the
+         issues (e.g., missing          full modified file
+      content, with no                Follow these steps to
+      explanations or diff               resolve the issue:
+      markers.                        1. As a first step, it
+                                         might be a good idea to
+  --- {path} original                     find and read code
+     content START ---                   relevant to the <
+  {curr_text}                            pr_description>
+  --- {path} original                 2. Create a script to
+     content END ---                     reproduce the error and
+                                          execute it with ‘
+                                         python <filename.py>‘
+                                         using the bash tool, to
+SWE-Agent Bug-fixing instructions
+                                          confirm the error
+  <uploaded_files>                    3. Edit the sourcecode of
+  {{working_dir}}                        the repo to resolve the
+  </uploaded_files>                       issue
+  I’ve uploaded a python              4. Rerun your reproduce
+     code repository in the              script and confirm that
+     directory {{working_dir              the error is fixed!
+     }}. Consider the                 5. Think about edgecases
+     following PR                        and make sure your fix
+     description:                        handles them as well
+                                      Your thinking should be
+  <pr_description>                       thorough and so it’s
+  {{problem_statement}}                  fine if it’s very long.
+  </pr_description>
+
+  Can you help me implement         SWE-Agent Test Generation instructions
+     the necessary changes
+     to the repository so             <uploaded_files>
+     that the requirements            {{working_dir}}
+     specified in the <               </uploaded_files>
+     pr_description> are met          I’ve uploaded a python
+     ?                                   code repository in the
+  I’ve already taken care of             directory {{working_dir
+      all changes to any of              }}. Consider the
+     the test files                      following problem
+     described in the <                  description:
+     pr_description>. This
+     means you DON’T have to          <problem_description>
+      modify the testing              {{problem_statement}}
+     logic or any of the              </problem_description>
+     tests in any way!
+  Your task is to make the            Can you help me implement
+     minimal changes to non-             a test that
+     tests files in the {{               successfully reproduces
+     working_dir}} directory              the problem specified
+      to ensure the <                    in the <
+     pr_description> is                  problem_description>?
+     satisfied.                       The test must be created
+     in the repository’s              resolve an issue within
+     existing test suite and           this repository.
+      should be runnable           Pylint has been run on the
+     with the repository’s             modified files and has
+     testing infrastructure /          produced the following
+      tooling (e.g. pytest).           feedback:
+  Do not make any changes to
+      the non-test code in         {{problem_statement}}
+     the repository since we
+      only need to create a        Your task is to:
+     reproduction test.            1. Analyze the Pylint
+  Follow these steps to               violations provided in
+     resolve the issue:               the problem statement
+  1. As a first step, it           2. Understand the specific
+     might be a good idea to           rules that were
+      find and read code              violated (e.g., naming
+     relevant to the <                conventions, unused
+     problem_description>             imports, complexity
+  2. Create a script to               issues)
+     reproduce the error and       3. Apply fixes that
+      execute it with ‘               resolve these errors
+     python <filename.py>‘            while maintaining code
+     using the bash tool, to          functionality
+      confirm the error            4. Ensure your changes
+  3. Edit the the testing             follow Python best
+     suite of the repo to             practices and improve
+     implement a test based           code readability
+     on this reproduction          5. Test that your fixes
+     script which can be run          don’t introduce new
+      using the repository’s          Pylint violations
+      testing infrastructure       6. Do not introduce any
+      / tooling (e.g. pytest)         new files to fix the
+                                      style errors
+  4. Ensure this test runs
+     and successfully              Common Pylint violations
+     reproduces the problem!          you may encounter:
+  5. Remove the reproduction       - Naming and style issues
+      script and only keep            (invalid-name, missing-
+     changes to the test              docstring, line-too-
+     suite that reproduce             long)
+     the problem.                  - Import issues (unused-
+  Your thinking should be             import, wrong-import-
+     thorough and so it’s             order, reimported)
+     fine if it’s very long.       - Error-prone patterns (
+                                      undefined-variable, no-
+                                      member, unsubscriptable-
+                                      object)
+SWE-Agent Style-Fix instructions
+                                   - Code design issues (too-
+  You have recently                   many-arguments, too-
+     generated a patch to             many-locals, too-many-
+     branches)                               working_dir}} directory
+  - Best practice and                         to ensure the <
+     maintainability issues                  pr_description> is
+     (fixme, unused-argument,                satisfied.
+      broad-except)                       Follow these steps to
+                                             resolve the issue:
+  Please resolve the Pylint               1. As a first step, it
+     feedback to the best of                 might be a good idea to
+      your ability, while                     find and read code
+     preserving the                          relevant to the <
+     functionality of the                    pr_description>
+     code.                                2. Create a script to
+  Focus on the most critical                 reproduce the error and
+      violations first and                    execute it to confirm
+     ensure your fixes                       the error
+     improve overall code                 3. Edit the sourcecode of
+     quality and                             the repo to resolve the
+     maintainability.                         issue
+                                          4. Rerun your reproduce
+                                             script and confirm that
+                                              the error is fixed!
+SWE-Agent Review-Fix instructions
+                                          5. Think about edgecases
+  <uploaded_files>                           and make sure your fix
+  {{working_dir}}                            handles them as well
+  </uploaded_files>                       Your thinking should be
+  I’ve uploaded a code                       thorough and so it’s
+     repository in the                       fine if it’s very long.
+     directory {{working_dir
+     }}. {{problem_statement
+     }}                             D.1   Rulesets used for Style Review
+                                    See Table 9, Table 10, and Table 11 for the list
+  Can you help me implement         of style errors we account for in our Style Review
+     the necessary changes          tasks.
+     to the repository so
+     that the requirements          D.2   Style Review Error Analysis
+     specified in the <             In Figure 12, it can be seen that Gemini consistently
+     pr_description> are met        fixes structural and naming issues, such as rede-
+     ?                              fined names, protected access, and undefined vari-
+  I’ve already taken care of        ables, which reduces runtime errors and improves
+      all changes to any of         code stability. Deepseek is strongest on module
+     the test files                 and resource patterns such as unused imports, reim-
+     described in the <             ported modules, and unnecessary lambdas, produc-
+     pr_description>. This          ing leaner code and fewer maintenance surprises.
+     means you DON’T have to        GPT performs best on interface and initialization
+      modify the testing            problems like unused arguments, mismatched func-
+     logic or any of the            tion signatures, and attribute initialization, lower-
+     tests in any way!              ing the risk of subtle API misuse. Qwen provides
+  Your task is to make the          broad, reliable cleanups across stylistic and warn-
+     minimal changes to non-        ing classes, including broad exception handling
+     tests files in the {{          and anomalous string escapes, raising overall code
+                                    quality and guideline compliance.
+Figure 12: Resolve rates for the 20 most frequent style errors in Python.
+Figure 13: Resolve rates for the 20 most frequent style errors in Java.
+                                     Table 9: List of Python Style Errors.
+
+protected-access                     redefined-outer-name                 unused-argument
+attribute-defined-outside-init       abstract-method                      fixme
+redefined-builtin                    invalid-str-returned                 unused-variable
+anomalous-backslash-in-string        unnecessary-pass                     broad-exception-caught
+raise-missing-from                   unbalanced-tuple-unpacking           arguments-differ
+unused-import                        reimported                           assigning-non-slot
+unnecessary-lambda                   undefined-variable                   pointless-statement
+logging-fstring-interpolation        missing-timeout                      unsubscriptable-object
+logging-not-lazy                     pointless-string-statement           not-callable
+unspecified-encoding                 dangerous-default-value              invalid-field-call
+possibly-used-before-assignment      arguments-renamed                    eval-used
+no-self-argument                     unexpected-keyword-arg               bare-except
+too-many-function-args               no-value-for-parameter               expression-not-assigned
+cell-var-from-loop                   comparison-with-callable             super-init-not-called
+undefined-loop-variable              used-before-assignment               global-variable-not-assigned
+abstract-class-instantiated          access-member-before-definition      bad-staticmethod-argument
+deprecated-class                     function-redefined                   implicit-str-concat
+not-context-manager                  signature-differs                    super-without-brackets
+invalid-unary-operand-type           broad-exception-raised               arguments-out-of-order
+assert-on-string-literal             bad-indentation                      global-statement
+global-variable-undefined            import-self                          invalid-getnewargs-ex-returned
+invalid-metaclass                    invalid-repr-returned                invalid-sequence-index
+isinstance-second-argument-not-valid-type
+                                     keyword-arg-before-vararg            misplaced-bare-raise
+missing-kwoa                         non-parent-init-called               possibly-unused-variable
+raising-non-exception                redundant-u-string-prefix            redundant-unittest-assert
+subprocess-run-check                 unnecessary-ellipsis                 unused-private-member
+wildcard-import                      astroid-error                        syntax-error
+useless-parent-delegation            bad-super-call                       method-hidden
+not-an-iterable                      too-few-format-args                  assignment-from-no-return
+assignment-from-none                 bad-chained-comparison               bad-str-strip-call
+bad-string-format-type               bad-thread-instantiation             bidirectional-unicode
+contextmanager-generator-missing-cleanup
+                                     deprecated-argument                  deprecated-method
+deprecated-module                    dict-iter-missing-items              duplicate-except
+duplicate-key                        duplicate-string-formatting-argument duplicate-value
+exec-used                            f-string-without-interpolation       format-string-without-interpolation
+inherit-non-class                    invalid-bool-returned                invalid-length-returned
+invalid-overridden-method            logging-format-interpolation         logging-too-many-args
+lost-exception                       method-cache-max-size-none           modified-iterating-list
+nested-min-max                       no-method-argument                   non-iterator-returned
+notimplemented-raised                pointless-exception-statement        positional-only-arguments-expected
+raising-bad-type                     raising-format-tuple                 redeclared-assigned-name
+redundant-keyword-arg                return-in-finally                    return-in-init
+self-assigning-variable              self-cls-assignment                  shadowed-import
+try-except-raise                     unbalanced-dict-unpacking            undefined-all-variable
+unexpected-special-method-signature unnecessary-semicolon                 unpacking-non-sequence
+unreachable                          unsupported-assignment-operation     unsupported-delete-operation
+unsupported-membership-test          unused-format-string-argument        unused-wildcard-import
+used-prior-global-declaration        useless-else-on-loop                 using-constant-test
+
+
+
+
+   Figure 13 shows that Gemini is strongest at           C-style arrays; fixing these issues reduces unde-
+structural and object-oriented fixes, such as adding     fined behavior and lowers crash risk. Deepseek
+or normalizing constructors, enforcing field and         is strongest on memory management and macro
+method naming conventions, and flattening deeply         usage, addressing owning memory and macro pat-
+nested logic, which improves maintainability and         terns that directly improve resource safety and long
+reduces subtle runtime defects. Deepseek performs        term maintainability. GPT performs best at ini-
+best on cleanup and refactor tasks like removing         tialization and API correctness tasks, such as ini-
+unnecessary imports, eliminating duplicate literals,     tializing variables and easily swappable parame-
+and simplifying utility classes, which reduces code      ters, which prevents subtle bugs and makes inter-
+bloat and lowers maintenance costs. GPT excels at        faces safer to use. Qwen delivers steady, moderate
+test and API related fixes, including adding asser-      improvements across stylistic and guideline rules,
+tions, finalizing method arguments and local vari-       making it a good choice for broad cleanup and
+ables, and correcting single return patterns, which      incremental rule conformance.
+raises test reliability and prevents interface regres-      Through these insights, we observe that LLMs
+sions. Qwen provides consistent, broad stylistic         excel at deterministic, local rewrites (e.g., remov-
+cleanups such as enforcing short class name poli-        ing duplicate imports, adding simple initializers,
+cies and small local correctness adjustments.            replacing macros with constexpr, extracting con-
+   Figure 14 shows that Gemini excels at correct-        stants, tightening exception catches, and adding
+ness and structural issues such as constant correct-     final) because they preserve observable behavior
+ness, non-private member variables, and avoiding         in the common case. They falter on fixes that re-
+                                     Table 10: List of Java Style Errors
+
+AtLeastOneConstructor                AvoidDuplicateLiterals               CommentDefaultAccessModifier
+FieldNamingConventions               LawOfDemeter                         LocalVariableCouldBeFinal
+MethodArgumentCouldBeFinal           OnlyOneReturn                        ShortClassName
+UnnecessaryImport                    UseUtilityClass                      AvoidCatchingGenericException
+AvoidDeeplyNestedIfStmts             AvoidLiteralsInIfCondition           ClassWithOnlyPrivateConstructorsShouldBeFinal
+JUnitTestContainsTooManyAsserts      JUnitTestsShouldIncludeAssert        LinguisticNaming
+SystemPrintln                        TestClassWithoutTestCases            AvoidAccessibilityAlteration
+AvoidCatchingThrowable               CallSuperInConstructor               CognitiveComplexity
+ImmutableField                       LooseCoupling                        ShortMethodName
+SignatureDeclareThrowsException      TooManyStaticImports                 UseDiamondOperator
+UseUnderscoresInNumericLiterals      UselessParentheses                   AssignmentInOperand
+AvoidFieldNameMatchingMethodName     AvoidReassigningParameters           AvoidThrowingRawExceptionTypes
+CollapsibleIfStatements              ConfusingTernary                     CouplingBetweenObjects
+CyclomaticComplexity                 DataClass                            ExceptionAsFlowControl
+ExcessivePublicCount                 GodClass                             LiteralsFirstInComparisons
+MethodNamingConventions              MutableStaticState                   NPathComplexity
+NcssCount                            NullAssignment                       PreserveStackTrace
+SimplifyBooleanReturns               TooManyFields                        UnnecessaryBoxing
+UnnecessaryConstructor               UnusedFormalParameter                UseProperClassLoader
+AbstractClassWithoutAbstractMethod   ArrayIsStoredDirectly                AvoidBranchingStatementAsLastInLoop
+ClassNamingConventions               CloseResource                        CompareObjectsWithEquals
+EmptyCatchBlock                      ExcessiveImports                     FieldDeclarationsShouldBeAtStartOfClass
+ForLoopCanBeForeach                  JUnit4TestShouldUseTestAnnotation    LocalVariableNamingConventions
+OneDeclarationPerLine                ReturnEmptyCollectionRatherThanNull UnnecessaryFullyQualifiedName
+UnnecessaryReturn                    UnnecessarySemicolon                 UnusedAssignment
+UseTryWithResources                  UseVarargs                           AvoidFieldNameMatchingTypeName
+AvoidReassigningLoopVariables        AvoidUncheckedExceptionsInSignatures ControlStatementBraces
+EmptyControlStatement                GenericsNaming                       GuardLogStatement
+MethodReturnsInternalArray           PrematureDeclaration                 SwitchStmtsShouldHaveDefault
+UnnecessaryCast                      UnnecessaryModifier                  UnusedPrivateMethod
+UseLocaleWithCaseConversions         UseShortArrayInitializer             AvoidThrowingNullPointerException
+BooleanGetMethodName                 ConstantsInInterface                 ConstructorCallsOverridableMethod
+ExcessiveParameterList               FinalFieldCouldBeStatic              ForLoopVariableCount
+JUnitUseExpected                     MissingSerialVersionUID              NonStaticInitializer
+OverrideBothEqualsAndHashcode        UnnecessaryAnnotationValueElement    UnnecessaryLocalBeforeReturn
+UnusedLocalVariable                  UseCollectionIsEmpty                 UseEqualsToCompareStrings
+UseStandardCharsets                  AbstractClassWithoutAnyMethod        AvoidCatchingNPE
+AvoidProtectedFieldInFinalClass      AvoidProtectedMethodInFinalClassNotExtending
+                                                                          AvoidUsingHardCodedIP
+DoubleBraceInitialization            EmptyMethodInAbstractClassShouldBeAbstract
+                                                                          EqualsNull
+FormalParameterNamingConventions     ImplicitSwitchFallThrough            JUnit5TestShouldBePackagePrivate
+MissingStaticMethodInNonInstantiatableClass
+                                     ReplaceVectorWithList                SimpleDateFormatNeedsLocale
+SimplifiedTernary                    SwitchDensity                        AvoidDecimalLiteralsInBigDecimalConstructor
+AvoidDollarSigns                     AvoidInstanceofChecksInCatchClause   AvoidPrintStackTrace
+AvoidRethrowingException             AvoidStringBufferField               DoNotCallGarbageCollectionExplicitly
+DontImportSun                        FinalParameterInAbstractMethod       IdenticalCatchBranches
+MissingOverride                      NonSerializableClass                 PrimitiveWrapperInstantiation
+SuspiciousEqualsMethodName           UnusedPrivateField                   AvoidThrowingNewInstanceOfSameException
+DefaultLabelNotLastInSwitchStmt      DetachedTestCase                     DoNotExtendJavaLangThrowable
+DoNotTerminateVM                     ForLoopShouldBeWhileLoop             InstantiationToGetClass
+JUnit4SuitesShouldUseSuiteAnnotation JumbledIncrementer                   LogicInversion
+ProperCloneImplementation            ReplaceHashtableWithMap              SimplifyBooleanExpressions
+SimplifyConditional                  SingletonClassReturningNewInstance   SingularField
+UseObjectForClearerAPI               AssignmentToNonFinalStatic           AvoidMessageDigestField
+AvoidMultipleUnaryOperators          AvoidUsingOctalValues                CheckSkipResult
+ClassCastExceptionWithToArray        CloneMethodMustBePublic              CloneMethodMustImplementCloneable
+CloneMethodReturnTypeMustMatchClassName
+                                     DoNotExtendJavaLangError             DoNotHardCodeSDCard
+DoNotThrowExceptionInFinally         DontUseFloatTypeForLoopIndices       FinalizeDoesNotCallSuperFinalize
+InvalidLogMessageFormat              NoPackage                            PackageCase
+SingleMethodSingleton                UnconditionalIfStatement             UnnecessaryCaseChange
+UnusedNullCheckInEquals              UseExplicitTypes                     UselessOperationOnImmutable
+UselessOverridingMethod              UselessQualifiedThis                 WhileLoopWithLiteralBoolean
+
+
+
+                                     Table 11: List of CPP Style Errors
+
+misc-include-cleaner                                   misc-use-anonymous-namespace
+cppcoreguidelines-avoid-magic-numbers                  cppcoreguidelines-avoid-do-while
+misc-const-correctness                                 cppcoreguidelines-rvalue-reference-param-not-moved
+misc-non-private-member-variables-in-classes           bugprone-easily-swappable-parameters
+cppcoreguidelines-pro-bounds-pointer-arithmetic        cppcoreguidelines-avoid-c-arrays
+cppcoreguidelines-avoid-non-const-global-variables     cppcoreguidelines-pro-bounds-array-to-pointer-decay
+cppcoreguidelines-owning-memory                        cppcoreguidelines-init-variables
+cppcoreguidelines-macro-usage                          cppcoreguidelines-special-member-functions
+cppcoreguidelines-pro-type-member-init                 cppcoreguidelines-pro-type-static-cast-downcast
+misc-no-recursion                                      performance-enum-size
+bugprone-narrowing-conversions                         cppcoreguidelines-narrowing-conversions
+cppcoreguidelines-pro-type-reinterpret-cast            cppcoreguidelines-pro-type-union-access
+cppcoreguidelines-use-default-member-init              cppcoreguidelines-pro-bounds-constant-array-index
+bugprone-implicit-widening-of-multiplication-result    bugprone-macro-repeated-side-effects
+bugprone-suspicious-include                            clang-analyzer-optin.core.EnumCastOutOfRange
+cppcoreguidelines-avoid-const-or-ref-data-members      cppcoreguidelines-explicit-virtual-functions
+cppcoreguidelines-pro-type-vararg                      portability-simd-intrinsics
+Figure 14: Resolve rates for the 20 most frequent style errors in CPP.
+quire global program understanding, API-level de-           The questions asked for each category were -
+cisions, ownership/lifetime tradeoffs, or knowledge
+about intended public interfaces, exactly the places        • Patch Incorrectness Type: Why is the bad
+where a human’s design judgment, test coverage,               patch incorrect?
+and knowledge of downstream users matter.                   • Patch Plausibility: How convincing does the
+E   Correlation Analysis across Tasks                         bad patch look?
+
+See Figure 15.                                              • Review Information Leakage: Does the re-
+                                                              view reveal the correct fix?
+F   Details of Data Collection
+                                                            • Review Correctness: Does the review accu-
+We consider popular projects, filtering out tutorials         rately identify what’s wrong?
+and other non-code repositories. From these, we
+collect merged pull requests that (1) resolve an is-       Table 13 summarizes the aggregated results.
+sue and (2) introduce at least one test. To ensure      Most bad patches reflect wrong but plausible ap-
+that each instance is a meaningful task for an agent    proaches rather than trivial mistakes. Specifically,
+to be evaluated on, we perform manual inspection.       51.1% of bad patches follow an incorrect approach,
+Only instances where the changes introduced in          while only 14.4% are trivially wrong. On a 1–3
+the pull request are within the scope of the descrip-   plausibility scale (1 = obviously wrong, 2 = some-
+tion of the issue are kept. For reproducibility, we     what plausible, 3 = very convincing), the mean
+also filter out flaky and non-functional instances      plausibility score is 2.10, indicating that most bad
+where dependencies could not be installed properly      patches are at least somewhat plausible, with rel-
+or where pre-existing tests would not pass consis-      atively few being either trivially wrong or highly
+tently. In addition, we also discard issues if they     convincing.
+only involve simpler changes to documentation or           With regard to review quality, reviews rarely
+configuration files.                                    leak the solution directly: 70.0% exhibit no leak-
+                                                        age, 30.0% exhibit moderate leakage, and none ex-
+G    Details of Bad Patch Generation                    hibit severe leakage. In addition, 88.9% of reviews
+     Failures                                           are fully correct and another 10.0% are partially
+We use two approaches for bad patch generation          correct, meaning that 98.9% are at least partially
+as detailed in Section 3.2.2: (1) collecting failed     correct overall. Inter-annotator agreement is mod-
+bug-fixing attempts and (2) perturbing the correct      erate to good, with majority agreement in at least
+patch to add bugs. For Python, we aimed for             86.7% of instances across all categories.
+three patches per instance using approach 1. Most          Overall, these results suggest that the gener-
+Python instances have all three, but around 1/3         ated tasks are neither trivial nor degenerate, and
+don’t have an approach 1 patch. All Python in-          that reviews generally provide constructive, non-
+stances have one patch using approach 2. For Java,      revealing feedback. Together with the LLM-based
+all instances have three approaches, using approach     categorization, this provides an initial validation
+1. For C++, most instances have 3 patches using         of the OmniCode task generation pipeline and its
+approach 1. Overall, there are 112 bad patches for      diversity.
+C++, 237 for Java, and 760 (487 from approach 1;
+                                                        I    Confidence Intervals
+273 from approach 2) for Python.
+                                                        In addition to our performance evaluation, we com-
+H    Human Evaluation of Synthetic Data                 pute confidence intervals on the main metrics pre-
+As we rely on synthetically generated patches in        sented in the paper in Tables 14 and 15.
+our work, human evaluation is an important initial
+validation step. For this purpose, six members
+of our research team independently inspected a
+subset of reviews and bad patches, verifying that
+(1) reviews provide meaningful guidance without
+leaking the gold patch, and (2) bad patches are
+substantively incorrect.
+Figure 15: Bugfixing performance plotted together with performance on other tasks separately for each language.
+                               Table 12: Review-Response - Avg. Complexity Score.
+
+                                                             Resolved     Resolved    Unresolved   Unresolved
+                                  Gold Avg     Model Avg
+ Model              Language                                 Gold Avg    Model Avg     Gold Avg    Model Avg
+                                 Complexity    Complexity
+                                                            Complexity   Complexity   Complexity   Complexity
+                    Python          7.07        1635.47        3.69         9.58         7.93       2408.95
+ Gemini 2.5 flash   Java           19.24          9.95         6.49         6.86        17.25        11.53
+                    C++            47.55        128.33         5.98         4.85        41.85       154.79
+                    Python          7.07         289.22        4.96        13.80         7.40        543.45
+ GPT-5-mini         Java           19.24          6.26         6.91         5.58        15.32         6.99
+                    C++            47.55         955.24        9.01        5.84         12.39       1489.28
+                    Python          7.07          10.71        4.36         6.24         9.23         16.26
+ Deepseek v3.1      Java           19.24           9.75        6.69         7.04        19.67         12.32
+                    C++            47.55         195.10        8.07         6.28        38.26        252.31
+                    Python          7.07         519.86        3.15         3.26         7.41        639.08
+ qwen3-32b          Java           19.24          3.96         5.85         2.83        16.83         4.31
+                    C++            47.55         248.65        2.25         2.4         14.55        261.96
+
+
+
+
+Table 13: Human evaluation (n=6) results for synthetic
+reviews and bad patches across 20 task instances.
+
+ Category           Subcategory               Score
+                    Trivially Wrong           14.4%
+ Patch Incor-
+                    Wrong Approach            51.1%
+ rectness
+                    Gold + Bugs               12.2%
+ Type
+                    Incomplete Fix            22.2%
+ Patch Plausi- Mean (1–3)                     2.10
+ bility
+ Review             None                      70.0%
+ Information        Moderate                  30.0%
+ Leakage            Severe                    0.0%
+                    Correct                   88.9%
+ Review
+                    Partially Correct         10.0%
+ Correctness
+                    Incorrect                 1.1%
+Table 14: Confidence intervals for the main evaluation metrics across models and tasks. Values are reported as a
+percentage ± confidence interval.
+
+        Language      Model                Bug-Fixing      Test-Generation     Review-Response     Style-Fixing
+                      Gemini-2.5-Flash     38.1% ± 5.8       14.0% ± 5.3         29.9% ± 7.0       57.0% ± 5.8
+                      GPT-5-mini           47.3% ± 5.9        6.2% ± 3.7         30.5% ± 7.1       45.9% ± 6.6
+        Python
+                      DeepSeek-V3.1        56.4% ± 5.9       18.7% ± 6.0         52.2% ± 7.7       54.0% ± 5.3
+                      Qwen3-32B            24.5% ± 5.1        4.0% ± 3.0         17.7% ± 5.8       19.5% ± 5.8
+                      Gemini-2.5-Flash      8.0% ± 5.0       12.2% ± 9.7         13.6% ± 10.1      30.5% ± 5.4
+                      GPT-5-mini           15.2% ± 6.7       6.8% ± 7.4          20.5% ± 11.9      19.5% ± 5.5
+        C++
+                      DeepSeek-V3.1        19.6% ± 7.4      25.0% ± 12.8         22.7% ± 12.4      18.8% ± 3.7
+                      Qwen3-32B             3.8% ± 3.5        4.5% ± 6.1          4.5% ± 6.1       6.7% ± 3.0
+                      Gemini-2.5-Flash     14.7% ± 6.7       4.9% ± 4.8          31.6% ± 10.3      22.0% ± 2.4
+                      GPT-5-mini           22.0% ± 7.8       2.7% ± 3.6           26.6% ± 9.7      22.1% ± 5.6
+        Java
+                      DeepSeek-V3.1        31.2% ± 8.7       20.9% ± 9.0         44.3% ± 10.9      23.1% ± 2.9
+                      Qwen3-32B            10.1% ± 5.7       1.3% ± 2.5           15.2% ± 7.9      18.5% ± 4.8
+
+
+
+
+Table 15: Confidence intervals for SWE-Agent and Aider comparison across tasks. Values are reported as percentage
+± confidence interval.
+
+           Language     Agent            Bug-Fixing      Test-Generation     Review-Response     Style-Fixing
+                        SWE-Agent        38.1% ± 5.8      14.0% ± 5.3          29.9% ± 7.0       57.0% ± 5.8
+           Python
+                        Aider            32.4% ± 5.6       9.4% ± 4.5          26.8% ± 6.8       48.6% ± 6.4
+                        SWE-Agent        8.0% ± 5.0       12.2% ± 9.7         13.6% ± 10.1       30.5% ± 5.4
+           C++
+                        Aider            1.8% ± 2.5        2.3% ± 4.4          4.5% ± 6.1        7.9% ± 3.8
+                        SWE-Agent        14.7% ± 6.7       4.9% ± 4.8         31.6% ± 10.3       22.0% ± 2.4
+           Java
+                        Aider            19.3% ± 7.4       3.9% ± 9.6          25.3% ± 9.6       21.7% ± 3.1
+

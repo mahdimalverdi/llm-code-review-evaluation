@@ -1,0 +1,634 @@
+                                         IEICE TRANS. INF. & SYST., VOL.E103–D, NO.1 JANUARY 2020
+                                                                                                                                                                          1
+
+
+                                         PAPER         Special Section on Empirical Software Engineering
+
+                                         An Exploration of Cross-Patch Collaborations via
+                                         Patch Linkage in OpenStack
+                                                                                         Dong WANG† , Patanamon THONGTANUNAM†† ,
+                                                              Raula GAIKOVINA KULA††† , Nonmembers, and Kenichi MATSUMOTO††† , Fellow
+
+
+
+                                         SUMMARY Contemporary development projects benefit
+arXiv:2211.15007v1 [cs.SE] 28 Nov 2022
+
+
+
+
+                                         from code review as it improves the quality of a project. Large
+                                         ecosystems of inter-dependent projects like OpenStack generate
+                                         a large number of reviews, which poses new challenges for collab-
+                                         oration (improving patches, fixing defects). Review tools allow
+                                         developers to link between patches, to indicate patch dependency,
+                                         competing solutions, or provide broader context. We hypothesize
+                                         that such patch linkage may also simulate cross-collaboration.
+                                                With a case study of OpenStack, we take a first step to ex-
+                                         plore collaborations that occur after a patch linkage was posted
+                                         between two patches (i.e., cross-patch collaboration). Our
+                                         empirical results show that although patch linkage that requests
+                                         collaboration is relatively less prevalent, the probability of collab-
+                                         oration is relatively higher. Interestingly, the results also show
+                                         that collaborative contributions via patch linkage are non-trivial,
+                                         i.e, contributions can affect the review outcome (such as voting)
+                                         or even improve the patch (i.e., revising). This work opens up fu-
+                                         ture directions to understand barriers and opportunities related         Figure 1 A conceptual illustration that describes (1)
+                                         to this new kind of collaboration, that assists with code review         a linkage between two patches is identified and (2) a col-
+                                         and development tasks in large ecosystems.
+                                                                                                                  laboration activity happens where a developer on one
+                                         key words: Collaboration, Human Aspects, Code Review
+                                                                                                                  patch contributes to the review of the other patch.
+                                         1.   Introduction
+                                                                                                             or problem) are often submitted for a review in soft-
+                                         Software development teams nowadays benefit from on-                ware projects hosted in GitHub. Ebert et al. [5] ob-
+                                         line code review tools (e.g., Gerrit, Codestriker, and              served that the inclusion of more people in the code re-
+                                         ReviewBoard) to effectively inspect patches and im-                 view increases their awareness of the code change, i.e.,
+                                         prove the code quality of their software systems, while             confusion resolution contributes to knowledge sharing.
+                                         enabling the teams to perform asynchronous code re-                 Recently, Wang et al. [6] observed that developers are
+                                         views that are more lightweight and flexible [1, 2]. On             likely to share links during review discussions with sev-
+                                         the other hand, a large number of code reviews are be-              eral intentions to fulfill information needs. Meanwhile,
+                                         ing performed by software teams as new patches (i.e., a             Hirao et al. [7] shed light that the patch linkage (i.e.,
+                                         set of code changes) frequently occur in a contemporary             posting a patch link to another patch) is used to in-
+                                         code review setting [3]. For example, the 2018 Open-                dicate patch dependency, competing solutions, or pro-
+                                         Stack User Survey report1 showed that about 70,000                  vide broader context. As recent work has shown that
+                                         patches were reviewed, with an average of 182 code re-              patch linkage can increase the awareness of the related
+                                         views changes per day. Such the large number of code                patches, we further investigate to what extent develop-
+                                         reviews potentially poses a new challenge for collabo-              ers collaborate across these linked patches.
+                                         ration (e.g., improving the patch, fixing defects) during                Figure 1 illustrates a motivating scenario where
+                                         code reviews and development tasks.                                 collaboration occurs after the patch linkage. As shown
+                                              More specifically, recent studies have highlighted             in the figure, a reviewer Pink in Patch A posted a
+                                         evidence of why developers should collaborate across                patch link to Patch B in the review discussion. In
+                                         code review tasks. Zhang et al. [4] found that redun-               this patch linkage, we consider Patch A as a source
+                                         dant patches (i.e., patches that address the same task              patch and Patch B as a target patch. After the patch
+                                             † Kyushu University, Japan.
+                                                                                                             link is posted, a developer Green who participated in
+                                            †† The University of Melbourne, Australia.                       the  Patch A discussion votes and leaves review com-
+                                           ††† Nara Institute of Science and Technology, Japan.              ments in Patch B. At the same time, a developer Blue
+                                               DOI: 10.1587/transinf.E103.D.1                                who participated in the Patch B discussion before the
+                                             1 https://www.openstack.org/user-survey/2018-user-survey-report/linking time could also provide comments in Patch A
+
+
+                                                        Copyright © 2020 The Institute of Electronics, Information and Communication Engineers
+                                                               IEICE TRANS. INF. & SYST., VOL.E103–D, NO.1 JANUARY 2020
+2
+
+
+
+
+                 (a) In the example, one developer left a comment in Patch 211019, in order to request a
+                 collaboration with another patch 209612.
+
+
+
+
+                 (b) In Patch 209612, the author and one reviewer from Patch 211019 provided code comments.
+
+                   Figure 2 A real example from OpenStack that illustrates the cross-patch
+                   collaborations after the patch linkage is posted. Note that to avoid ethical
+                   issues, the real developer names are anonymous.
+
+
+discussion. We consider either of these two cases as a          better understand the intentions of the patch linkage
+collaboration occurrence.                                       (e.g., requesting a collaboration) and statistically ana-
+     In a realistic scenario (i.e., review at https://          lyze to what extent collaboration will occur after the
+review.openstack.org/#/c/211019), as shown in                   patch linkage. Specifically, we investigate how different
+Figure 2, we observed that a reviewer (Reviewer #1)             kinds of linkage sharing lead to collaboration oppor-
+posted a comment with a collaboration request to the            tunities and characterize the contribution kinds that
+patch author (Author #1):                                       follow after the link is identified. Thus, three research
+                                                                questions are formulated to guide our study:
+    ‘Could you please sync your efforts with an-
+    other patch [https://review.openstack.org/#/c                 • RQ1 : To what degree do developers request
+    /209612/]?’                                                     collaborations when posting patch linkages?
+                                                                    Motivation. Although Hirao et al. [7] have shown
+After the patch link is posted, we observe that the au-             that patch linkage is mainly for team awareness
+thor (Author #1) and one of the reviewers (Reviewer                 (i.e., indicating dependency, providing broader
+#2) from Patch 211019, who were not involved in Patch               context, and pointing out an alternative solution),
+209612 before, made the specific review comments re-                we hypothesize that patch linkage could have an
+lated to the code changes in Patch 209612. Inspired by              association with the developer collaboration across
+the realistic scenario, we hypothesize that there exist             the patches. Thus, we would like to first under-
+collaborations across patches (we called cross-patch                stand how often developers request collaborations
+collaborations, henceforth) after the patch linkage.                accompanied with shared patch linkages.
+     In this work, we conduct an empirical study of 368           • RQ2 : How likely will collaborations occur
+patch linkages from a total of 8,612 linked patches to              after patch linkages are posted?
+WANG et al.: AN EXPLORATION OF CROSS-PATCH COLLABORATIONS VIA PATCH LINKAGE IN OPENSTACK
+                                                                                                                                3
+
+
+   Motivation. Prior work sheds light that patch link-              Table 1        Summary of dataset used in the study.
+   age can increase awareness [7]. Yet, little is known           Ecosystem        Time Window      Linkage Dataset   Sample Dataset
+   about whether developers are likely to contribute              OpenStack      2011.11 - 2019.7             8,612             368
+   to another via the patch linkage. To better under-
+   stand this, we investigate to what degree collabo-
+   ration will occur after a patch link is posted.
+                                                                  grated with the code review tools. Specifically, we use
+ • RQ3 : What are the kinds of cross-patch col-
+                                                                  the list of the automated tools that is provided in the
+   laboration activities?
+                                                                  work of Thongtanunam et al. [10]
+   Motivation. To gain an in-depth insight, we would
+                                                                       Extract Patch Linkage. To identify the patch
+   like to understand what kinds of collaborations de-
+                                                                  links, similar to prior work [6], we applied the regular
+   velopers do after the awareness of patch linkages.
+                                                                  expression to search all messages in the review discus-
+   Answering this question would help researchers
+                                                                  sions that include a patch URL in the following for-
+   and practitioners better understand the role of
+                                                                  mat: https?://review.openstack|opendev.org/#/c/[1-
+   patch linkages.
+                                                                  9]+[0-9]*. A total of 8,944 pairs of patches are re-
+     The empirical results lead us to conclude that the           trieved. Then we exclude the case where the source
+patch linkage requesting collaboration is relatively less         and target patches are the same. In our study, we keep
+frequent. In addition, the delay exists before a patch            the cases where (i) the patch linkages are written by
+linkage is posted (RQ1). We observe that a cross-patch            the same patch authors and (ii) the patch authors post
+collaboration is more likely to occur when the intention          links by themselves, as we assume that collaboration
+of a request for collaboration is accompanied with the            could occur between the reviewers of both patches. Fi-
+patch linkage (RQ2). Specially, four kinds of collabo-            nally, we obtain 8,612 pairs of patches that met our
+ration activities are classified, including voting, writing       experiment criteria. Table 1 shows the summary of the
+specific and general comments, and a revision of linked           dataset used in the study.
+patches (RQ3).
+     The remainder of this paper is organized as follows.         2.2     RQ1 Analysis
+Section 2 describes the empirical study design, includ-
+ing data preparation and approaches for each RQ. Sec-             To answer RQ1 : To what degree do developers
+tion 3 presents the results of our empirical study, while         request collaborations when posting patch link-
+Section 4 discusses our findings and challenge. Section           ages?, we investigate the intention of posting patch
+5 discloses the threats to validity. Section 6 discusses          linkages in the aspect of collaborations. In addition, we
+the related work regarding link sharing and reviewer              conduct a statistical analysis to investigate the timeline
+participation in code reviews. Finally, we conclude the           of patch linkages (e.g., when the linkage is posted and
+paper in Section 7.                                               how long it takes the review to be completed after the
+                                                                  linkage is posted). Such timeline analysis could high-
+2.     Empirical Study Design                                     light the necessity of tool support for in-time linkage
+                                                                  recommendations. Below, we describe these two anal-
+2.1     Data Collection                                           ysis approaches in detail.
+                                                                       Requesting collaboration. We perform a man-
+In this study, we use OpenStack as a case ecosys-                 ual analysis to investigate the intention behind the
+tem. OpenStack is an open-source software ecosys-                 patch linkage. More specifically, our analysis mainly
+tem where many well-known organizations and com-                  focuses on how often the patches are linked to request
+panies, e.g., IBM, VMware, and NEC, collaboratively               collaboration. Below, we describe our manual coding
+develop a platform for cloud computing. OpenStack                 based on a statistically representative sample of our
+actively performs code reviews through Gerrit, a tool-            patch linkage dataset:
+based code review tool, and is widely studied in the                   Representative dataset construction. As the full
+prior work [6, 8, 9].                                             set of our constructed data is too large to manually
+     Clean Dataset. For our experiments, we used the              examine their collaboration intention, we then draw a
+OpenStack review dataset provided by Thongtanunam                 statistically representative sample. The calculation of
+and Hassan [10]. The dataset includes 58,212 patches              statistically significant sample sizes based on popula-
+dated from November 2011 to July 2019. Since we focus             tion size, confidence interval, and confidence level is
+on the collaboration and contributions done by patch              well established [11], with a confidence level of 95%
+authors or reviewers, we exclude the comments that are            and a confidence interval of 5. In the end, we randomly
+posted by automated tools in the discussion threads.              sample 368 patch linkages.3
+To do so, we refer to the documentation of the studied                 Manual coding. In this step, we classify whether
+system2 to identify the automated tools that are inte-            the patch linkage is for requesting collaboration or not.
+      2 https://docs.openstack.org/infra/manual/developers.html         3 https://www.surveysystem.com/sscalc.htm
+                                                                   IEICE TRANS. INF. & SYST., VOL.E103–D, NO.1 JANUARY 2020
+4
+
+
+                            Table 2 (RQ1) The prevalence of linkage kinds and their timing nature.
+                            Requesting collaboration accompanied with links is less common.
+                                                        Patch-linked Time (# days)                Patch-closed Time (# days)
+    Linkage Kind                           Count
+                                                   1st Qu.   Median     Mean    3rd Qu.      1st Qu.   Median     Mean    3rd Qu.
+    Requesting collaboration                57         1.2      14.1         48.8    56.5        3.3      20.6     92.1      67.2
+    Sharing information                    211         0.9      11.6         38.3    48.2        1.0      10.8     55.1      49.2
+    Pointing out an alternative solution   100         0.4       4.0         31.7    32.8        0.0       0.9     31.2      19.2
+
+
+
+
+Based on the finding of prior work [7], patch linkage                  pointing out an alternative solution), and specifically a
+can be also for sharing information or pointing out an                 relatively longer time is likely taken for the linkage of
+alternative solution. Hence, we classify the intention of              requesting collaboration to be linked and closed. Then,
+patch linkages into three main kinds:                                  we perform a statistical analysis to examine our as-
+    • Requesting collaboration: Patch linkage for re-                  sumption. To do so, we use a Kruskal-Wallis test, i.e.,
+      questing collaboration is the linkage where a de-                a non-parametric test, to compute the statistical signif-
+      veloper (either a patch author or reviewer) posts a              icance.
+      link with a message that explicitly requests other
+      developers to collaborate in the target patch. In                2.3    RQ2 Analysis
+      this case, developers often write message which
+      includes words such as ‘help’, ‘collaborate’, ‘in-               To answer RQ2 : How likely will collaborations
+      tegrate’ or ‘rebase on’. For example, “Patch Set                 occur after patch linkages are posted?, we inves-
+      1: Code-Review-1 Can we please rebase this on                    tigate how frequently the collaboration will occur after
+      https://review.openstack.org/#/c/93842/ that re-                 the patch linkage. Below, we describe how we measure
+      view ensures specific values is present in the string            the collaboration occurrence.
+      for the flag to be switched on. thanks, dims”.                        Collaboration occurrence. We analyze the set
+    • Sharing information: Patch linkage for sharing in-               of additional developers who newly join and contribute
+      formation is the linkage where a developer posts                 to the patch after the patch link is posted. We con-
+      a link to increase team awareness (e.g., indicating              sider both directions of collaboration, i.e., developers
+      patch dependency, providing broader context)                     who participate in the source patch contribute to the
+    • Pointing out an alternative solution: Patch linkage              target patch (Source → Target) and developers who
+      for pointing out an alternative solution is the link-            participate in the target patch contribute to the source
+      age where a developer posts a link to mention that               patch (Source ← Target).
+      the target patch attempts to explicitly address the                   To identify the additional developers and direction
+      same or similar objective as the source patch.                   of collaboration, we first identify the set of developers
+To classify the patch linkages into a category, we con-                who contribute (e.g., providing a comment, voting) to
+sider the whole textual message that comes with the                    the source patch before the patch link is posted (S) and
+link. In some cases, we also read the whole review dis-                the set of other developers who *only* contribute after
+cussion to understand the context. To test the com-                    the link is posted (S’). Note that S includes the devel-
+prehensive understanding of the constructed schema,                    oper who posted the patch link. Similarly, we identify
+we randomly select 30 samples from our representative                  the set of developers who contribute to the target patch
+dataset, and the three authors of this paper indepen-                  based on the time point when the patch link is posted
+dently coded these samples. Among the three coders,                    (T and T’). Then, we identify the set of developers in
+we obtain a Kappa agreement score of 0.77 (i.e., sub-                  the source patch who contribute to the target patch af-
+stantial). The three coders then discussed the samples                 ter the patch link is posted (i.e., Source → Target = S
+with inconsistent codes to reach a consensus. Encour-                  ∩ T’) and the number of developers in the target patch
+aged by the promising Kappa agreement score, the re-                   who contribute to the source patch after the patch link
+maining data was then coded by one coder.                              is posted (i.e., Source ← Target = T ∩ S’).
+      Timeline of patch linkage. To understand the                          For example, in Figure 1, we will identify the
+timeline of patch linkage, we measure patch-linked time                following sets of developers: S = {Green, Pink}, S’
+and patch-closed time. The patch-linked time is the du-                = {Blue}, T = {Blue, Orange}, and T’ = {Green}.
+ration from when reviews start on a patch to the time                  Therefore, in this example, the developer Green is con-
+when the patch link is posted into the review discus-                  sidered as the one who is from the source patch and
+sion. The patch-closed time is the duration from when                  contributes to the target patch. Similarly, the devel-
+a patch link is posted to the time when the review is                  oper Blue is considered as the one who is from the tar-
+closed. We assume that patch-linked time and patch-                    get patch and contributes to the source patch. Note
+closed time significantly differ among linkage categories              that since we will analyze the collaboration occurrence
+(i.e., requesting collaboration, sharing information, and              across the three link kinds, we perform this analysis
+WANG et al.: AN EXPLORATION OF CROSS-PATCH COLLABORATIONS VIA PATCH LINKAGE IN OPENSTACK
+                                                                                                                          5
+
+
+based on the labeled 368 patch linkages.                        https://github.com/openstack/neutron/blob/master/do
+                                                                c/requirements.txt because after the new PTI, doc re-
+2.4   RQ3 Analysis                                              quirements are moved here.”
+
+To answer RQ3 : What are the kinds of cross-
+patch collaboration activities?, we conduct a semi-             3.     Empirical Results
+automatic analysis to further investigate the kinds of
+collaboration activities of developers who newly join
+and contribute to the patch. Below, we describe the             In this section, we present the results for each of our
+approach to identify collaboration activities.                  research questions.
+     Collaborative contribution kinds. In addition
+to the occurrence analysis, we examine what collabora-
+tive contributions were made by the additional devel-           3.1    RQ1: To what degree do developers request col-
+opers (i.e., S ∩ T’ and S’ ∩ T). In this work, based on                laborations when posting patch linkages?
+an open discussion with ten random samples and the
+OpenStack documentation by the first three authors
+of this paper, we focus on four kinds of contributions:         Results: We observe two main findings. First, patch
+1) Vote, 2) Specific Comments, 3) General Comments,             linkage for requesting collaboration is relatively less fre-
+and 4) Revise. Table 3 describes the definition of four         quent than others. Table 2 shows that only 57 patch
+contribution kinds.                                             linkages (15%) where developers post a patch link with
+     To identify the contribution kinds, we extract the         an explicit request for collaboration. Most patch link-
+contribution information recorded in the review mes-            ages (i.e., 211 patch linkages) are posted for sharing
+sage, i.e., 1,898 contributions are retrieved from the 368      information such as patch dependency and broader con-
+labeled patch linkages. We classify the collaborative           text, while the other 100 patch linkages are for pointing
+contribution kinds in two rounds. In the first round, we        out an alternative solution.
+use a regular expression to automatically identify each               Second, we observe around 4 to 14 days (median)
+kind of contribution. Specifically, we use the expres-          before a review member posts a patch linkage. Regard-
+sions (?:.*(Workflow[\+|\-][0-9]|Code-Review[\+|\-][0-          ing the patch-linked time, we find that it takes a rela-
+9]).*), (?:\(.*?comment.*?\)), and (?:uploaded patch            tively long time for review teams to post patch linkage.
+set) to identify Vote, Specific Comments, and Revise,           The median of 14.1, 11.6, and 4.0 days are taken for re-
+respectively. The rest of them are classified as General        questing collaboration, sharing information, and point-
+Comments. In the second round, we manually validate             ing out an alternative solution, respectively, as shown
+the identified candidates to reduce the potential threats       in Table 2. Related to the patch-closed time, we find
+caused by false positives. In addition, we highlight            that the patch with the linkage indicating an alterna-
+those general comments that are not trivial. For in-            tive solution is more likely to be closed quicker than the
+stance, a not trivial general comment is left with “Patch       other categories. Interestingly, we find that the linkage
+Set 2: Code-Review-1 i think you should update this file        for requesting collaboration takes a longer time to be
+                                                                closed compared with other categories. It is also im-
+                                                                portant to note that we do not aim to draw a causal
+Table 3 The definition of contribution kinds and                relationship, but only observe a trend. Several con-
+their distribution across the link kinds. Note that one         founding factors may also play a role, such as the patch
+review message can be labeled with more than one con-           size, the patch complexity, and the extent of the change
+tribution kind.                                                 impacts made by the patch. For instance, if a patch is
+  Contribution Kind     Definition                              complex to be understood, it may require more col-
+  Vote                  Collaborator votes whether to           laboration and further take a longer review time. The
+                        merge or abandon the patch, i.e.,
+                        “Code-Review +1”.
+                                                                Kruskal-Wallis test confirms that there is a significant
+                                                                difference (p-value < 0.001) in the patch-linked time
+  Specific Comments     Collaborator posts a comment
+                                                                and patch-closed time among different linkage kinds.
+                        that is directly related to patch
+                        change, i.e., typically an inline       Moreover, our assumption that a relatively longer long
+                        comment to reference a line of          time is taken for the linkage of requesting collaboration
+                        code in the patch.                      to be linked and closed is established.
+  General Comments      Collaborator posts a generic com-
+                        ment that does not directly relate            Takeaway I: Patch linkage that requests col-
+                        to or reference any line of code in           laboration is relatively less prevalent. Further-
+                        the patch.
+                                                                      more, we observe a delay from 4 to 14 days be-
+  Revise                Collaborator uploads revised patches,         fore a patch linkage is posted.
+                        i.e., “Uploaded patch set 3”.
+                                                            IEICE TRANS. INF. & SYST., VOL.E103–D, NO.1 JANUARY 2020
+6
+
+
+                     Table 4 (RQ2) Collaboration occurrence between the source patch and
+                     target patch. Collaboration is more likely to occur when the request is
+                     provided.
+          Collaboration Direction         Linkage Kind                              Occurrence Percent
+                                          Requesting collaboration                             0.72
+          Source → Target                 Sharing information                                  0.57
+                                          Pointing out an alternative solution                 0.47
+                                          Average                                              0.57
+                                          Requesting collaboration                             0.62
+          Source ← Target                 Sharing information                                  0.49
+                                          Pointing out an alternative solution                 0.34
+                                          Average                                              0.47
+
+
+                                                            of these comments are left with not trivial informa-
+3.2    RQ2: How likely will collaborations occur after      tion. For instance, one comment provides advice to
+       patch linkages are posted?                           fix up the eventlet change, i.e., “Patch Set 4: OK, fix
+                                                            up the docstring on run_vios_command_as_root and
+                                                            I think the commit message should mention the event-
+Results: Patch linkage with requesting collaboration
+                                                            let change, and then I’m +1.”. Interestingly, we find
+has a relatively higher percentage of collaboration than
+                                                            that Revise contribution kind is relatively more fre-
+the other two kinds. Table 4 shows the percentage of
+                                                            quent in the patch linkage for requesting collaboration
+patch linkages that have at least one developer from
+                                                            (15%) than the other two link kinds (9% and 5%, re-
+the source patch who contributes to the target patch or
+                                                            spectively). This result suggests that the patch linkage
+vice versa. We find that on average, 72% of the patch
+                                                            for requesting collaboration is more likely to trigger the
+linkages for requesting collaboration have at least one
+                                                            collaborative activity related to the patch quality (i.e.,
+developer from the source patch who contributes to the
+                                                            where the collaborator uploads revised patches).
+target patch (Source → Target). Similarly, 62% of the
+patch linkages for requesting collaboration have at least
+                                                                 Takeaway III: The cross-patch collaboration
+one developer from the target patch contributing to the
+                                                                 via the patch linkage includes voting, writing
+source patch (Source ← Target). On the other hand,
+                                                                 specific and general comments, and a revision of
+the percentages of collaboration in the other two link
+                                                                 patches. Furthermore, voting is the most com-
+kinds are relatively lower than the percentage of the
+                                                                 mon collaboration kind, i.e., 57% being identi-
+patch linkages for requesting collaboration (i.e., 34%–
+                                                                 fied on average.
+57%).
+
+      Takeaway II: A cross-patch collaboration is
+      more likely to occur when the patch linkage           4.    Threats to Validity
+      comment is accompanied with a request for col-
+      laboration.                                           We now discuss the threats to the validity of our em-
+                                                            pirical study.
+                                                                 External Validity. External validity is concerned
+                                                            with our ability to generalize based on our results. Our
+3.3    RQ3: What are the kinds of cross-patch collabo-      study only focuses on the OSS ecosystem (i.e., where
+       ration activities?                                   multiple projects develop software collaboratively) us-
+                                                            ing a tool-based code review. We understand that there
+Results: Among four kinds of collaboration activities,      are not many multi-project review ecosystems simi-
+vote is the most frequent contribution kind. Table 5        lar to OpenStack. However, as open source adoption
+shows the distribution of contribution kinds across the     has grown significantly in the last decade, and numer-
+link kinds. We find that among four contribution kinds,     ous companies have built business models around OSS
+Vote is the most common kind (i.e., 56% for requesting      ecosystems [12], we believe it is important to study the
+collaboration, 59% for sharing information, and 61%         OSS ecosystem.
+for pointing out an alternative solution). The follow-           Internal Validity. Internal validity is the approx-
+ing common contribution kind is General Comments.           imate truth about inferences regarding cause-effect or
+Based on our manual validation, we observe that 19.7%       causal relationships. In our empirical study, we em-
+WANG et al.: AN EXPLORATION OF CROSS-PATCH COLLABORATIONS VIA PATCH LINKAGE IN OPENSTACK
+                                                                                                                       7
+
+
+                      Table 5 (RQ3) The frequency of four kinds of cross-patch collaborations.
+                      Vote and general comments are more common contributions.
+               Contribution after Linkage            Link Kind                               Percent
+                                                     Requesting collaboration                0.56
+               Vote                                  Sharing information                     0.59
+                                                     Pointing out an alternative solution    0.61
+                                                     Requesting collaboration                0.29
+               Specific Comments                     Sharing information                     0.37
+                                                     Pointing out an alternative solution    0.31
+                                                     Requesting collaboration                0.43
+               General Comments                      Sharing information                     0.47
+                                                     Pointing out an alternative solution    0.52
+                                                     Requesting collaboration                0.15
+               Revise                                Sharing information                     0.09
+                                                     Pointing out an alternative solution    0.05
+
+
+ploy manual analysis for classifying linkage kinds. The        as well we provide several possible opportunities to
+label might be miscoded due to the subjective nature           guide future research.
+of understanding. To eliminate such a threat, we use                The empirical results show the potential for this
+the Kappa agreement to measure inter-rater reliabil-           new kind of collaboration that is triggered by a patch
+ity. Only until the Kappa score reaches more than 0.7          linkage. Hence, the study calls for new avenues for
+(i.e., the score in classifying intentions is 0.77, indicat-   research into this kind of collaboration. In fact, we
+ing substantial agreement), we were able to complete           show that cross-patch collaborative contributions via
+the rest of the samples. Another threat may occur in           the patch linkage are non-trivial, with key contribu-
+the choice of selecting statistical test techniques. To        tions like voting which affects the review outcome of
+address the statistical significance of the timeline, we       the target patch, or revising which improves the patch.
+apply the Kruskal-Wallis test, a non-parametric test.          In terms of the timeline of patch linkage, our empirical
+While, we are confident with this test, which is widely        study provides evidence that to be aware of the exis-
+used in the previous work [13].                                tence of patch linkage takes a relatively longer time.
+      Construct Validity. Construct validity is con-                There are still open challenges that remain. For in-
+cerned with the degree to which our measurements cap-          stance, the current approach has the threat to include
+ture what we aim to study. This threat potentially oc-         collaborations that may have not been triggered by the
+curs in the extraction of identifying patch linkages. In       patch linkage. Hence, future work needs to address the
+our study, we only extract patch links from the general        soundness of our approach. Another challenge may in-
+code review discussions, however, the patch links may          clude capturing cross-patch collaborations that do not
+also appear in inline review discussions. We believe this      have patch linkage. This can also be addressed in a
+will not affect our observations, since we use qualitative     bigger study. Furthermore, we would need a developer
+analysis to investigate the patch links in this study. An-     study to validate the practical implications of the study.
+other threat could be concerning the validity of the cat-           Our work lays out future opportunities for direc-
+egorization in RQ1. We classify three intentions behind        tions on how patch linkage sharing can lead to these
+the patch linkage, i.e., requesting collaboration, sharing     new kinds of collaboration. We highlight three below
+information, and pointing out an alternative solution.         to name a few:
+Sharing information may be a part of collaboration. To
+ensure that there is no orthogonality between them, we           • Identify heuristics and the information required for
+only classify the comment that provides actionable col-            a reviewer to contribute to a linked patch. To gain
+laboration intention (e.g., ‘help’, ‘collaborate’, and so          more practical insights, a survey or interview of
+on) as requesting collaboration; otherwise, we classify            the reviewer who posts the link could reveal col-
+it as sharing information.                                         laboration barriers and opportunities
+                                                                 • Investigate the impact of the collaboration on patch
+                                                                   quality and code review quality. To further under-
+5.   Challenges and Opportunities                                  stand the impact of the collaboration, one promis-
+                                                                   ing direction is to explore if the patch involved with
+We now discuss our empirical findings and challenges,              contribution via the linkage is likely to decrease the
+                                                             IEICE TRANS. INF. & SYST., VOL.E103–D, NO.1 JANUARY 2020
+8
+
+
+      probability of defects.                                an important role in predicting whether or not an in-
+    • Automatic recovery of links (especially for Dupli-     vited reviewer will participate in a review. To re-
+      cate/Alternative Solution Detection). Provide tool     lieve the challenges of reviewer participation, many re-
+      support to early detect or recommend patches to        viewer recommendation systems have been proposed.
+      reduce the time taken to identify the link, espe-      Thongtanunam et al. [9] introduced REVFINDER, a
+      cially since we find that pointing out an alterna-     file location-based code-reviewer recommendation ap-
+      tive solution earlier leads to a shorter review time   proach. Xia et al. [21] put textual information and
+      compared to the other link kinds.                      file location analyses together to recommend reviewers
+                                                             more accurately. Hannebauer et al. [22] recommended
+                                                             code reviewers based on their expertise. Most recently,
+6.     Related Work                                          Al-Zubaidi et al. [23] developed a novel approach that
+                                                             leverages a multi-objective meta-heuristic algorithm to
+In this section, we position our work with literature        search for reviewers guided by two objectives.
+reviews in terms of the practice of link sharing in soft-          Similarly, the ultimate goal of our study is to im-
+ware engineering and the reviewer participation in the       prove the reviewer participation by understanding the
+context of code review settings.                             developer collaboration activities across patch linkages.
+
+6.1    The Practice of Link Sharing                          7.   Conclusion and Future Work
+
+Link sharing has become a popular activity in software       The growing number of reviews in open source projects
+engineering, which enables developers to share knowl-        poses a new challenge for collaboration during the re-
+edge and mitigate potential issues. The value of link        view process and development tasks. In this paper, we
+sharing has been commonly addressed in question-and-         perform an empirical study on OpenStack to investigate
+answer forums like Stack Overflow and tool-based code        the cross-collaborations via patch linkages. Our results
+reviews like GitHub and Gerrit. Goemz et al. [14] re-        show that requesting collaboration accompanied with
+ported that link sharing is a significant phenomenon on      shared patch links is less common, while cross-patch
+Stack Overflow, referring readers to software develop-       collaboration is more likely to occur once the request
+ment innovations like libraries and tools. Ye et al. [15]    is provided. Moreover, four kinds of collaboration ac-
+generated the structural and dynamic properties of the       tivities are classified and the results suggest that cross-
+emergent knowledge network, using shared URLs in             collaborations are not trivial. Future research direc-
+Stack Overflow. With the popularity of GitHub, Hata          tions include the causality analysis between patch link-
+et al. [16] found that 9.6 million links exist in source     age and collaboration, perceptions and collaboration
+code comments across 25,925 repositories. Within Ger-        barriers from real developers, and tool development for
+rit based reviews, Wang et al. [6] observed seven in-        link recovery.
+tentions behind link sharing and their developer sur-
+vey results suggested that link sharing is useful. At        Acknowledgment
+the same time, Hirao et al. [7] categorized five kinds
+of review linkage, such as patch dependency, broader         This work has been supported by JSPS KAKENHI
+context, and alternative solution. To aid such practice,     Grant Numbers JP20K19774, and JP20H05706. P.
+Wang et al. [13] proposed a linkage detection using tex-     Thongtanunam was supported by the Australian Re-
+tual contents and file location.                             search Council’s Discovery Early Career Researcher
+      Our work expanded upon the work of Wang et             Award (DECRA) funding scheme (DE210101091).
+al. [6] and Hirao et al. [7] to investigate the aspect of
+collaboration across patch linkages.                         References
+
+6.2    Reviewer Participation                                  [1] D. Wang, Y. Ueda, R.G. Kula, T. Ishio, and K. Matsumoto,
+                                                                   “Can we benchmark code review studies? a systematic
+The reviewer participation becomes one of the main                 mapping study of methodology, dataset, and metric,” J.
+                                                                   Syst. Softw, vol.180, p.111009, 2021.
+challenges in the tool-based code review process, since        [2] C. Sadowski, E. Söderberg, L. Church, M. Sipko, and
+unlike formal code review, reviewers can decide whether            A. Bacchelli, “Modern Code Review: A Case Study at
+or not to participate in a review. A large body of stud-           Google,” Proc. 39th Int. Conf. on Software Engineering:
+ies has found that reviewer participation is associated            Software Engineering in Practice Track, p.181–190, 2018.
+with software quality and code review time [8, 17, 18].        [3] P.C. Rigby and C. Bird, “Convergent Contemporary Soft-
+                                                                   ware Peer Review Practices,” Proc. 9th Joint Meeting on
+For instance, Kononenko et al. [19] observed that the
+                                                                   Foundations of Software Engineering, p.202–212, 2013.
+number of invited reviewers have a statistically sig-          [4] X. Zhang, Y. Chen, W.Z. Yongfeng Gu, X. Xie, X. Jia, and
+nificant impact on review bugginess. Moreover, Ru-                 J. Xuan, “How do Multiple Pull Requests Change the Same
+angwan et al. [20] reported that human factors play                Code: A Study of Competing Pull Requests in GitHub,”
+WANG et al.: AN EXPLORATION OF CROSS-PATCH COLLABORATIONS VIA PATCH LINKAGE IN OPENSTACK
+                                                                                                                                    9
+
+
+     Proc. 34th Int. Conf. on Software Maintenance and Evolu-               view this change?: Putting text and file location analyses
+     tion, pp.228–239, 2018.                                                together for more accurate recommendations,” IEEE Int.
+ [5] F. Ebert, F. Castor, N. Novielli, and A. Serebrenik, “Con-             Conf. on Software Maintenance and Evolution (ICSME),
+     fusion in code reviews: Reasons, impacts, and coping                   pp.261–270, 09 2015.
+     strategies,” Int. Conf. on Software Analysis, Evolution and       [22] C. Hannebauer, M. Patalas, S. Stünkel, and V. Gruhn, “Au-
+     Reengineering, pp.49–60, 2019.                                         tomatically recommending code reviewers based on their
+ [6] D. Wang, T. Xiao, P. Thongtanunam, R.G. Kula, and                      expertise: An empirical comparison,” Proc. Int. Conf. on
+     K. Matsumoto, “Understanding shared links and their in-                Automated Software Engineering, pp.99–110, 2016.
+     tentions to meet information needs in modern code review,”        [23] W.H.A. Al-Zubaidi, P. Thongtanunam, H.K. Dam, C. Tan-
+     Empir. Softw. Eng., vol.26, no.5, p.96, 2021.                          tithamthavorn, and A. Ghose, “Workload-aware reviewer
+ [7] T. Hirao, S. McIntosh, A. Ihara, and K. Matsumoto, “The                recommendation using a multi-objective search-based ap-
+     Review Linkage Graph for Code Review Analytics: A Re-                  proach,” Proc. Int. Conf. on Predictive Models and Data
+     covery Approach and Empirical Study,” Proc. Int. Symp.                 Analytics in Software Engineering, pp.21–30, 2020.
+     on the Foundations of Software Engineering, p.578–589,
+     2019.
+ [8] M. Chouchen, A. Ouni, R.G. Kula, D. Wang, P. Thongta-
+     nunam, M.W. Mkaouer, and K. Matsumoto, “Anti-patterns
+     in modern code review: Symptoms and prevalence,” IEEE
+     Int. Conf. on Software Analysis, Evolution and Reengineer-
+     ing (SANER), pp.531–535, IEEE, 2021.
+ [9] P. Thongtanunam, C. Tantithamthavorn, R.G. Kula,
+     N. Yoshida, H. Iida, and K. Matsumoto, “Who should re-
+     view my code? a file location-based code-reviewer recom-
+     mendation approach for modern code review,” IEEE 22nd
+     Int. Conf. on Software Analysis, Evolution, and Reengineer-
+     ing (SANER), pp.141–150, 2015.
+[10] P. Thongtanunam and A.E. Hassan, “Review dynamics and
+     their impact on software quality,” IEEE Trans. Software
+     Eng., pp.1–1, 2020.
+[11] R.V. Krejcie and D.W. Morgan, “Determining sample size
+     for research activities,” Educational and Psychological Mea-
+     surement, 1970.
+[12] Y. xia Zhang, M. Zhou, K.J. Stol, J. yu Wu, and Z. Jin,
+     “How do companies collaborate in open source ecosystems?
+     an empirical study of openstack,” IEEE/ACM 42nd Int.
+     Conf. on Software Engineering, p.1196–1208, 2020.
+[13] D. Wang, R.G. Kula, T. Ishio, and K. Matsumoto, “Au-
+     tomatic patch linkage detection in code review using tex-
+     tual content and file location features,” Inf. Softw. Technol.,
+     vol.139, no.C, nov 2021.
+[14] C. Gomez, B. Cleary, and L. Singer, “A study of innova-
+     tion diffusion through link sharing on stack overflow,” Int.
+     Working Conf. on Mining Software Repositories, pp.81–84,
+     2013.
+[15] D. Ye, Z. Xing, and N. Kapre, “The structure and dynamics
+     of knowledge network in domain-specific q&a sites: A case
+     study of stack overflow,” Empir. Softw. Eng., p.375–406,
+     2017.
+[16] H. Hata, C. Treude, R.G. Kula, and T. Ishio, “9.6 Million
+     Links in Source Code Comments: Purpose, Evolution, and
+     Decay,” Proc. Int. Conf. on Software Engineering, 2019.
+[17] S. McIntosh, Y. Kamei, B. Adams, and A.E. Hassan, “The
+     impact of code review coverage and code review participa-
+     tion on software quality: A case study of the qt, vtk, and
+     itk projects,” Proc. 11th Working Conf. on Mining Software
+     Repositories, MSR 2014, pp.192–201, 2014.
+[18] P. Thongtanunam, S. Mcintosh, A.E. Hassan, and H. Iida,
+     “Review participation in modern code review,” Empir.
+     Softw. Eng., pp.768–817, 2017.
+[19] O. Kononenko, O. Baysal, and M.W. Godfrey, “Code re-
+     view quality: How developers see it,” 38th Int. Conf. on
+     Software Engineering (ICSE), pp.1028–1038, 2016.
+[20] S. Ruangwan, P. Thongtanunam, A. Ihara, and K. Mat-
+     sumoto, “The impact of human factors on the participation
+     decision of reviewers in modern code review,” Empir. Softw.
+     Eng., p.973–1016, 2018.
+[21] X. Xia, D. Lo, X. Wang, and X. Yang, “Who should re-
+                                                                     IEICE TRANS. INF. & SYST., VOL.E103–D, NO.1 JANUARY 2020
+10
+
+
+                       Dong Wang         is currently an assistant
+                       professor at Kyushu University. He re-
+                       ceived PhD from Nara Institute of Science
+                       and Technology, Japan. He is a member
+                       of the IEEE Computer Society. His re-
+                       search interests include mining software
+                       repositories, empirical software engineer-
+                       ing, and human aspects. More about his
+                       information is available online at https:
+                       //dong-w.github.io/.
+
+
+                       Patanamon Thongtanunam               is an
+                       ARC DECRA awardee and a senior lec-
+                       turer at the School of Computing and In-
+                       formation System, the University of Mel-
+                       bourne, Australia. She received PhD from
+                       Nara Institute of Science and Technology,
+                       Japan. Her research interests include em-
+                       pirical software engineering, mining soft-
+                       ware repositories, software quality, and
+                       human aspect. Her research has been
+                       published at top-tier software engineering
+venues like ICSE, TSE, and EMSE. More about Patanamon and
+her work is available online at http://patanamon.com.
+
+
+
+                       Raula Gaikovina Kula             is an as-
+                       sistant professor at Nara Institute of Sci-
+                       ence and Technology. In 2013, he grad-
+                       uated with a PhD. from Nara Institute
+                       of Science and Technology, Japan. He is
+                       currently an active member of the IEEE
+                       Computer Society and ACM. His research
+                       interests include repository mining, code
+                       review, software libraries and visualiza-
+                       tions.
+
+
+                       Kenichi Matsumoto             received the
+                       B.E., M.E., and PhD degrees in Engi-
+                       neering from Osaka University, Japan, in
+                       1985, 1987, 1990, respectively. Dr. Mat-
+                       sumoto is currently a professor in the
+                       Graduate School of Information Science
+                       at Nara Institute Science and Technology,
+                       Japan. His research interests include soft-
+                       ware measurement and software process.
+                       He is a senior member of the IEEE and a
+                       member of the IPSJ and SPM.
+

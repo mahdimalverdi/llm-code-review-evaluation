@@ -1,0 +1,433 @@
+                                          Evaluation of LLM-Based Software Engineering Tools: Practices,
+                                                         Challenges, and Future Directions
+                                                          Utku Boran Torun                                                       Ali Babar                                              Eray Tüzün
+                                                            Veli Karakaya                                             ali.babar@adelaide.edu.au                           eraytuzun@cs.bilkent.edu.tr
+                                                    boran.torun@bilkent.edu.tr                                            Adelaide University                                  Bilkent University
+                                                  veli.karakaya@ug.bilkent.edu.tr                                         Adelaide, Australia                                   Ankara, Turkey
+                                                         Bilkent University
+                                                           Ankara, Turkey
+
+                                         Abstract                                                                                        ACM Reference Format:
+arXiv:2604.24621v1 [cs.SE] 27 Apr 2026
+
+
+
+
+                                         Large Language Models (LLMs) are increasingly embedded in soft-                                 Utku Boran Torun, Veli Karakaya, Ali Babar, and Eray Tüzün. 2026. Evalu-
+                                                                                                                                         ation of LLM-Based Software Engineering Tools: Practices, Challenges, and
+                                         ware engineering (SE) tools, powering applications such as code
+                                                                                                                                         Future Directions. In Proceedings of International Conference on Evaluation
+                                         generation, automated code review, and bug triage. As these LLM-                                and Assessment in Software Engineering (EASE ’26). ACM, New York, NY,
+                                         based AI for Software Engineering (AI4SE) systems transition from                               USA, 6 pages. https://doi.org/XXXXXXX.XXXXXXX
+                                         experimental prototypes to widely deployed tools, the question
+                                         of what it means to evaluate their behavior reliably has become
+                                         both critical and unanswered. Unlike traditional SE or machine                                  1    Introduction
+                                         learning systems, LLM-based tools often produce open-ended, nat-                                Large Language Models (LLMs) have rapidly become a central com-
+                                         ural language outputs, admit multiple valid answers, and exhibit                                ponent of modern software engineering (SE) tools. They now power
+                                         non-deterministic behavior across runs. These characteristics fun-                              a wide range of AI4SE applications, including code generation, au-
+                                         damentally challenge long-standing evaluation assumptions such                                  tomated code review, bug triage, test generation, and developer
+                                         as the existence of a single ground truth, deterministic outputs, and                           assistance [12]. Unlike earlier generations of software engineering
+                                         objective correctness. In this paper, we examine LLM evaluation                                 tools, such as static analysis and rule-based systems like Facebook
+                                         as a general, task-dependent concept through the lens of SE tasks.                              Infer1 and SonarQube2 , which were typically designed for narrowly
+                                         We discuss why reliable evaluation is essential for trust, adoption,                            scoped tasks, LLM-based systems function as general-purpose com-
+                                         and meaningful assessment of LLM-based tools, summarize the                                     ponents that can be adapted to a wide range of software engineering
+                                         current state of evaluation practices, and highlight their limitations                          activities through prompting and contextualization.. As a result,
+                                         in realistic AI4SE settings. We then identify key challenges facing                             LLMs are increasingly embedded directly into developers’ everyday
+                                         current approaches, including the absence of stable ground truth,                               workflows and decision-making processes.
+                                         subjectivity and multi-dimensional quality, evaluation instability                                 This growing adoption raises a fundamental question: how should
+                                         due to non-determinism, limitations of automated and model-based                                LLM-based SE tools be evaluated? Evaluation plays a critical role
+                                         evaluation, and fragmentation of evaluation practices. Finally, we                              in determining trust, guiding deployment decisions, and enabling
+                                         outline future directions aimed at advancing LLM evaluation toward                              meaningful comparison between tools and models. However, evalu-
+                                         more robust, scalable, and trustworthy methodologies, to stimulate                              ating LLM-based systems poses challenges that differ substantially
+                                         discussion on principled evaluation practices that can keep pace                                from those encountered in traditional SE or machine learning set-
+                                         with the growing role of LLMs in SE.                                                            tings. Many LLM-driven software engineering tasks involve inter-
+                                                                                                                                         preting and generating context-dependent natural language arti-
+                                         CCS Concepts                                                                                    facts, where quality cannot be assessed through a single predefined
+                                                                                                                                         correct outcome. Moreover, LLMs are inherently stochastic, often
+                                         • Software and its engineering → Software creation and man-
+                                                                                                                                         producing different outputs across repeated runs under identical
+                                         agement; • Computing methodologies → Artificial intelligence.
+                                                                                                                                         conditions [2, 31].
+                                                                                                                                            Existing evaluation practices struggle to fully account for these
+                                         Keywords                                                                                        characteristics. While benchmarks such as SWE-Bench3 , Live Code
+                                         Large Language Models, AI for Software Engineering, LLM Evalua-                                 Bench4 , and automatic metrics have long been used to assess model
+                                         tion, Model Evaluation, Software Engineering Tools                                              performance, they often rely on assumptions such as deterministic
+                                                                                                                                         behavior, fixed ground truth, or surface-level similarity between
+                                         Permission to make digital or hard copies of all or part of this work for personal or           outputs and references [25, 32]. These assumptions break down in
+                                         classroom use is granted without fee provided that copies are not made or distributed
+                                         for profit or commercial advantage and that copies bear this notice and the full citation       many AI4SE scenarios, particularly for tasks such as code review
+                                         on the first page. Copyrights for components of this work owned by others than the              and code explanation, where quality is subjective, and correctness
+                                         author(s) must be honored. Abstracting with credit is permitted. To copy otherwise, or          is not binary. As a result, current evaluation methods may provide
+                                         republish, to post on servers or to redistribute to lists, requires prior specific permission
+                                         and/or a fee. Request permissions from permissions@acm.org.
+                                                                                                                                         1 https://fbinfer.com/docs/man-infer/
+                                         EASE ’26, Glasgow, UK
+                                                                                                                                         2 https://www.sonarsource.com/products/sonarqube/
+                                         © 2026 Copyright held by the owner/author(s). Publication rights licensed to ACM.
+                                                                                                                                         3 https://www.swebench.com/
+                                         ACM ISBN 978-1-4503-XXXX-X/2026/06
+                                         https://doi.org/XXXXXXX.XXXXXXX                                                                 4 https://livecodebench.github.io/index.html
+EASE ’26, June 09–12, 2026, Glasgow, UK                                                                                                Torun et al.
+
+
+incomplete, unstable, or misleading signals about real-world per-          behave across inputs, tasks, and usage conditions. This characteri-
+formance. In response to these challenges, a diverse ecosystem of          zation is essential for comparing tools, identifying appropriate use
+LLM evaluation approaches has emerged, including manual human              cases, and setting realistic expectations about model capabilities.
+evaluation, standardized benchmarks, reference-based automatic                Efficiency, Cost, and Practical Feasibility. While accuracy
+metrics, LLM-as-a-judge techniques, and comprehensive evalua-              and output quality are important, organizations adopting LLM-
+tion frameworks such as DeepEval5 , RAGAS6 , and HELM7 . While             based SE tools must also consider efficiency and cost. In real SE
+these approaches offers valuable insights, they also introduce new         workflows, models are expected to provide near-interactive re-
+trade-offs related to scalability, reproducibility, bias, and alignment    sponses, scale across large codebases, and integrate into continuous
+with developer needs. The lack of a unified understanding of their         development pipelines. Evaluation, therefore, plays a critical role
+strengths and limitations has led to fragmentation in evaluation           in revealing whether a tool can meet these practical requirements.
+practice and uncertainty about how results should be interpreted.          By assessing dimensions such as latency, resource consumption,
+                                                                           and monetary cost alongside output quality, evaluation enables
+2     Why Is LLM Evaluation Important?                                     informed trade-offs between model capability and deployability.
+                                                                           For example, two models may achieve similar accuracy or useful-
+Evaluation determines whether LLM-based software engineering
+                                                                           ness, yet differ substantially in inference time or operational cost,
+tools are useful, reliable, and safe in practice. In AI4SE, it serves as
+                                                                           leading to very different adoption outcomes in practice. Evalua-
+quality assurance for probabilistic systems whose behavior varies
+                                                                           tion that captures these dimensions supports realistic deployment
+across prompts, contexts, and model versions. Without principled
+                                                                           decisions rather than purely performance-driven comparisons. As
+evaluation, tools may be optimized for the wrong objectives and
+                                                                           LLM-based tools transition from research prototypes to production
+fail to transfer to real-world workflows. In the following, we outline
+                                                                           systems, evaluation becomes a key mechanism for aligning model
+the key reasons why evaluation is central to LLM-based SE tools.
+                                                                           performance with organizational constraints and expectations. In-
+   Trust, Adoption, and Decision-Making in Practice. LLMs
+                                                                           corporating efficiency and cost into evaluation is therefore essential
+are now embedded in a wide range of SE activities, including code
+                                                                           for understanding the real-world viability of LLM-based approaches
+review, bug analysis, and documentation. In these settings, model
+                                                                           in software engineering.
+outputs are often advisory rather than executable, meaning that
+                                                                              Evaluation for Reliability Awareness. Beyond measuring per-
+developers must decide when to trust, accept, or ignore model
+                                                                           formance, evaluation plays a central role in making the behavior of
+suggestions [4]. Evaluation, therefore, directly influences user trust
+                                                                           LLM-based SE tools visible and interpretable. LLMs can generate
+and long-term adoption. Without a reliable evaluation, it becomes
+                                                                           fluent and persuasive outputs that vary in correctness, support, or
+difficult to assess whether an LLM accurately and consistently
+                                                                           appropriateness [16, 33]. In software engineering contexts, such
+provides helpful guidance or merely produces plausible-looking
+                                                                           variability may not be immediately apparent from individual out-
+responses. As LLMs increasingly influence developer decisions [36],
+                                                                           puts, yet it can substantially influence developer decisions.
+evaluation outcomes shape both organizational confidence and
+                                                                              Through systematic evaluation, practitioners and researchers
+individual reliance on these systems.
+                                                                           gain insight into the conditions under which LLM-based tools be-
+   Evaluation as Engineering Feedback and Regression Con-
+                                                                           have reliably and where their limitations lie. Evaluation therefore
+trol. In practice, LLM-based SE tools evolve continuously: prompts,
+                                                                           enables informed use by revealing patterns of behavior that would
+retrieval strategies, guardrails, model versions, and serving config-
+                                                                           otherwise remain hidden, supporting realistic expectations about
+urations are frequently updated. Evaluation, therefore, plays the
+                                                                           model capabilities and guiding appropriate integration into SE work-
+role of a Quality Assurance (QA) and regression-testing mecha-
+                                                                           flows.
+nism: it helps tool builders detect behavioral drift, quantify stability
+across runs, and identify which changes improve developer out-
+comes versus merely changing style. Without systematic regression
+evaluation, teams may unknowingly deploy updates that reduce
+                                                                           3   Current State of LLM Evaluation
+                                                                           The evaluation of LLMs has evolved rapidly in response to their
+reliability on rare-but-critical cases while appearing “better” on
+                                                                           growing adoption across diverse tasks and domains. Rather than
+superficial metrics.
+                                                                           relying on a single methodology, current practice employs a combi-
+   Characterizing Model Behavior Beyond Individual Out-
+                                                                           nation of human judgment, automatic metrics, benchmarks, LLM-
+puts. Unlike traditional software components, LLM-based tools
+                                                                           based judges, and comprehensive evaluation frameworks. Each of
+do not expose their behavior through fixed, deterministic outputs.
+                                                                           these approaches reflects different assumptions about what consti-
+Instead, they operate as general-purpose components whose be-
+                                                                           tutes good model behavior and is suited to different types of tasks.
+havior depends on prompts, context, and usage scenarios [26, 41].
+                                                                           Table 1 summarizes the main evaluation approaches currently used
+Evaluation, therefore, plays a crucial role in characterizing typical
+                                                                           for large language models and highlights their distinct roles within
+model behavior, variability across runs, and sensitivity to context.
+                                                                           the evaluation pipeline. The following subsections discuss each
+By moving beyond anecdotal examples or single outputs, evaluation
+                                                                           approach in more detail.
+enables a more systematic understanding of how LLM-based tools
+                                                                              Manual Evaluation Manual evaluation remains a widely used
+                                                                           approach for assessing LLM behavior, particularly for tasks with
+5 https://deepeval.com                                                     open-ended or subjective outputs [8]. In this setting, human evalua-
+6 https://docs.ragas.io/en/stable/                                         tors assess model responses directly according to qualitative criteria
+7 https://crfm.stanford.edu/helm/                                          defined by the evaluation protocol. This form of evaluation can
+Evaluation of LLM-Based Software Engineering Tools: Practices, Challenges, and Future Directions                              EASE ’26, June 09–12, 2026, Glasgow, UK
+
+
+                 Table 1: Overview of current LLM evaluation approaches and their roles in the evaluation pipeline.
+
+ Approach                       Evaluation mechanism            Reference required          Degree of automation       Role in the evaluation pipeline
+ Manual evaluation              Human evaluators                No                          Manual                     Provides direct human assessment
+ Reference-based metrics        Automatic metric                Yes                         Fully automatic            Quantifies performance against references
+ Benchmarks                     Automatic metric                Yes                         Fully automatic            Standardizes comparison across models
+ LLM-as-a-judge                 LLM                             No                          Fully automatic            Approximates human judgment at scale
+ Evaluation frameworks          Automatic Metric + LLM          Optional                    Semi- to fully automatic   Orchestrates and integrates evaluation methods
+
+
+be employed for tasks such as code review, explanation, summa-                          also in the SE context [39]. They are often used to approximate hu-
+rization, and conversational interaction, where automatic metrics                       man judgments or to support large-scale evaluations where manual
+struggle to capture nuanced aspects of model behavior [8].                              assessment would be impractical [44].
+    Manual evaluation is often used as a reference point for assessing                     Evaluation Frameworks. Evaluation frameworks aim to pro-
+model performance and for validating automated evaluation meth-                         vide structured and reusable pipelines for conducting LLM eval-
+ods. It is especially prevalent in scenarios where multiple responses                   uation. Frameworks such as DeepEval, RAGAS, HELM, offer ab-
+may be acceptable and where correctness cannot be determined                            stractions for defining evaluation criteria, running experiments,
+through fixed ground truth alone [38]. As a result, manual evalua-                      and aggregating results across models and tasks. By encapsulating
+tion continues to play a central role in the evaluation of LLM-based                    evaluation logic into configurable components, these frameworks
+systems despite the emergence of increasingly automated alterna-                        support repeatable experimentation and reduce the engineering ef-
+tives.                                                                                  fort required to evaluate LLM-based systems. They are increasingly
+    Reference-Based Automatic Evaluation. Reference-based                               used to operationalize evaluation practices across research and ap-
+automatic evaluation assesses model outputs by comparing them                           plied workflows. Altogether, the current state of LLM evaluation
+against predefined gold references. This approach underlies many                        is characterized by methodological diversity. Manual evaluation,
+traditional evaluation metrics, including accuracy, BLEU [32], ROUGE                    reference-based metrics, benchmarks, LLM-as-a-judge approaches,
+[25], and METEOR [3] has been widely adopted in tasks such as clas-                     and evaluation frameworks are all actively used, often in combi-
+sification, translation, summarization, and code generation [28, 42].                   nation. Rather than converging on a single standard, evaluation
+When clear ground truth exists, reference-based evaluation pro-                         practice reflects the heterogeneity of LLM tasks and application
+vides a straightforward and reproducible way to quantify model                          contexts, particularly in SE settings.
+performance. Within LLM evaluation, reference-based metrics re-                            Table 2 summarizes how representative SE tasks differ in their
+main commonly used for tasks that can be expressed as well-defined                      evaluation characteristics, highlighting the role of task objectives
+input–output mappings. These metrics are frequently employed in                         and output structure in shaping evaluation difficulty.
+benchmarks and experimental studies where standardized evalua-
+tion is required and where reference outputs are available.                             4     Challenges of Current LLM Evaluation
+    Benchmarks. Benchmarks provide standardized datasets, tasks,                        Consider an LLM-based automated code review assistant that com-
+and evaluation protocols that enable systematic comparison across                       ments on PRs. If the evaluation protocol uses a reference comment
+models. The recent growth of LLM research has led to the devel-                         set and a lexical overlap metric (or a single “useful/not useful” judge
+opment of numerous benchmarks targeting different capabilities,                         prompt), the system may score highly by producing fluent, stylisti-
+including reasoning [34], factual and domain knowledge [14], and                        cally similar feedback while systematically missing rare-but-critical
+SE tasks [18]. Examples include benchmarks designed to evaluate                         issues (e.g., input validation gaps, unsafe error handling, or security-
+realistic programming scenarios like SWE-Bench as well as those                         relevant edge cases). In practice, developers may still accept the
+focusing on broader cognitive or problem-solving abilities.                             tool’s suggestions because they read plausibly, yet the evaluation
+    Benchmark-based evaluation plays an important role in tracking                      signal fails to reflect the risk profile that matters for deployment.
+progress over time and facilitating comparison across models and                        This example illustrates a broader pattern in current LLM evalu-
+approaches. By fixing datasets and evaluation procedures, bench-                        ation: evaluation signals that appear reasonable in isolation can
+marks offer a common reference point for reporting and interpret-                       fail to capture the risks and behaviors that matter in real-world
+ing results within the research community.                                              software engineering contexts.
+    LLM-as-a-Judge. LLM-as-a-judge approaches use an LLM to                                Despite the rapid development of evaluation tools and practices,
+evaluate the outputs of another model. In this paradigm, an LLM is                      the evaluation of LLM-based systems continues to face fundamental
+prompted to assess responses based on task-specific instructions or                     challenges that limit the reliability, interpretability, and usefulness
+rubrics, often producing scores, rankings, or preference judgments.                     of evaluation results. These challenges arise not from a single source,
+This approach has gained traction as a flexible and scalable way to                     but from the interaction between non-deterministic model behavior,
+evaluate tasks where reference answers are unavailable or difficult                     open-ended outputs, human judgment, and the complexity of real-
+to define [39, 44].                                                                     world SE contexts. In the following, we discuss these challenges
+    In current practice, LLM-as-a-judge methods are applied across                      briefly.
+a range of tasks, including dialogue evaluation [13], reasoning as-                        Absence of Stable and Objective Ground Truth. A central
+sessment [23], qualitative comparison of model outputs [21], and                        challenge in LLM evaluation is the lack of stable and objective
+EASE ’26, June 09–12, 2026, Glasgow, UK                                                                                                                           Torun et al.
+
+
+                                       Table 2: Software engineering tasks and their evaluation characteristics.
+
+ SE task                               Task description                             Output characteristics                      Why is evaluation easy or problematic?
+ Code generation [9, 43]               Generate executable code from                Structured, executable code                 Correctness can be checked via unit tests or
+                                       specifications or prompts                                                                execution outcomes
+ Bug classification / triage [1, 22]   Assign bugs to categories such as type,      Discrete labels from predefined classes     Explicit labels provide a clear (though
+                                       severity, or priority                                                                    imperfect) ground truth
+ Code review [10, 27]                  Provide feedback on code changes or pull     Open-ended natural language comments        Quality depends on usefulness and context;
+                                       requests (PR)                                                                            no single correct answer
+ Code explanation [5, 29]              Explain code behavior or design decisions    Open-ended natural language explanations    Plausible but shallow explanations may
+                                                                                                                                appear correct
+ Program repair [15, 24]               Generate patches that fix faulty code        Structured code with executable semantics   Correctness can be verified by tests, but
+                                                                                                                                multiple fixes may exist
+ Effort/cost/time estimation [6, 7]    Estimate development effort, time, or cost   Numeric or ordinal estimates                Estimates are inherently subjective and
+                                       for a task or change                                                                     influenced by context and uncertainty
+
+
+
+ground truth for many tasks [17]. While reference answers can be                               As highlighted in recent surveys [8, 30] of LLM evaluation, re-
+defined for closed-form problems, a large fraction of LLM-driven                           ducing such outputs to a single metric often obscures important
+AI4SE tasks, such as code review, code explanation, bug analysis,                          qualitative differences and can lead to misleading comparisons. This
+and requirements interpretation, do not admit a single correct an-                         challenge is compounded in SE tasks, where judgments depend not
+swer. Instead, multiple responses may be acceptable depending on                           only on textual correctness but also on implicit domain knowl-
+context, assumptions, and developer intent.                                                edge, project conventions, and downstream impact on developer
+   Even when human annotations are used to construct reference                             decisions.
+labels, treating these labels as “gold” introduces additional uncer-                           Non-Determinism and Evaluation Instability. LLMs are in-
+tainty. Prior works [11, 37] have shown that ground truth derived                          herently stochastic systems. Due to probabilistic decoding and sen-
+from historical human decisions may be incomplete, biased, or                              sitivity to prompt phrasing, repeated runs of the same model under
+misaligned with the intended evaluation objective. For example,                            identical conditions can produce different outputs. Crucially, even
+studies on ground truth deficiencies [37] in SE report that recorded                       when the temperature is set to zero, system-level non-determinism
+labels often reflect convenience, availability, or organizational con-                     in high-performance environments prevents these models from be-
+straints rather than optimal technical decisions, which can distort                        having as truly deterministic functions [2, 31]. This non-determinism
+evaluation outcomes. Similarly, research on code reviewer recom-                           complicates evaluation in two ways.
+mendation [11] demonstrates that reviewers assigned in practice                                First, single-run evaluations may fail to represent typical model
+are frequently treated as ideal ground truth despite evidence that as-                     behavior. Second, evaluation results themselves can vary across
+signments are influenced by non-technical factors such as workload                         runs, even when using automatic metrics or LLM-based judges. The
+and social dynamics.                                                                       inherent variability in LLM performance—driven by factors such
+   Insights from cognitive psychology further reinforce these con-                         as training data, architecture, and inconsistent evaluation meth-
+cerns. As argued by Kahneman in “Thinking, Fast and Slow” [19],                            ods—often results in irreproducible findings. Consequently, poorly
+human evaluators rely on fast, intuitive reasoning that is sensitive to                    controlled evaluation setups undermine reproducibility and make
+framing, prior beliefs, and contextual cues. More directly, “Noise: A                      fair comparison between models difficult [38]. In SE contexts, where
+Flaw in Human Judgment” [20] shows that even trained experts can                           evaluation results may influence deployment or adoption decisions,
+produce substantially different judgments when evaluating identi-                          such instability poses a serious risk. Without explicit strategies for
+cal cases, a phenomenon referred to as judgment noise. Taken to-                           repeated evaluation, aggregation, or uncertainty reporting, evalua-
+gether, these findings challenge the assumption that human-labeled                         tion outcomes can give a false sense of confidence.
+data constitutes a reliable gold standard for evaluation. In the con-                          Limitations of Automated and Model-Based Evaluation.
+text of LLM evaluation, disagreement, noise, and bias in human                             Automated evaluation methods, including reference-based metrics
+judgments can propagate into benchmarks and evaluation proto-                              and LLM-as-a-judge approaches, offer scalability but introduce
+cols, undermining reproducibility and comparability across studies.                        their own challenges. Reference-based metrics rely on surface-level
+This issue is particularly pronounced in evaluation setups that                            similarity and assume that reference outputs adequately capture
+rely on a small number of annotators or do not explicitly model                            task intent, an assumption that often fails for open-ended AI4SE
+inter-annotator disagreement.                                                              tasks. LLM-as-a-judge methods, while flexible, inherit biases, blind
+   Subjectivity and Multi-Dimensional Quality. Many exist-                                 spots, and inconsistencies from the models they employ.
+ing evaluation approaches discussed above implicitly assume that                               Empirical studies [35, 40] have shown that LLM-based judges do
+model quality can be reduced to a single scalar score. However, for                        not always align with human preferences and may exhibit system-
+open-ended LLM outputs, quality is inherently multi-dimensional.                           atic biases depending on prompt design, model choice, or evaluation
+Outputs may differ in usefulness, completeness, reasoning style,                           context. This raises concerns about circularity, where models are
+or alignment with developer expectations, even when they are all                           effectively evaluated by systems with similar training data and
+technically plausible.                                                                     inductive biases.
+Evaluation of LLM-Based Software Engineering Tools: Practices, Challenges, and Future Directions                                   EASE ’26, June 09–12, 2026, Glasgow, UK
+
+
+   Fragmentation of Evaluation Practices. Current LLM evalua-                           direction is to standardize multi-run evaluation as a default report-
+tion practice is highly fragmented, with different tools, metrics, and                  ing practice and to treat key outcomes as distributions (including
+frameworks emphasizing distinct aspects of model behavior [17].                         rank stability), while explicitly budgeting the added evaluation cost
+As a result, the same system may appear strong or weak depending                        and runtime that multi-run protocols introduce.
+on the chosen evaluation setup. This fragmentation complicates                             Integrating human judgment without treating it as ground
+comparison across studies and makes it difficult to accumulate reli-                    truth. Human evaluation, despite its central role, raises unresolved
+able empirical knowledge. In SE contexts, where evaluation results                      questions about how human judgment should be incorporated into
+may guide tool adoption or deployment, inconsistent evaluation                          evaluation pipelines in a principled way. Well-documented noise
+signals can lead to conflicting conclusions and undermine trust in                      and inconsistency in human decisions challenge the assumption
+reported results.                                                                       that human labels constitute reliable ground truth. Open ques-
+   Together, these challenges indicate that LLM evaluation is not                       tions include how many annotators are required, how disagreement
+merely a technical measurement problem, but a broader socio-                            should be modeled rather than eliminated, and how human judg-
+technical issue involving human judgment, probabilistic systems,                        ments can be combined with automated signals without masking
+and SE practice.                                                                        uncertainty. One promising approach is to treat humans as calibra-
+                                                                                        tion and audit signals (with explicit disagreement modeling) and
+5    Open Research Questions and Directions                                             to use automated methods for scale only after they are validated
+We see four near-term standardization targets for trustworthy                           against small, high-quality audit sets.
+AI4SE evaluation: (1) lightweight task specifications (“evaluation                         Evaluating guardrails and deployment-time controls. In
+cards”) that encode intent, context scope, and risk tolerance; (2)                      practice, LLM-based SE tools are rarely deployed “naked”; they
+default multi-run reporting (distributions + rank stability) for both                   are wrapped with guardrails such as constrained prompting, re-
+generators and judges; (3) developer-centric, multi-dimensional                         trieval grounding, policy filters, output validators, sandboxed ex-
+rubrics with severity weighting (e.g., security-critical misses domi-                   ecution, and fallback/abstention rules. An open question is how
+nate style); and (4) calibrated hybrid judging pipelines that combine                   to evaluate guardrails as first-class components rather than inci-
+executable checks (tests/static analysis), LLM judges, and small                        dental implementation details: how should we measure their mar-
+human audit sets.                                                                       ginal contribution to reliability and risk reduction, and how do
+   Evaluating open-ended tasks without stable ground truth.                             we choose guardrail configurations that satisfy latency and cost
+A fundamental open question concerns how open-ended LLM                                 budgets? Answering this requires evaluation protocols that report
+tasks should be evaluated in the absence of a single, objective                         end-to-end tool performance (model + guardrails), including both
+ground truth. Many AI4SE tasks admit multiple valid responses,                          quality outcomes and the operational overhead introduced by safety
+making traditional reference-based evaluation insufficient. This                        mechanisms.
+raises questions about whether evaluation should move beyond                               Balancing evaluation rigor with practical constraints. Fi-
+correctness-oriented judgments toward comparative, preference-                          nally, there is an open tension between academic evaluation rigor
+based, or outcome-oriented assessment, and how such approaches                          and industrial practicality. Many evaluation protocols are expensive,
+can be designed to remain systematic, reproducible, and inter-                          time-consuming, or difficult to integrate into real-world develop-
+pretable. A promising direction is to make the evaluation target                        ment workflows. At the same time, overly simplified evaluation
+explicit via lightweight evaluation specifications (e.g., intended                      risks missing important weaknesses. A key research question is
+developer goal, acceptable variation, severity weighting) so that                       how evaluation methods can balance methodological rigor with
+evaluation rewards “useful and risk-aware” outputs rather than                          scalability, cost, and relevance to practitioners. A useful framing
+merely “similar” ones.                                                                  is to treat evaluation itself as a resource-bounded process (time,
+   Defining and detecting hallucinations across tasks. While                            money, and human attention), and to develop tiered evaluation
+hallucinations are widely recognized as a critical failure mode,                        pipelines (cheap automated checks → calibrated judging → tar-
+there is still no consensus on how to define, operationalize, or mea-                   geted human audits → optional workflow-outcome validation) that
+sure them across different tasks. Open questions remain regarding                       exposes explicit quality–cost–latency trade-offs.
+whether hallucination detection should rely on external signals,
+internal model uncertainty, cross-model agreement, or human-in-
+the-loop verification, and how these signals should be combined. In                     References
+AI4SE settings, an important pathway forward is to couple halluci-                        [1] Gabriel Aracena, Kyle Luster, Fabio Santos, Igor Steinmacher, and Marco Au-
+                                                                                              relio Gerosa. 2024. Applying large language models to issue classification. In
+nation evaluation with tool-level guardrails, and to quantify both                            Proceedings of the Third ACM/IEEE International Workshop on NL-based Software
+their risk-reduction benefits and their latency/cost overhead.                                Engineering. 57–60.
+   Accounting for non-determinism and evaluation variabil-                                [2] Berk Atıl, Sarp Aykent, Alexa Chittams, Lisheng Fu, Rebecca J. Passonneau, Evan
+                                                                                              Radcliffe, Guru Rajan Rajagopal, Adam Sloan, Tomasz Tudrej, Ferhan Ture, Zhe
+ity. Non-determinism introduces another set of open problems                                  Wu, Lixinyu Xu, and Breck Baldwin. 2025. Non-Determinism of “Deterministic”
+for evaluation. Given that repeated runs of the same model can                                LLM System Settings in Hosted Environments. In Proceedings of the 5th Workshop
+                                                                                              on Evaluation and Comparison of NLP Systems. Association for Computational
+yield different outputs, it remains unclear how evaluation protocols                          Linguistics, Mumbai, India, 135–148. https://aclanthology.org/2025.eval4nlp-
+should account for variability. Key questions include how many                                1.12/
+runs are sufficient to characterize typical model behavior, how eval-                     [3] Satanjeev Banerjee and Alon Lavie. 2005. METEOR: An automatic metric for
+                                                                                              MT evaluation with improved correlation with human judgments. In Proceedings
+uation results should be aggregated, and how uncertainty should be                            of the acl workshop on intrinsic and extrinsic evaluation measures for machine
+reported to support fair comparison and reproducibility. A practical                          translation and/or summarization. 65–72.
+EASE ’26, June 09–12, 2026, Glasgow, UK                                                                                                                               Torun et al.
+
+
+ [4] Shraddha Barke, Michael B. James, and Nadia Polikarpova. 2023. Grounded                    Transactions on Software Engineering and Methodology 33, 5 (2024), 1–26.
+     Copilot: How Programmers Interact with Code-Generating Models. Proc. ACM              [27] Junyi Lu, Lei Yu, Xiaojia Li, Li Yang, and Chun Zuo. 2023. Llama-reviewer: Ad-
+     Program. Lang. 7, OOPSLA1, Article 78 (April 2023), 27 pages. doi:10.1145/3586030          vancing code review automation with large language models through parameter-
+ [5] Paheli Bhattacharya, Manojit Chakraborty, Kartheek NSN Palepu, Vikas Pandey,               efficient fine-tuning. In 2023 IEEE 34th International Symposium on Software
+     Ishan Dindorkar, Rakesh Rajpurohit, and Rishabh Gupta. 2023. Exploring large               Reliability Engineering (ISSRE). IEEE, 647–658.
+     language models for code explanation. arXiv preprint arXiv:2310.16673 (2023).         [28] Shuai Lu, Daya Guo, Shuo Ren, Junjie Huang, Alexey Svyatkovskiy, Ambro-
+ [6] Thanh-Long Bui, Hoa Khanh Dam, and Rashina Hoda. 2025. An LLM-based                        sio Blanco, Colin Clement, Dawn Drain, Daxin Jiang, Duyu Tang, et al. 2021.
+     multi-agent framework for agile effort estimation. arXiv preprint arXiv:2509.14483         Codexglue: A machine learning benchmark dataset for code understanding and
+     (2025).                                                                                    generation. arXiv preprint arXiv:2102.04664 (2021).
+ [7] Gül Calikli and Mohammed Alhamed. 2025. Impact of Request Formats on Effort           [29] Stephen MacNeil, Andrew Tran, Dan Mogil, Seth Bernstein, Erin Ross, and
+     Estimation: Are LLMs Different Than Humans? Proc. ACM Softw. Eng. 2, FSE,                  Ziheng Huang. 2022. Generating diverse code explanations using the gpt-3
+     Article FSE051 (June 2025), 22 pages. doi:10.1145/3715771                                  large language model. In Proceedings of the 2022 ACM conference on international
+ [8] Yupeng Chang, Xu Wang, Jindong Wang, Yuan Wu, Linyi Yang, Kaijie Zhu, Hao                  computing education research-volume 2. 37–39.
+     Chen, Xiaoyuan Yi, Cunxiang Wang, Yidong Wang, et al. 2024. A survey on               [30] Matéo Mahaut, Laura Aina, Paula Czarnowska, Momchil Hardalov, Thomas
+     evaluation of large language models. ACM transactions on intelligent systems and           Müller, and Lluis Marquez. 2024. Factual Confidence of LLMs: on Reliability and
+     technology 15, 3 (2024), 1–45.                                                             Robustness of Current Estimators. In Proceedings of the 62nd Annual Meeting of
+ [9] Liguo Chen, Qi Guo, Hongrui Jia, Zhengran Zeng, Xin Wang, Yijiang Xu, Jian                 the Association for Computational Linguistics (Volume 1: Long Papers). Association
+     Wu, Yidong Wang, Qing Gao, Jindong Wang, et al. 2024. A survey on evaluating               for Computational Linguistics, Bangkok, Thailand, 4554–4570. doi:10.18653/v1/
+     large language models in code generation tasks. arXiv preprint arXiv:2408.16498            2024.acl-long.250
+     (2024).                                                                               [31] Shuyin Ouyang, Jie M Zhang, Mark Harman, and Meng Wang. 2025. An empirical
+[10] Umut Cihan, Vahid Haratian, Arda İçöz, Mert Kaan Gül, Ömercan Devran, Emir-                study of the non-determinism of chatgpt in code generation. ACM Transactions
+     can Furkan Bayendur, Baykal Mehmet Uçar, and Eray Tüzün. 2025. Automated                   on Software Engineering and Methodology 34, 2 (2025), 1–28.
+     code review in practice. In 2025 IEEE/ACM 47th International Conference on Soft-      [32] Kishore Papineni, Salim Roukos, Todd Ward, and Wei-Jing Zhu. 2002. Bleu: a
+     ware Engineering: Software Engineering in Practice (ICSE-SEIP). IEEE, 425–436.             method for automatic evaluation of machine translation. In Proceedings of the
+[11] Emre Doğan, Eray Tüzün, K Ayberk Tecimer, and H Altay Güvenir. 2019. Investi-              40th annual meeting of the Association for Computational Linguistics. 311–318.
+     gating the validity of ground truth in code reviewer recommendation studies. In       [33] Abhilasha Ravichander, Shrusti Ghela, David Wadden, and Yejin Choi. 2025.
+     2019 ACM/IEEE International Symposium on Empirical Software Engineering and                Halogen: Fantastic llm hallucinations and where to find them. In Proceedings of
+     Measurement (ESEM). IEEE, 1–6.                                                             the 63rd Annual Meeting of the Association for Computational Linguistics (Volume
+[12] Angela Fan, Beliz Gokkaya, Mark Harman, Mitya Lyubarskiy, Shubho Sengupta,                 1: Long Papers). 1402–1425.
+     Shin Yoo, and Jie M Zhang. 2023. Large language models for software engineering:      [34] Tomohiro Sawada, Daniel Paleka, Alexander Havrilla, Pranav Tadepalli, Paula
+     Survey and open problems. In 2023 IEEE/ACM International Conference on Software            Vidas, Alexander Kranias, John J Nay, Kshitij Gupta, and Aran Komatsuzaki. 2023.
+     Engineering: Future of Software Engineering (ICSE-FoSE). IEEE, 31–53.                      Arb: Advanced reasoning benchmark for large language models. arXiv preprint
+[13] Kehua Feng, Keyan Ding, Jing Yu, Yiwen Qu, Zhiwen Chen, Gang Yu, Qiang                     arXiv:2307.13692 (2023).
+     Zhang, Huajun Chen, et al. 2025. SaMer: A scenario-aware multi-dimensional            [35] Lin Shi, Chiyu Ma, Wenhua Liang, Xingjian Diao, Weicheng Ma, and Soroush
+     evaluator for large language models. In The Thirteenth International Conference            Vosoughi. 2025. Judging the Judges: A Systematic Study of Position Bias in LLM-
+     on Learning Representations.                                                               as-a-Judge. In Proceedings of the 14th International Joint Conference on Natural
+[14] Dan Hendrycks, Collin Burns, Steven Basart, Andy Zou, Mantas Mazeika, Dawn                 Language Processing and the 4th Conference of the Asia-Pacific Chapter of the Asso-
+     Song, and Jacob Steinhardt. 2020. Measuring massive multitask language under-              ciation for Computational Linguistics. The Asian Federation of Natural Language
+     standing. arXiv preprint arXiv:2009.03300 (2020).                                          Processing and The Association for Computational Linguistics, Mumbai, India,
+[15] Kai Huang, Jian Zhang, Xinlei Bao, Xu Wang, and Yang Liu. 2025. Comprehensive              292–314. https://aclanthology.org/2025.ijcnlp-long.18/
+     fine-tuning large language models of code for automated program repair. IEEE          [36] Sofia Eleni Spatharioti, David Rothschild, Daniel G Goldstein, and Jake M Hofman.
+     Transactions on Software Engineering 51, 4 (2025), 904–928.                                2025. Effects of LLM-based Search on Decision Making: Speed, Accuracy, and
+[16] Nihal Jain, Robert Kwiatkowski, Baishakhi Ray, Murali Krishna Ramanathan,                  Overreliance. In Proceedings of the 2025 CHI Conference on Human Factors in
+     and Varun Kumar. 2025. On Mitigating Code LLM Hallucinations with API                      Computing Systems (CHI ’25). Association for Computing Machinery, New York,
+     Documentation. In 2025 IEEE/ACM 47th International Conference on Software                  NY, USA, Article 1025, 15 pages. doi:10.1145/3706598.3714082
+     Engineering: Software Engineering in Practice (ICSE-SEIP). 237–248. doi:10.1109/      [37] Eray Tüzün, Hakan Erdogmus, Maria Teresa Baldassarre, Michael Felderer, Robert
+     ICSE-SEIP66354.2025.00027                                                                  Feldt, and Burak Turhan. 2022. Ground-Truth Deficiencies in Software Engineer-
+[17] Pengcheng Jiang, Jiacheng Lin, Zifeng Wang, Jimeng Sun, and Jiawei Han. 2024.              ing: When Codifying the Past Can Be Counterproductive. IEEE Software 39, 3
+     GenRES: Rethinking Evaluation for Generative Relation Extraction in the Era                (2022), 85–95. doi:10.1109/MS.2021.3098670
+     of Large Language Models. arXiv:2402.10744 [cs.CL] https://arxiv.org/abs/2402.        [38] Stefan Wagner, Marvin Muñoz Bartón, Davide Falessi, and Sebastian Baltes.
+     10744                                                                                      2025. Towards Evaluation Guidelines for Empirical Studies Involving LLMs. In
+[18] Carlos E Jimenez, John Yang, Alexander Wettig, Shunyu Yao, Kexin Pei, Ofir                 Proceedings of the 2025 IEEE/ACM International Workshop on Methodological Issues
+     Press, and Karthik Narasimhan. 2023. Swe-bench: Can language models resolve                with Empirical Studies in Software Engineering (Ottawa, Ontario, Canada) (WSESE
+     real-world github issues?, 2024. URL https://arxiv. org/abs/2310.06770 7 (2023).           ’25). IEEE Press, 24–27. doi:10.1109/WSESE66602.2025.00011
+[19] Daniel Kahneman. 2012. Thinking, fast and slow. Penguin, London.                      [39] Ruiqi Wang, Jiyu Guo, Cuiyun Gao, Guodong Fan, Chun Yong Chong, and Xin
+[20] D. Kahneman, O. Sibony, and C.R. Sunstein. 2021. Noise: A Flaw in Human Judg-              Xia. 2025. Can LLMs Replace Human Evaluators? An Empirical Study of LLM-
+     ment. Little, Brown. https://books.google.com.tr/books?id=g2MBEAAAQBAJ                     as-a-Judge in Software Engineering. Proc. ACM Softw. Eng. 2, ISSTA, Article
+[21] Takyoung Kim, Janvijay Singh, Shuhaib Mehri, Emre Can Acikgoz, Sagnik                      ISSTA086 (June 2025), 23 pages. doi:10.1145/3728963
+     Mukherjee, Nimet Beyza Bozdag, Sumuk Shashidhar, Gokhan Tur, and Dilek                [40] Jiayi Ye, Yanbo Wang, Yue Huang, Dongping Chen, Qihui Zhang, Nuno Moniz,
+     Hakkani-Tür. 2025. AURA: A Diagnostic Framework for Tracking User Satisfac-                Tian Gao, Werner Geyer, Chao Huang, Pin-Yu Chen, et al. 2024. Justice or
+     tion of Interactive Planning Agents. arXiv preprint arXiv:2505.01592 (2025).               prejudice? quantifying biases in llm-as-a-judge. arXiv preprint arXiv:2410.02736
+[22] Atish Kumar Dipongkor. 2024. An ensemble method for bug triaging using                     (2024).
+     large language models. In Proceedings of the 2024 IEEE/ACM 46th International         [41] Seonghyeon Ye, Hyeonbin Hwang, Sohee Yang, Hyeongu Yun, Yireun Kim, and
+     Conference on Software Engineering: Companion Proceedings. 438–440.                        Minjoon Seo. 2024. Investigating the effectiveness of task-agnostic prefix prompt
+[23] Yukyung Lee, JoongHoon Kim, Jaehee Kim, Hyowon Cho, Jaewook Kang, Pilsung                  for instruction following. In Proceedings of the AAAI Conference on Artificial
+     Kang, and Najoung Kim. 2025. CheckEval: A reliable LLM-as-a-Judge framework                Intelligence, Vol. 38. 19386–19394.
+     for evaluating text generation using checklists. In Proceedings of the 2025 Confer-   [42] Quanjun Zhang, Chunrong Fang, Yang Xie, Yaxin Zhang, Yun Yang, Weisong Sun,
+     ence on Empirical Methods in Natural Language Processing. Association for Com-             Shengcheng Yu, and Zhenyu Chen. 2023. A survey on large language models for
+     putational Linguistics, Suzhou, China, 15771–15798. doi:10.18653/v1/2025.emnlp-            software engineering. arXiv preprint arXiv:2312.15223 (2023).
+     main.796                                                                              [43] Shun Zhang, Zhenfang Chen, Yikang Shen, Mingyu Ding, Joshua B Tenenbaum,
+[24] Fengjie Li, Jiajun Jiang, Jiajun Sun, and Hongyu Zhang. 2025. Hybrid automated             and Chuang Gan. 2023. Planning with large language models for code generation.
+     program repair by combining large language models and program analysis. ACM                arXiv preprint arXiv:2303.05510 (2023).
+     Transactions on Software Engineering and Methodology 34, 7 (2025), 1–28.              [44] Lianmin Zheng, Wei-Lin Chiang, Ying Sheng, Siyuan Zhuang, Zhanghao Wu,
+[25] Chin-Yew Lin. 2004. Rouge: A package for automatic evaluation of summaries.                Yonghao Zhuang, Zi Lin, Zhuohan Li, Dacheng Li, Eric Xing, et al. 2023. Judging
+     In Text summarization branches out. 74–81.                                                 llm-as-a-judge with mt-bench and chatbot arena. Advances in neural information
+[26] Yue Liu, Chakkrit Tantithamthavorn, Yonghui Liu, and Li Li. 2024. On the                   processing systems 36 (2023), 46595–46623.
+     reliability and explainability of language models for program generation. ACM
+

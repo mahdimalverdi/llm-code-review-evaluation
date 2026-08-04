@@ -1,0 +1,373 @@
+                                                             Visual Integration of
+                                                  Static and Dynamic Software Analysis in
+                                                Code Reviews via Software City Visualization
+                                                         Alexander Krause-Glau∗ , Lukas Damerau† , Malte Hansen† and Wilhelm Hasselbring‡
+                                                                              Department of Computer Science, Kiel University
+                                                                                               Kiel, Germany
+                                                Email: ∗ alexander@krause-glau.de, † {forename}.{surname}@email.uni-kiel.de ‡ hasselbring@email.uni-kiel.de
+arXiv:2408.08141v1 [cs.SE] 15 Aug 2024
+
+
+
+
+                                            Abstract—Software visualization approaches for code reviews       use static code analysis to visualize structural properties of
+                                         are often implemented as standalone applications, which use          the code base. In the context of code review, for example, this
+                                         static code analysis. The goal is to visualize the structural        means that structural code changes are visualized differently
+                                         changes introduced by a pull / merge request to facilitate the
+                                         review process. In this way, for example, structural changes         and therefore represent an alternative or supplement to the
+                                         that hinder code evolution can be more easily identified, but        usual textual representation. However, additional presentations
+                                         understanding the changed program behavior is still mainly           of the changes introduced by a pull / merge request (from
+                                         done by reading the code. For software visualization to be           now on called change request or CR) are not sufficient for
+                                         successful in code review, tools must be provided that go beyond     reviewers. In fact, discrepancies have been observed between
+                                         an alternative representation of code changes and integrate well
+                                         into the developers’ daily workflow.                                 code review tools and functional defect detection [11], as well
+                                            In this paper, we report on the novel and in-progress de-         as between tooling and the information needed for the review
+                                         sign and implementation of a web-based approach capable of           process [4]. Therefore, developers tend to use their familiar
+                                         combining static and dynamic analysis data in software city          development environment for PC instead of using specific
+                                         visualizations. Our architectural tool design incorporates modern    tools such as SV [12]. Overall, we expect that the usefulness
+                                         web technologies such as the integration into common Git hosting
+                                         services. As a result, code reviewers can explore how the modified   of SV in code reviews depends, among other things, on the
+                                         software evolves and execute its use cases, which is especially      ability to visualize potential behavioral changes at runtime, as
+                                         helpful for distributed software systems. In this context, devel-    well as on the ease of integration into the developers’ daily
+                                         opers can be directly linked from the Git hosting service’s issue    workflow. As there exist already well-established procedures
+                                         tracking system to the corresponding software city visualization.    and tools for code review [1], SV approaches should expand
+                                         This approach eliminates the recurring action of manual data
+                                         collection and setup. We implement our design by extending the       on these procedures rather than introducing a completely new
+                                         web-based software visualization tool ExplorViz. We invite other     review process in a standalone tool.
+                                         researchers to extend our open source software and jointly re-          In this paper, we report on the novel and in-progress
+                                         search this approach. Video URL: https://youtu.be/DYxijdCEdrY        design and implementation of a web-based approach capable
+                                                                                                              of combining static and dynamic analysis data in software city
+                                            Index Terms—software visualization, program comprehension,
+                                         static analysis, dynamic analysis, code review, continuous inte-     visualizations. To achieve that, we extend ExplorViz [13]–
+                                         gration                                                              [15], which so far only used dynamic analysis data. The
+                                                                                                              result is a visualization of the changes of a software systems’
+                                                               I. I NTRODUCTION                               structural evolution and dynamic runtime behavior. Our web-
+                                            Code reviewing has a long history of research [1]–[4] and is      based approach is designed to supplement the process of code
+                                         nowadays a standard activity in professional software devel-         review in common Git hosting services (GHS). In this way,
+                                         opment. It is an effective method for finding non-functional         reviewers are able to explore a software system’s visualized
+                                         defects, such as those that affect code evolution [5], [6]           changed runtime behavior and code structure introduced by a
+                                         in upcoming changes to the code base. With a focus on                CR. We expect this to facilitate the comprehension of changes,
+                                         the change-based style [7], developers spend an average of           especially for runtime behavior modifications, which is rather
+                                         almost six and a half hours a week in reviewing [8]. As              difficult by reading the source code alone.
+                                         software becomes more complex and may be generated by                   The remainder of this paper is structured as follows. Sec-
+                                         generative AI such as GitHub Copilot, the time required for          tion II introduces the design of our approach. The implemen-
+                                         code reviews can be expected to increase. Researchers are            tation of this design is presented in Section III. Section IV
+                                         therefore investigating how this task can be facilitated.            illustrates the visual integration of static and dynamic analysis
+                                            A promising approach is the use of software visualization         within our approach. Scalability and limitation concerns are
+                                         (SV) in the reviewing process. The reason for this is that SV        discussed in Section V. Section VI differentiates this work
+                                         can facilitate the underlying task of program comprehension          from related approaches. Finally, Section VII concludes the
+                                         (PC) [9], [10]. To this end, SV approaches for PC commonly           paper and outlines directions for future research.
+                                            Git Hosting Service (GHS)                                                      Self-hosted
+
+                                                                     insert frontend / IDE URL                                       G           Legend
+                                                         CI job
+                                                                   Run Static
+                                                                    Analysis                                                                     Data flow
+                                                                                C
+                                                                                                                      Backend
+                                                                                                  E                     Process and persist      User flow
+     GHS UI           A                     CI jobs                                                                            data
+       Create / Update updates                                        B          Funct. behavior test             F
+                                        uses e.g. Run unit tests
+      Change Request             Repo                                             (load generator)
+                                                                                                                      Frontend
+                                                                                                                         Explore evolution /    User action
+                                                                                         uses                             runtime changes
+                                                         CI job                 D   CI job
+                                                              Build application           Run Dynamic
+                                                               Docker image                 Analysis                                           Autom. action
+
+                                                      explore changes
+
+
+                                    Fig. 1: Conceptual data flow and architecture of our approach.
+
+
+                             II. D ESIGN                                          However, it is also necessary for the target software to perform
+   We introduce the (architectural) design of our approach by                     meaningful operations during its execution. For instance, web
+explaining its data flow illustrated in Figure 1. In this context,                services are often inactive after their initial setup phase so
+we distinguish between actions occurring within the GHS                           that the instrumented code is not executed. Developers must
+and those executed within the self-hosted components of our                       therefore define a load generator (Figure 1-E) that triggers the
+approach, as indicated by the green dashed boxes. User actions                    execution of the (desired) use cases in the target software,
+are denoted by blue-colored entities, while solid black entities                  for example with (dockerized) JMeter2 or Playwright.3 This is
+represent automatically executed actions. These automated                         similar to writing API or end-to-end tests; i.e., if they already
+actions operate as stateless CI jobs and as operations within                     exist, they can be reused here. Both, the load generator and
+the stateful backend component. As is standard practice, the CI                   the instrumented target application are then executed within
+jobs require initial configuration and adaptation to the specific                 the CI job to start the recording of execution traces.
+application, particularly concerning dynamic analysis, e.g., the
+                                                                                  D. Data Processing
+scope of instrumentation.
+                                                                                     The data resulting from the static and dynamic analyses
+A. Initiation of the CI Pipeline                                                  is forwarded to the backend component, which is self-hosted
+   The creation of a CR and its subsequent updates (repre-                        outside of the GHS (Figure 1-F). Within the backend, all
+sented as new Git commits for the repository) initiate a CI                       static and dynamic analysis data is processed, persisted, and
+pipeline execution and the corresponding data flow (Figure 1-                     provided for later visualization. In addition, the backend inserts
+A). Within the context of CI, multiple lightweight build and                      a URL of the web-based frontend component into the CR
+verification jobs must typically succeed prior to the execution                   description, allowing reviewers to access the corresponding
+of more time-intensive tasks (Figure 1-B). Consequently, the                      visualization with a single click from within the CR.
+static and dynamic analyses in our approach are executed
+in separate CI jobs and only proceed after the successful                         E. Visualization
+completion of the preceding jobs.                                                   The frontend (Figure 1-G) combines and renders the appli-
+                                                                                  cation structure and runtime behavior in a single visualization.
+B. Static Analysis
+                                                                                  At the same time, the changes introduced by the CR in both the
+  The static analysis (Figure 1-C) produces a comprehensive                       application structure and the runtime behavior are highlighted.
+snapshot that outlines the structure and the changes of the                       This will be further explained and visualized in the upcoming
+source code, based on the Git repository, i.e., the Git branch,                   Section IV.
+associated with the CR. Additionally, it computes a range of
+metrics for each source code file, as well as for the classes                                             III. I MPLEMENTATION
+and their methods.                                                                  We implemented the design introduced in Section II by
+C. Dynamic Analysis                                                               extending ExplorViz [13]–[15]. ExplorViz comprises several
+                                                                                  applications, which are publicly developed on GitHub4 and
+   For the dynamic analysis (Figure 1-D), it is required to
+                                                                                  available as Docker images.5 Due to space constraints, we will
+instrument and execute the target software system. Since
+                                                                                  focus on the newly developed and most important features of
+Docker1 is the de-facto standard for deploying applications
+in professional software development, we run both the target                        2 https://jmeter.apache.org
+
+application and the dynamic analysis inside Docker containers.                      3 https://playwright.dev
+                                                                                    4 https://github.com/explorviz
+  1 https://www.docker.com                                                          5 https://hub.docker.com/u/explorviz
+                                  A
+
+
+                                                                                        D
+
+
+                                                                                                                 C
+Fig. 2: Excerpt of an example GitLab issue. Code reviewers
+can click on the ExplorViz frontend link to access the related
+visualization.
+                                                                                                      A
+
+our approach below. For further implementation details readers
+are kindly referred to previous works [16]–[18].
+   Prior to this extension, ExplorViz only provided live-                                                                   B
+trace visualization for Java applications based on dynamic
+analysis, which is usually performed outside of CI envi-
+ronments. To address this limitation, we implemented our
+design for target applications developed and built on the           Fig. 3: Software cities visualize the distributed Spring Pet-
+GitLab GHS. Consequently, we adapted ExplorViz’s dynamic            Clinic. In this color scheme, the packages are light and dark
+analysis approach to be executed as a CI job (Figure 1-             gray. The height of the blue buildings (classes) indicates
+D). In this context, ExplorViz utilizes NovaTec’s inspectIT         the current number of instances for a class based on the
+Ocelot (hereafter: Ocelot).6 Ocelot is a Java agent that uses       runtime behavior. Orange pipes show method calls captured
+bytecode weaving to instrument and monitor Java applications.       by dynamic analysis. Textures, e.g. plus signs, mark changes
+It supports distributed tracing and offers various exporters,       between the selected Git commits and their runtime snapshots.
+including exporters for the industry standard OpenTelemetry,7
+which is used by ExplorViz. To realize our new design for the       which completes the CI jobs. Here, the code service and the
+dynamic analysis, we employ a dockerized version of Ocelot in       span service receive the static analysis data and the runtime
+CI. Additionally, we leverage GitLab CI environment variables       data, respectively. Each service processes, persists, and pro-
+to incorporate the hash (as a unique identifier) of the current     vides the prepared visualization data via an HTTP API. Storing
+Git commit into each execution trace recorded by Ocelot.            the data allows users to select / compare previously analyzed
+This approach enables us to later find the correct instances        Git commits to examine, for example, the evolution of a
+of runtime behavior for a given Git commit. Consequently, it        software system in terms of structural and behavioral changes.
+allows us to map runtime behavior to structural evolution data,     The commit comparison described here is related to other SV
+the latter being the outcome of the static code analysis.           approaches that address code evolution [19]–[21]. Eventually,
+   To realize the static code analysis outlined in our design       all data will be made available to the extended ExplorViz
+(Figure 1-C), we developed a static code analyzer for Java          frontend component, a web-based WebGL application [22].
+source code. This tool, referred to as the code agent, is written   Here, users can select analyzed applications and explore the
+in Java and can be used in or outside of CI environments.           changes introduced by the CR. In the upcoming Section IV,
+When executed in a CI job for a Git commit, the code agent          we will demonstrate this process by exploring the software
+creates a list of all Java classes that are contained in the        city visualization of our approach using an example software
+Git branch associated with the relevant CR. Additionally, it        system.
+analyzes the changed Java classes of the Git commit via the
+JavaParser library.8 As a result, the static analysis includes,        IV. V ISUAL I NTEGRATION OF S TATIC AND DYNAMIC
+for example, the recognition of (abstract) classes, inheritance,                      S OFTWARE A NALYSIS
+interfaces, and method declarations.                                   In this section, we present the visual integration of static
+   Both, the static code analysis data and the runtime data are     and dynamic analysis data in our approach. To illustrate this,
+then sent to the ExplorViz backend (Figure 1-F) via gRPC,9          we introduce ExplorViz’s extended software city visualization
+  6 https://www.inspectit.rocks
+                                                                    using an example software system.
+  7 https://opentelemetry.io                                           The extended ExplorViz frontend is accessible via a web
+  8 https://javaparser.org                                          browser, either directly or via a link from within a CR as illus-
+  9 https://grpc.io                                                 trated by Figure 2-A. By utilizing query parameters, users can
+(a) Unfiltered comparison showing all                   (b) Filtered comparison visualizing the           (c) Filtered comparison emphasizing only
+commit-related data. Four data sets are dy-             compared static analysis data without any         the code differences. Comparison details
+namically combined for this visualization.              runtime information.                              are displayed upon hovering over an entity.
+Fig. 4: Software city visualizations comparing two commits of PlantUML at varying levels of detail. Users can select a
+combination of analysis data types to be visualized using toggle buttons.
+
+
+specify which particular Git commit or which comparison of                    comparison of the runtime behavior for the selected runtime
+Git commits of an analyzed application should be visualized.                  snapshots. This indicates a new method call during the runtime
+By default, applications that are not configured via a query                  behavior which could be caused by the proposed code changes
+parameter are rendered using their last known Git commit.                     of the CR. Removed or modified entities are represented by
+This feature is utilized by the extended ExplorViz backend                    other textures, as illustrated in Figure 3-D, while hovering with
+when updating the CR description. As a result, reviewers                      a mouse over an entity displays additional information.
+are presented with the correct visualization when clicking the
+ExplorViz frontend link in the CR description (Figure 1-G).                                   V. S CALABILITY & L IMITATIONS
+   Figure 3 depicts the software city visualization of our                       In the context of data visualization, an excess of informa-
+approach. ExplorViz currently visualizes all data using the city              tion within a single visualization can impede comprehension.
+metaphor, as this has a positive effect in the context of program             Therefore, tools such as SV must account for the scalability of
+understanding [10], [23]. For the sample application, we                      information [24]. Prior to this work, ExplorViz already allowed
+use the distributed version of the Spring PetClinic (hereafter                users to interactively filter entities in software cities. This
+PetClinic).10 The PetClinic consists of multiple microservices                feature allows users to more easily locate specific entities, such
+and a frontend component that communicates with all services                  as classes with a particular instance count, thereby enhancing
+depending on the executed use case, such as booking a visit to                the users’ ability to understand complex software structures.
+the veterinarian for a user’s pet. The accompanying screenshot                With the introduced extension of ExplorViz in this work, we
+illustrates the visualization of both the runtime behavior and                expand the filtering feature.
+code structure for the PetClinic. In this context, multiple                      Figure 4 depicts the same software city visualization com-
+software cities, i.e., one for each service of the PetClinic, are             paring two commits of PlantUML11 with selected runtime
+visualized simultaneously. Additionally, a specific Git commit                snapshots (see Section IV) at varying levels of detail. In such
+comparison for the service in the foreground has already been                 situations, the ExplorViz frontend, by default, combines all
+selected.                                                                     four data sets, i.e., processed code and runtime data for each
+   This can be changed at any time via the code tab (Figure 3-                of the two commits, into a single visualization. The resulting
+A). In the example shown Figure 3, the two compared Git                       unfiltered comparison can be seen in Figure 4a. Although
+commits also have associated runtime behavior for the encom-                  applied textures indicate if classes and packages have been
+passing service, as illustrated by the runtime tab. Two runtime               added, deleted, or modified, these changes are not easily
+snapshots, i.e., aggregated runtime behavior over ten seconds,                visible in the unfiltered view. To address this, the visualization
+are selected and compared (Figure 3-B). For this comparison,                  can be dynamically adjusted using a set of toggle buttons
+we use textures because colors are already associated with                    that allow users to select the type of data to be visualized.
+other meanings in our visualization approach. Figure 3-C                      For instance, Figure 4b displays a filtered comparison where
+depicts a new Java package with a new class, indicated by                     the software city visualization includes only the combined
+a plus sign texture. The new entities were identified based                   code structures of the two commits. In this view, certain
+on the comparison of the code structure between the two                       packages and classes are absent as they were present only in
+selected Git commits. Additionally, Figure 3-C shows a new                    the runtime behavior. Differences in packages and classes are
+communication line, using the same texture, derived from the                  still indicated with textures. Furthermore, users have the option
+  10 https://github.com/spring-petclinic/spring-petclinic-microservices         11 https://plantuml.com
+to visualize only the differences between the two commits.          software cities, whereas ReviewVis relies solely on static
+This is demonstrated in Figure 4c, which shows the actual           analysis. Additionally, our use of the city metaphor contrasts
+code differences in the visualization. Detailed comparison          with ReviewVis’s graph rendering using D3.js13 . The authors
+information, such as the lines of code for a class between          of ReviewVis also consider the potential application of the city
+the two commits, is displayed upon hovering over an entity.         metaphor for large MRs based on participant feedback.
+   Beyond information scalability, rendering scalability, de-          Recently, Augustinowski et al. presented their ongoing study
+fined as the capability to scale the visualization performance      to determine the necessary features for their SV tool SEE to
+to manage increasing amounts of data, is a critical requirement     enhance the code review process [35]. SEE and ExplorViz
+for SV tools [24]. This is one of the current limitations           share concepts such as the SV metaphor and support for
+of ExplorViz. Although users can dynamically change the             collaborative use [17]. Currently, SEE is in an early de-
+visualized commits and related runtime snapshots in the fron-       velopment stage, with potential CI integration concepts that
+tend, these actions currently trigger on-demand processing of       are comparable to our approach not yet formulated. At this
+the desired data without employing any reduction techniques.        stage, SEE includes an in-tool web browser, likely for CR
+Consequently, visualizations for larger datasets, such as the       description access, whereas ExplorViz automatically links to
+PlantUML example depicted in Figure 4, experience signif-           the corresponding CR visualization in the description.
+icant delays when updating upon the selection of different
+                                                                                              VII. C ONCLUSIONS
+commits or runtime snapshots.
+   Another limitation is the current capability of the code agent      In this paper, we report on the novel and in-progress
+(see Section III) to resolve Java import paths in analyzed          design and implementation of a web-based approach capable
+class files. For instance, the code agent successfully identified   of combining static and dynamic analysis data in software city
+over 2,400 Java classes. However, the logs of the code agent        visualizations. In comparison to related works, our approach
+indicated that classes were skipped due to incomplete analysis      incorporates the collection and visualization of both (changed)
+of their source code.                                               runtime behavior and code structure introduced by a pull
+                                                                    / merge request. Our architectural tool design incorporates
+                VI. R ELATED W ORK & N OVELTY                       modern web technologies such as the integration into common
+   The combination of static and dynamic analysis has a wide        Git hosting services. As a result, code reviewers can see how
+range of applications [25]–[28]. However, in the context of         the modified software evolves and executes its use cases,
+modern code review, related SV approaches generally only use        which is especially helpful for the underlying task of program
+static code analysis [29]–[31]. Dynamic analysis, on the other      comprehension. We have presented the implementation of our
+hand, is often used by code coverage tools for CRs [32]12           design through the extension of ExplorViz [13]–[15], which
+or SV approaches that are not concerned about the review            so far only used dynamic analysis data. The resulting source
+process [33]. Below we present the work that we consider to         code can be found on GitHub.14 Additionally, we presented
+be the most related to ours in terms of system integration,         and discussed ExplorViz’s extended software city visualization
+perceived degree of maturity, and using SV to facilitate the        using an example software system. We provide a video of our
+review task.                                                        approach online, which showcases the implementation of our
+   In 2022, Fregnan et al. introduced ReviewVis [34], a tool        design.
+aimed at facilitating the comprehension of Java code changes           We expect that the visual integration of both static and
+introduced by CRs. ReviewVis enhances GitLab’s merge re-            dynamic software analysis facilitates the task of code re-
+quest (MR) interface with interactive 2D force-directed graphs.     view, particularly within the context of distributed software
+These graphs feature nodes representing classes, interfaces,        systems. We plan to investigate this assumption in future
+methods, or non-Java files, colored to indicate their change        research, subsequent to addressing current limitations of our
+status (e.g., added, deleted, or changed). A backend component      approach. Additionally, we aim to support the new code
+performs static analysis on the changed source code, creating       review mode in ExplorViz’s collaborative [17] and code-
+and comparing abstract syntax trees for both the source and         proximal approaches [18]. For instance, ExplorViz’s Visual
+target branches to determine the change status of each file.        Studio Code extension could automatically leverage the code
+The visualization is displayed via a Google Chrome extension,       editor’s internal Git feature. Consequently, users would be
+which allows users to navigate between the graph and the            presented not only with the comparison visualization but also
+related code in the GitLab MR view. Surveys with professional       with the associated code changes in a predefined web-based
+developers indicate that ReviewVis aids in comprehending and        development environment.
+navigating code changes, though it offers limited help for small                             ACKNOWLEDGMENT
+MRs and requires improvements for larger MRs. Although
+                                                                      The authors would like to thank Julian Pleines, Lennart
+ReviewVis and our approach share the goal of facilitating code
+                                                                    Ideler, and Arash Giv for their contributions with implement-
+review through SV, they differ in several design aspects. Our
+                                                                    ing and evaluating some of the features presented in this paper.
+approach integrates both static and dynamic analysis within
+                                                                      13 https://d3js.org
+  12 https://cobertura.github.io/cobertura                            14 https://github.com/explorviz
+                              R EFERENCES                                             of the 11th Working Conference on Software Visualization (VISSOFT
+                                                                                      2023), 2023.
+ [1] D. Badampudi, M. Unterkalmsteiner, and R. Britto, “Modern code              [19] S. Ardigò, C. Nagy, R. Minelli, and M. Lanza, “M3tricity: Visualizing
+     reviews—survey of literature and practice,” ACM Trans. Softw. Eng.               evolving software & data cities,” in Companion Proceedings of the
+     Methodol., vol. 32, no. 4, 2023. DOI: 10.1145/3585004                            IEEE/ACM 44th International Conference on Software Engineering
+ [2] V. Basili and R. Selby, “Comparing the effectiveness of software testing         (ICSE-Companion 2022), 2022. DOI: 10.1145/3510454.3516831 pp.
+     strategies,” IEEE Transactions on Software Engineering, vol. SE-13,              130–133.
+     no. 12, pp. 1278–1296, 1987. DOI: 10.1109/TSE.1987.232881                   [20] A. Ciani, R. Minelli, A. Mocci, and M. Lanza, “Urbanit: Visualizing
+ [3] M. E. Fagan, “Design and code inspections to reduce errors in program            repositories everywhere,” in Proceedings of the IEEE International
+     development,” IBM Systems Journal, vol. 15, no. 3, pp. 182–211, 1976.            Conference on Software Maintenance and Evolution (ICSME 2015),
+     DOI: 10.1147/sj.153.0182                                                         2015. DOI: 10.1109/ICSM.2015.7332479 pp. 324–326.
+                                                                                 [21] G. Occhipinti, C. Nagy, R. Minelli, and M. Lanza, “Syn: Ultra-
+ [4] E. Söderberg, L. Church, J. Börstler, D. Niehorster, and C. Rydenfält,
+                                                                                      scale software evolution comprehension,” in Proceedings of the 31st
+     “Understanding the experience of code review: Misalignments, at-
+                                                                                      IEEE/ACM International Conference on Program Comprehension (ICPC
+     tention, and units of analysis,” in Proceedings of the 26th Interna-
+                                                                                      2023), 2023. DOI: 10.1109/ICPC58990.2023.00020 pp. 69–73.
+     tional Conference on Evaluation and Assessment in Software Engi-
+                                                                                 [22] A. Krause-Glau, M. Hansen, and W. Hasselbring, “Collaborative pro-
+     neering, ser. EASE ’22. New York, NY, USA: ACM, 2022. DOI:
+                                                                                      gram comprehension via software visualization in extended reality,”
+     10.1145/3530019.3530037 p. 170–179.
+                                                                                      Information and Software Technology, vol. 151, p. 107007, 2022. DOI:
+ [5] A. Bacchelli and C. Bird, “Expectations, outcomes, and challenges
+                                                                                      10.1016/j.infsof.2022.107007
+     of modern code review,” in Proceedings of the 35th International
+                                                                                 [23] F. Galperin, R. Koschke, and M. Steinbeck, “Visualizing code smells:
+     Conference on Software Engineering (ICSE 2013), ser. ICSE ’13. IEEE
+                                                                                      Tables or code cities? a controlled experiment,” in Proceedings of the
+     Press, 2013. DOI: 10.1109/ICSE.2013.6606617 p. 712–721.
+                                                                                      10th IEEE Working Conference on Software Visualization (VISSOFT
+ [6] M. V. Mäntylä and C. Lassenius, “What types of defects are really dis-         2022), 2022. DOI: 10.1109/VISSOFT55257.2022.00014 pp. 51–62.
+     covered in code reviews?” IEEE Transactions on Software Engineering,        [24] H. M. Kienle and H. A. Muller, “Requirements of software visual-
+     vol. 35, no. 3, pp. 430–448, 2009. DOI: 10.1109/TSE.2008.71                      ization tools: A literature survey,” in Proceedings of the fourth IEEE
+ [7] T. Baum, H. Leßmann, and K. Schneider, “The Choice of Code Review                International Workshop on Visualizing Software for Understanding and
+     Process: A Survey on the State of the Practice,” in Product-Focused              Analysis, 2007. DOI: 10.1109/VISSOF.2007.4290693 pp. 2–9.
+     Software Process Improvement, vol. 10611.         Springer, 2017. DOI:      [25] D. Heuzeroth, T. Holl, and W. Loewe, Combining static and
+     10.1007/978-3-319-69926-4 9 pp. 111–127.                                         dynamic analyses to detect interaction patterns, 2001. DOI:
+ [8] A. Bosu and J. C. Carver, “Impact of peer code review on peer                    10.5445/IR/18272001 Karlsruhe 2001. (Interner Bericht. Fakultät für
+     impression formation: A survey,” in Proceedings of the seventh ACM               Informatik, Universität Karlsruhe. 2001,21.).
+     / IEEE International Symposium on Empirical Software Engineering            [26] F. Li, Q.-s. Li, Y. Su, and P. Chen, “Detection of design patterns by
+     and Measurement (ESEM 2013), 2013. DOI: 10.1109/ESEM.2013.23                     combining static and dynamic analyses,” Journal of Shanghai Uni-
+     pp. 133–142.                                                                     versity (English Edition), vol. 11, no. 2, pp. 156–162, 2007. DOI:
+ [9] B. Cornelissen, A. Zaidman, and A. van Deursen, “A controlled ex-                10.1007/s11741-007-0213-z
+     periment for program comprehension through trace visualization,” IEEE       [27] K. Sellami, M. A. Saied, A. Ouni, and R. Abdalkareem, “Combin-
+     Transactions on Software Engineering, vol. 37, no. 3, pp. 341–355, 2011.         ing static and dynamic analysis to decompose monolithic application
+     DOI: 10.1109/TSE.2010.47                                                         into microservices,” in Service-Oriented Computing. Springer Nature
+[10] R. Wettel, M. Lanza, and R. Robbes, “Software systems as cities:                 Switzerland, 2022. DOI: 10.1007/978-3-031-20984-0 14 pp. 203–218.
+     a controlled experiment,” in Proceedings of the 33rd International          [28] A. Tahir and S. G. MacDonell, “Combining dynamic analysis and visu-
+     Conference on Software Engineering (ICSE 2011), 2011. DOI:                       alization to explore the distribution of unit test suites,” in Proceedings
+     10.1145/1985793.1985868 pp. 551–560.                                             of the sixth IEEE/ACM International Workshop on Emerging Trends in
+[11] J. Czerwonka, M. Greiler, and J. Tilford, “Code reviews do not find bugs.        Software Metrics, 2015. DOI: 10.1109/WETSoM.2015.12
+     how the current code review best practice slows us down,” in Proceed-       [29] F. Balci, D. Haliloglu, O. Sahin, C. Tilki, M. Yurtsever, and E. Tuzun,
+     ings of the 37th IEEE/ACM IEEE International Conference on Software              “Augmenting code review experience through visualization,” in Proceed-
+     Engineering (ICSE 2015), vol. 2, 2015. DOI: 10.1109/ICSE.2015.131                ings of the ninth IEEE Working Conference on Software Visualization
+     pp. 27–28.                                                                       (VISSOFT 2021), 2021. DOI: 10.1109/VISSOFT52517.2021.00021 pp.
+[12] X. Xia, L. Bao, D. Lo, Z. Xing, A. E. Hassan, and S. Li, “Measuring              110–114.
+     program comprehension: A large-scale field study with professionals,”       [30] L. Gasparini, E. Fregnan, L. Braz, T. Baum, and A. Bacchelli,
+     IEEE Transactions on Software Engineering, vol. 44, no. 10, pp. 951–             “Changeviz: Enhancing the github pull request interface with method
+     976, 2018. DOI: 10.1109/TSE.2017.2734091                                         call information,” in Proceedings of the ninth IEEE Working Conference
+[13] F. Fittkau, J. Waller, C. Wulf, and W. Hasselbring, “Live trace visual-          on Software Visualization (VISSOFT 2021), 2021. DOI: 10.1109/VIS-
+     ization for comprehending large software landscapes: The ExplorViz               SOFT52517.2021.00022
+     approach,” in Proceedings of the first IEEE International Working           [31] Y. Tymchuk, A. Mocci, and M. Lanza, “Code review: Veni, vidi, vici,”
+     Conference on Software Visualization (VISSOFT 2013), Sep. 2013. DOI:             in Proceedings of the 22nd IEEE International Conference on Software
+     10.1109/VISSOFT.2013.6650536 pp. 1–4.                                            Analysis, Evolution, and Reengineering (SANER 2015), 2015. DOI:
+[14] F. Fittkau, A. Krause, and W. Hasselbring, “Software landscape and               10.1109/SANER.2015.7081825
+     application visualization for system comprehension with ExplorViz,”         [32] S. Oosterwaal, A. v. Deursen, R. Coelho, A. A. Sawant, and A. Bac-
+     Information and Software Technology, vol. 87, pp. 259–277, Juli 2017.            chelli, “Visualizing code and coverage changes for code review,” in
+     DOI: 10.1016/j.infsof.2016.07.004                                                Proceedings of the 24th ACM SIGSOFT International Symposium on
+[15] W. Hasselbring, A. Krause, and C. Zirkelbach, “ExplorViz: Research               Foundations of Software Engineering (FSE 2016). Association for
+     on software visualization, comprehension and collaboration,” Software            Computing Machinery, 2016. DOI: 10.1145/2950290.2983929
+     Impacts, vol. 6, Nov. 2020. DOI: 10.1016/j.simpa.2020.100034                [33] V. Dashuber and M. Philippsen, “Trace visualization within the soft-
+[16] A. Krause-Glau and W. Hasselbring, “Scalable collaborative software              ware city metaphor: Controlled experiments on program comprehen-
+     visualization as a service: Short industry and experience paper,” in             sion,” Information and Software Technology, vol. 150, 2022. DOI:
+     Proceedings of the 10th IEEE International Conference on Cloud                   10.1016/j.infsof.2022.106989
+     Engineering (IC2E 2022), 2022. DOI: 10.1109/IC2E55432.2022.00026            [34] E. Fregnan, J. Fröhlich, D. Spadini, and A. Bacchelli, “Graph-based
+     pp. 182–187.                                                                     visualization of merge requests for code review,” Journal of Systems
+[17] A. Krause-Glau, M. Bader, and W. Hasselbring, “Collaborative software            and Software, vol. 195, 2023. DOI: 10.1016/j.jss.2022.111506
+     visualization for program comprehension,” in Proceedings of the 10th        [35] S. Augustinowski, A. Cheema, and L. Gawenda, “Transforming code-
+     IEEE Working Conference on Software Visualization (VISSOFT 2022),                review practices: An action research study with collaborative software
+     2022. DOI: 10.1109/VISSOFT55257.2022.00016 pp. 75–86.                            visualization in SEE,” Softwaretechnik-Trends, vol. 44, no. 2, pp. 49–50,
+[18] A. Krause-Glau and W. Hasselbring, “Collaborative, code-proximal                 2024. [Online]. Available: https://dl.gi.de/handle/20.500.12116/44185
+     dynamic software visualization within code editors,” in Proceedings
+

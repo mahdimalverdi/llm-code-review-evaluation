@@ -1,0 +1,751 @@
+                                                 Fine-Tuning Models for Automated Code Review Feedback
+                                                                            Smitha Kumar∗∗                                                                  Michael Adam Lones
+                                                                     smitha.kumar@hw.ac.uk                                                                  Heriot-Watt University
+                                                                     smitha.kumar@hw.ac.uk                                                                Edinburgh, United Kingdom
+                                                                      Heriot-Watt University                                                                  m.lones@hw.ac.uk
+                                                                    Dubai, United Arab Emirates
+
+                                                                            Manuel Maarek                                                                        Hind Zantout
+                                                                      Heriot-Watt University                                                                h.zantout@hw.ac.uk
+                                                                    Edinburgh, United Kingdom                                                              Heriot-Watt University
+                                                                       m.maarek@hw.ac.uk                                                                 Dubai, United Arab Emirates
+arXiv:2605.12610v1 [cs.SE] 12 May 2026
+
+
+
+
+                                         Abstract                                                                                        Keywords
+                                         Large Language Models (LLMs) have introduced new possibilities                                  Large Language Model, Programming Feedback, Fine-tuning
+                                         for programming education through personalized support, con-                                    ACM Reference Format:
+                                         tent creation, and automated feedback. While recent studies have                                Smitha Kumar, Michael Adam Lones, Manuel Maarek, and Hind Zantout.
+                                         demonstrated the potential for feedback generation, many tech-                                  2018. Fine-Tuning Models for Automated Code Review Feedback. In Pro-
+                                         niques rely on proprietary models, raising concerns about cost,                                 ceedings of Make sure to enter the correct conference title from your rights
+                                         computational demands, and the ethical implications of sharing                                  confirmation email (Conference acronym ’XX). ACM, New York, NY, USA,
+                                         student code. Open LLMs provide an alternative approach, but they                               8 pages. https://doi.org/XXXXXXX.XXXXXXX
+                                         do not currently have the capabilities of proprietary models. To
+                                         address this problem, we investigate whether parameter-efficient                                1    Introduction
+                                         fine-tuning (PEFT) and prompt engineering—both of which distil                                  Generative AI tools have significantly reshaped programming edu-
+                                         knowledge from a dataset derived from a large, more capable model                               cation in recent years. Prior to the emergence of Large Language
+                                         can be used to adapt and enhance the quality of feedback generated                              Models (LLMs), automated feedback generation techniques were
+                                         by the open LLM Code Llama. Feedback quality on buggy Java code                                 constrained by several technical challenges that hindered their
+                                         was assessed using a combination of student evaluation, manual an-                              broader adoption in educational settings [18]. Recent studies indi-
+                                         notation and the automated metrics BLEU, ROUGE, and BERTScore.                                  cate that LLMs are capable of outperforming traditional feedback
+                                         Our findings indicate that PEFT leads to notable improvements in                                generation approaches [37], which has led to a significant increase
+                                         feedback quality, and significantly outperforms prompt engineer-                                in leveraging them for more precise, personalized, and effective
+                                         ing, providing an avenue for developing freely-deployable feedback                              feedback. According to Narciss [26], “feedback refers to all post-
+                                         tools that can be effectively used to guide student learning. Student                           response information which informs the learner on his/her actual
+                                         evaluation indicates that learners value the PEFT model’s feedback,                             state of learning or performance in order to regulate the further
+                                         and see it as being equally effective as the proprietary ChatGPT                                process of learning”. Feedback types include knowledge of perfor-
+                                         model. Participants suggested that incorporating additional expla-                              mance (KP), knowledge of result or response (KR), and knowledge
+                                         nation for technical terms in the PEFT model’s feedback could be                                of the correct response (KCR). More elaborate forms of feedback,
+                                         more beneficial. This study demonstrates that fine-tuned models                                 such as knowledge about task constraints (KTC), knowledge about
+                                         can effectively support critical thinking and guide the design of                               concepts (KC), knowledge about mistakes (KM), knowledge about
+                                         scalable pedagogical systems.                                                                   how to proceed (KH), and knowledge about meta-cognition (KMC)
+                                                                                                                                         offer deeper guidance to learners.
+                                         CCS Concepts                                                                                       Students often rely on proprietary LLMs to receive prompt re-
+                                         • Applied computing → Computer-assisted instruction.                                            sponses during programming education [34]. However, such mod-
+                                                                                                                                         els are often costly [16], lack transparency, and offer limited cus-
+                                                                                                                                         tomization options for specific downstream tasks [22]. Despite their
+                                         ∗ all authors contributed equally to this research.
+                                                                                                                                         benefits, LLMs sometimes generate hallucinations, which can con-
+                                                                                                                                         fuse learners [31]. Moreover, they may provide complete correct
+                                                                                                                                         solutions without guiding learners through the problem-solving
+                                         Permission to make digital or hard copies of all or part of this work for personal or
+                                         classroom use is granted without fee provided that copies are not made or distributed           process. This can hinder the development of critical thinking and
+                                         for profit or commercial advantage and that copies bear this notice and the full citation       problem-solving skills, which are some of the key competencies in
+                                         on the first page. Copyrights for components of this work owned by others than the              programming education [29].
+                                         author(s) must be honored. Abstracting with credit is permitted. To copy otherwise, or
+                                         republish, to post on servers or to redistribute to lists, requires prior specific permission      Proprietary LLMs are black-box models that do not release the
+                                         and/or a fee. Request permissions from permissions@acm.org.                                     model weights, whereas open LLMs provides access to their model
+                                         Conference acronym ’XX, Woodstock, NY                                                           weights and can be freely deployed on local computer systems [38].
+                                         © 2018 Copyright held by the owner/author(s). Publication rights licensed to ACM.
+                                         ACM ISBN 978-1-4503-XXXX-X/2018/06                                                              Open LLMs allow fine-tuning to suit diverse needs, while also pro-
+                                         https://doi.org/XXXXXXX.XXXXXXX                                                                 viding greater transparency, privacy, and control [22]. Therefore,
+Conference acronym ’XX, June 03–05, 2018, Woodstock, NY                                                                         Trovato et al.
+
+
+harnessing the potential of open LLMs to suit pedagogical goals is     performance of proprietary models [17]. While previous studies
+an important step towards their widespread acceptance in educa-        have demonstrated the potential and challenges associated with
+tional settings. Recent studies on automated feedback generation       LLMs, their effectiveness depends greatly on how they are opti-
+techniques report that the majority of tools generate KM type feed-    mized for specific use cases. Prompt engineering and fine-tuning
+back, with limited support for KH type feedback, which offers more     have emerged as some of the most promising techniques to en-
+effective guidance to learners [25].                                   hance the performance of the models on downstream tasks [30].
+   This study aims to develop a novel framework based on PEFT to       The following section provides an overview of prompt engineering
+create high-quality actionable feedback for Java programming as-       and parameter-efficient fine-tuning (PEFT).
+signments. We also investigate how this approach compares against
+prompt engineering, an approach that can be used to generate KM-
+type and KH-type responses without additional training. A key          2.2    Prompt Engineering
+challenge in programming education research is the lack of pub-        Prompt engineering involves guiding a pre-trained LLM to generate
+licly available datasets. Most existing studies do not release their   a desired output using natural language queries. Zero-shot prompt-
+datasets, which limits the validation of their findings. To overcome   ing and in-context learning are the most commonly used prompting
+this limitation, researchers have begun leveraging LLMs to gener-      strategies. In zero-shot prompting, the model is provided with a
+ate diverse datasets [20]. As LLMs are largely trained on datasets     direct natural language instruction to generate a response for a
+written by humans, this approach offers a viable alternative for       task, and relies only on its trained knowledge. In-context learning
+dataset generation. For the purposes of this research, we created      extends this approach by including additional examples along with
+and shared publicly a new dataset containing code, KM-feedback,        the query. Importantly,these approaches do not update the model’s
+and KH-feedback. This research study is guided by the following        internal parameters [30].
+research question: How can large language models be optimized to
+generate high-quality targeted and actionable feedback?                2.3    Parameter-Efficient Fine-Tuning
+   Our contributions include:
+                                                                       Fine-tuning has emerged as a practical approach for adapting large
+     • A novel PEFT framework to generate pedagogically struc-
+                                                                       pre-trained code LLMs to various downstream tasks. It can be
+        tured feedback.
+                                                                       broadly classified into two types depending on the number of param-
+     • Empirical evidence demonstrating that PEFT leads to better
+                                                                       eters updated: full fine-tuning and parameter-efficient fine-tuning
+        feedback than baseline prompt engineering strategies and
+                                                                       (PEFT). Full fine-tuning potentially updates all model parameters
+        performs comparably to proprietary models. Student evalua-
+                                                                       and can require large amounts of training data and computational
+        tions indicate a preference for this feedback over ChatGPT
+                                                                       resources. In contrast, PEFT can be done using much more limited
+        in a formative lab setting.
+                                                                       computational resources as it updates only a subset of the model
+     • A new dataset1 of annotated Java programs with KM-KH
+                                                                       parameters. This also helps to minimize the risk of catastrophic
+        responses covering diverse error types in Java programming.
+                                                                       forgetting. PEFT can be implemented using various approaches,
+   This article is organized as follows. In Section 2, we discuss
+                                                                       including Low-Rank Adaptation (LoRA) [12] and Quantized LoRA
+the use of LLMs in programming education and review key opti-
+                                                                       (QLoRA) [8]. LoRA adds trainable low-rank matrices to the LLM’s
+mization strategies. Section 3 outlines the research methodology.
+                                                                       transformer layers while keeping the base model weights frozen.
+Section 4 presents the findings of this study including its limita-
+                                                                       This approach significantly reduces the number of trainable pa-
+tions. Finally, conclusions and recommendations for future work
+                                                                       rameters and computational overhead without compromising the
+are covered in Section 5.
+                                                                       model’s accuracy. Quantized LoRA (QLoRA), which we use in this
+                                                                       research, builds on LoRA by incorporating quantization that further
+2 Background                                                           reduces the memory footprint without degrading performance. It
+2.1 LLMs in Programming Education                                      uses a 4-bit floating-point value to store the model weights, applies
+The programming education landscape has been profoundly im-            double quantization, and uses paged optimizers to dynamically
+pacted by LLMs that generate code. Existing literature reveals         manage memory during training to achieve optimal performance.
+that LLMs are leveraged in programming education for tasks such
+as code generation, debugging, clarifying complex concepts, and        3     Methodology
+providing personalized feedback. Existing research also shows          In this section we explain the dataset creation process, model archi-
+that students generally hold positive attitudes towards the use of     tecture and configurations, and the evaluation metrics. An overview
+LLMs [2, 28]. LLMs help students learn independently at their pace,    of the methodology is shown in Figure 1.
+receiving instant feedback and explanations for coding challenges.
+This real-time assistance across multiple programming languages        3.1    Dataset Creation
+enhances the learning experience [6].                                  Due to the scarcity of openly shared data in the programming
+   The proprietary models used in most of these studies are as-        education domain, researchers have investigated the ability of LLMs
+sociated with financial constraints, making open LLMs a viable         to generate synthetic data and found that the generated samples are
+alternative [15]. However, these models have yet to match the          not significantly different from actual student submissions [20]. To
+                                                                       ensure that the synthetic dataset accurately reflects student errors,
+1 https://anonymous.4open.science/r/JCODE_KM_KH-4BEC                   we analysed the following research papers published in prominent
+Fine-Tuning Models for Automated Code Review Feedback                                                                         Conference acronym ’XX, June 03–05, 2018, Woodstock, NY
+
+
+                                                                              Prompt 1
+                                                                              Bug Type
+                                                                                                            Prompt 1: Prompt template for triplets (Code, KM, KH)
+                                                       For each bug
+  A. Bug Type Dataset Creation                         type, use
+                                                       DeepSeek LLM                                         SYSTEM: You are an expert programming tutor with strong knowl-
+                                                       to create 5 bug
+                       List bug types                  sample triplets                                      edge of common student mistakes from programming education
+                       identified by                   (buggy code,
+   CSE Paper 1         the literature    Bug Type 1    KM, KH)            Bug Sample 1                      literature.
+        •                                                                      •
+        •
+                                              •
+                                                                               •                            USER: Your task is to generate five buggy Java code snippets that
+                                              •
+        •                                                                      •
+   CSE Paper 13
+                                              •
+                                                                         Bug Sample 425
+                                                                                                            illustrate the common mistakes made by students in introductory
+                                         Bug Type 85
+                                                                                                            undergraduate programming courses (CS1 and CS2 levels) aligned
+                                                                                     If unsuitable bug
+                                                                                     sample triplet,        with the bug type specified below. Bug type: <BUG_TYPE>
+                                                                                     discard and
+                                                                                     generate new triplet   For each code provide:
+  B. Evaluation of Feedback Generation Strategies                                                           ** KM (Knowledge about mistakes) ** : Provide feedback that
+                                                                         Manual evaluation metrics
+                                                                          ● KM Accuracy
+                                                                                                            helps students understand their mistakes. If there are multiple mis-
+                                                        Prompt 3          ● KH Helpfulness                  takes, list them individually.
+                                                       Bug Sample         ● Misleading Suggestions
+                                        PE-Fewshot                        ● Prompt Adherence                ** KH (Knowledge about how to proceed) ** : Provide guidance
+   Bug Sample 1                                                          Automated evaluation metrics
+        •
+                     Fine tune Llama
+                                                                          ● KM-BLEU                         to the students on how to fix the mistakes. Do not provide the
+                     using 5- fold   PEFT
+                                                                          ● KM-ROUGE
+        •            crossvalidation
+                                                                          ● KM-BertScore
+                                                                                                            corrected code. Instead, please provide short, concise, and easily
+        •            of bug samples
+  Bug Sample 425
+                                          Baseline
+                                                                         Student Evaluation                 understandable explanations.
+                                                        Prompt 2
+                                                       Bug Sample                                           Here are a few examples:
+                                                                                                            <JAVA CODE> <KM: KM response KH: KH response>
+Figure 1: Overview of methodology, showing (A) the bug type
+dataset creation presented in Section 3.1, and (B) the different
+feedback strategies presented in Sections 3.2 and 3.3 and the
+evaluation metrics presented in Section 3.4                                                                 Response 1: Sample bug triplet
+computer science venues between 2005 to 2024, aiming to identify            import java.util.*;
+common bug types frequently observed in student submissions [1,             class Vehicle {}
+3, 5, 7, 9–11, 13, 14, 19, 23, 24, 32]. We observed that certain errors     class Car extends Vehicle {
+were repeated across multiple papers. In some instances, errors with               void startEngine() {
+unclear or incomplete details were excluded. A total of 85 distinct                System.out.println("Vroom!"); } }
+bug types were identified, each type assigned a unique identifier           public class Main {
+(BugID) and recorded only once, regardless of its occurrence across                public static void main(String[] args) {
+multiple publications. The full list of bug types is available at 2 .                   List<Vehicle> vehicles =
+The bug types served as the basis for generating the synthetic                                new ArrayList<>();
+data in this study. These include syntax, semantic, logical errors                      vehicles.add(new Car());
+and conceptual misunderstandings commonly found in student                              for (Vehicle v : vehicles) {
+submissions, and cover both compilation-time errors and runtime                               v.startEngine();
+errors. To provide deeper insights into the model’s capabilities, the                   }       } }
+bug types are classified into two categories: imperative (I), and           Knowledge about mistakes (KM) : Compile-time type of
+object-oriented (O).                                                        ‘v‘ is ‘Vehicle‘, which lacks the ‘startEngine()‘ method. Poly-
+    We employed prompt engineering with Deepseek-R13 to gener-              morphism doesn’t automatically expose subclass-specific
+ate labelled triplets in the form of <Code, KM-feedback, KH-feedback>       methods without explicit casting.
+to train our model. Deepseek-R1 was chosen for this study because           Knowledge about how to proceed (KH) : Cast ‘v‘ to ‘Car‘
+its license permits the model’s output to be used in training other         inside the loop before calling ‘startEngine()‘, ensuring ‘v‘ is
+models. Each bug type is illustrated with a corresponding code snip-        a ‘Car‘ instance.
+pet that demonstrates a distinct code scenario. In each iteration, the
+placeholder <BUG_TYPE> in Prompt 1 was replaced with a specific         3.2 PEFT-Driven Framework for Pedagogical
+bug type (BugID) from 4 . For each bug type, the model generated
+                                                                                Code Feedback
+five distinct triplets, which were subsequently validated by the first
+author in order to verify the correctness of the feedback. A total of   Our   framework     builds on Code Llama-7b-Instruct-hf, a LLaMA
+425 triplets were created for this study, containing 5 samples for      causal  language   model  based on the transformer architecture with
+each BugID in order to reflect natural variation in the occurrence      32 layers and support for very long context lengths. The frame-
+of each bug. The generated feedback serves as the ground truth          work’s technical components include the base model, PEFT adapter
+for this research. This dataset has potential to support the develop-   module, input encoding and the training dataset. Code Llama-7B-
+ment of pedagogical models, and facilitate future studies. A sample     Instruct is based on the foundation model Llama 2 [36] and is trained
+code snippet and the associated KM and KH response is shown in          on 500B tokens and designed to follow human instructions. Addi-
+Response 1.                                                             tionally, it extends the context length from 4,096 tokens used in
+                                                                        Llama 2 to 16,384 tokens. A longer context window enables the
+2 https://anonymous.4open.science/r/JCODE_KM_KH-4BEC                    model to understand longer code samples, effectively process de-
+3 https://huggingface.co/deepseek-ai/DeepSeek-R1                        tailed prompts, and avoid truncations [33]. While larger models
+4 https://anonymous.4open.science/r/JCODE_KM_KH-4BEC                    offer significant performance benefits, the 7B model is favored for
+Conference acronym ’XX, June 03–05, 2018, Woodstock, NY                                                                         Trovato et al.
+
+
+its efficient resource usage, ease of deployment in typical educa-    3.4    Evaluation
+tional environments, and faster inference time.                       Our evaluation process has three components. The first is done
+   The dataset was restructured to conform to the format require-     from the instructor perspective, and involves rubric-based manual
+ments of Code Llama training [33]:                                    annotations conducted by the first author, an instructor of CS1
+        "bug_id": "ID", "prompt": "[INST] Generate detailed           courses. To provide a more objective perspective, this is supported
+        feedback in the format KM (Knowledge about Mis-               by the second component, which involves automated metric analy-
+        takes) and KH (Knowledge about how to proceed) for            sis. The third component, to evaluate the student perspective, is a
+        this Java code: <JAVA CODE> [/INST]",                         small focus group discussion involving CS1 students.
+        "response": "KM: <KM response> ‘."KH: <KH response>‘"            For the instructor evaluation, we developed a rubric consisting of
+The data was converted into JSON objects. To avoid overfitting        four binary criteria (see Table 1) where a score of 1 for a component
+and provide a robust picture of generalizability, we used 5-fold      indicates that the feedback perfectly aligns with the specified char-
+cross-validation, with each fine-tuned model instance trained on      acteristic. In cases with multiple KM/KH responses, each response
+a subset of bug categories and then independently evaluated on        is examined for misleading information and evaluated accordingly.
+the others. Each token is converted into a vector of size 4096. We    Cross-annotation was performed by a second researcher to ensure
+employed QLoRA-style 4-bit quantization using nf4 format and          consistency and reliability of the labelling of the KHH, KMA, MS
+double quantization on CodeLlama for this task-specific adaptation.   and PA categories. This process prompted meaningful discussions
+During training the original model weights are frozen and the         and refined the labelling criteria.
+newly added weights are updated. This significantly reduces the          For the objective evaluation, the automated evaluation metrics
+number of training parameters from 6,743,789,568 to 5,242,880. The    compute the similarity between the feedback produced by the mod-
+adapters were configured with a rank of 10, scaling factor 16 and a   els and the ground truth. BLEU [27] evaluates how many exact
+dropout rate of 0.08%. LoRA adapters were applied to the q_proj and   word/n-grams in the output match those in the reference text.
+v_proj projection layers. This fine-tuning strategy adapts the base   ROUGE [21], on the other hand, measures how many n-grams
+model for downstream tasks with lower computational resource          from the reference text are present in the generated output. BLEU
+requirements. The prompt format is given in Prompt 2.                 emphasizes precision, whereas ROUGE focuses on recall. Among
+                                                                      the ROUGE variants, we report the ROUGE-L as it captures the
+    Prompt 2:                                                         longest common subsequence between the generated and reference
+                                                                      feedback. These two metrics rely on exact word/phrase overlap, and
+    PEFT Llama and baseline prompt [INST]Generate detailed            they may miss feedback that is semantically similar but lexically
+    feedback in the format Knowledge about Mistakes (KM) and          different. Therefore, BERTScore [39], which captures the seman-
+    Knowledge about how to proceed (KH) for this Java code:           tic similarity between the model response and the ground truth,
+    <JAVA CODE>[/INST]                                                was also employed. Specficially, we used BERTScore-F1, which bal-
+                                                                      ances precision and recall. Since feedback on the same idea can be
+                                                                      expressed in multiple ways, evaluating it using multiple metrics
+                                                                      enhances the robustness of the evaluation. The evaluation metrics
+3.3     Prompt Engineering                                            were computed for all the samples in the test dataset.
+We investigated the effectiveness of two prompting strategies, a         For the student evaluation, we employed a mixed-methods eval-
+baseline zero-shot prompt and in-context prompting, for feedback      uation following a small focus group discussion to investigate the
+generation using CodeLlama-7b-Instruct-hf. For in-context prompt-     student’s perception of different types of feedback for a CS1 Java
+ing, we augmented the baseline prompt with three examples se-         programming assignments. The study was conducted following the
+lected from the training dataset; see Prompt 3. A temperature value   institution’s ethical approval. All undergraduate students in years
+                                                                      1 and 2 were invited to participate in this study. Eleven students
+    Prompt 3: In-context Llama prompt                                 signed the consent form, and seven students (P1 to P7) attended
+                                                                      the meeting. Participants were provided with four buggy CS1-level
+    [INST]Generate detailed feedback in the format Knowledge about    Java code snippets and three different types of feedback to help
+    Mistakes (KM) and Knowledge about how to proceed (KH) for this
+                                                                      them identify and fix the error in the code. The first feedback type
+    Java code: <JAVA CODE>. Do NOT create additional examples.
+                                                                      was the compiler error message (E), the second was feedback gen-
+    Example 1
+                                                                      erated by ChatGPT (C), and the third feedback was produced by
+    <JAVA CODE> <Feedback : KM, KH>                                   the fine-tuned model (F) used in this study. Participants rated each
+    Example 2                                                         type of feedback from 1 to 5 across three factors: usefulness, clarity
+    <JAVA CODE> <Feedback : KM, KH>                                   and structure. In the second phase of the focus group discussion,
+    Example 3                                                         the students were asked to reflect on their rating and discussed the
+    <JAVA CODE> <Feedback : KM, KH> [/INST]                           rationale for it. The session was audio-recorded. We conducted a
+                                                                      thematic analysis [4] of the transcripts to examine the students’
+                                                                      perception of the feedback provided.
+of 0.7, a maximum token limit of 8192, and a top-p (nucleus sam-
+pling) value of 0.7 were used. The feedback responses for the test
+dataset were collected using both prompting strategies.
+Fine-Tuning Models for Automated Code Review Feedback                                                                                            Conference acronym ’XX, June 03–05, 2018, Woodstock, NY
+
+
+             Metric                                            Description                                                   KM accuracy scores with 54% over 20%. Moreover, KH helpful-
+             KMA       KM Accuracy                             Addresses the core issue in the code                          ness increased from 26% to 46% and the misleading suggestions
+             KHH       KH Helpfulness                          Provides meaningful hint to the learner                       dropped to 60%. This shows that prompt engineering with task-
+             MS        Misleading Suggestions                  Wrong fix or irrelevant advice
+             PA        Prompt Adherence                        Follows the specified structure (KM, KH)                      specific examples can also improve feedback quality. Both strategies
+                                                                                                                             consistently achieved high PA scores.
+             Table 1: Descriptions of feedback evaluation metrics.
+                                                                                                                                Overall, PEFT demonstrated the strongest performance and pro-
+4             Results, Discussion, and Limitations                                                                           duced the highest-quality feedback compared to other approaches.
+                                                                                                                             Additionally, the evaluation revealed that the PEFT model intro-
+The following section outlines the findings from our experiments
+                                                                                                                             duced minimal redundancy and produced the least number of mis-
+involving PEFT and prompt engineering. We applied manual and
+                                                                                                                             leading statements. This is an essential consideration in a ped-
+automated evaluation metrics along with student evaluations to
+                                                                                                                             agogical environment, as these elements directly affect student
+assess the quality of the generated responses.
+                                                                                                                             performance. The evaluation also assessed the performance of the
+                                                                                                                             PEFT model within the two error categories, imperative and object-
+4.1              Instructor Evaluation                                                                                       oriented. It achieved an accuracy of 49% for imperative errors and
+Figure 2 summarizes the rubric-based comparative analysis con-                                                               52% for object-oriented errors, suggesting that performance across
+ducted by the first author (CS1 course instructor). Our results show                                                         error categories is relatively consistent.
+that the fine-tuned model (CL7B-LoRA-JavaFB) outperformed the
+other techniques on all of the four rubric criteria (see Table 1). Ex-
+amples of feedback produced by each model, along with the dataset,                                                           4.2    Objective Evaluation
+are provided in the footnote 5 .                                                                                             To complement the human annotated evaluations, we conducted an
+                                                                                                                             automated analysis of feedback using BLEU, ROUGE, and BERTScore.
+                                                       Baseline             PE-FewShot
+                                                                                                                             Figure 3 summarize the results. Generally, we see the same pattern
+                                                          PEFT                                                               as in the manual analysis, with the fine-tuned model performing
+              100                                                                                                       95
+                                                                                                                             best on these metrics, followed by in-context learning, and then
+                                                                                                                   86
+                                                                                  83                                         the baseline model. Although the models demonstrated low BLEU
+               80                                                                                                            and ROUGE scores, the high BERTScore indicates that they gener-
+                                 61                       60                           60
+                                                                                                                             ated meaningful feedback semantically similar to the ground truth.
+               60           54                                                                                54             The fine-tuned model achieved particularly high BERTScore values
+ Score (%)
+
+
+
+
+                                                     46                                     47
+                                                                                                                             indicating strong semantic alignment. While these metrics provide
+               40                                                                                                            valuable insights, they do not capture aspects such as clarity, for-
+                                                26
+                       20
+                                                                                                                             mat adherence or the pedagogical soundness of the feedback. Our
+               20                                                                                                            observations also indicate that high BERTScores do not guarantee
+                                                                                                                             pedagogically soundness, cautioning against the use of automated
+                0                                                                                                            metrics alone to evaluate model performance. For instance, while
+                       cy
+
+
+
+
+                                                   s
+
+
+
+
+                                                                                   s
+
+
+
+
+                                                                                                              ce
+
+
+
+
+                                                                                                                             the baseline model achieved a BERTScore of 0.84, manual checking
+                                                es
+
+
+
+
+                                                                                  on
+
+
+
+
+                                                                                                               n
+                       a
+
+
+
+
+                                               n
+                    ur
+
+
+
+
+                                                                                                            re
+                                                                                ti
+                                            ul
+
+
+
+
+                                                                             es
+
+
+
+
+                                                                                                          he
+                   c
+
+
+
+
+                                           pf
+                Ac
+
+
+
+
+                                                                                                                             of the responses reported an accuracy rate of only 20-26%.
+                                                                             gg
+
+
+
+
+                                                                                                        Ad
+                                           el
+
+
+
+
+                                                                           Su
+              KM
+
+
+
+
+                                       H
+
+
+
+
+                                                                                                    pt
+                                      KH
+
+
+
+
+                                                                        g
+
+
+
+
+                                                                                                                                Although the rate of misleading suggestions generated by the
+                                                                                                   om
+                                                                       in
+                                                                       d
+
+
+
+
+                                                                                                 Pr
+                                                                    ea
+                                                                 isl
+
+
+
+
+                                                                                                                             PEFT-model is significantly lower than the other techniques, this re-
+                                                                M
+
+
+
+
+                                                                                                                             mains a concern and underscores the necessity of verifying results
+Figure 2: Comparison of KM accuracy, KH helpfulness, num-
+                                                                                                                             before deploying it in an educational setting. We observed that the
+ber of misleading suggestions (lower is better), and prompt
+                                                                                                                             generated feedback tend to be prescriptive in nature, offering direct
+adherence across model configurations. Baseline refers to
+                                                                                                                             instructions. This feedback can be enriched by integrating reason-
+the standard Llama response. PE-FewShot refers to prompt
+                                                                                                                             ing elements, scaffolding questions or partial hints to enhance its
+engineering with few-shot examples. PEFT refers to the fine-
+                                                                                                                             pedagogical effectiveness. Currently the PEFT model is trained with
+tuned model.
+                                                                                                                             <Code, KM, KH> triplets. Incorporating task description into the
+                                                                                                                             training data is expected to improve the performance.
+   The fine-tuned model demonstrated superior KM accuracy, achiev-
+ing 61% compared to 20% for the un-tuned baseline model. In terms
+of KH helpfulness, it achieved a score of 60% compared to 26%.                                                               4.3    Student Evaluation
+We also observed that the rate of misleading suggestions dropped                                                             Based on the positive evaluation of the PEFT model, we carried out
+from 83% to 47%, and prompt adherence increased from 54% to                                                                  a student evaluation, where participants assessed the PEFT model
+95%. These results demonstrate the potential of PEFT in generating                                                           responses alongside those from a proprietary model. The findings
+pedagogically meaningful feedback.                                                                                           indicate that the feedback generated by ChatGPT (C) and the model
+   For the prompt engineering strategies, we see that in-context                                                             (F) received positive responses across all three parameters, as shown
+learning achieved better performance than the baseline model in                                                              in Figure 4. Participants unanimously agreed that compiler error
+                                                                                                                             messages (E) were ineffective. The thematic analysis of the tran-
+5 https://anonymous.4open.science/r/JCODE_KM_KH-4BEC                                                                         scripts identified five key themes: clarity of explanation, level of
+Conference acronym ’XX, June 03–05, 2018, Woodstock, NY                                                                                                       Trovato et al.
+
+
+              1                                       1
+                                                                                        4                                                        4
+
+
+
+
+                                                                                Score
+
+
+
+
+                                                                                                                                         Score
+            0.8                                     0.8                                 2                                                        2
+
+            0.6                                     0.6                                     E    C       F                                              E   C      F
+   Score
+
+
+
+
+                                            Score
+                                                                                        (a) Usefulness                                               (b) Clarity
+            0.4                                     0.4
+                                                                                                                     4
+
+
+
+
+                                                                                                             Score
+            0.2                                     0.2
+                                                                                                                     2
+              0                                       0                                                                  E   C       F
+                 U
+
+                                GE
+
+
+                                  re
+
+
+
+
+                                                                    U
+
+                                                                  GE
+
+
+                                                                    re
+              LE
+
+
+
+
+                                                      LE
+                               co
+
+
+
+
+                                                                 co
+                             OU
+
+
+
+
+                                                                                                                     (c) Structure
+                                                               OU
+                            TS
+           -B
+
+
+
+
+                                                              TS
+                                                    -B
+                          -R
+
+
+
+
+                                                            -R
+   KM
+
+
+
+
+                                            KH
+                         ER
+
+
+
+
+                                                           ER
+                                                                          Figure 4: Distributions of student-assessed scores for differ-
+                  KM
+
+
+
+
+                                                          KH
+                       -B
+
+
+
+
+                                                         -B
+                     KM
+
+
+
+
+                                                                          ent feedback types: compiler error message (E), ChatGPT (C),
+                                                      KH
+                                                                          and fine-tuned model (F).
+             (a) KM Feedback                         (b) KH Feedback
+                                                                          code". Participants agreed that early access to the correct code can
+                         Baseline      PE-FewShot              PEFT       negatively affect critical thinking.
+Figure 3: Comparison of BLEU, ROUGE, and BERTScore met-                      Overall, the findings indicate that participants valued the feed-
+rics for KM and KH feedback across different model configu-               back generated by the fine-tuned model, and its ratings were com-
+rations.                                                                  parable to those of the proprietary model. According to the partici-
+                                                                          pants, Feedback F is well-suited for a lab setting, as it encourages
+detail, usefulness, actionability of feedback, and the presence or        students to engage in critical thinking and problem-solving. Our
+absence of code.                                                          findings are consistent with those reported in [35].
+
+4.3.1 Theme - Clarity of explanation, Level of detail. Most partici-      4.4           Limitations
+pants noted that, while Feedback C was helpful, it was often overly
+                                                                          Our dataset was generated using Deepseek-R1; therefore, the model
+verbose, which may be overwhelming for beginners. E.g., "detailed
+                                                                          performance is influenced and limited by the original model. Addi-
+feedback but too many options" (P1), "too much information" (P4), "bit
+                                                                          tionally, the dataset used in this study is limited in size, which may
+too wordy" (P5), "overexplain the concepts" (P6). However, P4 stated,
+                                                                          affect the generalizability of the results. Furthermore, this analysis
+"I didn’t feel like it was a lot of information. When I’m learning, I
+                                                                          is confined to Java and a specific set of bugs identified in the liter-
+feel that I want to know why there’s a problem, and what other op-
+                                                                          ature. The student evaluation was based on a small focus group;
+tions and additional information are available.". Results indicate that
+                                                                          additional research with larger samples would be useful to verify
+learners’ preferred level of feedback detail may affect their learn-
+                                                                          that the findings generalize.
+ing experience. Another observation was that "Feeback F would be
+more appropriate for learners with basic knowledge of Java" (P1),         5      Conclusions
+"and is best suited for formative assessments in a lab setting, whereas
+Feedback C might be more appropriate for summative assessment             LLMs offer potential in providing guidance to student learners, but
+feedback" (P5).                                                           the financial constraints of proprietary models and the computa-
+                                                                          tional demands of large-parameter architectures pose significant
+4.3.2 Theme - Usefulness, Actionability of feedback. Aligned with         challenges in educational contexts. Open models, which are signifi-
+these observed preferences, all participants agreed that actionable       cantly smaller and freely deployable, present a viable alternative,
+feedback promotes engagement and motivates learners to tackle             but are generally less capable than proprietary models. To address
+complex challenges. P7 stated, "Feedback C clearly identified the         this, in our work we have shown how the capabilities of a more
+error and explained why the error was there, and how to fix it." and      capable model can be distilled into an open model by the use of syn-
+"Feedback F was precise, straight to the point explanation, encouraging   thetic data generation and parameter-efficient fine-tuning. These
+student to think of solution, and directs them to the correct path."      fine-tuned models offer significantly better guidance to students,
+There was also a suggestion to update Feedback F with additional          in terms of providing actionable feedback on buggy Java programs,
+explanations for technical terms. P4 commented, "Some phrases             than the baseline model. Notably, the accuracy and helpfulness of
+such as ‘incompatible’ types could be explained more. I felt I could      the feedback approximately doubles after fine-tuning, and there is
+work with it and get the code fixed."                                     also considerable improvement in terms of reducing hallucinations.
+                                                                          We also show that fine-tuning is more effective in this domain than
+4.3.3 Theme - Presence or absence of code. Participants observed          prompt engineering, although the latter approach also offers im-
+that Feedback C often provides the correct solution, which could          provement over the baseline model. The presence of misleading
+lead to over-reliance and limited independent learning. For instance,     information in PEFT-based feedback cannot be ignored, highlight-
+P3 noted that, although "Feedback C was good, but the correct solution    ing the need for human evaluation in education settings. As part
+might result in some students skipping the feedback and copying the       of future work, we plan to extend the dataset by including more
+Fine-Tuning Models for Automated Code Review Feedback                                                              Conference acronym ’XX, June 03–05, 2018, Woodstock, NY
+
+
+diverse feedback covering various Java programming concepts and                                Accepted.
+to optimise the model performance and effectiveness.                                      [19] Chris Langhout and Maurício Aniche. 2021. Atoms of Confusion in Java. In
+                                                                                               2021 IEEE/ACM 29th International Conference on Program Comprehension (ICPC).
+                                                                                               25–35. doi:10.1109/ICPC52881.2021.00012
+                                                                                          [20] Juho Leinonen, Paul Denny, Olli Kiljunen, Stephen MacNeil, Sami Sarsa, and Arto
+References                                                                                     Hellas. 2024. LLM-itation is the Sincerest Form of Data: Generating Synthetic
+ [1] Marzieh Ahmadzadeh, Dave Elliman, and Colin Higgins. 2005. An analysis of                 Buggy Code Submissions for Computing Education. arXiv:2411.10455 [cs.CY]
+     patterns of debugging among novice computer science students. In Proceedings              https://arxiv.org/abs/2411.10455
+     of the 10th Annual SIGCSE Conference on Innovation and Technology in Computer        [21] Chin-Yew Lin. 2004. ROUGE: A Package for Automatic Evaluation of Summaries.
+     Science Education (Caparica, Portugal) (ITiCSE ’05). Association for Computing            In Text Summarization Branches Out. Association for Computational Linguistics,
+     Machinery, New York, NY, USA, 84–88. doi:10.1145/1067445.1067472                          Barcelona, Spain, 74–81. https://aclanthology.org/W04-1013/
+ [2] Zishan Ahmed, Shakib Sadat Shanto, and Akinul Islam Jony. 2024. Potentiality         [22] Jorge Machado. 2025. Toward a Public and Secure Generative AI: A Comparative
+     of generative AI tools in higher education: Evaluating ChatGPT’s viability as a           Analysis of Open and Closed LLMs. arXiv:2505.10603 [cs.CY] https://arxiv.org/
+     teaching assistant for introductory programming courses. STEM Education 4, 3              abs/2505.10603
+     (2024), 165–182. doi:10.3934/steme.2024011                                           [23] Davin McCall and Michael Kölling. 2019. A New Look at Novice Programmer
+ [3] Amjad Altadmri and Neil C.C. Brown. 2015. 37 Million Compilations: Investigat-            Errors. ACM Trans. Comput. Educ. 19, 4, Article 38 (July 2019), 30 pages. doi:10.
+     ing Novice Programming Mistakes in Large-Scale Student Data. In Proceedings of            1145/3335814
+     the 46th ACM Technical Symposium on Computer Science Education (Kansas City,         [24] Davin McCall and Michael Kölling. 2014. Meaningful categorisation of novice pro-
+     Missouri, USA) (SIGCSE ’15). Association for Computing Machinery, New York,               grammer errors. In 2014 IEEE Frontiers in Education Conference (FIE) Proceedings.
+     NY, USA, 522–527. doi:10.1145/2676723.2677258                                             1–8. doi:10.1109/FIE.2014.7044420
+ [4] Virginia Braun and Victoria Clarke. 2006.               Using thematic analy-        [25] Marcus Messer, Neil C. C. Brown, Michael Kölling, and Miaojing Shi. 2024. Au-
+     sis in psychology.          Qualitative Research in Psychology 3, 2 (2006),               tomated Grading and Feedback Tools for Programming Education: A System-
+     77–101.         arXiv:https://doi.org/10.1191/1478088706qp063oa doi:10.1191/              atic Review. ACM Trans. Comput. Educ. 24, 1, Article 10 (Feb. 2024), 43 pages.
+     1478088706qp063oa                                                                         doi:10.1145/3636515
+ [5] Neil C.C. Brown and Amjad Altadmri. 2014. Investigating novice programming           [26] Susanne Narciss. 2008. Feedback strategies for interactive learning tasks. In
+     mistakes: educator beliefs vs. student data. In Proceedings of the Tenth Annual           Handbook of research on educational communications and technology. Routledge,
+     Conference on International Computing Education Research (Glasgow, Scotland,              125–143.
+     United Kingdom) (ICER ’14). Association for Computing Machinery, New York,           [27] Kishore Papineni, Salim Roukos, Todd Ward, and Wei-Jing Zhu. 2002. BLEU: a
+     NY, USA, 43–50. doi:10.1145/2632320.2632343                                               method for automatic evaluation of machine translation. In Proceedings of the 40th
+ [6] Eason Chen, Ray Huang, Han-Shin Chen, Yuen-Hsien Tseng, and Liang-Yi Li.                  Annual Meeting on Association for Computational Linguistics (Philadelphia, Penn-
+     2023. GPTutor: a ChatGPT-powered programming tool for code explanation.                   sylvania) (ACL ’02). Association for Computational Linguistics, USA, 311–318.
+     arXiv:2305.01863 [cs.HC] https://arxiv.org/abs/2305.01863                                 doi:10.3115/1073083.1073135
+ [7] Paul Denny, Andrew Luxton-Reilly, and Ewan Tempero. 2012. All syntax errors          [28] Olga Petrovska, Lee Clift, Faron Moller, and Rebecca Pearsall. 2024. Incorporating
+     are not equal. In Proceedings of the 17th ACM Annual Conference on Innovation and         Generative AI into Software Development Education. In Proceedings of the 8th
+     Technology in Computer Science Education (Haifa, Israel) (ITiCSE ’12). Association        Conference on Computing Education Practice (Durham, United Kingdom) (CEP
+     for Computing Machinery, New York, NY, USA, 75–80. doi:10.1145/2325296.                   ’24). Association for Computing Machinery, New York, NY, USA, 37–40. doi:10.
+     2325318                                                                                   1145/3633053.3633057
+ [8] Tim Dettmers, Artidoro Pagnoni, Ari Holtzman, and Luke Zettlemoyer. 2023.            [29] Farman Ali Pirzado, Awais Ahmed, Román Alejandro Mendoza-Urdiales, and
+     QLoRA: Efficient Finetuning of Quantized LLMs. arXiv:2305.14314 [cs.LG] https:            Hugo Terashima-Marin. 2024. Navigating the Pitfalls: Analyzing the Behavior
+     //arxiv.org/abs/2305.14314                                                                of LLMs as a Coding Assistant for Computer Science Students—A Systematic
+ [9] Andrew Ettles, Andrew Luxton-Reilly, and Paul Denny. 2018. Common logic                   Review of the Literature. IEEE Access 12 (2024), 112605–112625. doi:10.1109/
+     errors made by novice programmers. In Proceedings of the 20th Australasian                ACCESS.2024.3443621
+     Computing Education Conference (Brisbane, Queensland, Australia) (ACE ’18).          [30] Chanathip Pornprasit and Chakkrit Tantithamthavorn. 2024. Fine-tuning and
+     Association for Computing Machinery, New York, NY, USA, 83–89. doi:10.1145/               prompt engineering for large language models-based code review automation.
+     3160489.3160493                                                                           Information and Software Technology 175 (2024), 107523. doi:10.1016/j.infsof.2024.
+[10] Ian Finlayson and Stephen Davies. 2024. Jguardrail: A Framework for Identifying           107523
+     Possible Errors in Student Java Code. J. Comput. Sci. Coll. 40, 3 (Oct. 2024),       [31] James Prather, Paul Denny, Juho Leinonen, Brett A. Becker, Ibrahim Albluwi,
+     322–333.                                                                                  Michelle Craig, Hieke Keuning, Natalie Kiesler, Tobias Kohn, Andrew Luxton-
+[11] Maria Hristova, Ananya Misra, Megan Rutter, and Rebecca Mercuri. 2003. Identi-            Reilly, Stephen MacNeil, Andrew Petersen, Raymond Pettit, Brent N. Reeves,
+     fying and correcting Java programming errors for introductory computer science            and Jaromir Savelka. 2023. The Robots Are Here: Navigating the Generative AI
+     students. In Proceedings of the 34th SIGCSE Technical Symposium on Computer               Revolution in Computing Education. In Proceedings of the 2023 Working Group
+     Science Education (Reno, Navada, USA) (SIGCSE ’03). Association for Computing             Reports on Innovation and Technology in Computer Science Education (ITiCSE 2023).
+     Machinery, New York, NY, USA, 153–156. doi:10.1145/611892.611956                          ACM, 108–159. doi:10.1145/3623762.3633499
+[12] Edward J. Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-Zhu, Yuanzhi Li, Shean       [32] Yizhou Qian and James Lehman. 2017. Students’ Misconceptions and Other
+     Wang, Lu Wang, and Weizhu Chen. 2021. LoRA: Low-Rank Adaptation of Large                  Difficulties in Introductory Programming: A Literature Review. ACM Trans.
+     Language Models. arXiv:2106.09685 [cs.CL] https://arxiv.org/abs/2106.09685                Comput. Educ. 18, 1, Article 1 (Oct. 2017), 24 pages. doi:10.1145/3077618
+[13] J. Jackson, M. Cobb, and C. Carver. 2005. Identifying Top Java Errors for Novice     [33] Baptiste Rozière, Jonas Gehring, Fabian Gloeckle, Sten Sootla, Itai Gat, Xiao-
+     Programmers. In Proceedings Frontiers in Education 35th Annual Conference. T4C–           qing Ellen Tan, Yossi Adi, Jingyu Liu, Romain Sauvestre, Tal Remez, Jérémy
+     T4C. doi:10.1109/FIE.2005.1611967                                                         Rapin, Artyom Kozhevnikov, Ivan Evtimov, Joanna Bitton, Manish Bhatt, Cris-
+[14] Nadja Just, Janet Siegmund, and Belinda Schantong. 2025. From Bugs to Break-              tian Canton Ferrer, Aaron Grattafiori, Wenhan Xiong, Alexandre Défossez, Jade
+     throughs: Novice Errors in CS2. arXiv:2502.14438 [cs.SE] https://arxiv.org/abs/           Copet, Faisal Azhar, Hugo Touvron, Louis Martin, Nicolas Usunier, Thomas
+     2502.14438                                                                                Scialom, and Gabriel Synnaeve. 2024. Code Llama: Open Foundation Models for
+[15] Charles Koutcheme. 2022. Towards Open Natural Language Feedback Generation                Code. arXiv:2308.12950 [cs.CL] https://arxiv.org/abs/2308.12950
+     for Novice Programmers using Large Language Models. In Proceedings of the            [34] Carlos Alexandre Gouvea da Silva, Felipe Negrelle Ramos, Rafael Veiga de Moraes,
+     22nd Koli Calling International Conference on Computing Education Research (Koli,         and Edson Leonardo dos Santos. 2024. ChatGPT: Challenges and Benefits in
+     Finland) (Koli Calling ’22). Association for Computing Machinery, New York, NY,           Software Programming for Higher Education. Sustainability 16, 3 (2024). doi:10.
+     USA, Article 29, 2 pages. doi:10.1145/3564721.3565955                                     3390/su16031245
+[16] Charles Koutcheme, Nicola Dainese, Sami Sarsa, Arto Hellas, Juho Leinonen,           [35] Lorenzo Lee Solano, Charles Koutcheme, Juho Leinonen, Alexandra Vassar, and
+     and Paul Denny. 2024. Open Source Language Models Can Provide Feed-                       Jake Renzella. 2025. Narrowing the Gap: Supervised Fine-Tuning of Open-
+     back: Evaluating LLMs’ Ability to Help Students Using GPT-4-As-A-Judge.                   Source LLMs as a Viable Alternative to Proprietary Models for Pedagogical
+     arXiv:2405.05253 [cs.CL] https://arxiv.org/abs/2405.05253                                 Tools. arXiv:2507.05305 [cs.CY] https://arxiv.org/abs/2507.05305
+[17] Charles Koutcheme and Arto Hellas. 2024. Propagating Large Language Models           [36] Hugo Touvron, Louis Martin, Kevin Stone, Peter Albert, et al. 2023. Llama
+     Programming Feedback. In Proceedings of the Eleventh ACM Conference on Learn-             2: Open Foundation and Fine-Tuned Chat Models. arXiv:2307.09288 [cs.CL]
+     ing @ Scale (Atlanta, GA, USA) (L@S ’24). Association for Computing Machinery,            https://arxiv.org/abs/2307.09288
+     New York, NY, USA, 366–370. doi:10.1145/3657604.3664665                              [37] Chunqiu Steven Xia, Yuxiang Wei, and Lingming Zhang. 2023. Automated
+[18] Smitha S Kumar, Michael Lones, Manuel Maarek, and Hind Zantout. 2025. Navi-               Program Repair in the Era of Large Pre-Trained Language Models. In Proceedings
+     gating the landscape of automated feedback generation techniques for program-             of the 45th International Conference on Software Engineering (Melbourne, Victoria,
+     ming exercises. ACM Trans. Comput. Educ. (Sept. 2025). doi:10.1145/3764593 Just           Australia) (ICSE ’23). IEEE Press, 1482–1494. doi:10.1109/ICSE48619.2023.00129
+Conference acronym ’XX, June 03–05, 2018, Woodstock, NY                                                                                              Trovato et al.
+
+
+[38] Jiawei Xu, Ying Ding, and Yi Bu. 2025. Position: Open and Closed Large Language   [39] Tianyi Zhang, Varsha Kishore, Felix Wu, Kilian Q. Weinberger, and
+     Models in Healthcare. arXiv:2501.09906 [cs.CY] https://arxiv.org/abs/2501.09906        Yoav Artzi. 2020.     BERTScore: Evaluating Text Generation with BERT.
+                                                                                            arXiv:1904.09675 [cs.CL] https://arxiv.org/abs/1904.09675
+

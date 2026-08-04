@@ -1,0 +1,847 @@
+                                                             Early Career Developers’ Perceptions of Code Understandability.
+                                                                             A Study of Complexity Metrics
+
+                                                                          Matteo Espositoa , Andrea Janesb , Terhi Kilamoc , Valentina Lenarduzzia
+                                                                                                      a University of Oulu, Finland
+                                                                                                 b Free University of Bozen-Bolzano, Italy
+                                                                                                      c Tampere University, Finland
+
+
+
+
+                                         Abstract
+                                         Context. Code understandability is fundamental. Developers need to understand the code they are modifying clearly. A low
+                                         understandability can increase the amount of coding effort, and misinterpreting code impacts the entire development process.
+arXiv:2303.07722v2 [cs.SE] 15 Jul 2024
+
+
+
+
+                                         Ideally, developers should write clear and understandable code with the least effort.
+                                         Aim. Our work investigates whether the McCabe Cyclomatic Complexity or the Cognitive Complexity can be a good predictor
+                                         for the developers’ perceived code understandability to understand which of the two complexities can be used as criteria to
+                                         evaluate if a piece of code is understandable.
+                                         Method. We designed and conducted an empirical study among 216 early career developers with professional experience
+                                         ranging from one to four years. We asked them to manually inspect and rate the understandability of 12 Java classes that
+                                         exhibit different levels of Cyclomatic and Cognitive Complexity.
+                                         Results. Our findings showed that while the old-fashioned McCabe Cyclomatic Complexity and the most recent Cognitive
+                                         Complexity are modest predictors for code understandability when considering the complexity perceived by early-career de-
+                                         velopers, they are not for problem severity.
+                                         Conclusions. Based on our results, early-career developers should not be left alone when performing code-reviewing tasks
+                                         due to their scarce experience. Moreover, low complexity measures indicate good understandability, but having either CoC or
+                                         CyC high makes understandability unpredictable. Nevertheless, there is no evidence that CyC or CoC are indicators of early-
+                                         career perceived severity.Future research efforts will focus on expanding the population to experienced developers to confront
+                                         whether seniority influences the predictive power of the chosen metrics.
+
+                                         Keywords: Cyclomatic Complexity, Cognitive Complexity, Empirical Study, Early-Career, Developers, Code Undestendability,
+                                         Severity
+
+
+                                         1. Introduction                                                                of clear and concise syntax, consistent formatting, naming
+                                                                                                                        conventions, as well as well-organized code structure. Addi-
+                                            Code understandability is an essential aspect of software                   tionally, documentation and comments can also play a cru-
+                                         development. Code understandability can be defined as the                      cial role in improving code understandability. Different met-
+                                         measure to which “code possesses the characteristic of un-                     rics, such as the McCabe Cyclomatic Complexity [6] (CyC)
+                                         derstandability to the extent that its purpose is clear to the in-             and the CoC Complexity [7] (CoC), have been proposed in
+                                         spector” [1]. Having poor code understandability in the pro-                   the past to evaluate the complexity of the code. Current static
+                                         gram code can increase the amount of coding effort by more                     analysis tools allow developers to keep track of these metrics
+                                         than 50% [2, 3]. To avoid misinterpretation of the code, de-                   in their code in real-time. CoC has been introduced by the
+                                         velopers should write code that requires the least amount of                   tool SonarQube1 as an extension of the McCabe CyC, to eval-
+                                         effort to be understood [4].                                                   uate code understandability [7] better. The effect of CoC on
+                                            When code is easy to understand, developers can more                        code understandably was investigated by two recent studies
+                                         easily identify and fix errors, modify existing code, and in-                  by Scalabrino et al.[8] and Munoz [4]. CoC seems to be a good
+                                         tegrate new code into existing projects. On the other hand,                    indicator of understandability where a higher value means
+                                         code that is difficult to understand can lead to confusion, er-                a reduction of understandability. Moreover, as highlighted
+                                         rors, and time-consuming troubleshooting [5]. Several fac-                     by Munoz [4], the different complexity and understandabil-
+                                         tors contribute to code understandability, including the use                   ity metrics are not deeply investigated and validated. In par-
+                                                                                                                        ticular, it is still not evident which metrics better support the
+                                                                                                                        prediction of code understandability [8]. As a consequence,
+                                              Email addresses: matteo.esposito@oulu.fi (Matteo Esposito),
+                                         andrea.janes@unibz.it (Andrea Janes), terhi.kilamo@tuni.fi (Terhi
+                                         Kilamo), valentina.lenarduzzi@oulu.fi (Valentina Lenarduzzi)                       1 https://www.sonarqube.org
+
+
+                                         Preprint submitted to Information and Software Technology                                                                            July 16, 2024
+Lavazza et al. [9] extended the work of Munoz et al. [4] com-           2. Related Work
+paring CoC and CyC to identify which metric provides an ad-
+vantage for code understandability.                                        Code understandability is described as the measure of how
+   However, Code can also be complex due to problems such               well “code possesses the characteristic of understandability
+as design issues or code smells. As highlighted by Politowski           to the extent that its purpose is clear to the inspector” [1].
+et al. [10], anti-patterns in the code can decrease the code un-        To better understand a piece of code, legibility is one of the
+derstandability and increase the effort needed to modify the            main factors to take under control since if code is harder to
+code. Therefore, if the complexity metrics are correlated with          read, it could be harder to understand [1]. Code understand-
+code understandability, problems in the code can also be as-            ing requires building high-level abstractions from code state-
+sociated with the complexity measures.                                  ments, visualizations, or models [11, 12]. However, also read-
+   Previous studies highlighted the need to understand                  able code could be difficult to understand [8].
+whether CoC is correlated with understandability better than               Code understandability can be measured by considering
+the other existing metrics, and the previous results, based on          several different factors. One possibility is based on the
+mining software repository studies, could not tip the scales.           perceived understandability reported by developers answer-
+Therefore, we decided to investigate the impact of these two            ing comprehension questions [13, 14], or filling out blank
+metrics on code understandably from the point of view of the            program parts [15], or extending and/or modifying existing
+developer’s perception.                                                 pieces of code [16]. To be more accurate, some studies traced
+                                                                        the time to perform the assigned task, both questions or de-
+   We designed and conducted an empirical study involving
+                                                                        veloping ones [17, 16]. Other approaches evaluate code un-
+216 early-career developers with at least one year of experi-
+                                                                        derstandability focusing on physiological metrics detected by
+ence. We asked them to manually inspect twelve Java classes
+                                                                        biometrics sensors [18, 19] or eye-tracking devices [20, 21].
+to provide their opinion on the understandability of the code,
+                                                                        Moreover, considering the perceived understandability by
+on the presence of issues, and to rate the severity of the exist-
+                                                                        rating the different pieces of code under analysis, can provide
+ing problem, if any. We analyzed the developers’ answers and
+                                                                        a positive step forward in this field [8]. Different factors can
+correlated the developer’s perceived understandability with
+                                                                        positively or negatively influence how developers perceive
+the CyC and CoC.
+                                                                        the understandability of a piece of code [8], which can be
+   Moreover, suppose a positive but lower correlation exists
+                                                                        useful to develop a model to automatically measure the un-
+between complexity measures and code understandability.
+                                                                        derstandability. Several studies investigated the role of soft-
+In that case, we also aim to understand if complexity mea-
+                                                                        ware metrics focusing on complexity as well as source-level
+sures are correlated with the developers’ perceived severity
+                                                                        metrics, such as LOC [8] and CyC [22, 8] or CoC [7] during
+of problems in the Java code.
+                                                                        the developing process or maintenance tasks [23]. Moreover,
+   While there are differences between developers’ opinions             other types of metrics such as documentation-related met-
+on the perception of the complexity of the code, the overall            rics such as comment readability and metrics relating to a de-
+data indicate that CoC and CoC are modest indicators of the             veloper’s experience were considered by researchers [8]. Re-
+perceived understandability of the code. We also found that             sults showed that none of the investigated metrics accurately
+neither CyC nor CoC is correlated with the presence and the             represent code understandability [23, 8]. However, all the
+perceived severity of problems in the code.                             software metrics considered in these studies suffered from
+   We focused on early career developers because we believe             empirical validation of their ability to measure code under-
+it is important to grasp their perceptions. For instance, (1)           standability. In particular, CoC needs more accurate valida-
+identifying how they interpret and use the complexity mea-              tion [7]. However, the results demonstrated that such metrics
+sures in real-world coding scenarios gives insight into where           can improve the effectiveness of the code understandability
+theoretical knowledge might not find its way into practice.             under evaluation [8].
+Moreover, such insights can also show (2) how more intuitive               A deeper investigation of CoC has been performed by
+and effective training programs, tools, and resources can be            Munoz et al. [4] and later by Lavazza et al. [9]. Munoz et al. [4]
+designed to suit them better.                                           considered CoC the metric measured by SonarQube and eval-
+   Therefore, our work can aid in highlighting common chal-             uated the association with different code understandability
+lenges and misbeliefs in the first years of a professional              metrics: the time taken to understand a code snippet, the
+career, hence, professional growth, thus marking possible               percentage of correctly answered comprehension questions
+venues to select good practices that might improve the qual-            on a code snippet, subjective ratings of a comprehension
+ity and maintainability of the code in general, boosting over-          task, and physiological measures on the subjects engaged
+all productivity and confidence for early-career developers.            in understanding code. Results showed that CoC is corre-
+   Paper Structure. Section 2 describes the related work, in            lated with the time spent by a developer to understand source
+Section 3 we introduce the background of this work, while               code. However, they did not compare the magnitude of this
+in Section 4 we outline the research methodology adopted in             correlation against different complexity metrics. As Lavazza
+this study. Section 5 presents and discusses the obtained re-           et al. [9] reported in their work “before embracing the use of
+sults. Section 7 identifies the threats to validity and Section 8       CoC, we need to understand whether CoC is correlated with
+draws the conclusions.                                                  understandability better than the measures that were pro-
+                                                                    2
+posed in the past for the same purpose”. To assess it, Lavazza et       object-oriented programming that have been validated by
+al. [9] conducted an empirical study extending study [4]. They          Misra et al. [28]. In both studies, the authors evaluated exist-
+correlated CoC and CyC to identify which metric provides                ing CoC metrics (such as Cognitive Functional Size and Cog-
+an advantage for code understandability. Unfortunately, the             nitive Program Complexity Measure), chose those that high-
+achieved results are not proposed for a particular metric.              light distinct features, made any required adjustments, and
+                                                                        then assembled them into a unified collection.
+                                                                           SonarQube computed CoC metrics based on three basic
+3. Background                                                           rules [7]:
+
+    CyC was introduced by McCabe in 1976 [6]. It is a graph              1. “Ignore structures that allow multiple statements to be
+theoretical measure of program complexity. CyC measures                     readably shorthanded into one”;
+the amount of linearly independent paths in the program. It              2. “Increment for each break in the linear flow of the code”;
+is based on the assumption that the more independent paths
+there are in a program, the more complex the program is                  3. “Increment when flow-breaking structures are nested”.
+likely to be.
+    The definition of CyC is based on representing program              4. Empirical Study Design
+code as a control flow graph, i.e. a directed graph with all
+execution paths of the program depicted. Each node in the                 This section presents the empirical study’s goal, research
+graph represents a basic code block and each edge is a pass             questions, metrics, and hypotheses. We outline the study
+of control between the blocks. Based on the graph, CyC M is             context, the data collection, and the analysis. We designed
+calculated as M = E − N + P where E is the number of edges,             and conducted an empirical study following the guidelines
+N is the number of nodes, and P is the number of strongly               proposed by Wohlin [29].
+connected components in the graph. While CyC is a widely
+used metric to indicate the error proneness of program code,            4.1. Goal and Research Questions
+it fails to address certain code issues especially when it comes           The goal of this study is to compare CyC and CoC with
+to computational complexity. CyC is poor at handling nested             the purpose of understanding which complexity metric better
+conditions and iterative structures [24]. It has been regarded          represents the early career developer’s perceived complexity
+as a poor metric for code understandability [7].                        of the Java code. The perspective is of researchers since they
+    In SonarQube, the Complexity measure is calculated based            are interested in understanding what complexity metrics can
+on the CyC of the code [25] where each split in the control             be more helpful to understand the code complexity.
+flow of a function increments the complexity measure by one.               Based on our study goal, we derived the following Research
+However, there are small differences between languages in               Questions:
+how the complexity gets calculated due to differences in lan-
+guage structures.                                                          RQ1 . What is the accuracy of early career developers
+    CyC can be used as an indicator of how difficult a pro-                in detecting problematic classes?
+gram is to test, maintain, or modify. Programs with high
+CyC are generally more difficult to understand, analyze, and
+                                                                           Understanding how early career developers perceive code
+change, as they contain more decision points and potential
+                                                                        understandability is important because early career develop-
+paths through the code. CyC is often used as a quality met-
+                                                                        ers are usually put to work on maintenance and evolution
+ric to evaluate the maintainability and overall complexity of
+                                                                        [30, 31, 32]. Hence, the ability of these developers to correctly
+software programs.
+                                                                        identify classes with problems significantly impacts software
+    CoC is based on the idea that not all decision points in
+                                                                        quality and development efficiency [33, 34]. Therefore, we
+a program are equally difficult for a human to understand.
+                                                                        aim to evaluate the accuracy of those developers in their early
+Some decisions are simple and easy to reason about, while
+                                                                        years at detecting problem classes within software code.
+others are more complex and require more mental effort.
+                                                                           Although important, assessing early-career development’s
+CoC assigns a weight to each decision point in the code based
+                                                                        accuracy would only lightly scratch the surface of the prob-
+on its level of complexity, with more complex decisions re-
+                                                                        lem. No previous study has investigated possible proxies of
+ceiving a higher weight.
+                                                                        developer’s perception regarding perceived understandabil-
+    In SonarQube, CoC was introduced as “a new metric
+                                                                        ity and severity. Therefore, we computed complexity metrics
+for measuring the understandability of any given piece of
+                                                                        such as CoC or CyC, and we asked:
+code” [7]. Based on the documentation [26], CoC exhibits
+some similarity with CyC defined by McCabe [6], since CoC                  RQ2 . Can complexity metrics indicate an early career
+can address some of the “common critiques and shortcom-                    developer’s perceived understandability of classes?
+ings belonging to CyC” [24]. Moreover, CoC can fill the gap
+related to understandability present in the CyC [27, 28, 7].
+Crasso et al. [27] suggested a set of metrics that combines               CyC and CoC are employed to measure the complexity.
+various measurements encompassing essential aspects of                  Hence the maintainability of software [35]. The unnoticed
+                                                                    3
+and un-foddered fact is how well such metrics go with the                • H02 : There is no correlation between complexity metrics
+perception of understanding according to early-career devel-               and early career developer’s perceived severity of an exist-
+opers, who have less experience and heuristics than their se-              ing issue in a class.
+nior peers. Therefore, analyzing the relationship between the
+perceived understandability and complexity metrics could               4.2. Study Context
+hint at whether current complexity metrics are useful pre-                As for participants, we selected junior developers. The rea-
+dictors of how less-experienced developers view understand-            son for choosing them instead of senior developers is be-
+ability.                                                               cause they are the developers that most frequently need to
+   In particular, since CoC is considered a “more contextual-          approach new code. In particular, junior developers com-
+ized form of quantitative data on code complexity,” we are             monly need to extend existing code in their company, fix
+interested to understand if CoC is a better predictor for code         bugs, or integrate new features. Therefore, we selected early
+understandability. Since CoC was built upon the CyC, we                career developers from various Finnish software houses. We
+hypothesized it might better represent the code understand-            selected participants based on their current tasks, specifically
+ability. Therefore we conjectured one hypothesis (H1 ) as fol-         working on existing code, and needed to understand prob-
+lows:                                                                  lems in the code when extending it or fixing bugs. We finally
+                                                                       involved 216 junior developers with Java experience ranging
+  • H11 : There is a correlation between complexity metrics
+                                                                       from one to four years.
+    and early career developer’s perceived understandability
+                                                                          We did not present the CyC and CoC values to the partic-
+    of classes.
+                                                                       ipants to not influence their ability to recognize a potential
+Hence, we defined the null hypothesis (H0 ) as follows:                design problem only because they see the complexity values
+                                                                       in advance.
+  • H01 : There is no correlation between complexity metrics
+    and early career developer’s perceived understandability           4.3. Study Setup and Data Collection
+    of classes.                                                           We designed our empirical study using the five steps below
+                                                                       to answer our research questions. Figure 1 illustrates the pro-
+  Complex code is considered hard to modify [2, 3]. More-
+                                                                       cess using the Business Process Model and Notation (BPMN)
+over, code affected by high levels of CyC is usually affected by
+                                                                       [38] specification language.
+more severe problems [2, 3]. Hence we ask:
+                                                                        1. Code Selection: We selected Java code affected by prob-
+   RQ3 . Can complexity metrics indicate an early career
+                                                                           lems of different severity from Apache Software Founda-
+   developer’s perceived severity of an existing issue in a
+                                                                           tion projects.
+   class?
+                                                                        2. Complexity measurement: We measured the CyC and
+   As stated before, although complexity metrics are designed              CoC of the selected Java code using SonarQube.
+to quantify numerous facets of code that could impact its               3. Developers selection: We identified the junior developers
+maintainability and readability, it remains an open question               to be included in our study.
+how the different complexity metrics align with the issue
+severity ranking of human developers in their early careers             4. Code inspection: We asked developers to inspect the se-
+[35, 30, 36]. This relationship can only be understood because             lected Java code and to provide their opinion on the un-
+early career developers usually identify and fix code issues in            derstandability of the code, on the presence of issues,
+real projects [30, 37]. If complexity metrics could become a               and to rate the severity of the existing problem, if any.
+good predictor for perceived severity, they could be used as
+an orientation means, guiding these developers in their work.           5. Data Analysis: We analyzed the developers’ answers and
+Hence, we aim to establish the strength of the relationship be-            correlated the developer’s perceived understandability
+tween the established complexity metrics and the severity of               with the CyC and CoC.
+issues in code classes as perceived by early-career developers.
+Moreover, we considered that a lower code understandability
+                                                                       4.3.1. Code Selection
+could lead to a misleading in the problem identification in
+the inspected code and, consequently, a wrong perception of               In this section, we report the case and subject selection for
+its severity. Therefore we conjectured one hypothesis (H2 ) as         this study. We selected classes written in Java that were af-
+follows:                                                               fected by different problems that can influence code under-
+                                                                       standably from Apache Software Foundation projects. Two
+  • H12 : There is a correlation between complexity metrics            of three authors and a senior Java developer independently
+    and early career developer’s perceived severity of an exist-       evaluated the presence of issues in the code. Then, all three
+    ing issue in a class.                                              persons discussed possible inconsistencies and finally de-
+                                                                       fined a list of 12 classes where all agreed on the presence of
+Hence, we defined the null hypothesis (H0 ) as follows:                the same issues (Table 1). More details of the selected classes
+                                                                   4
+                                                                          Cyclomatic and cognitive
+                                                                                complexity
+                                                              Measure
+                           Java code                         complexity
+
+
+                                 Select case                                                        Analyze
+                                 and subject                                                       correlation
+
+
+                                                            Inspect code
+
+
+                                                                                                                  Answers to
+                                                                                                                 RQ2 and RQ3
+
+                                                                         Code understandability,
+                                                                       issues and relative severity
+
+                                                Figure 1: Empirical study design process
+
+
+
+and the problems identified in the code are available in the                                          Table 1: Selected classes
+
+replication package3 . Table 5 details the selected classes and           Class   C1   C2    C3       C4    C5    C6   C7    C8   C9   C10   C11   C12
+the problems identified in the code. All the authors inspected             CyC    37   130   113      56    57    35   110   23    2     6     7     3
+                                                                           CoC    38    73    36      68     3     6     0    6    1     0     1     0
+the selected classes and independently reported the identi-
+fied problems. All the authors validated the identified prob-
+lem at the end of the process.                                         4.3.4. Study Execution
+                                                                          We provided the participants with instructions describing
+4.3.2. Complexity Measurement.                                         how to access the classes and answer the survey. The par-
+   We measured the code complexity using CoC and CyC by                ticipants could inspect the classes and complete the online
+applying SonarQube version 7.51 . We selected SonarQube                questionnaire in one round. We informed the participants,
+since, to our knowledge, it is the only tool that detects both         according to the GDPR2 , about their rights and that they
+and reports how each metric is calculated. Moreover, we rely           could abandon the study anytime. Moreover, all information
+on SonarQube since it is one of the most adopted static anal-          provided by each participant has been treated as confidential,
+ysis tools by practitioners [39, 40].                                  without disclosing any sensible data.
+
+4.3.3. Code Inspection.                                                4.4. Data Analysis
+   We asked developers to manually inspect the 12 Java
+                                                                          This section describes the procedure for analyzing the data
+classes and provide their opinions about the code under-
+                                                                       collected.
+standability. To collect the information, we organized the
+                                                                          Concerning the results of the code inspection phase, we
+questionnaire into four sections:
+                                                                       first verified the participants’ backgrounds by analyzing the
+                                                                       distribution of their education level (bachelor or master) and
+  • Respondents’ Background. We collected the profiles of
+                                                                       their experience as developers in software companies.
+    the respondents who were considering development ex-
+                                                                          To address our research question, we quantitatively ana-
+    perience.
+                                                                       lyzed developers’ reported perceptions of code understand-
+  • Code Inspection. In this questionnaire section, we asked           ability.
+    participants to manually inspect a Java class and provide             To investigate developers’ accuracy (RQ1 ), we measured it
+    their opinion about their perceived Code Understand-               with widely adopted IR accuracy metrics [37, 41, 42] (Table
+    ability through a five-point Likert Scale (1 means “very           3 and computed the agreement among developers, i.e., Inter-
+    difficult” and 5 means “very easy”). The questions are             Rater Agreement (IRA) as suggested by established guidelines
+    reported in Table 2.                                               [43].
+                                                                          We analyze developers’ IRA via Fleiss’s κ [44]. When assign-
+  • Perceived Problem Criticality in the code, reporting if            ing items to different categories, the kappa statistic is com-
+    the problem exists in the class and rating their sever-            monly used to evaluate the agreement between raters or clas-
+    ity through a five-point Likert Scale (1 means “very low           sifiers. In our context, we used it to measure the level of IRA
+    severity” and 5 means “very high severity”).                       between the three HRs who reviewed the output of models
+
+  We implemented the questionnaire using Google Forms.
+The Questionnaire is available in the replication package3 .                 2 https://gdpr-info.eu
+
+
+                                                                   5
+                                                      Table 2: Questions about code inspection’s section
+
+            RQ      Question                                                                                       Answer type
+            RQ1     How easy is it to understand the code of this class?                                           Five-point scales
+                    Does, in your opinion, this class has design, coding style, or any other problems?             Yes/No
+            RQ2
+                    If YES, please rate the severity of the problem                                                Five-point Likert Scales
+
+
+                         Table 3: IR Metrics                                             Table 4: Interpretation of κ values for measuring agreement
+
+        Metric                        Formula                                                      Value of κ      Interpretation
+                                        TP                                                         κ<0             No agreement
+        Precision
+                                      TP +FP                                                       0 ≤ κ < 0.4     Poor agreement
+                                                                                                   0.4 ≤ κ < 0.6   Discrete agreement
+                                        TP
+        Recall                                                                                     0.6 ≤ κ < 0.8   Good agreement
+                                      TP +FN
+                                                                                                   0.8 ≤ κ < 1     Excellent agreement
+                                  T P ∗T N −F P ∗F N
+        MCC          p                                             .
+                      (T P +F P )(T P +F N )(T N +F P )(T N +F N )
+                                                                                  larger sample sizes than our own. Therefore, we preferred AD
+                              2 · P r eci si on · Recal l
+        F1-score                                                                  over SW [52]. AD is also considered one of the most powerful
+                               P r eci si on + Recal l
+                                                                                  statistical tools for detecting most deviations from normality
+                                                                                  [52, 53].
+                                                                                     Test results allowed us to reject the null hypothesis for
+and HEs. When comparing the observed agreement level to                           each test case, H0N , asserting that the data was not normally
+the expected agreement level, Fleiss’s κ provides a metric for                    distributed.
+the reliability and consistency of the categorizations among                         Therefore, we adopted the Spearman rank correlation co-
+two or more reviewers. We opted for Fleiss’s κ over Cohen’s κ                     efficient ρ instead of Pearson’s to test the H1 and H2 values
+because the latter is restricted to only two reviewers. Table 4                   [54]. Spearman’s ρ is a statistical measure used to assess the
+presents the interpretation Fleiss’s κ [44, 45, 46].                              strength and direction of association between two variables,
+   To investigate whether CyC and CoC (independent vari-                          and it is a non-parametric measure that evaluates the mono-
+ables) can be indicators of a developer’s perceived code un-                      tonic relationship between variables. Therefore, ρ assesses
+derstandability (RQ2 ) and severity (RQ3 ) (dependent vari-                       whether the variables tend to increase or decrease together,
+able), we assessed the distribution of the collected data to se-                  regardless of the exact rate of change.
+lect the appropriate statistical tests for hypothesis testing and                    We interpret the values of ρ,according to Cohen [55]: no
+correlation analysis [47, 48]. and we conjectured one hypoth-                     correlation if 0 ≤ ρ < 0.1, small correlation if 0.1 ≤ ρ < 0.3,
+esis (HN ) as follows:                                                            medium correlation if 0.3 ≤ ρ < 0.5, and large correlation if
+                                                                                  0.5 ≤ ρ ≤ 1. Corresponding limits apply for negative correla-
+  • H1N : The data do not belong to a normal distribution.
+                                                                                  tion coefficients. We set our significance level to the standard
+Hence, we defined the null hypothesis (H0 ) as follows:                           value of α = 0.05.
+                                                                                     Specifically, regarding RQ3 , each author has conducted
+  • H0N : The data belongs to a normal distribution.                              the qualitative data analysis individually. Moreover, pairwise
+   We tested HN with the Anderson-Darling (AD) test [49].                         inter-rater reliability was measured across the three sets of
+The AD test assesses whether data samples derive from a spe-                      decisions to get a fair/good agreement on the first iteration of
+cific probability distribution, such as the normal distribution.                  this process. Based on the disagreements, we clarified possi-
+AD measures the difference between the sample data and the                        ble discrepancies and different classifications. A second iter-
+expected values from the tested distribution. More specifi-                       ation resulted in perfect agreement. We conducted the anal-
+cally, it evaluates differences in the cumulative distribution                    ysis only for the cases where participants correctly identified
+function (CDF) between the observed data and the hypothe-                         a problem in the code.
+sized distribution [49].
+   The AD test and the Shapiro-Wilk (SW) test [50] are both                       4.5. Replicability
+statistical tests used to assess the normality of data.                              To allow our study to be replicated, we have published the
+   The SW test focuses on the correlation between the ob-                         complete raw data in the replication package3 .
+served data and the expected values under a normal distri-
+bution, emphasizing the smallest and largest values in the                        5. Results
+dataset. Therefore, according to Mishra et al. [51], SW is more
+appropriate when targeting small datasets (≤ 50 samples).                           In this section, we report the results obtained by answer-
+On the other hand, the AD test considers a broader range of                       ing our RQs. We collected information from 216 early-career
+values, including those in the middle of the distribution, pro-
+viding a more sensitive evaluation of normality, especially for                      3 https://doi.org/10.5281/zenodo.12743183
+
+
+                                                                              6
+                        Table 5: Class Ground Truth
+
+  Class    Has Design Issue       Issue Description
+   C1            Yes              -maintainability: code smells
+                                  -CoC exceeded
+   C2             Yes
+                                  -maintainability: code smells
+   C3             Yes             -untested
+                                  -buggy code
+   C4             Yes             -maintainability: code smells
+                                  -CoC exceeded
+                                  -duplicated code                             -0,4      -0,2       0          0,2       0,4         0,6         0,8   1,0
+   C5             Yes
+                                  -maintainability: code smells
+                                                                                                         Precision    Recall    F1         MCC
+                                  (constants missing)
+   C6             Yes             -duplicated code                             Figure 2: Distribution of early-career developers’ accuracy in detecting prob-
+   C7             Yes             -maintainability: critical code smells       lematic classes.
+                                  (unimplemented functions)
+  C8              Yes             -minor code smells
+  C9              Yes             -code smell: exception handling              to Figure 4, the IRA is dispersed between negative discreet
+  C10             No              -untested, but fine                          agreement and good agreement with a positive poor agree-
+  C11             No              -untested, but fine                          ment as mean value. Hence, we can affirm that on average
+  C12             Yes             -minor code smell                            early-career developers have different sensibility to issues
+                                                                               in a class.
+                  Table 6: Background Information
+                                                                                  Finally, to answer RQ1 , we can conclude that early-career
+                                                                               developers have scarce agreement on classifying problem-
+         Education level             Developer Experience
+        Bachelor 21%            less than 2 years     84%
+                                                                               atic classes with a discrete accuracy.
+        Master   79%            3 and 4 years         16%
+                                                                               5.2. Complexity metrics and perceived code understandability
+                                                                                    (RQ1 )
+developers.                                                                      Figure 5 presents the distribution of CyC and CoC by per-
+                                                                               ceived understandability. We note the trend for which classes
+5.1. Early-career developers accuracy and agreement                            deemed Hard to understand correspond to lower values of
+   In this subsection, we address background information                       CyC and CoC.
+on the early-career developers interviewed, their accuracy in                    Table 7 presents the perceived code understandability. Ac-
+classifying problematic classes, and their agreement.                          cording to Table 7 The respondents deemed half of the classes
+Background Information. Table 6 presents the respondents’                      (C6-C12) very easy to understand, while the other half were
+education level and years of experience. More specifically, we                 neither hard nor easy.
+interviewed 170 master’s degrees (79%) and 46 (21%) bache-                       Table 8 presents Spearman’s ρ to test the correlation be-
+lor degrees, of which 96 (79.34%) had between 1 and 2 years of                 tween CyC, CoC, and the perceived understandability. We
+developing experience, while the remaining 25 (20.66%) had                     note that the correlations are statistically significant for both
+more than 3 and 4 years (Table 6).                                             complexity metrics. Therefore, we can affirm that CyC and
+Accuracy. Figure 2 presents the distribution of early-career                   CoC exhibit a negative, moderate correlation. Hence, these
+developers’ accuracy in detecting problematic classes in Pre-                  results statistically confirm what is already presented in Fig-
+cision, Recall, F1, and MCC. According to Figure 2, we note                    ure 5, a low level of understandability corresponds to higher
+that albeit developers have a promising Precision with a                       values of the complexity metrics.
+mean value circa 0.97, they fail to detect true positives, de-
+tecting a considerable number of false positives reflected in                  5.3. Complexity metrics and perceived severity of the design
+the Recall score that although scoring a mean value of 0.6, the                     problem (RQ3 )
+interval ranges from 0 to 1. MCC exemplifies the imbalance                        Perceived design or coding style problem. The percentage
+between Precision and Recall with negative values as low as                    of respondents who consider a class affected by a design or
+-0.35 with a mean value of 0.3.                                                coding style problem is less than 75% (Table 9).
+IRA. Figure 3 reports the average agreement percentage by                         Design coding style problem identification. It is interest-
+Class and Reviewer. According to Figure 3, on average, the                     ing to note that almost all the participants who identified a
+percentage of agreement per class is over 55% with peaks of                    problem in the classes correctly identified at least one of the
+67% for C10 and as low as 49% for C9. Conversely, the per-                     actual problems previously validated by all the authors. The
+centage of agreement per reviewer varies wildly between 45%                    only exception is for classes C7 and C12 not all the develop-
+and 70%.                                                                       ers provided a description. 77.85% of them correctly iden-
+   Therefore, to evaluate IRA, we used Fleiss’s κ. Figure 4 re-                tified the correct problem for C7 and 89% considering C12
+ports Fleiss’s κ and the error standard deviation. According                   class. Table 9 shows the results for identifying the problems
+                                                                           7
+                 70
+
+                 60
+
+                 50
+% of agreement
+
+
+
+
+                 40
+
+                 30
+
+                 20
+
+                 10
+
+                   0
+                                C1        C2             C3         C4            C5          C6              C7        C8          C9               C10         C11    C12
+                        CLASS
+
+
+                                                                          Figure 3: Average agreement percentage by Class.
+
+
+
+                                                                                                       140
+
+                                                                                                       120
+
+                                                                                                       100
+
+                                                                                                        80
+
+                                                                                                        60
+
+                                                                                                        40
+
+                                                                                                        20
+
+                 -0,5                          0                         0,5                             0
+                                                                                                                   1           2                 3           4          5
+                                                       Dati
+                                                                                                                                         Understendability
+                                                   Std. Error   Kappa
+                                                                                                                                    CoC          CyC
+
+                           Figure 4: Fleiss’s κ and error standard deviation (RQ1 ).
+                                                                                                       Figure 5: Distribution of complexity metrics values by the perceived code
+                                                                                                       understandability (RQ2 )
+
+grouped by Class (C). Therefore, as also highlighted by Ta-
+ble 9, we can conclude that the understandability of the code
+is independent of the perception of a problem.                                                         classes and overlook them. Identifying non-obvious, more
+   Design or coding style problem severity. The participants                                           subtle issues likely requires more practice and experience.
+rated their concern for the design problem identified in the                                           Hence, industries should strengthen their internal training
+inspected code for each class. The participants rated their                                            programs to help early-career developers reach a common
+evaluation based on a 5-point Likert scale (1 means “very low”                                         ground needed by the specific industry. For instance, since
+and 5 means “very high”). Table 9 shows the obtained results                                           the level of agreement among the developers is quite vari-
+grouped by Class (C), 5-point Likert scale levels (from 1 to 5),                                       able in the cases presented, closer mentorship and regular
+and the number of respondents. We report the average and                                               supervision are needed to develop a more homogenized un-
+the mode of the perceived severity. Most of the respondents                                            derstanding of problematic classes.
+who perceived a problem in the inspected classes considered                                              Therefore, team composition should mix early- and mid-
+it at least with a medium severity.                                                                    career developers when assigning code-reviewing tasks to
+   Table 10 presents Spearman’s ρ to test H2. We note that                                             balance their strengths and weaknesses. Finally, Workshops
+correlation is statistically significant for both CyC and CoC.                                         and hands-on coding sessions for life-long learning intro-
+Therefore, we can affirm that the complexity metrics showed                                            duce some balance into performance metrics for precision
+a poor but statistically significant negative correlation.                                             and recall over time.
+
+                                                                                                               1. The role of early-career developers.
+6. Discussion                                                                                                Early-career developers should not be the only ones
+                                                                                                             responsible for code-reviewing tasks due to their
+   This section presents the discussions and key takeaways
+                                                                                                             scarce experience.
+from the results of our study.
+   Regarding RQ1 , the accuracy metrics and the IRA deliver
+an interesting take on early-career researcher proficiency in                                            Considering RQ2 , it was evident that less complex classes
+detecting problematic classes. For instance, high Precision                                            were deemed easy to understand, indicating that low CyC
+and low Recall mean developers fail to identify problematic                                            and CoC support the understandability of the code. However,
+                                                                                                   8
+        Table 7: Perceived Code Understandability (RQ1 )                      Table 9: Problem description and Perceived Severity (RQ2 )
+
+
+Class      Perc. Understandability     # respondent        Mode                Perceived     Described               Severity
+                                                                      Class                                                                Mode
+           1-Very Hard                           20                            #     %       #     %                                  #
+           2-Hard                                54                                                         1-Very High Severity      5
+ C1        3-Neither Hard or Easy                76        3                                                2-High Severity           11
+           4-Easy                                42                   C1       146    69     146    100     3-Neither Low or High     25   3
+           5-Very Easy                            8                                                         4-Low Severity            24
+           1-Very Hard                           48                                                         5-Very Low Severity       16
+           2-Hard                                55                                                         1-Very High Severity      7
+ C2        3-Neither Hard or Easy                58        2                                                2-High Severity           29
+           4-Easy                                28                   C2       159    75     159    100     3-Neither Low or High     23   3
+           5-Very Easy                            3                                                         4-Low Severity            21
+           1-Very Hard                           51                                                         5-Very Low Severity       8
+           2-Hard                                49                                                         1-Very High Severity      9
+ C3        3-Neither Hard or Easy                58        2                                                2-High Severity           21
+           4-High                                29                   C3       154    74     154    100     3-Neither Low or High     35   3
+           5-Very Easy                            7                                                         4-Low Severity            16
+           1-Very Hard                           27                                                         5-Very Low Severity       10
+           2-Hard                                46                                                         1-Very High Severity      8
+ C4        3-Neither Hard or Easy                65        3                                                2-High Severity           17
+           4-Easy                                40                   C4       127    60     127    100     3-Neither Low or High     17   3
+           5-Very Easy                           12                                                         4-Low Severity            21
+           1-Very Hard                           22                                                         5-Very Low Severity       12
+           2-Hard                                35                                                         1-Very High Severity      11
+ C5        3-Neither Hard or Easy                67        4                                                2-High Severity           17
+           4-Easy                                49                   C5       145    69     145    100     3-Neither Low or High     21   3
+           5-Very Easy                           23                                                         4-Low Severity            22
+           1-Very Hard                            8                                                         5-Very Low Severity       15
+           2-Hard                                21                                                         1-Very High Severity      4
+ C6        3-Neither Hard or Easy                34        3                                                2-High Severity           5
+           4-Easy                                72                   C6       81     38     81     100     3-Neither Low or High     9    4
+           5-Very Easy                           60                                                         4-Low Severity            11
+           1-Very Hard                           18                                                         5-Very Low Severity       21
+           2-Hard                                35                                                         1-Very High Severity      9
+ C7        3-Neither Hard or Easy                61        4                                                2-High Severity           10
+           4-Easy                                52                   C7       149    71     116    78      3-Neither Low or High     24   3
+           5-Very Easy                           29                                                         4-Low Severity            24
+           1-Very Hard                            7                                                         5-Very Low Severity       13
+           2-Hard                                14                                                         1-Very High Severity      0
+ C8        3-Neither Hard or Easy                39        4                                                2-High Severity           4
+           4-Easy                                50                   C8       60     28     60     100     3-Neither Low or High     8    4
+           5-Very Easy                           83                                                         4-Low Severity            8
+           1-Very Hard                           29                                                         5-Very Low Severity       17
+           2-Hard                                29                                                         1-Very High Severity      6
+ C9        3-Neither Hard or Easy                38        4                                                2-High Severity           9
+           4-Easy                                35                   C9       96     46     75     78      3-Neither Low or High     11   4
+           5-Very Easy                           66                                                         4-Low Severity            9
+           1-Very Hard                           10                                                         5-Very Low Severity       20
+           2-Hard                                18                                                         1-Very High Severity      1
+C10        3-Neither Hard or Easy                35        4                                                2-High Severity           4
+           4-Easy                                52                   C10      39     19     39     100     3-Neither Low or High     5    4
+           5-Very Easy                           75                                                         4-Low Severity            3
+           1-Very Hard                            6                                                         5-Very Low Severity       10
+           2-Hard                                10                                                         1-Very High Severity      1
+C11        3-Neither Hard or Easy                31        4                                                2-High Severity           0
+           4-Easy                                57                   C11      53     25     53     100     3-Neither Low or High     5    5
+           5-Very Easy                           88                                                         4-Low Severity            9
+           1-Very Hard                            6                                                         5-Very Low Severity       16
+           2-Hard                                19                                                         1-Very High Severity      1
+C12        3-Neither Hard or Easy                28        4                                                2-High Severity           6
+           4-Easy                                51                   C12      89     42     55     62      3-Neither Low or High     10   4
+           5-Very Easy                           92                                                         4-Low Severity            15
+                                                                                                            5-Very Low Severity       20
+
+   Table 8: Code Understandability - Correlation (RQ2 )                       Table 10: Perceived Problem Severity - Correlation (RQ3 )
+
+             Spearman           CyC         CoC                                            Spearman          CyC       CoC
+             ρ               -0,3819     -0,3282                                           ρ              -0.2665   -0.1686
+             p-value         <0.0001     <0.0001                                           p-value        <0.0001   <0.0001
+
+                                                                  9
+140                                                                                  adopted to mitigate them.
+120                                                                                     Construct validity. Concerning the set of tasks, we con-
+100
+                                                                                     sidered classes whose code complexity was measured by the
+                                                                                     same tool that allows us to compute both complexities con-
+ 80
+                                                                                     sidered in this work. We checked each question to avoid po-
+ 60                                                                                  tential misunderstandings, negative questions, and threats.
+ 40
+                                                                                     The perceived priority of the design problem was collected
+                                                                                     by asking the participants to describe the problem they per-
+ 20
+                                                                                     ceived to understand if their perception is related to the iden-
+  0                                                                                  tified problem and not to other potential issues in the code.
+           1             2              3             4             5
+                                     Severity
+                                                                                     We asked the participants to rate the severity of the prob-
+                               CoC      CyC                                          lem using a Likert scale to allow us to compare the responses
+                                                                                     based on a homogeneous scale. To reduce this threat, we
+Figure 6: Distribution of complexity metrics values by the perceived severity        checked the correctness of the identification both manually
+of the design problem - (RQ3 )
+                                                                                     and using automated tools.
+                                                                                        Internal Validity. Considering the respondents, we se-
+if CyC or CoC was high, the opinion on understandability                             lected junior developers with a maximum of 4 years of experi-
+was varied. This is a very interesting result and requires fur-                      ence in programming skills to better focus on our goal. How-
+ther investigation. What is especially eye-opening is that per-                      ever, we are aware that the results could be biased by selecting
+ceptions of understandability varied, with both complexities                         participants from a set of developers more deeply trained in
+rated highly. Understandability seems to be somewhat more                            these tasks. We adopted a treatment set of classes to measure
+correlated with CoC. However, the difference in CyC was not                          whether using the same tool to measure CoC and CyC com-
+drastic. Developers showed greater consensus on CoC as a                             plexities was possible. We know that further studies with dif-
+complexity measure, indicating it might be more useful than                          ferent analyzed classes, considering the missing groups, are
+the two. Prior results [9, 8, 23] indicated that the metrics                         needed to confirm our results.
+themselves do not indicate understandability and that the                               Moreover, one class from one domain (e.g., accounting)
+different proposed metrics are not positively correlated [9].                        may be very understandable to someone with experience de-
+                                                                                     veloping software for that domain but not at all comprehen-
+        2. CyC an CoC as understandability indicator.                                sible to someone without experience. So, the two develop-
+      Based on our findings, low complexity measures indi-                           ers’ answers would differ for the same class. Considering the
+      cate good understandability, but having either CoC or                          amount of code used in the study (12 units of code), acknowl-
+      CyC high makes understandability unpredictable.                                edging that it might be too small if the studied phenomenon
+                                                                                     is large (e.g., the architecture of a large software product). In
+                                                                                     our case, we reasoned that the studied phenomenon mani-
+   Finally, regarding RQ3 we found that increased complex-                           fests within small pieces of code. We selected 12 classes that
+ity heightened the perception of severity. However, there was                        contain the studied phenomena (see Table 1), which are ex-
+significant variance. Early-career developers had a good un-                         amined by 216 developers. The fact that the same phenom-
+derstanding of the code issues. When a class was identified                          ena were studied 216 times 12 gives us confidence that—in
+as having a design problem, developers could also describe                           our context—the data set is large enough to yield representa-
+the problem. This indicates that highlighting the issues con-                        tive results.
+tributing to complexity measures can help maintain high un-                             External validity. We considered only junior developers
+derstandability. However, understandability does not depend                          with a maximum of four years of experience. We know de-
+on the type of problem. Therefore, developers should take                            velopers with more experience might have a different percep-
+minor design issues more seriously.                                                  tion of code complexity and understandability due to their fa-
+                                                                                     miliarity with more complex code. Therefore, our results can
+        3. CyC an CoC as severity indicator.                                         not be generalized across the entire population of developers.
+      Based on our findings, there is no evidence that CyC or                           Reliability. Three experts checked the survey on empir-
+      CoC are indicators of early-career perceived severity.                         ical studies. Moreover, it was ensured that the subjects of
+                                                                                     both groups had similar backgrounds and knowledge regard-
+                                                                                     ing code understandability and inspection.
+7. Threats to Validity
+
+   In this Section, we introduce the threats to validity and                         8. Conclusion
+discuss the different tactics adopted to mitigate them. We
+followed the structure suggested by Yin [56], reporting con-                            We designed and conducted a case study among 216 early-
+struct validity, internal validity, external validity, and relia-                    career developers. We asked them to manually inspect 12 Java
+bility. Moreover, we will also discuss the different tactics                         classes that exhibit different code complexity levels as Cogni-
+                                                                                10
+tive and CyC measured by SonarQube. For each class, devel-                           [15] J. Borstler, B. Paech, The Role of Method Chains and Comments in Soft-
+opers had to rate the code’s understandability. CoC and CyC                               ware Readability and Comprehension—An Experiment, IEEE Transac-
+                                                                                          tions on Software Engineering 42 (2016) 886–898.
+are medium negatively correlated with code understandabil-                           [16] J. Hofmeister, J. Siegmund, D. V. Holt, Shorter identifier names take
+ity and poor negatively correlated with the severity of code                              longer to comprehend, in: International Conference on Software Anal-
+problems. We expected to find more problems in classes with                               ysis, Evolution and Reengineering, 2017, pp. 217–227.
+higher levels of complexity, mainly because we were expect-                          [17] S. Aljunid, A. Zin, Z. Shukur, A Study on the Program Comprehension
+                                                                                          and Debugging Processes of Novice Programmers, Journal of Software
+ing these classes to be harder to understand. Therefore, we                               Engineering 6 (2012) 1–9.
+cannot claim that classes with a higher CyC or CoC are af-                           [18] D. Fucci, D. Girardi, N. Novielli, L. Quaranta, F. Lanubile, A Replication
+fected by more severe problems than those with lower lev-                                 Study on Code Comprehension and Expertise using Lightweight Bio-
+els of complexity. Moreover, we also suggest, based on our                                metric Sensors, in: Int. Conf. on Program Comprehension, 2019, pp.
+                                                                                          311–322.
+results, that early-career developers should not be the only                         [19] M. K. . Yeh, D. Gopstein, Y. Yan, Y. Zhuang, Detecting and comparing
+ones responsible for code-reviewing tasks due to their scarce                             brain activity in short program comprehension using EEG, in: IEEE
+experience. Future work will involve replicating this study                               Frontiers in Education Conference (FIE), 2017, pp. 1–5.
+                                                                                     [20] T. Fritz, A. Begel, S. C. Müller, S. Yigit-Elliott, M. Züger, Using Psycho-
+with more developers to suggest refactoring actions for iden-
+                                                                                          Physiological Measures to Assess Task Difficulty in Software Develop-
+tified problems. We will also compare the perceived under-                                ment, in: Int. Conference on Software Engineering, 2014, pp. 402–413.
+standability of code between junior and senior developers                            [21] R. Turner, M. Falcone, B. Sharif, A. Lazar, An Eye-Tracking Study As-
+and explore other programming languages like Python and                                   sessing the Comprehension of C++ and Python Source Code, in: Eye
+                                                                                          Tracking Research and Applications, 2014, pp. 231–234.
+JavaScript. Finally, we plan to use larger, more varied code
+                                                                                     [22] N. Kasto, J. Whalley, Measuring the Difficulty of Code Comprehension
+samples, control for variables such as domain knowledge and                               Tasks Using Software Metrics, in: Fifteenth Australasian Computing
+employ different tools to measure complexity.                                             Education Conference - Volume 136, 2013, pp. 59–65.
+                                                                                     [23] J. Feigenspan, S. Apel, J. Liebig, C. Kastner, Exploring Software Mea-
+                                                                                          sures to Assess Program Comprehension, in: Symposium on Empirical
+References                                                                                Software Engineering and Measurement, 2011, pp. 127–136.
+                                                                                     [24] M. M. Suleman Sarwar, S. Shahzad, I. Ahmad, Cyclomatic complexity:
+ [1] B. W. Boehm, J. R. Brown, M. Lipow, Quantitative Evaluation of Software              The nesting problem, in: Eighth International Conference on Digital
+     Quality, in: International Conference on Software Engineering, 1976,                 Information Management (ICDIM 2013), 2013, pp. 274–279.
+     pp. 592–605.                                                                    [25] SonarSource, Metric Definitions, https://docs.sonarqube.org/
+ [2] R. Minelli, A. Mocci, M. Lanza, I Know What You Did Last Summer - An                 latest/user-guide/metric-definitions/, accessed on July 28,
+     Investigation of How Developers Spend Their Time, in: International                  2022.
+     Conference on Program Comprehension, 2015, pp. 25–35.                           [26] G. A. Campbell, Cognitive Complexity, a new way of measur-
+ [3] X. Xia, L. Bao, D. Lo, Z. Xing, A. E. Hassan, S. Li, Measuring Program               ing understandability,         https://www.sonarsource.com/docs/
+     Comprehension: A Large-Scale Field Study with Professionals, IEEE                    CognitiveComplexity.pdf, accessed on July 28, 2022.
+     Transactions on Software Engineering 44 (2018) 951–976.                         [27] M. Crasso, C. Mateos, A. Zunino, S. Misra, P. Polvorin, Assessing cogni-
+ [4] M. Muñoz Barón, M. Wyrich, S. Wagner, An Empirical Validation of Cog-                tive complexity in java-based object-oriented systems: Metrics and tool
+     nitive Complexity as a Measure of Source Code Understandability, in:                 support, Computing and Informatics 35 (2014).
+     Int. Symp. on Empirical Software Engineering and Measurement, 2020.             [28] S. Misra, A. Adewumi, L. Fernandez-Sanz, R. Damasevicius, A suite
+ [5] K. Tashima, H. Aman, S. Amasaki, T. Yokogawa, M. Kawahara, Fault-                    of object oriented cognitive complexity metrics, IEEE Access 6 (2018)
+     prone java method analysis focusing on pair of local variables with con-             8782–8796.
+     fusing names, in: Proceedings - 44th Euromicro Conference on Soft-              [29] C. Wohlin, P. Runeson, M. Höst, M. Ohlsson, B. Regnell, A. Wesslén,
+     ware Engineering and Advanced Ap- plications, 2018. doi:10.1109/                     Experimentation in Software Engineering: An Introduction, Springer,
+     SEAA.2018.00033.                                                                     2000.
+ [6] T. J. McCabe, A Complexity Measure, IEEE Transactions on Software               [30] M. O. Ahmad, I. Ahmad, F. Qayum, Early career software developers and
+     Engineering SE-2 (1976) 308–320.                                                     work preferences in software engineering, Journal of Software: Evolu-
+ [7] G. A. Campbell, Cognitive Complexity - An Overview and Evaluation,                   tion and Process 36 (2024) e2513.
+     in: International Conference on Technical Debt, 2018, pp. 57–58.                [31] X. Zhao, N. Tsuboi, Early career software developers-are you sinking or
+ [8] S. Scalabrino, G. Bavota, C. Vendome, M. Linares-V?squez, D. Poshy-                  swimming?, in: Proceedings of the 46th International Conference on
+     vanyk, R. Oliveto, Automatically Assessing Code Understandability,                   Software Engineering: Software Engineering in Society, 2024, pp. 166–
+     IEEE Transactions on Software Engineering (2019) 1–1.                                176.
+ [9] L. Lavazza, A. Z. Abualkishik, G. Liu, S. Morasca, An empirical eval-           [32] M. Esposito, D. Falessi, Validate: A deep dive into vulnerability predic-
+     uation of the “Cognitive Complexity” measure as a predictor of code                  tion datasets, Information and Software Technology (2024) 107448.
+     understandability, Journal of Systems and Software 197 (2023) 111561.           [33] A. N. Meyer, E. T. Barr, C. Bird, T. Zimmermann, Today was a good day:
+[10] C. Politowski, F. Khomh, S. Romano, G. Scanniello, F. Petrillo, Y.-G.                The daily life of software developers, IEEE Transactions on Software
+     Guéhéneuc, A. Maiga, A large scale empirical study of the impact of                  Engineering 47 (2019) 863–880.
+     Spaghetti Code and Blob anti-patterns on program comprehension, In-             [34] M. Esposito, M. Robredo, F. A. Fontana, V. Lenarduzzi, On the corre-
+     formation and Software Technology 122 (2020) 106278.                                 lation between architectural smells and static analysis warnings, arXiv
+[11] M.-A. Storey, K. Wong, H. Muller, How do program understanding tools                 preprint arXiv:2406.17354 (2024).
+     affect how programmers understand programs?, Science of Computer                [35] D. Kafura, G. R. Reddy, The use of software complexity metrics in soft-
+     Programming 36 (2000) 183–207.                                                       ware maintenance, IEEE Transactions on Software Engineering (1987)
+[12] J. Lin, K. Wu, A Model for Measuring Software Understandability, in:                 335–343.
+     International Conference on Computer and Information Technology,                [36] M. Esposito, S. Moreschini, V. Lenarduzzi, D. Hästbacka, D. Falessi, Can
+     2006, pp. 192–192.                                                                   we trust the default vulnerabilities severity?, in: 2023 IEEE 23rd Interna-
+[13] J. J. Dolado, M. Harman, M. C. Otero, L. Hu, An empirical investigation              tional Working Conference on Source Code Analysis and Manipulation
+     of the influence of a type of side effects on program comprehension,                 (SCAM), IEEE, 2023, pp. 265–270.
+     IEEE Transactions on Software Engineering 29 (2003) 665–670.                    [37] M. Esposito, D. Falessi, Uncovering the hidden risks: The importance
+[14] G. Salvaneschi, S. Amann, S. Proksch, M. Mezini, An Empirical Study                  of predicting bugginess in untouched methods, in: 2023 IEEE 23rd In-
+     on Program Comprehension with Reactive Programming, in: Symp. on                     ternational Working Conference on Source Code Analysis and Manipu-
+     Foundations of Software Engineering, 2014, pp. 564–575.
+
+                                                                                11
+     lation (SCAM), IEEE, 2023, pp. 277–282.
+[38] OMG, Business Process Model and Notation (BPMN), Version 2.0, 2011.
+     URL: http://www.omg.org/spec/BPMN/2.0.
+[39] C. Vassallo, S. Panichella, F. Palomba, S. Proksch, H. C. Gall, A. Zaidman,
+     How developers engage with static analysis tools in different contexts,
+     Empirical Software Engineering (2019) 1–39.
+[40] P. Avgeriou, D. Taibi, A. Ampatzoglou, F. Arcelli Fontana, T. Besker,
+     A. Chatzigeorgiou, V. Lenarduzzi, A. Martini, N. Moschou, I. Pigazzini,
+     N. Saarimäki, D. Sas, S. Soares de Toledo, A. Tsintzira, An overview
+     and comparison of technical debt measurement tools, IEEE Software
+     (2021).
+[41] M. Esposito, V. Falaschi, D. Falessi, An extensive comparison of static
+     application security testing tools, in: Proceedings of the 28th Interna-
+     tional Conference on Evaluation and Assessment in Software Engineer-
+     ing, ACM, 2024, pp. 69–78.
+[42] M. Esposito, F. Palagiano, Leveraging large language models for pre-
+     liminary security risk analysis: A mission-critical case study, in: Pro-
+     ceedings of the 28th International Conference on Evaluation and As-
+     sessment in Software Engineering, ACM, 2024, pp. 442–445.
+[43] P. Ralph, N. bin Ali, S. Baltes, D. Bianculli, J. Diaz, Y. Dittrich, N. Ernst,
+     M. Felderer, R. Feldt, A. Filieri, B. B. N. de França, C. A. Furia,
+     G. Gay, N. Gold, D. Graziotin, P. He, R. Hoda, N. Juristo, B. Kitchen-
+     ham, V. Lenarduzzi, J. Martínez, J. Melegati, D. Mendez, T. Men-
+     zies, J. Molleri, D. Pfahl, R. Robbes, D. Russo, N. Saarimäki, F. Sarro,
+     D. Taibi, J. Siegmund, D. Spinellis, M. Staron, K. Stol, M.-A. Storey,
+     D. Taibi, D. Tamburri, M. Torchiano, C. Treude, B. Turhan, X. Wang,
+     S. Vegas, Empirical standards for software engineering research, 2021.
+     arXiv:2010.03525.
+[44] J. L. Fleiss, Measuring nominal scale agreement among many raters.,
+     Psychological bulletin 76 (1971) 378.
+[45] J. Sim, C. C. Wright, The kappa statistic in reliability studies: Use, inter-
+     pretation, and sample size requirements, Physical Therapy 85 (2005)
+     257–268. URL: https://doi.org/10.1093/ptj/85.3.257. doi:10.
+     1093/ptj/85.3.257.
+[46] M. Esposito, F. Palagiano, V. Lenarduzzi, Beyond words: On large
+     language models actionability in mission-critical risk analysis, arXiv
+     preprint arXiv:2406.10273 (2024).
+[47] D. Falessi, S. M. Laureani, J. Çarka, M. Esposito, D. A. d. Costa, Enhanc-
+     ing the defectiveness prediction of methods and classes via jit, Empiri-
+     cal Software Engineering 28 (2023) 37.
+[48] J. Çarka, M. Esposito, D. Falessi, On effort-aware metrics for defect pre-
+     diction, Empirical Software Engineering 27 (2022) 152.
+[49] T. W. Anderson, D. A. Darling, Asymptotic Theory of Certain "Goodness
+     of Fit" Criteria Based on Stochastic Processes, The Annals of Mathemat-
+     ical Statistics 23 (1952) 193 – 212. URL: https://doi.org/10.1214/
+     aoms/1177729437. doi:10.1214/aoms/1177729437.
+[50] S. Shaphiro, M. Wilk, An analysis of variance test for normality,
+     Biometrika 52 (1965) 591–611.
+[51] P. Mishra, C. M. Pandey, U. Singh, A. Gupta, C. Sahu, A. Keshri, Descrip-
+     tive statistics and normality tests for statistical data, Annals of cardiac
+     anaesthesia 22 (2019) 67–72.
+[52] M. A. Stephens, Edf statistics for goodness of fit and some comparisons,
+     Journal of the American statistical Association 69 (1974) 730–737. URL:
+     https://www.tandfonline.com/doi/abs/10.1080/01621459.
+     1974.10480196. doi:10.1080/01621459.1974.10480196.
+[53] M. A. Stephens, Tests based on edf statistics, in: Goodness-of-fit-
+     techniques, Routledge, 2017, pp. 97–194.
+[54] K. Pearson, Notes on regression and inheritance in the case of two par-
+     ents proceedings of the royal society of london, 58, 240-242, K Pearson
+     (1895).
+[55] J. Cohen,     Statistical power analysis for the behavioral sciences,
+     Lawrence Earlbaum Associates 2 (1988).
+[56] R. Yin, Case Study Research: Design and Methods, 5th Edition, 5th ed.,
+     SAGE Publications, Inc, 2014.
+
+
+
+
+                                                                                      12
+

@@ -1,0 +1,851 @@
+                                         Code Review Comprehension: Reviewing Strategies
+                                           Seen Through Code Comprehension Theories
+                                                     Pavlı́na Wurzel Gonçalves                           Pooja Rani                             Margaret-Anne Storey
+                                                      Department of Informatics                   Department of Informatics                 Department of Computer Science
+                                                         University of Zurich                        University of Zurich                        University of Victoria
+                                                        Zurich, Switzerland                         Zurich, Switzerland                            Victoria, Canada
+                                                       p.goncalves@ifi.uzh.ch                         rani@ifi.uzh.ch                              mstorey@uvic.ca
+
+                                                          Diomidis Spinellis                                                  Alberto Bacchelli
+                                         Department of Management Science and Economy                                     Department of Informatics
+arXiv:2503.21455v1 [cs.SE] 27 Mar 2025
+
+
+
+
+                                           Athens University of Economics and Business                                       University of Zurich
+                                                         Athens, Greece                                                     Zurich, Switzerland
+                                                           dds@aueb.gr                                                       bacchelli@ifi.uzh.ch
+
+
+
+                                            Abstract—Despite the popularity and importance of modern              Code comprehension [44, 24], particularly comparative code
+                                         code review, the understanding of the cognitive processes that        comprehension [34], is the most important competency review-
+                                         enable reviewers to analyze code and provide meaningful feed-         ers need [52] and simultaneously their greatest challenge [2].
+                                         back is lacking. To address this gap, we observed and interviewed
+                                         ten experienced reviewers while they performed 25 code reviews        However, there is little insight into how developers form their
+                                         from their review queue. Since comprehending code changes is          understanding during code review and use it to provide feed-
+                                         essential to perform code review and the primary challenge for        back. Understanding these aspects of individual code review
+                                         reviewers, we focused our analysis on this cognitive process. Using   performance can inform the design of code review tools and
+                                         Letovsky’s model of code comprehension, we performed a theory-        practices [51] that support reviewers’ construction of the men-
+                                         driven thematic analysis to investigate how reviewers apply code
+                                         comprehension to navigate changes and provide feedback.               tal models [47] and in following effective individual reviewing
+                                            Our findings confirm that code comprehension is fundamental        strategies [30]. Human-centric design can improve developers’
+                                         to code review. We extend Letovsky’s model to propose the Code        productivity in code review and their experience when facing
+                                         Review Comprehension Model and demonstrate that code review,          common challenges, like code change complexity [29].
+                                         like code comprehension, relies on opportunistic strategies. These       In this study, we investigate in detail how developers form
+                                         strategies typically begin with a context-building phase, followed
+                                         by code inspection involving code reading, testing, and discussion    and use their understanding of the code change under review.
+                                         management. To interpret and evaluate the proposed change,            Previous work has studied the behavior of reviewers using
+                                         reviewers construct a mental model of the change as an extension      various methods, ranging from controlled experiments [22,
+                                         of their understanding of the overall software system and contrast    21, 18], to eye-tracking [48], and analyses of traces left
+                                         mental representations of expected and ideal solutions against        in software repositories [9, 36, 21]. These studies describe
+                                         the actual implementation. Based on our findings, we discuss
+                                         how review tools and practices can better support reviewers in        reviewing mostly as linear reading of code [21, 48]. However,
+                                         employing their strategies and in forming understanding.              the strategy for reviewing large changes remains unexplained
+                                         Data and material: https://doi.org/10.5281/zenodo.14748996            (e.g., in terms of reading order [6]). These studies often involve
+                                            Index Terms—Human Factors, Code Review, Code Compre-               participants reviewing small code changes from unknown sys-
+                                         hension, Code Review Strategies                                       tems and lack a real context, purpose, and interactions among
+                                                                                                               authors and reviewers. As an alternative, we selected observa-
+                                                                I. I NTRODUCTION                               tion accompanied by think-aloud protocols and interviews to
+                                            Modern code review is a widely used practice to ensure             capture the reviewer’s decisions or comprehension strategies
+                                         the quality of code contributions [41, 23, 16]. Typically,            in real time [1, 49]. We observed ten experienced developers—
+                                         developers manually review code changes through an informal,          recommended by others as great reviewers—while performing
+                                         tool-based, and asynchronous process [23, 41]. Reviewing              25 code reviews in their work environment to gain insight into
+                                         code changes is seen as beneficial to identify defects and find       their reviewing strategies. We performed an in-depth theory-
+                                         alternative solutions, improve transparency in the team, and          driven qualitative analysis to code and interpret the collected
+                                         share knowledge among developers [2]. Despite its benefits,           data, using several theories from code comprehension and
+                                         code review is time-consuming [2], challenging to adopt [5],          psychology [32, 38, 40, 3].
+                                         and costly to sustain [35]. Therefore, researchers have been             As a result of our observations, we contribute with an
+                                         focused on investigating ways to support developers in per-           extension of Letovsky’s code comprehension model [32]: a
+                                         forming code reviews efficiently and effectively.                     Code Review Comprehension Model. Our model describes and
+enhances our understanding of how reviews are performed           the developer community and thus, fitting the mental schemas
+and of the role of code comprehension in shaping the review       of other developers. In the analysis, we have viewed reviewers
+process. The model highlights the opportunistic nature of code    as gatekeepers ensuring code understandability and maintain-
+review comprehension strategies employed by reviewers to          ability by promoting adherence to these shared standards.
+deal with review complexity, e.g., scoping down the review        Code Review Strategies. Past research has provided evidence
+or employing other code inspection strategies apart from          that reviewers often perform ad hoc reviews [12]: They
+linear reading, such as chunking or segmenting code based         “just read the code” or adopt an unsystematic approach that
+on reviewing difficulty. We also identify the knowledge and       relies on personal strategies to navigate code and identify
+information sources that help reviewers navigate code, con-       defects [12, 48]. Baum et al. [6] found that reviewers mostly
+struct a mental model of the pull requests (PRs), and provide     navigate the files linearly following the order offered by the
+feedback by comparing their mental model of the PR to ideal       review tool. Fregnan et al. [21] found a linear decline in
+and expected solutions. Finally, based on our observations and    the number of comments reviewers leave as the files appear
+analyses, we propose guidelines for performing code review        later in a change set, and measured diminished developers’
+and designing better human-centered review tools.                 effectiveness at detecting defects in files presented last by
+                                                                  review tools. In eye-tracking experiments, reviewers were
+                     II. BACKGROUND
+                                                                  found to perform reviews mostly linearly, splitting the review
+  We provide details on theories and findings we used in the      into a scanning phase (where reviewers first get an overview
+qualitative analysis to code and interpret the data.              of the code) and a detailed phase (where they return to look
+Opportunistic strategies to code comprehension. Code com-         into specific code segments) [48].
+prehension research has observed, described, and interpreted         Although review navigation seems to be often linear, this
+code navigation strategies aimed at understanding a code          may not be the case for more complex reviews. In fact, com-
+artifact [10, 11, 13, 24]. Accordingly, researchers have pro-     plex changes are more challenging to review [29] and the order
+posed numerous comprehension models to capture the com-           in which reviewers choose to review them remains largely
+prehension process [10, 44, 32, 49]. For instance, researchers    unexplained [6]. For example, Spadini et al. [45] indicate that
+found that developers initially take a top-down comprehension     reviewers might choose to follow diversified review strategies,
+approach to gain an overall big picture and then move to          such as performing test-driven reviews. Therefore, in our study
+detailed code snippet [10]. The top-down approach relies          we observe reviews of changes of varying complexity to better
+on applying domain knowledge, knowledge of programming            understand how complexity may affect the process.
+plans, and rules of programming discourse to interpret specific   Code comprehension and code review. Similarly to code
+implementations of programmatic solutions. Developers also        comprehension, it seems reasonable to expect that reviewers
+use other strategies for code navigation, for example, bottom-    performing ad hoc reviews [12] may shape their reviewing
+up [50, 44] or following the control flow [37].                   process through a combination of strategies and opportunistic
+   Developers opportunistically choose the strategies to com-     decisions that aim to optimize for both effective understanding
+bine the top-down and bottom-up processes and seek the            and efficient reviewing. However, code review requires deeper
+information relevant to their task to form understanding most     engagement of higher-level cognitive processes (e.g., decision
+efficiently and update their knowledge through the comprehen-     making and analysis) than code comprehension alone due to
+sion process [31, 32]. In addition to understanding code, code    the need to inspect the code changes for quality aspects [20].
+comprehension is a fundamental step in supporting subsequent         Code review is a specific context for using code comprehen-
+software development activities [50]. Relevant to our study,      sion, as understanding occurs within an environment where the
+code comprehension also determines how developers review          changes to the software system are iterative (reviewers repeat-
+code, the review outcomes, and the artifacts created in the       edly comprehend the same artifact), incremental (they com-
+process. We aim to understand which approaches are used and       prehend a modification of a likely partially known software
+how the mental model of the reviewed code change is formed.       system), and interactive (the comprehension is supported by
+Role of experience in code review comprehension. Code             interactions with the author and other colleagues). Reviewing
+review is based on forming an accurate mental model of            may require developers to work with other software artifacts,
+the change and ensuring maintainability by other develop-         such as the PR discussion, issues, testing tools, architecture,
+ers [52]. Developers achieve understanding through recogni-       and design documentation. Therefore, comprehension models
+tion of programming plans, i.e., stereotypical implementations    that address only code navigation may be insufficient to fully
+of goals [44]. Reviewers’ experience is crucial to recognize      capture code review comprehension.
+and correct programming patterns into readable and maintain-
+                                                                                      III. M ETHODOLOGY
+able code: Novice developers tend to have more difficulty
+understanding a program [7], gaining the overall picture,           Our study investigates how software developers perform
+and identifying programming patterns [27]. Consequently,          code reviews through the lens of code comprehension theories.
+adherence to coding conventions and programming patterns          As the main tool for approaching the data and informing
+ensures also adherence to representations shared throughout       the research questions, we use Letovsky’s model of code
+Code Comprehension
+
+      Knowledge base                                 Information sources           a) Recruitment of Participants: Following estimates for
+                                                                              grounded theory studies, we expected to need 20 to 30 obser-
+                                                                              vations to reach saturation [14]. We used purposeful sampling
+                                Code
+                             comprehension                                    method [4] to achieve high variety in the data by observing
+                                                                              1) reviews in a real-world context, thus observing more varied
+                                                                              PRs, 2) reviews of varying complexity and 3) reviews in both
+                                                                              OSS community and in in-house software development teams.
+                                                                                 We recruited reviewers recommended as great reviewers or
+                              Mental Model
+                                                                              who had at least ten years of code review experience. This
+ Fig. 1. Letovsky’s Model of Code Comprehension [32] - Code comprehension     approach allowed us to observe experienced reviewers with
+ is an assimilation process using knowledge base and information sources to   purposeful decision-making in code reviews who have high
+ create a mental model of the code.                                           knowledge of programming patterns and are recognized by
+                                                                              other people as insightful. We specifically obtained six review-
+ comprehension [32] (shown in Figure 1). The model is based                   ers through their companies—four from an open-source soft-
+ on Piaget’s model of cognitive development [38], which posits                ware development company (participants P1, P3, P4, P5) and
+ that learning is an activity with a scope, as the ability to learn           two from a closed-source development company (P8 and P10).
+ in a certain moment has a limit of information that can be                   We asked developers within these companies to recommend
+ effectively processed.                                                       great reviewers, and researchers only received contact details
+                                                                              for those who had been recommended and agreed to partici-
+ A. Research Questions                                                        pate. Additionally, four reviewers were contacted individually:
+                                                                              P2, an experienced author of open-source software (OSS) and
+   We address three research questions. First, we ask:                        of technology books and academic publications on software
+                                                                              quality; P6, an experienced OSS reviewer recommended by
+ RQ1 . How do reviewers scope code review comprehension?
+                                                                              P2; P7, a software engineer at a big technological firm who
+    Although reviews are often seen as unsystematic [12, 48],
+                                                                              shares their coding and reviewing practices on their YouTube
+ their reliance on code comprehension [2] suggests that re-
+                                                                              channel; and P9, an insightful and experienced reviewer known
+ viewing may follow opportunistic strategies as code compre-
+                                                                              from a previous study. The reviewers typically held leadership
+ hension does. Understanding review strategies and the deci-
+                                                                              and mentoring roles in their teams, had over ten years of
+ sions in their selection, particularly when handling complex
+                                                                              professional experience, and reviewed code daily (see Table I).
+ changes [6], can provide valuable insights on how to support
+                                                                                   b) Review&Interview sessions: We collected data in
+ reviewers to perform effective code reviews and inform the
+                                                                              three phases – (1) observation of code review sessions, (2)
+ design of more human-centered review tools. In RQ2 , we focus
+                                                                              exploratory interview, and (3) a demographic survey. We
+ on the Code Comprehension component of Letovsky’s model:
+                                                                              conducted each session through an online video call that lasted
+ RQ2 . What strategies do developers use to perform code                      approximately one hour. With the consent of the participants,
+ review?                                                                      we recorded each session for subsequent data analysis. During
+                                                                              each session reviewers performed both a short and a long
+    In Letovsky’s model of code comprehension [32] (see
+                                                                              review on PRs from their review queue (at work or in their
+ Figure 1), code comprehension is accompanied by other three
+                                                                              open source project). While reviewing, participants used a
+ components of the model: (1) the information sources includ-
+                                                                              think-aloud method. The interviewer played a passive role,
+ ing the code artifact being understood and (2) the knowledge
+                                                                              mainly intervening only to facilitate the think-aloud. After
+ base, which interact in the code comprehension process to
+                                                                              each review, the researcher conducted a short semi-structured
+ create (3) the mental model of the code artifact. To capture
+                                                                              interview to clarify the observations – establishing the se-
+ how code comprehension is used in code reviews, we also ask:
+                                                                              quence of actions/steps in the review, reasoning and choices of
+ RQ3 . What are the roles of information sources, knowledge                   the reviewers and differences among participants. These areas
+ base, and mental models in the code review process?                          were captured in a non-binding interview guide. Following
+                                                                              these sessions, the participants completed a short demographic
+                                                                              survey.
+ B. Data Collection
+                                                                                 As a result of our data collection process, we acquired rich
+    Given that the cognitive processes underlying a code review               data from 25 review sessions. Table II details the reviewed
+ are not directly observable, we use observation, interviewing,               changes: Their sizes ranged from 2 to 34,520 changed lines of
+ and think-aloud protocols to capture the reviewer’s cognitive                code, and the reviews were conducted using GitHub (N=18),
+ process similarly to other studies looking into code com-                    GitLab (N=2), Phabricator(N=2), or Gerrit(N=3). We observed
+ prehension or developers’ approaches to perform engineering                  15 reviews in open-source and 10 in closed-source contexts. In
+ tasks [1, 49]. Throughout the paper, participants and specific               most reviews, our participants ended their task by requesting
+ review sessions are referenced using the format [participant                 changes (N=11) or providing comments (N=9), while they
+ ID][review number] (e.g., P2R3).                                             directly approved a minority (N=5).
+     c) Transcription: We transcribed the observations and
+                                                                                                       Piaget’s model of cognitive development [38]
+interviews to enable the subsequent analyses. For the ob-
+                                                                   Code Review
+servations, we created the transcripts based on what was                                Scope
+                                                                   Comprehension
+vocalized by the reviewers in their think-aloud and by ac-                              Mental model                      Actual                      Specification
+tions performed in the reviewing platform. As a validation
+of this transcription process, the second author of the study                           Knowledge base                    Ideal                       Annotation
+
+compared three transcripts (P2R2, P4R1, P9R1) against the                               Information sources               Expected                    Implementation
+non-anonymized observations, providing feedback to the first
+                                                                                        Process                  Self-discrepancy theory [4]
+author and pointing out additional insights. These were used
+to improve and update the other transcripts.
+                                                                                                       Letovsky’s code comprehension model [32]
+C. Data Analysis
+   Through familiarizing with the collected observations and       Fig. 2. Coding schema used to structure and code the data according to the
+interviews, we confirmed that themes of understanding and          selected code comprehension and psychological theories.
+comprehension were prominent and that code comprehension
+theory, particularly Letovsky’s model of code comprehen-           authors at two major milestones: (1) during the analysis and
+sion [32], provides us with an effective vocabulary to capture     (2) once the findings were interpreted and reported.
+the scope of our observations.                                        Our replication package includes the observation and inter-
+   Therefore, we used Letovsky’s model complemented by
+                                                                   view transcripts, interview guide, coding schema, and other
+other models, terms and theories from code comprehension
+                                                                   documents [53].
+and psychology [38, 3] to produce the coding schema pre-
+sented in Figure 2, through which we performed a theory-           D. Ethics and Data Handling
+driven thematic analysis [8].                                         The Human Subjects Committee of the home university of
+• Letovsky’s code comprehension model [32] (Figure 1): cap-        the first, second, and last author approved the study design.
+   tures code comprehension as an interplay of information         Reviewers signed an informed consent before participating
+   sources and knowledge base through which the developer          in a monitored review session. Observations including par-
+   creates a mental model representing the code artifact.          ticipants’ screens and faces were temporarily stored on the
+   Mental models consist of the specification, annotation and      university server to create anonymized behavioral transcripts.
+   implementation layer.                                           The observed code came from OSS projects or was shared
+• Piaget’s model of cognitive development [38]: posits that        with the permission of the project/team lead, given no sensitive
+   learning is an activity with a scope that happens in achiev-    information was shared in the recorded code.
+   able increments rather than being formed as a complete and
+   comprehensive understanding of a new input.                     E. Limitations
+• Self-discrepancy theory [3]: interprets human distress as a         The scope of the study focused on describing aspects
+   result of a discrepancy between their self perception and       related to code comprehension, using observation of reviews
+   their own and societal ideals and expectations. We applied it   performed by experienced reviewers performed in a real-world
+   to interpret how reviewers use discrepancies between the PR     context. There are limitations to this focus.
+   and their expectations and ideals to interpret and evaluate        Being the first observational study of cognitive processes in
+   the code change.                                                code review, our data collection was initially exploratory and
+   The second author validated the text excerpts using tran-       focused on aspects of code comprehension only in the analysis
+scripts from three review sessions (P2R2, P4R1, P9R1). Within      phase. We did not delve deeply into other key aspects of code
+the concept-related excerpts, we proceeded with a bottom-up        review, such as reviewers’ interactions—a possible rich field
+coding [8] to understand how these concepts can be described       for further exploration.
+and understood in the code review context. Subsequently, we           We conducted the observations via a video call. We asked
+used the research work mentioned in Section II as a basis to       participants whether their review process was the same as
+interpret the data.                                                usual. Only P2 mentioned they were highly aware of being
+   The analysis aimed to reach code saturation [25]. Therefore,    observed and possibly made their review more thorough than
+the themes reported in the paper represent a coding structure      usual, suggesting a possible influence of the Hawthorne ef-
+that was stable and repetitive by the end of the analysis.         fect [17]. To capture natural strategies, we avoided interrupting
+   We performed the analysis using the qualitative research        the reviewers, keeping the clarifications for the end of the
+software NVivo 14. The first author was the person collecting      sessions. This approach allowed us to observe the higher level
+and analyzing the data. To support the validity of the findings,   flow, rather than to investigate details of each decision made,
+we used peer debriefing [15]. Theories and preliminary results     e.g., reasoning for writing individual comments.
+were regularly discussed with the second author who also              The study participants are experienced reviewers with es-
+performed checks for validity of transcripts and first-level       tablished reviewing strategies and reasoning. Therefore, this
+coding. We discussed results and interpretations among all the     data does not represent the strategies of novice reviewers.
+                                                                   TABLE I
+                                              D ESCRIPTIVE DEMOGRAPHICS OF THE STUDY PARTICIPANTS
+
+             Participant                                          Experience (years)        Team/Project            Frequency of
+                           Role                  Gender
+             ID                                               programming     reviewing    tenure (years)     programming    reviewing
+             P1            Technical Lead        Female                 17           17                 3     Daily             Daily
+             P2            Code base author      Male                   37           10                 1     Weekly            Monthly
+             P3            Project Lead          Male                   17            5                 3     Daily             Daily
+             P4            Team Lead             Male                   16           15                10     Daily             Daily
+             P5                                                         Chose not to disclose
+             P6            Core contributor      Male                   14           16                13     Daily             Daily
+             P7                                                         Chose not to disclose
+             P8            Senior developer      Male                    3            2                 1     Daily             Daily
+             P9            Team Lead             Male                   11           10                 4     Daily             Daily
+             P10           Team Lead             Male                   15            9                 2     Daily             Daily
+
+
+                                                                TABLE II
+                   D ESCRIPTIVES OF THE REAL - WORLD REVIEWS CONDUCTED BY OUR PARTICIPANTS DURING THE OBSERVATIONS .
+
+        Review                                                                                               Number of
+                   Tool           Code    Iteration(*)    Draft     Verdict                                                     lines
+        ID                                                                            reviewers     files changed
+                                                                                                                           added      removed
+        P1R1       Gerrit         CSS     2nd             ✖         Request changes             5               3              97           86
+        P1R2       GitHub         OSS     1st             ✖         Comment                     3               1              15           21
+        P1R3       Gerrit         CSS     1st             ✖         Request changes             4               6             174            2
+        P2R1       GitHub         OSS     1st             ✖         Request changes             1              13           1,366           76
+        P2R2       GitHub         OSS     2nd             ✖         Accept                      1               8             376           45
+        P2R3       GitHub         OSS     3rd             ✖         Request changes             1               6             109           39
+        P2R4       GitHub         OSS     1st             ✖         Accept                      1               1              13            4
+        P3R1       GitHub         OSS     1st             ✖         Accept                      1               1               4            4
+        P3R2       GitHub         OSS     1st             ✔         Request changes             1               7             369           98
+        P4R1       GitHub         OSS     1st             ✖         Accept                      1               1               1            1
+        P4R2       GitHub         OSS     1st             ✔         Comment                     1               3             158           92
+        P5R1       Gerrit         OSS     1st             ✖         Request changes             3              12              79            0
+        P5R2       GitHub         OSS     2nd             ✔         Comment                     2              36           3,848           40
+        P6R1       GitLab         OSS     1st             ✔         Comment                     1               4              49            6
+        P6R2       GitLab         OSS     1st             ✖         Comment                     1               6             360            3
+        P7R1       Phabricator    OSS     1st             ✖         Request changes             3               3               3            0
+        P7R2       Phabricator    OSS     3rd+            ✖         Comment                     6               5              57           36
+        P8R1       Github         CSS     3rd+            ✖         Accept                      2               1              41            0
+        P8R2       Github         CSS     3rd+            ✖         Request changes             3              17             535            2
+        P9R1       Github         CSS     1st             ✖         Comment                     1              17      (**)17,030   (**)17,490
+        P9R2       Github         CSS     1st             ✖         Request changes             2              28             446          165
+        P9R3       GitHub         CSS     1st             ✖         Comment                     2              56             842        1,177
+        P10R1      Github         CSS     3rd+            ✖         Request changes             3              19             636            9
+        P10R2      Github         CSS     2nd             ✖         Request changes             2               1               7            5
+        P10R3      Github         CSS     1st             ✖         Comment                     3               1               1            5
+  (*) Iteration number for the participant as a reviewer
+  (**) The code change was extremely large due to the inclusion of a large autogenerated .yaml file.
+
+
+
+  We observed reviews done on four online platforms                                                         IV. R ESULTS
+(GitHub, GitLab, Gerrit, and Phabricator). We did not observe
+reviews in other contexts, such as IDE-integrated code review                    The 25 reviews performed by ten expert reviewers led to
+tools, reviews through emails, or in-person reviews. Therefore,               a total of 14 hours and 42 minutes of recorded observations
+our observations may not generalize to those contexts.                        and follow-up interviews. The coding led to the definition of
+                                                                              846 codes captured in 3,792 unique references. The replication
+                                                                              package also includes the list of themes from the analysis [53].
+                                                                                 Our analysis showed that the Letovsky’s code comprehen-
+   Since the data was collected and mainly analyzed by the                    sion model [32] was efficient, yet not complete enough to
+first author, the results are shaped mainly by her knowledge                  cover the case of code review comprehension. Therefore, we
+and expertise. The second author validated the material on                    propose an extended model to fill this gap: the Code Review
+two separate occasions for coding and transcription quality.                  Comprehension Model (CRCM), as depicted in Figure 3.
+Furthermore, the results and interpretations were repeatedly                  Through our new model, we describe the individual compo-
+discussed with all other co-authors in individual and group                   nents (Code Review Process, Information Sources, Knowledge
+meetings and updated accordingly.                                             Base, and Mental Model) alongside their function. While
+Code Review Comprehension
+
+   Knowledge base                                       Information sources         approve, but I can live without it today.” Each review iteration
+                               Update     Guide
+                                                                                    also allowed reviewers to narrow the scope of the review.
+                      Supply                        Evaluate                        When reviewing the same PR for the third time (P2R2), P2
+                                Code Review                                         explained: “I can take shortcuts. If [the file] has no comments,
+                               Comprehension                                        I will ignore it, I will not really review it. And this thing
+                                                                                    converges, right? Because more and more files enter the state.”
+                            Construct   Compare                                        Code review is also interactive: Reviewers and authors can
+                                                                                    support each other in understanding the code. The collective
+                                Mental Model                                        comprehension of the author and reviewers can have more
+                                                                                    importance than an individual reviewer reaching full com-
+                                                                                    prehension of the PR. Reviewers consider the added value
+                                                                                    their review can provide, the expertise of other reviewers, and
+  Fig. 3. Code Review Comprehension Model - Code Review Comprehension
+  uses opportunistic strategies to enrich information sources through identifying
+                                                                                    the opportunity to seek clarifications from the author. As P9
+  issues, commenting, and proposing improvements.                                   puts it: “If this was application code and I didn’t understand
+                                                                                    anything, I would definitely either make sure that I understand
+                                                                                    or ask about it. Or there is another reviewer who can go a little
+  Letovsky’s model views code comprehension as combining                            bit deeper than me.”
+  knowledge base and information sources to form a mental                              The complexity of the change under review fundamentally
+  model of the code, CRCM also integrates more recent code                          contributes to the need to scope their review comprehension.
+  comprehension theories like constructivism [40] (i.e., compre-                    When we asked P5 why they reviewed only a part of the
+  hension is a learning process that updates the knowledge base)                    change, they explained: “I have to ... it is impossible to fit [it]
+  and views code review comprehension as an opportunistic                           into my head.” Small changes require less comprehension or
+  process shaped by the purpose and usage of the understand-                        reviewer involvement; as P2 put it: “There are not many things
+  ing [49] (i.e., to understand code changes, select an appropriate                 that can go wrong in one line of code and the automated tools
+  reviewing strategy, and provide feedback). In the following                       would have caught most of the issues already.”
+  subsections, we present detailed results for each component
+  of the CRCM, their interactions, and the review scope.                            B. RQ2: Strategies Reviewers Use To Perform Code Review
+                                                                                       RQ2 explores the strategies reviewers use to understand and
+  A. RQ1: Scoping Code Review Comprehension                                         review the code change. The code review process, similar
+     The goal of RQ1 is to explore the limits reviewers set for                     to code comprehension, is opportunistic. Reviewers combine
+  their review. We define review comprehension scope as the                         various information sources with their knowledge base and ex-
+  completeness and depth of the code review comprehension                           isting mental models to understand the code change, evaluate
+  process. We observed reviewers employing four distinct ways                       the PR, and provide feedback. They deliberately select their
+  of scoping their review: they performed (1) full reviews, i.e.,                   reviewing strategy, accounting for the change’s complexity,
+  the reviewers achieved a complete understanding of the code                       aligning with their current priorities and review scope.
+  changes, (2) reviews focused on specific aspects of the code                         Understanding in code review is reached through multiple
+  change (e.g., high-level rationale coherence and areas related                    activities, presented in Figure 4 (a) — with activities numbered
+  to their expertise), (3) partial reviews of sections of the change                and color-coded to guide the reader through the results.
+  (sometimes due to the review being terminated prematurely),                       Figure 4 (b) uses this color scheme to represent the sequence
+  and (4) shallow reviews where only a superficial understand-                      of activities across review sessions, ordered by change size.
+  ing was reached, and reviewers based their judgment on                               In most reviews (N=23), the reviewer began with a I con-
+  external factors (e.g., sufficient testing and the expertise and                  text building phase, then proceeded to II code inspection, and
+  responsibility areas of the other involved reviewers; as P4                       concluded by submitting feedback, making a III decision, and
+  explained: “If the PR is really really big, I trust in the CI.                    potentially merging the change. During the code inspection,
+  I trust if all the tests are passed I understand that the changes                 reviewers II.DM manage discussions, perform II.CR code
+  that are being added are not affecting the current behavior.”).                   reading using various strategies, and perform II.T testing.
+     Reviewers reported that several factors—related to the na-                     While reading code, we observed that reviewers tended to
+  ture of PR-based code review and code complexity—influence                        follow a II.CR.L linear reading approach for smaller changes
+  the completeness and thoroughness of their reviews.                               (up to P1R3 - 6 files changed, 176 lines of code); while,
+     Given that code review is iterative and incremental in                         for larger changes, they employed alternative strategies, such
+  nature, a full understanding of the code changes can be grad-                     as II.CR.D difficulty-based reading or II.CR.C chunking,
+  ually achieved through multiple review iterations. Reviewers                      which enabled them to split the review into manageable units.
+  use these characteristics to break up the entire review into                       I Context Building . This step starts with reviewers famil-
+  manageable steps and to benefit from the expectation of further                   iarizing themselves with the PR title and description, and
+  review iterations. As P5 noted: “I don’t need this knowledge                      gathering other information sources (mentioned there or in the
+  answered right now. I need this to be answered before I                           PR history and discussion; see Section IV-C1 for more details).
+  I                                               II                                                III                         even thinking about it.” Yet, the benefits of this phase are
+      Context Building                                 Code Inspection                                       Decision           compromised when the information sources are not provided.
+                                                                                                                                   Reviewers reduced the need for context building during the
+                            II.DM                                      II.CR                                          II.T      review session by being part of creating issues before the
+             Discussion
+                                                         Code Reading                                       Testing             review or holding planning and alignment meetings with their
+            Management
+                                                                                                                                team and the change’s author. In P2R2 and P9R2 the context-
+                  Linear
+                                    II.CR.L
+                                                       Difficulty-based
+                                                                             II.CR.D
+                                                                                                 Chunking
+                                                                                                                  II.CR.C       building phase was skipped entirely due to a high availability
+       - One View                              - Easy-first                             - Unit
+                                                                                                                                of the context. Five reviewers (P2, P5, P7, P8, P9, and P10)
+       - Scanning                              - Core-based                             - Issue                                 underlined the importance of having a pre-alignment with the
+       - Top-Bottom                                                                     - Commit
+                                                                                        - Comment                               PR’s author for review efficiency. As P10 explained: “We
+                                                                                        - File
+                                                                                                                                already pre-agreed on solutions so I don’t need to challenge so
+                                                                                                                                much. It’s more like does this match my expectation of what
+(a) Activities reviewers combine to reach an understanding and create a
+reviewing strategy. Each activity is described in the text using its number
+                                                                                                                                would happen or not? So [the review] is much smoother.”
+and colored label.                                                                                                               II Code Inspection . This phase, shown in Figure 4(a), con-
+Review ID Strategy                                                                                                              sists of discussion management, code reading, and testing:
+P4R1                 I               II.CR.L           III
+                                                                                                                                    II.DM Discussion Management . While reviewers mostly
+P10R3                I               II.CR.L           III
+
+P3R1                 I               II.CR.L           III
+                                                                                                                                wrote comments while performing Code Reading, some of the
+P10R2                I               II.CR.L           III                                                                      reviewers allotted a specific slot in their review to read through
+P2R4                 I               II.CR.L           III                                                                      the available discussion and interact with the comments of
+P1R2                 I               II.CR.L           III
+                                                                                                                                other reviewers. This step was used to see what other reviewers
+P8R1                 I               II.CR.L           III
+
+P7R1                 I               II.CR.L           II.T          III
+                                                                                                                                and the author have already addressed, identify areas of agree-
+P1R1                 I               II.CR.L           III                                                                      ment, and identify where they might add a new perspective.
+P4R2                 I              II.CR.C            III                                                                      As P5 put it: “maybe the discussion already explains to me
+                                                                      II.T
+P6R1                 I               II.CR.L       II.CR.D         II.CR.D
+                                                                                                                                that I shouldn’t review it right now, because somebody already
+P7R2                 I               II.CR.L           III
+
+P2R3                 I               II.CR.L           III
+                                                                                                                                went deep into this, and my time is not even needed right now
+P1R3                 I               II.CR.L           III                                                                      here.”
+P6R2                 I              II.CR.D
+
+P3R2                 I               II.CR.L       II.CR.D        II.CR.L              II.CR.D        III
+                                                                                                                      II.CR.L
+                                                                                                                       II.DM
+                                                                                                                                   II.CR Code Reading . The strategies discussed here are in-
+P2R2              II.CR.L           II.CR.C        II.CR.L        II.CR.C                III                                    spired by Heinonen et al. [24]. We observed three approaches:
+P5R1                 I              II.CR.D        II.CR.D        II.CR.C              II.DM          III
+                                                                                                                                linear reading, difficulty-based reading, and chunking.
+                                     II.CR.L
+P2R1                 I               II.CR.C
+                                                   II.CR.L           III
+
+P8R2               II.DM
+                                     II.CR.L           III         II.DM
+                                                                                                                                     II.CR.L Linear . Reviewers use this strategy with reviews
+                       I
+
+P9R1                 II.T
+                       I
+                                    II.CR.D        II.CR.D          II.T                 III         II.T                       of manageable size. As P2 puts it: “There are not many things
+                                     II.CR.D
+P10R1                I               II.CR.C
+                                                   II.CR.C        II.CR.C              II.CR.C                                  that can go wrong in one line of code”. Linear reading was
+P9R2               II.T             II.CR.D        II.CR.D           III
+                                                                                                                                the main strategy used in small reviews until the review of
+P5R2                 I              II.CR.C        II.CR.C           III
+
+P9R3                 I              II.CR.D        II.CR.D
+                                                                   II.CR.L             II.CR.C
+                                                                                                      III
+                                                                                                                                P1R3 (176 changed LOC), as shown in Figure 4 (b).
+                                                                   II.CR.D             II.CR.D
+
+                                                                                                                                    II.CR.D Difficulty-based . Reviewers employed this strat-
+(b) Composition of these activities in each review session. The color legend                                                    egy when review size increased and they had to deal with the
+corresponds to Figure 4 (a). Some activities can be employed in parallel
+(represented by split-color fields.) The reviews are ordered by size - smallest                                                 growing complexity. Reviewers prioritize what to review based
+to largest code changes.                                                                                                        on reviewing difficulty. Table III summarizes examples of code
+                                                                                                                                that reviewers deemed difficult or easy to review. Reviewers
+                             Fig. 4. Code Review Process Strategies
+                                                                                                                                also referred to these two categories as areas where they (do
+                                                                                                                                not) need to invest significant effort and energy. The difficulty-
+                                                                                                                                based reading appears in two forms: (1) the easy-first approach
+This initial step gives them an idea about the completeness of                                                                  (P3R2, P6R1, P9R1, P9R2, P9R3) where reviewers first “get
+the available information and the Git hygiene [26] of the PR.                                                                   rid of easy stuff” then focus on the parts that require more
+It helps reviewers identify issues needing attention, actions                                                                   effort, and (2) the core-based approach (P5R1, P6R2) where
+required from them, and open questions. The context-building                                                                    reviewers began with what some of them refer to as “the core
+phase also enables reviewers to build a preliminary mental                                                                      of the change,” then follow the data and execution flow to
+model of the PR and assess its complexity. Furthermore,                                                                         understand how the core changes were used in the code.
+reviewers form expectations about the PR and its ideal im-                                                                           II.CR.C Chunking . This approach also deals with in-
+plementation, which they compare with what they see during                                                                      creasing complexity and can exist in parallel to top-bottom
+the code inspection. In the team of P10, the PR descriptions                                                                    or difficulty-based reviewing. Reviewers may review only
+can also explicitly include the PR acceptance criteria or                                                                       selected parts of a change, leaving the rest for later, or break
+suggestions for the reviewing strategy. For instance, P10R1                                                                     the PR into chunks to narrow their scope and reduce their
+included a suggestion to review the PR commit by commit,                                                                        cognitive load. However, reviewing chunk by chunk can lead
+which P10 followed: “I would at least give it a try without                                                                     to a lack of overview; for example, to compensate for this
+                          TABLE III                                            the reviewer’s knowledge to construct a mental model of the
+  E XAMPLES OF CODE THAT REVIEWERS PRIORITIZED ACCORDING TO                    code change. The mental models are then used to update the
+                          REVIEWING DIFFICULTY
+                                                                               knowledge base, compare with other mental models (such
+ Hard to review                     Examples                                   as mental models of expected and ideal solutions), update
+ Large changes                                                                 them, and consequently evaluate the code change and provide
+ Complex changes                    Logic, chained events
+ Potential for substantial issues   Parallel processing                        feedback. In the following section, we provide an overview of
+ Easy to review                     Examples                                   the role of these CRCM components in review comprehension.
+ Not author-written code            Auto-generated files, boilerplate code,        1) Information Sources: Reviewers use many information
+                                    binary files
+ Not production critical            Documentation, tests                       sources during code review. The ones explicitly mentioned
+ Structurally constant changes      Declarative changes, established pat-      in the most reviews are the PR title and description (21
+                                    terns in the code                          reviews out of 25), the issue tracking (11 reviews), and the
+ Small changes                      Renaming of program entities, small
+                                    logic changes, string changes, upgrades,   PR discussion (10 reviews). Reviewers use (1) information
+                                    white space changes, usage of the main     sources linked within the PR itself (e.g., review size, commit
+                                    implemented element                        titles, or CI/CD status), (2) resources to understand the broader
+ Changes with low effect on the     Unnecessary removed files, visual
+ final code quality                 front-end changes, code that will          code context of the PR (e.g., code base, tests, or documen-
+                                    change in the future                       tation), (3) tools to evaluate and test the change (e.g., local
+                                                                               development environment, specialized software tools), and (4)
+                                                                               external sources not directly connected to the software system
+drawback, the reviewers in P2R2 and P5R2 finalized their                       (e.g., language documentation, ChatGPT, blog posts). P7 and
+review by linearly reading the entire change to ensure the                     P9 both used specialized code review applications developed
+change’s consistency. Reviewers employed various units of                      within their companies to test the system behavior after a patch
+chunking (listed in Figure 4). Those reviewing the PR commit-                  is applied and navigate the code base history.
+by-commit stressed the importance of good Git hygiene and                          We classified in which review stage reviewers used different
+team processes to enable an effective breakdown of the re-                     resources. During the context-building phase, which occurs at
+view via commits. Other units, such as functional areas –                      the start of the review, most of the information, especially
+e.g., models, migrations, and tests (P8R2), also served as                     what is presented and linked within the PR, is gathered.
+ways to mentally segment the PR. Tests, in particular, were                    Interestingly, in 20% of the observed sessions, reviewers
+a significant unit of chunking. Reviewers reported different                   needed to refer to other PRs for more context. While PR
+preferences as to when to review tests. P2 and P5 sometimes                    discussion is accessed throughout the review, specific activ-
+like to start with tests as they document the intention of the                 ities rely on different information sources. For instance, in
+author, similarly to test-driven review [45]. In contrast, P8                  the code inspection phase, reviewers use resources that help
+preferred reviewing tests last. Re-reviews of the same PR                      them navigate the code base, evaluate whether the PR was
+present a specific scenario where reviewers use comment-                       implemented correctly, and test the PR. Reviewers tested the
+based chunking (P2R1, P2R2, P5R2) to selectively check                         PR in their local instance of the software system and used
+how were their previous comments addressed by the author.                      other specialized tools. Before making the final verdict, some
+Furthermore, we observed reviewers chunking their review                       reviewers revisited information sources such as CI/CD status
+based on files, issues, etc.                                                   or to-do notes.
+    II.T Testing . During code inspection reviewers not only                       2) Knowledge Base: This component of the model plays
+review tests but also actively test the PR (P6R1, P7R1, P9R1                   a key role in code review comprehension and in directly
+and P9R2). They check the expected and actual output of                        evaluating the PR for potential issues. Letovsky’s model of
+functions in their local terminal, verify whether the system                   code comprehension provides a broad depiction of knowledge
+runs properly in their local environment with the new changes,                 that understanders use: from high-level domain knowledge
+perform hands-on testing of the responsiveness of the imple-                   and programming plans to the knowledge of programming
+mented UI changes, or troubleshoot failed CI/CD checks.                        language semantics. These fundamental aspects of code com-
+ III Decision . Reviewers submit their comments, give overall                  prehension enable reviewers to recognize the ‘correct’ im-
+feedback, and provide a verdict: accept the change, leave                      plementation of the domain concepts, engineering processes,
+comments, or request further changes. They finalize the review                 programming goals, and code formatting, and to set an expec-
+once they have checked all necessary parts of the PR, reached                  tation for code quality [46]. We observed that reviewers also
+a desired level of understanding, provided sufficient feedback,                employ their knowledge gained through their own experience
+know that they have no pending notes, and wrapped up any                       as software developers, acquired through their interactions
+ongoing discussions.                                                           with code and other developers. This knowledge ranges from
+                                                                               technical experience and familiarity with tools to their strate-
+C. RQ3: Role of information sources, knowledge base, and                       gies to solve programming problems, to knowledge of their
+mental models                                                                  colleagues’ expertise, coding and working style, and learning
+  Code review comprehension strategies rely on the infor-                      needs. Reviewers use this knowledge to provide more focused
+mation sources that include the reviewed code change and                       feedback: “If you don’t have specific [coding] rules because
+you are a junior developer I will help you create them” (P6).      the code, code tracing, or observing the system’s behavior with
+   The more familiar a reviewer is with the overall context        the changes applied). This overview aids them in populating
+of the PR, the fewer resources they need to understand the         all three layers of their mental model.
+PR and related artifacts. This helped enhance their ability to        Specification refers to an explicit, complete description
+give constructive feedback for improvements. As mentioned          of the program’s goals [32]. Reviewers need to understand
+in the context-building phase, activities such as issue writing    the review goal, i.e., the problem being solved, the reasons
+or pre-alignment with the team before the review reduce the        for the change, and the scope of addressed cases. As they
+need to build the context from information sources within the      construct the specifications of the mental model of the PR,
+review itself. For instance, P1 quickly navigated code and         they also set explicit expectations for what the implementation
+provided feedback without stopping to understand or think          should include, such as which tasks and code units the PR
+further. When asked about it, they explained that it was due       may contain, thus defining the evaluation criteria for the
+to their role in gatekeeping all code changes in the project       implementation. For instance, in the review P5R1, the reviewer
+and their extensive knowledge of the code base. They further       reads the title of a PR that introduces a counter for lazy loads
+clarified: “I have been reviewing code for a while, but there      on a specific object. The reviewer anticipates that the author
+will be always changes that are completely new. And in those       probably counts lazy loads per request and logs them, which
+cases, it will take me longer. It could take even an hour to go    aligns with the actual implementation found later in the review.
+through the test, match it with what I know, and figure it out”.      The implementation layer of the mental model refers to the
+The knowledge base also contains efficiency knowledge [32],        actions and data structures in the program [32]. Reviewers
+which refers to the explicit knowledge of common issues            need to understand what has changed in the implementation
+that can be directly applied to identify them. This shows          and use code tracing [39] to infer the code’s behavior and
+the fundamental role the knowledge base plays in context           its output. They also need to assess the rationale behind
+building and improving the efficiency and thoroughness of          implementation choices and whether the changes are located
+code reviews.                                                      correctly in the code. Reviewers in the first review iterations
+   Below we report on the mental models reviewers construct        on the PR might focus on ensuring the overall logic is sound
+during their review sessions. The knowledge base may already       before they dive into the implementation details. For instance,
+contain mental models stored in long-term memory that were         P10 explained: “I was thinking if it needs some other mapped
+constructed prior to the review and that can be used during a      table ... but that doesn’t matter that much as it is a technical
+review session: (1) a mental model of the software system—         thing and I am now checking mostly whether it makes sense”.
+keeping knowledge of the processes, standards, expectations,          The annotation layer connects specification goals to the
+and coding patterns in the code base that allows them to           parts of the implementation that fulfill them and which parts
+identify inconsistency with the system architecture, company       of the implementation fulfill certain specifications [32]. As
+and team coding practices; and (2) a mental model of the PR—       suggested, the annotation is done by reviewers by using top-
+reviewers may already have enough context about the PR to          down and bottom-up processes employed in parallel. When
+form a preliminary mental model of it.                             reviewers build their mental model in the context-building
+   The mental models of the system and the PR are constructed      phase of the review, they can already construct all three layers.
+and updated through review iterations and stored in long-term      Many information sources allow them to build specifications
+memory for future recall. Thus, there is an ongoing exchange       and create expectations that are merely confirmed in a top-
+between the mental models in the knowledge base and the            down manner during code inspection. The top-down annota-
+ones resulting from the comprehension process in the review        tion is supported by meaningful traceability across the issue
+session itself.                                                    tracking, PR title, and description, commit messages, file and
+   3) Mental Models: A mental model is the developer’s men-        variable naming to the implementation layer or by tracing
+tal representation of a program or code entity [24]—the PR         review comments to their fixes. The bottom-up annotation
+in code review context. In Letovsky’s representation [32], the     starts by understanding code behavior and then assigning
+mental model is constructed in three layers: the specification,    purpose to it. Reviewers commonly comprehended a piece
+the implementation, and the annotation layer. Here, we present     of the implementation and noted to themselves that it ‘made
+in detail (1) the three layers of the mental model of the PR       sense’(P2, P3, P7, P8, P9, P10).
+and (2) the use of alternative mental models of the PR as             These three layers of the mental model create a complete
+expectations and ideals that can be used for comprehension as      understanding. Therefore, the review process can be stream-
+well as PR evaluation.                                             lined by supplying reviewers early with cues that help them
+Layers of the Mental Model of the PR: An essential part            identify the change’s goals and annotate them to expectations
+of constructing the mental model of the PR is establishing         on how these goals are implemented. The expected version of
+the modification and increment to the software system—what         the PR might, however, prove to be different from the actual
+parts of the system were changed and the size and complexity       PR implementation and specification during the review.
+of these changes. Reviewers achieve this by using the available    The Expected and the Ideal: Reviewers form alternatives,
+information sources (Section IV-C1) and by understanding the       variants, and extensions of their mental model of the PR in
+code itself (e.g., by comparing the removed and added parts of     the form of expected and ideal solutions.
+   As mentioned in Sections IV-C2 and IV-C3, reviewers                 Code review comprehension is scoped. According to
+tend to form expectations about the PR, which can reach                Letovsky [32], full understanding is achieved when all three
+the details of a partially formed mental model. We call this           layers of a mental model are fully developed. In practice,
+mental model the expected mental model. Such a pre-existing            full understanding can be reached over the entire PR lifetime,
+model only needs to be confirmed when reviewing the PR.                rather than in a single review session. As predicted by Piaget’s
+These expectations can stem from various sources, such as              theory of cognitive development [38], we observed that devel-
+previous review rounds and entered comments, pre-alignment             opers scope their reviewing and understanding. Full compre-
+on solutions with the author, or general software engineering          hension may not always be the goal, especially when reviewers
+practices. Adhering to the expectations is desirable in the eyes       perform focused, partial, or shallow reviews. Scoping down
+of the reviewer (P8: “This is pretty much what I expected              the review is a commonly used strategy to deal with review
+to see. So I’ll just approve it”.) and makes the review more           complexity—one of the main challenges reviewers face [29].
+efficient (P10: “We already pre-agreed on solutions. So ... it’s       Code review comprehension is incremental, iterative, and
+more like: Does this match my expectation of what would                interactive. Reviewers already have mental models of the
+happen or not?”)                                                       software system and may already have one for the PR itself
+   An alternative set of models are the ideal mental models,           before starting their review sessions. This knowledge allows
+representing the optimal, corrected, or improved version of the        them to be efficient when reviewing the PR. Reviewers’ mental
+PR. P7 remarked: “Now I’m wondering what the ideal solution            model of the PR develops over time through review iterations
+is...”. These models are supported by the reviewer’s program-          and is used to update their mental model of the software
+ming experience, personal preferences, and knowledge of good           system. Importantly, reviewers interact with the author and
+engineering practices. Adherence to this imagined optimum is           other reviewers to reach the desired level of understanding.
+valued but not necessarily followed. P10 puts it: “In the end I
+                                                                       Reviewing is strategic. Ad hoc reviewing is considered unsys-
+don’t necessarily agree that this is a better solution, but it still
+                                                                       tematic [12, 48]. However, we have observed that reviewers
+somehow solves the problem and it doesn’t add a technical
+                                                                       employ opportunistic strategies, similar to code comprehen-
+debt or anything like that”.
+                                                                       sion, to reach an understanding of the PR and review the
+   Both the expected and the ideal mental models offer an
+                                                                       change. Reviewers combine several activities in a modular way
+alternative or extension to the mental model of the actual PR.
+                                                                       to form their reviewing strategy. First, they build the context.
+They may not always be formed or used, but when they are,
+                                                                       Then, they combine code reading, discussion management, and
+they can be a vital tool to perform the review. Overall, mental
+                                                                       testing to comprehend and evaluate the change. The scoping
+models help reviewers set their expectations and evaluate
+                                                                       and the modular design of their reviewing strategy allow them
+changed codes against them, thus streamlining the review and
+                                                                       to creatively deal with change complexity.
+identifying areas of potential improvements.
+                                                                       Ideals and expectations. Reviewers approach the review with
+                        V. D ISCUSSION                                 ideas on ideal and optimal solutions and other expectations
+  In this study, we observed 25 review sessions to analyze             towards the PR, informed by common engineering solutions,
+reviewing strategies through the lens of code comprehension.           good practices, and their knowledge of the PR as well as
+Extending Letovsky’s model of code comprehension [32], we              the software system. Using the self-discrepancy theory [3],
+developed the Code Review Comprehension Model, detailing               we could interpret the data effectively, identifying developers
+how its components – the information sources, knowledge                alternative mental models of the ideal and expected code
+base, and mental models interact and shape code review.                changes. Meeting these ideals and expectations is seen as
+                                                                       correct and streamlines the review by aiding reviewers to effi-
+A. Findings                                                            ciently interpret the code, give feedback, suggest alternatives,
+Code comprehension is central to code review. Reviewers’               and identify issues.
+ability to perform code review is dependent on their ability
+                                                                       B. Implications and Recommendations
+to understand the code change [52, 2, 19, 33]. Letovsky’s
+model [32] offers a valuable framework to explain how com-                Based on these findings, we discuss recommendations on
+prehension shapes review, because reaching an understanding            how to support reviewers in effective code review comprehen-
+is among the reviewers’ criteria to finalize their review and ac-      sion and change evaluation.
+cept changes and drives them to seek information sources and           For Code Review Tools: Our results provide insights for
+choose effective reviewing strategies. Using the constructivist        designing code review tools that better align with reviewers’
+perspective on code comprehension [40], we described how               natural strategies. First, reviewers scope their review sessions
+reviewers update their knowledge of programming practices              and prioritize their activities. Tools can support reviewers in
+and the software system through reviewing code. By viewing             viewing only certain aspects and parts of the PR, as well as
+code comprehension as a tool to perform software develop-              provide ways to let reviewers communicate the scope and main
+ment tasks, such as in the work of Von Mayrhauser and Vans,            outcomes of the performed review.
+we also described how the comprehension process contributes               The main strategies for code reading while dealing with
+to evaluating the code changes and providing feedback.                 review complexity were chunking and difficulty-based reading.
+This finding is an opportunity to investigate how tools can            Reviewers’ activity has been previously approached with
+provide support to identify and visually separate meaningful        methods such as experiments [22, 21, 18], interviews [45],
+code chunks, indicate the change distribution by signifying the     eye-tracking [43], and mining software repositories [9, 36, 21].
+core of the change or more complex passages, and support Git        However, these methods have limitations in capturing crit-
+hygiene. Reviewers often switched contexts to navigate the          ical factors such as context, priorities, interactions among
+code base or test the code change. Both these activities were       reviewers, and their knowledge of the software system being
+substituted in two cases (P7, P9) by an in-house reviewing          reviewed. Usually, eye-tracking studies and experiments use
+application. This behavior shows there is a need to integrate       artificial code changes of a manageable size where linear
+code base navigation, testing, and reviewing in one environ-        reviewing strategies were mostly observed [43, 21]. However,
+ment together with information sources, such as issue trackers      we have observed that complex reviews in real-world context
+or online/documentation search.                                     require strategies to manage the complexity. These strategies
+   Reviewers used review comments as an information source          include narrowing the scope of the review or concluding it
+throughout the review, while remaining wary that comments           when the reviewers feel their comments no longer provide
+could be a source of potential bias. Tools should be designed       significant value, or when they run out of time or energy to
+to allow reviewers to be able to toggle the viewing of existing     continue the review. This behavior may explain why Fregnan
+review comments. Furthermore, reviewers created many men-           et al. [21] observed a linear decrease of the number of
+tal models of the code change, their expectations, and ideals.      comments in each subsequent file of the PR or contextualize
+Tools can support developers to collaboratively construct and       the test-driven review among other reviewing practices [45].
+cross-reference multiple mental models [47].                        For Educators: Students benefit from being taught (1) ex-
+   Future research can be designed and carried out to inves-        plicit programming strategies and (2) to reflect on their prac-
+tigate whether and how AI and LLMs have the potential to            tices [28]. Our findings can aid students to reflect on their
+support many of the aforementioned improvements, e.g., by           reviewing strategies. Moreover, students can be instructed on
+suggesting effective reviewing strategies, annotating review        potential reviewing strategies, decomposing PRs in more re-
+comments to related fixes in the implementation, or generating      viewable units, and finding appropriate information resources.
+missing context and documentation [42].                             Students can learn to leverage the experience and expertise
+For Practitioners: We observed real-world code reviews              of other developers and create rich expectations for change
+performed by experienced reviewers recommended by others            evaluation through building rich context and documentation of
+as great reviewers—their practices can be used to propose           PRs and creating alignment with their teammates. Educators
+effective reviewing strategies.                                     should emphasize the importance of a strong foundation in
+   For dealing with review complexity, our participants mainly      programming patterns to enhance the effectiveness and effi-
+used three strategies: (1) narrowing down the scope of the          ciency of code reviews. This is particularly crucial as the use of
+review, (2) using iterations to reach full understanding one        AI-generated code becomes more prevalent, requiring students
+step at a time, and (3) adjusting the reading approach (e.g.,       to develop the skills needed to review such code effectively.
+using chunking). The effectiveness of the first strategy is
+reinforced by previous research, which found that focused                                 VI. C ONCLUSION
+reviews enhance reviewers’ ability to detect defects [9]. To
+better support the third strategy, good Git hygiene is helpful;        In the study presented in this paper, by observing expert
+and, if there is a clear core of the change, it can be used as a    reviewers—recommended as great reviewers by others—while
+starting point for reading.                                         reviewing real-world code changes and interviewing them
+   For improving reviewing efficiency, our participants relied      afterwards, we could uncover, for the first time, the oppor-
+on a strong knowledge base, by knowing programming prac-            tunistic strategies they use to form an understanding of the
+tices, the codebase, and the team. Additionally, they also relied   code change and to evaluate it. Based on these strategies,
+on the colleagues involved in the review process to com-            we developed a Code Review Comprehension Model and put
+plement their expertise and understanding. Finally, creating        forward recommendations on how to improve code review
+expectations about the change under review and having an            tools as well as on topics to conduct further research.
+alignment with the change author prior to the review session
+was used to improve reviewing effectiveness.
+                                                                                         ACKNOWLEDGMENT
+For Researchers: Code comprehension is a stepping stone
+in performing software development tasks [50]. Letovsky’s              Alberto Bacchelli and Pooja Rani gratefully acknowl-
+model of code comprehension has proved to be good basis             edge the support of the Swiss National Science Foun-
+to start describing how code review is performed in a real          dation through the SNF Projects 200021 197227 and
+scenario, including the diversity of reviewers’ strategies and      200021M 205146. Pavlı́na Wurzel Gonçalves gratefully ac-
+information sources. Using this model can be applied to other       knowledges the support of CHOOSE, the Swiss Group
+software development tasks to formulate recommendations             for Original and Outside-the-box Software Engineering
+towards more human-centric tool design.                             (https://choose.swissinformatics.org/).
+                        R EFERENCES                                   (3):124–130, 2000.
+                                                                 [16] Nicole Davila and Ingrid Nunes. A systematic literature
+ [1] Maurı́cio Aniche, Christoph Treude, and Andy Zaidman.            review and taxonomy of modern code review. Journal of
+     How developers engineer test cases: An observational             Systems and Software, 177:110951, 2021.
+     study. IEEE Transactions on Software Engineering, 48        [17] Gordon Diaper. The hawthorne effect: A fresh examina-
+     (12):4925–4946, 2021.                                            tion. Educational studies, 16(3):261–267, 1990.
+ [2] Alberto Bacchelli and Christian Bird. Expectations, out-    [18] Alastair Dunsmore, Marc Roper, and Murray Wood. The
+     comes, and challenges of modern code review. In 2013             role of comprehension in software inspection. Journal of
+     35th International Conference on Software Engineering            Systems and Software, 52(2-3):121–129, 2000.
+     (ICSE), pages 712–721. IEEE, 2013.                          [19] Michael E Fagan. Design and code inspections to reduce
+ [3] Waclaw Bak. Self-standards and self-discrepancies. a             errors in program development. IBM Systems Journal, 38
+     structural model of self-knowledge. Current Psychology,          (2.3):258–287, 1999.
+     33(2):155–173, 2014.                                        [20] Benjamin Floyd, Tyler Santander, and Westley Weimer.
+ [4] Sebastian Baltes and Paul Ralph. Sampling in software            Decoding the representation of code in the brain: An
+     engineering research: A critical review and guidelines.          fMRI study of code review and expertise. In 2017
+     Empirical Software Engineering, 27(4):94, 2022.                  IEEE/ACM 39th International Conference on Software
+ [5] Tobias Baum, Olga Liskin, Kai Niklas, and Kurt Schnei-           Engineering (ICSE), pages 175–186. IEEE, 2017.
+     der. Factors influencing code review processes in in-       [21] Enrico Fregnan, Larissa Braz, Marco D’Ambros, Gül
+     dustry. In Proceedings of the 2016 24th acm sigsoft              Çalıklı, and Alberto Bacchelli. First come first served:
+     international symposium on foundations of software en-           the impact of file position on code review. In Proceedings
+     gineering, pages 85–96, 2016.                                    of the 30th ACM Joint European Software Engineering
+ [6] Tobias Baum, Kurt Schneider, and Alberto Bacchelli.              Conference and Symposium on the Foundations of Soft-
+     On the optimal order of reading source code changes              ware Engineering, pages 483–494, 2022.
+     for review. In 2017 IEEE international conference           [22] Pavlı́na Wurzel Gonçalves, Enrico Fregnan, Tobias
+     on software maintenance and evolution (ICSME), pages             Baum, Kurt Schneider, and Alberto Bacchelli. Do
+     329–340. IEEE, 2017.                                             explicit review strategies improve code review perfor-
+ [7] Deborah A Boehm-Davis, Robert W Holt, and Alan C                 mance? towards understanding the role of cognitive load.
+     Schultz. The role of program structure in software               Empirical Software Engineering, 27(4):99, 2022.
+     maintenance. International Journal of Man-Machine           [23] Georgios Gousios, Martin Pinzger, and Arie van Deursen.
+     Studies, 36(1):21–63, 1992.                                      An exploratory study of the pull-based software devel-
+ [8] Virginia Braun and Victoria Clarke. Using thematic anal-         opment model. In Proceedings of the 36th international
+     ysis in psychology. Qualitative research in psychology,          conference on software engineering, pages 345–355,
+     3(2):77–101, 2006.                                               2014.
+ [9] Larissa Braz, Christian Aeberhard, Gül Çalikli, and Al-   [24] Ava Heinonen, Bettina Lehtelä, Arto Hellas, and Fabian
+     berto Bacchelli. Less is more: supporting developers in          Fagerholm. Synthesizing research on programmers’ men-
+     vulnerability detection during code review. In Proceed-          tal models of programs, tasks and concepts—a systematic
+     ings of the 44th International Conference on Software            literature review. Information and Software Technology,
+     Engineering, pages 1317–1329, 2022.                              page 107300, 2023.
+[10] Ruven Brooks. Towards a theory of the cognitive pro-        [25] Monique M Hennink, Bonnie N Kaiser, and Vincent C
+     cesses in computer programming. International Journal            Marconi. Code saturation versus meaning saturation:
+     of Man-Machine Studies, 9(6):737–751, 1977.                      how many interviews are enough? Qualitative health
+[11] Mauro Cherubini, Gina Venolia, Rob DeLine, and Amy J             research, 27(4):591–608, 2017.
+     Ko. Let’s go to the whiteboard: how and why software        [26] Nick Hodges.         Six rules for good git hygiene,
+     developers use drawings. In Proceedings of the SIGCHI            2019.             URL       https://betterprogramming.pub/
+     conference on Human factors in computing systems,                six-rules-for-good-git-hygiene-5006cf9e9e2.
+     pages 557–566, 2007.                                        [27] Robin Jeffries. A comparison of the debugging behavior
+[12] Marcus Ciolkowski, Oliver Laitenberger, and Stefan               of expert and novice programmers. In Proceedings of
+     Biffl. Software reviews, the state of the practice. IEEE         AERA annual meeting, volume 10, pages 1–7, 1982.
+     software, 20(6):46–51, 2003.                                [28] Amy J Ko, Thomas D LaToza, Stephen Hull, Ellen A Ko,
+[13] Thomas A Corbi. Program understanding: Challenge for             William Kwok, Jane Quichocho, Harshitha Akkaraju, and
+     the 1990s. IBM Systems Journal, 28(2):294–306, 1989.             Rishin Pandit. Teaching explicit programming strategies
+[14] John W Creswell. Educational research: Planning,                 to adolescents. In Proceedings of the 50th ACM technical
+     conducting, and evaluating quantitative and qualitative          symposium on computer science education, pages 469–
+     research. pearson, 2015.                                         475, 2019.
+[15] John W Creswell and Dana L Miller. Determining              [29] Oleksii Kononenko, Olga Baysal, and Michael W God-
+     validity in qualitative inquiry. Theory into practice, 39        frey. Code review quality: How developers see it. In
+     Proceedings of the 38th international conference on              2012.
+     software engineering, pages 1028–1038, 2016.                [44] Elliot Soloway and Kate Ehrlich. Empirical studies of
+[30] Thomas D LaToza, Maryam Arab, Dastyni Loksa, and                 programming knowledge. IEEE Transactions on software
+     Amy J Ko. Explicit programming strategies. Empirical             engineering, (5):595–609, 1984.
+     Software Engineering, 25(4):2416–2449, 2020.                [45] Davide Spadini, Fabio Palomba, Tobias Baum, Stefan
+[31] Joseph Lawrance, Christopher Bogart, Margaret Burnett,           Hanenberg, Magiel Bruntink, and Alberto Bacchelli.
+     Rachel Bellamy, Kyle Rector, and Scott D Fleming. How            Test-driven code review: an empirical study. In 2019
+     programmers debug, revisited: An information foraging            IEEE/ACM 41st International Conference on Software
+     theory perspective. IEEE Transactions on Software                Engineering (ICSE), pages 1061–1072. IEEE, 2019.
+     Engineering, 39(2):197–215, 2010.                           [46] Diomidis Spinellis, Panos Louridas, Maria Kechagia, and
+[32] Stanley Letovsky. Cognitive processes in program com-            Tushar Sharma. Broken windows: Exploring the applica-
+     prehension. Journal of Systems and software, 7(4):325–           bility of a controversial theory on code quality. In Pro-
+     339, 1987.                                                       ceedings of 40th International Conference on Software
+[33] Laura MacLeod, Michaela Greiler, Margaret-Anne                   Maintenance and Evolution, ICSME ’24, New York, NY,
+     Storey, Christian Bird, and Jacek Czerwonka. Code                USA, 2024. IEEE. doi: 10.1145/3643665.3648048.
+     reviewing in the trenches: Challenges and best practices.   [47] M-AD Storey, F David Fracchia, and Hausi A Müller.
+     IEEE Software, 35(4):34–42, 2017.                                Cognitive design elements to support the construction of
+[34] Justin Middleton and Kathryn T Stolee. Understanding             a mental model during software exploration. Journal of
+     similar code through comparative comprehension. In               Systems and Software, 44(3):171–185, 1999.
+     2022 IEEE Symposium on Visual Languages and Human-          [48] Hidetake Uwano, Masahide Nakamura, Akito Monden,
+     Centric Computing (VL/HCC), pages 1–11. IEEE, 2022.              and Ken-ichi Matsumoto. Analyzing individual per-
+[35] Andy Oram and Greg Wilson. Making software: What                 formance of source code review using reviewers’ eye
+     really works, and why we believe it. ” O’Reilly Media,           movement. In Proceedings of the 2006 symposium on
+     Inc.”, 2010.                                                     Eye tracking research & applications, pages 133–140,
+[36] Luca Pascarella, Davide Spadini, Fabio Palomba, Magiel           2006.
+     Bruntink, and Alberto Bacchelli. Information needs in       [49] Anneliese Von Mayrhauser and A Marie Vans. From
+     contemporary code review. Proceedings of the ACM on              program comprehension to tool requirements for an in-
+     Human-Computer Interaction, 2(CSCW):1–27, 2018.                  dustrial environment. In [1993] IEEE Second Workshop
+[37] Nancy Pennington. Stimulus structures and mental                 on Program Comprehension, pages 78–86. IEEE, 1993.
+     representations in expert comprehension of computer         [50] Anneliese von Mayrhauser and A. Marie Vans. Program
+     programs. Cognitive psychology, 19(3):295–341, 1987.             comprehension during software maintenance and evolu-
+[38] Jean Piaget. Cognitive development in children: Piaget           tion. Computer, 28(8):44–55, aug 1995. ISSN 0018-
+     development and learning. Journal, of Research in                9162. doi: 10.1109/2.402076. URL https://doi.org/10.
+     Science Teaching, 2:176–186, 1964.                               1109/2.402076.
+[39] Ruixiang Qi and Davide Fossati. Unlimited trace tu-         [51] T Winograd and DD Woods. The challenge of human-
+     tor: Learning code tracing with automatically generated          centered design. Human-centered systems: information,
+     programs. In Proceedings of the 51st ACM Technical               interactivity, and intelligence, 1997.
+     Symposium on Computer Science Education, pages 427–         [52] Pavlı́na Wurzel Gonçalves, Gül Calikli, Alexander Sere-
+     433, 2020.                                                       brenik, and Alberto Bacchelli. Competencies for code
+[40] Václav Rajlich and Norman Wilde. The role of concepts           review. Proceedings of the ACM on Human-Computer
+     in program comprehension. In Proceedings 10th Inter-             Interaction, 7(CSCW1):1–33, 2023.
+     national Workshop on Program Comprehension, pages           [53] Pavlina Wurzel Goncalves, Pooja Rani, Diomidis Spinel-
+     271–278. IEEE, 2002.                                             lis, Margareth Storey-Anne, and Alberto Bacchelli.
+[41] Caitlin Sadowski, Emma Söderberg, Luke Church,                  Replication package for ‘code review comprehension:
+     Michal Sipko, and Alberto Bacchelli. Modern code                 Reviewing strategies seen through code comprehen-
+     review: a case study at Google. In Proceedings of the            sion theories’, 2025. URL https://zenodo.org/records/
+     40th international conference on software engineering:           14748996.
+     Software engineering in practice, pages 181–190, 2018.
+[42] Md Nazmus Sakib, Md Athikul Islam, and Md Mashrur
+     Arifin. Automatic pull request description generation
+     using llms: A T5 model approach. arXiv preprint
+     arXiv:2408.00921, 2024.
+[43] Bonita Sharif, Michael Falcone, and Jonathan I Maletic.
+     An eye-tracking study on the role of scan time in finding
+     source code defects. In Proceedings of the symposium on
+     eye tracking research and applications, pages 381–384,
+
