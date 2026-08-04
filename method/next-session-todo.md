@@ -6,10 +6,13 @@ The review remains a targeted structured review. A dated supplementary identific
 
 ## Resume in this order
 
-1. **Integrate the completed arXiv full-text screening.**
-   - `data/search/arxiv-full-text-screening-reviewed.csv` now contains 140 reviewed records: 132 included and 8 excluded; no records remain pending.
+1. **Reconcile the completed arXiv full-text screening with the baseline corpus.**
+   - `data/search/arxiv-full-text-screening-reviewed.csv` contains 140 reviewed records: 132 included and 8 excluded; no records remain pending.
+   - Match included records against P01–P71 and external candidates by arXiv ID, DOI, normalized title, and version/companion relationship.
+   - Assign new project IDs only after duplicate resolution; do not count the 132 screening inclusions as final studies yet.
    - Preserve the recorded eligibility criterion, evidence location, rationale, tier, reviewer, and date.
-   - Keep direct generated-review-comment and review-agent studies `core`; retain workflow, security, reviewer-burden, evaluator-validity, and context studies only as `supporting` when they satisfy the protocol.
+   - The initial exact-ID/title pass found 1 direct match to an existing paper (P05) and 131 unmatched candidates: 52 `core` and 79 `supporting`. Review the 52 core candidates first; this ledger is a triage aid, not a final duplicate decision.
+   - The 52-record core queue is materialized in `data/search/core-reconciliation-queue.csv` with provisional IDs P72–P123. Two records (P108/EXT-0028 and P116/EXT-0030) are now flagged as external duplicate/companion candidates; 50 remain for independent version and metadata verification. These IDs must not be cited or treated as final until verification is complete.
 
 2. **Resolve the supplied external-source candidates.**
    - `data/search/external-candidate-screening.csv` contains 30 identifier-level records: 9 already in the corpus, 8 already in the arXiv queue, and 13 still requiring independent title/abstract verification.

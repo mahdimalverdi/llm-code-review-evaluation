@@ -18,6 +18,12 @@ Future reproducible searches must be recorded row by row in `method/search-run-l
 | Full-PDF extraction complete | 71 | All local PDFs were available for canonical reconstruction |
 | Final included set | Not yet frozen | Freeze core/supporting/peripheral tiers before reporting study counts by RQ |
 
+## Supplementary reproducible identification stage
+
+The dated arXiv amendment is tracked separately from the baseline P01–P71 corpus. It produced 293 unique candidates after deduplication; 140 reached full-text assessment, with 132 included for consideration and 8 excluded. These 132 records are screening outcomes, not automatic additions to the final evidence set. Duplicate/companion resolution, project-ID assignment, extraction, quality assessment, and tier reconciliation remain pending.
+
+The supplementary external export contains 30 candidate records: 18 duplicates, 3 full-text verified inclusions, 8 provisional metadata-only inclusions, and 1 exclusion. Provisional records are not counted in the final included set.
+
 ## Required fields for each record
 
 Each record must have: project ID, citation key, source PDF, screening decision, inclusion group, exact criterion, RQ1–RQ6 evidence, quality score, exclusion/limitation rationale, duplicate status, and unresolved verification items.

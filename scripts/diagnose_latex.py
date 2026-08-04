@@ -16,6 +16,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 BUILD_DIR = REPO_ROOT / "build"
 LOG_FILES = [BUILD_DIR / "paper.log", BUILD_DIR / "paper.blg"]
+AUX_FILE = BUILD_DIR / "paper.aux"
 
 PATTERNS = {
     "undefined_citations": [
@@ -44,6 +45,16 @@ def main() -> None:
     combined = "\n".join(path.read_text(encoding="utf-8", errors="replace") for path in existing_logs)
     citations = collect_matches(combined, PATTERNS["undefined_citations"])
     references = collect_matches(combined, PATTERNS["undefined_references"])
+
+    # The first LaTeX pass necessarily reports citations/references as undefined
+    # before BibTeX and later passes resolve them. Filter those transient warnings
+    # against the final .aux file so the diagnostic reflects the completed build.
+    if AUX_FILE.exists():
+        aux = AUX_FILE.read_text(encoding="utf-8", errors="replace")
+        resolved_citations = set(re.findall(r"^\\bibcite\{([^}]+)\}", aux, re.MULTILINE))
+        resolved_references = set(re.findall(r"^\\newlabel\{([^}]+)\}", aux, re.MULTILINE))
+        citations = [key for key in citations if key not in resolved_citations]
+        references = [key for key in references if key not in resolved_references]
 
     if citations:
         print("Undefined citation keys:")

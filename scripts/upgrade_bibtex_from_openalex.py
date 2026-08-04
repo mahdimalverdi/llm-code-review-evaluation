@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 
+import csv
 import difflib
 import json
+import os
 import re
 import shutil
 import subprocess
 import time
 import urllib.parse
+import urllib.error
 import urllib.request
 from dataclasses import dataclass
 from datetime import datetime
@@ -19,7 +22,8 @@ ARXIV_DOI_PREFIX = "10.48550/arxiv."
 
 MIN_SCORE = 0.86
 PER_PAGE = 10
-REQUEST_SLEEP_SECONDS = 0.15
+REQUEST_SLEEP_SECONDS = 1.0
+MAX_REQUEST_RETRIES = 5
 
 REPORT_PATH = "build/openalex_bib_upgrade_report.tsv"
 
@@ -291,13 +295,34 @@ def serialize_entry(entry: BibEntry) -> str:
 
 
 def request_json(url: str) -> dict[str, Any]:
-    request = urllib.request.Request(
-        url,
-        headers={"User-Agent": "openalex-bibtex-upgrader/1.0"},
-    )
-
-    with urllib.request.urlopen(request, timeout=60) as response:
-        return json.loads(response.read().decode("utf-8"))
+    for attempt in range(1, MAX_REQUEST_RETRIES + 1):
+        started = time.monotonic()
+        print(f"[openalex] request attempt {attempt}/{MAX_REQUEST_RETRIES}: {url}", flush=True)
+        headers = {"User-Agent": "openalex-bibtex-upgrader/1.0"}
+        mailto = os.environ.get("OPENALEX_MAILTO", "").strip()
+        if mailto:
+            headers["User-Agent"] += f" (mailto:{mailto})"
+        request = urllib.request.Request(url, headers=headers)
+        try:
+            with urllib.request.urlopen(request, timeout=60) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+            elapsed = time.monotonic() - started
+            print(f"[openalex] response in {elapsed:.1f}s", flush=True)
+            return payload
+        except urllib.error.HTTPError as error:
+            elapsed = time.monotonic() - started
+            if error.code != 429 or attempt == MAX_REQUEST_RETRIES:
+                print(f"[openalex] error after {elapsed:.1f}s: HTTP {error.code}", flush=True)
+                raise
+            retry_after = error.headers.get("Retry-After")
+            delay = float(retry_after) if retry_after and retry_after.isdigit() else 2**attempt
+            print(f"[openalex] HTTP 429 after {elapsed:.1f}s; retrying in {delay:.1f}s", flush=True)
+            time.sleep(delay)
+        except Exception as error:
+            elapsed = time.monotonic() - started
+            print(f"[openalex] error after {elapsed:.1f}s: {error}", flush=True)
+            raise
+    raise RuntimeError("OpenAlex request retries exhausted")
 
 
 def openalex_search(title: str) -> list[dict[str, Any]]:
@@ -483,6 +508,8 @@ def best_candidate(entry: BibEntry) -> tuple[dict[str, Any] | None, float, str]:
     except Exception as error:
         return None, 0.0, f"openalex error: {error}"
 
+    print(f"[openalex] {entry.key}: {len(candidates)} candidates", flush=True)
+
     best_work = None
     best_score = 0.0
     best_reason = "no candidate"
@@ -596,6 +623,7 @@ def main() -> int:
     content = bib_path.read_text(encoding="utf-8")
     entries = parse_bib_entries(content)
 
+    report_path = root / REPORT_PATH
     report_rows = [
         [
             "key",
@@ -610,13 +638,27 @@ def main() -> int:
             "reason",
         ]
     ]
+    completed_keys: set[str] = set()
+    if report_path.exists():
+        with report_path.open(encoding="utf-8", newline="") as handle:
+            previous_rows = list(csv.DictReader(handle, delimiter="\t"))
+        for previous in previous_rows:
+            if previous.get("action") == "upgraded":
+                completed_keys.add(previous.get("key", ""))
+        report_rows.extend(
+            [[row.get(column, "") for column in report_rows[0]] for row in previous_rows]
+        )
+        print(f"[openalex] loaded checkpoint: {len(completed_keys)} upgraded entries will be skipped", flush=True)
 
     changed_entries: list[BibEntry] = []
 
-    for entry in entries:
-        if not entry_is_arxivish(entry):
+    arxiv_entries = [entry for entry in entries if entry_is_arxivish(entry)]
+    print(f"[openalex] parsed {len(entries)} entries; processing {len(arxiv_entries)} arXiv-like entries", flush=True)
+    for index, entry in enumerate(arxiv_entries, start=1):
+        if entry.key in completed_keys:
+            print(f"[openalex] [{index}/{len(arxiv_entries)}] {entry.key}: checkpoint skip", flush=True)
             continue
-
+        print(f"[openalex] [{index}/{len(arxiv_entries)}] {entry.key}: {entry.fields.get('title', '')}", flush=True)
         old_doi = entry.fields.get("doi", "")
         old_url = entry.fields.get("url", "")
         old_venue = (
@@ -626,6 +668,7 @@ def main() -> int:
         )
 
         candidate, score, reason = best_candidate(entry)
+        print(f"[openalex] {entry.key}: score={score:.3f}; {reason}", flush=True)
         time.sleep(REQUEST_SLEEP_SECONDS)
 
         if candidate is None:
@@ -643,6 +686,7 @@ def main() -> int:
                     reason,
                 ]
             )
+            write_report(root, report_rows)
             continue
 
         new_doi = clean_doi(candidate.get("doi") or "")
@@ -664,6 +708,7 @@ def main() -> int:
                     reason,
                 ]
             )
+            write_report(root, report_rows)
             continue
 
         apply_candidate(entry, candidate)
@@ -685,6 +730,8 @@ def main() -> int:
                 reason,
             ]
         )
+        completed_keys.add(entry.key)
+        write_report(root, report_rows)
 
     report_path = write_report(root, report_rows)
 

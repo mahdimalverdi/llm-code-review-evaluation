@@ -84,6 +84,8 @@ def run_command(command: list[str]) -> subprocess.CompletedProcess[str]:
 
 
 def fetch_bibtex_from_doi(doi: str) -> str | None:
+    started = time.monotonic()
+    print(f"[doi] request {doi}", flush=True)
     result = run_command([
         "curl",
         "-fsSL",
@@ -92,13 +94,17 @@ def fetch_bibtex_from_doi(doi: str) -> str | None:
         f"https://doi.org/{doi}",
     ])
     if result.returncode != 0:
-        print(f"SKIP {doi}: curl failed: {result.stderr.strip()}")
+        elapsed = time.monotonic() - started
+        print(f"[doi] skip {doi} after {elapsed:.1f}s: curl failed: {result.stderr.strip()}", flush=True)
         return None
 
     bibtex = result.stdout.strip()
     if not bibtex.startswith("@"):
-        print(f"SKIP {doi}: DOI response is not BibTeX")
+        elapsed = time.monotonic() - started
+        print(f"[doi] skip {doi} after {elapsed:.1f}s: response is not BibTeX", flush=True)
         return None
+    elapsed = time.monotonic() - started
+    print(f"[doi] response in {elapsed:.1f}s", flush=True)
     return bibtex
 
 
@@ -137,9 +143,12 @@ def ensure_url(entry: str, doi: str) -> str:
 def refresh_entries(text: str, request_delay_seconds: float) -> tuple[str, int, int]:
     updated_count = 0
     skipped_arxiv_count = 0
+    doi_count = len(DOI_PATTERN.findall(text))
+    processed_count = 0
+    print(f"[doi] discovered {doi_count} DOI fields", flush=True)
 
     def update_entry(match: re.Match[str]) -> str:
-        nonlocal updated_count, skipped_arxiv_count
+        nonlocal updated_count, skipped_arxiv_count, processed_count
 
         prefix = match.group("prefix") or ""
         original_entry = match.group("entry")
@@ -152,7 +161,11 @@ def refresh_entries(text: str, request_delay_seconds: float) -> tuple[str, int, 
         doi = normalize_doi(doi_match.group(1))
         if should_skip_doi(doi):
             skipped_arxiv_count += 1
+            print(f"[doi] skip arXiv DOI {doi}", flush=True)
             return match.group(0)
+
+        processed_count += 1
+        print(f"[doi] processing {processed_count}/{max(1, doi_count - skipped_arxiv_count)}: {original_key}", flush=True)
 
         note_match = NOTE_PATTERN.search(original_entry)
         original_note = note_match.group(1).strip() if note_match else None
@@ -166,7 +179,7 @@ def refresh_entries(text: str, request_delay_seconds: float) -> tuple[str, int, 
         updated = ensure_project_note(updated, original_note)
 
         updated_count += 1
-        print(f"UPDATED {original_key} from DOI {doi}")
+        print(f"[doi] updated {original_key} from DOI {doi}", flush=True)
         time.sleep(request_delay_seconds)
         return prefix + updated
 
@@ -209,7 +222,7 @@ def main() -> None:
 
     backup_file = bib_file.with_suffix(bib_file.suffix + ".bak")
     shutil.copy2(bib_file, backup_file)
-    print(f"Wrote backup: {backup_file.relative_to(REPO_ROOT)}")
+    print(f"[doi] wrote backup: {backup_file.relative_to(REPO_ROOT)}", flush=True)
 
     text = bib_file.read_text(encoding="utf-8")
     updated_text, updated_count, skipped_arxiv_count = refresh_entries(
@@ -218,8 +231,8 @@ def main() -> None:
     )
     bib_file.write_text(updated_text, encoding="utf-8")
 
-    print(f"Updated DOI-backed entries: {updated_count}")
-    print(f"Skipped arXiv DOI entries: {skipped_arxiv_count}")
+    print(f"[doi] updated DOI-backed entries: {updated_count}", flush=True)
+    print(f"[doi] skipped arXiv DOI entries: {skipped_arxiv_count}", flush=True)
 
     if args.no_tidy:
         print("Skipped bibtex-tidy because --no-tidy was passed")

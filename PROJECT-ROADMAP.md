@@ -100,6 +100,8 @@ Current focus:
 - [x] Triage the 30 externally supplied candidate records.
 - [x] Validate and log three newly acquired external PDFs.
 - [ ] Reconcile all arXiv inclusions with P01–P71, external candidates, and other preprint/publisher versions.
+- [x] Generate an initial arXiv-to-corpus reconciliation ledger using exact arXiv-ID and title-similarity matching.
+- [x] Generate a provisional queue for the 52 unmatched core candidates with local arXiv metadata.
 - [ ] Resolve the eight provisional external inclusions through full-text assessment or a documented access limitation.
 - [ ] Resolve the metadata conflict recorded for EXT-0012.
 - [ ] Update `method/next-session-todo.md` and search documentation whose counts predate completed screening.
