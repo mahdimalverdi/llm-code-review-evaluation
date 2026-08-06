@@ -4,8 +4,8 @@
 Usage:
     python3 scripts/diagnose_latex.py
 
-The script reads build/paper.log and build/paper.blg if they exist and prints the
-exact citation or reference keys that LaTeX/BibTeX could not resolve.
+The script reads the LaTeX and bibliography logs and prints the exact citation
+or reference keys that could not be resolved.
 """
 
 from __future__ import annotations
@@ -15,8 +15,12 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 BUILD_DIR = REPO_ROOT / "build"
-LOG_FILES = [BUILD_DIR / "paper.log", BUILD_DIR / "paper.blg"]
-AUX_FILE = BUILD_DIR / "paper.aux"
+LOG_FILES = [
+    BUILD_DIR / "paper.log",
+    BUILD_DIR / "paper.blg",
+    BUILD_DIR / "primary.blg",
+]
+AUX_FILES = [BUILD_DIR / "paper.aux", BUILD_DIR / "primary.aux"]
 
 PATTERNS = {
     "undefined_citations": [
@@ -49,8 +53,12 @@ def main() -> None:
     # The first LaTeX pass necessarily reports citations/references as undefined
     # before BibTeX and later passes resolve them. Filter those transient warnings
     # against the final .aux file so the diagnostic reflects the completed build.
-    if AUX_FILE.exists():
-        aux = AUX_FILE.read_text(encoding="utf-8", errors="replace")
+    existing_aux_files = [path for path in AUX_FILES if path.exists()]
+    if existing_aux_files:
+        aux = "\n".join(
+            path.read_text(encoding="utf-8", errors="replace")
+            for path in existing_aux_files
+        )
         resolved_citations = set(re.findall(r"^\\bibcite\{([^}]+)\}", aux, re.MULTILINE))
         resolved_references = set(re.findall(r"^\\newlabel\{([^}]+)\}", aux, re.MULTILINE))
         citations = [key for key in citations if key not in resolved_citations]

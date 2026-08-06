@@ -56,7 +56,8 @@ run_pdflatex() {
 
   if [[ -f "$log_file" ]] && grep -q "File ended while scanning use of" "$log_file"; then
     echo "WARN: pdflatex found a truncated aux file; removing aux state for a clean pipeline retry." >&2
-    rm -f paper.aux paper.bbl paper.blg paper.brf paper.out paper.toc
+    rm -f paper.aux paper.bbl paper.blg paper.brf paper.out paper.toc \
+      primary.aux primary.bbl primary.blg
     return 1
   fi
 
@@ -64,36 +65,18 @@ run_pdflatex() {
   return 1
 }
 
-prepare_aux_for_bibtex() {
-  local attempt
-  for attempt in 1 2 3; do
-    run_pdflatex
-
-    if [[ -s paper.aux ]] \
-      && grep -q '^\\citation{' paper.aux \
-      && grep -q '^\\bibdata{' paper.aux \
-      && grep -q '^\\bibstyle{' paper.aux; then
-      return 0
-    fi
-
-    echo "WARN: paper.aux is incomplete after pdflatex pass ${attempt}; rebuilding it." >&2
-    rm -f paper.aux paper.bbl paper.blg paper.brf paper.out paper.toc
-  done
-
-  echo "ERROR: paper.aux is still incomplete after repeated pdflatex passes." >&2
-  return 1
-}
-
 run_bibtex() {
+  local bibliography_name="$1"
   # The complete study bibliography contains non-ASCII author names. bibtexu
   # preserves UTF-8 metadata that classic BibTeX can corrupt in the BBL output.
-  if ! bibtexu paper; then
-    echo "ERROR: BibTeX failed. Check build/paper.blg." >&2
+  if ! bibtexu "$bibliography_name"; then
+    echo "ERROR: BibTeX failed. Check build/${bibliography_name}.blg." >&2
     return 1
   fi
 
-  if [[ ! -s paper.bbl ]] || grep -Eq "I found no \\\\(citation|bibdata|bibstyle) command" paper.blg; then
-    echo "ERROR: BibTeX did not produce a usable bibliography. Check build/paper.aux and build/paper.blg." >&2
+  if [[ ! -s "${bibliography_name}.bbl" ]] \
+    || grep -Eq "I found no \\\\(citation|bibdata|bibstyle) command" "${bibliography_name}.blg"; then
+    echo "ERROR: BibTeX did not produce a usable bibliography. Check build/${bibliography_name}.aux and build/${bibliography_name}.blg." >&2
     return 1
   fi
 }
@@ -103,13 +86,18 @@ build_pdf_pipeline() {
   # This protects manual rebuilds where an old paper.aux may have survived
   # outside the normal clean path.
   rm -f paper.aux paper.bbl paper.blg paper.brf paper.fdb_latexmk paper.fls \
-    paper.lof paper.log paper.lot paper.out paper.toc
+    paper.lof paper.log paper.lot paper.out paper.toc primary.aux primary.bbl \
+    primary.blg
 
   # Use an explicit, deterministic LaTeX/BibTeX sequence instead of relying on
   # latexmk's dependency detection. This keeps citation and reference resolution
   # predictable across local TeX installations.
-  prepare_aux_for_bibtex || return 1
-  run_bibtex || return 1
+  # multibib needs two initial passes to populate both bibliography aux files
+  # reliably from a clean build directory.
+  run_pdflatex || return 1
+  run_pdflatex || return 1
+  run_bibtex paper || return 1
+  run_bibtex primary || return 1
   run_pdflatex || return 1
   run_pdflatex || return 1
   run_pdflatex || return 1

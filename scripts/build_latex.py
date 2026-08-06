@@ -92,6 +92,8 @@ LATEX_HEADER = rf"""\documentclass[10pt]{{article}}
 \definecolor{{ACMRule}}{{RGB}}{{72,72,72}}
 \definecolor{{ACMTableHead}}{{RGB}}{{238,242,246}}
 \usepackage[colorlinks=true,linkcolor=ACMBlue,citecolor=ACMBlue,urlcolor=ACMBlue]{{hyperref}}
+\usepackage{{multibib}}
+\newcites{{primary}}{{Primary Studies Included in the Review}}
 
 \linespread{{1.02}}
 \setlength{{\parindent}}{{1.15em}}
@@ -159,6 +161,8 @@ LATEX_HEADER = rf"""\documentclass[10pt]{{article}}
 LATEX_FOOTER = r"""
 \bibliographystyle{abbrv}
 \bibliography{references}
+\bibliographystyleprimary{abbrv}
+\bibliographyprimary{references}
 
 \end{document}
 """
@@ -249,7 +253,14 @@ def citation_to_latex(match: re.Match[str]) -> str:
             keys.append(part[1:])
     if not keys:
         return match.group(0)
-    return r"\cite{" + ",".join(keys) + "}"
+    primary_keys = [key for key in keys if key.startswith("p")]
+    reference_keys = [key for key in keys if not key.startswith("p")]
+    commands = []
+    if reference_keys:
+        commands.append(r"\cite{" + ",".join(reference_keys) + "}")
+    if primary_keys:
+        commands.append(r"\citeprimary{" + ",".join(primary_keys) + "}")
+    return " ".join(commands)
 
 
 def convert_inline_markdown(text: str) -> str:
@@ -748,7 +759,7 @@ def add_misc_publication_details(bibliography: str) -> str:
 
 
 def included_study_nocite() -> str:
-    """Return a LaTeX nocite command for every included study."""
+    """Return a primary-bibliography nocite command for every included study."""
     if not STUDY_INVENTORY_FILE.exists():
         raise FileNotFoundError(f"Missing study inventory: {STUDY_INVENTORY_FILE}")
 
@@ -772,7 +783,7 @@ def included_study_nocite() -> str:
         raise ValueError(
             "Included studies missing from bibliography: " + ", ".join(missing_keys)
         )
-    return r"\nocite{" + ",".join(citation_keys) + "}"
+    return r"\nociteprimary{" + ",".join(citation_keys) + "}"
 
 
 def build_latex(order_file: Path, output_file: Path) -> None:
