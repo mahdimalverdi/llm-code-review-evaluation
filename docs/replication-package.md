@@ -13,6 +13,7 @@ This manifest identifies the repository artifacts used to audit the 121-study sy
 
 - `method/search-protocol-amendment.md`: scope and procedure of the dated amendment.
 - `method/search-run-log.csv`: recorded search runs and query provenance.
+- `method/source-search-execution-audit.md`: source-by-source endpoints, observed access failures, and completion rule.
 - `data/search/raw/`: retained raw arXiv responses.
 - `data/search/arxiv-title-abstract-screening.csv`: title and abstract decisions.
 - `data/search/arxiv-full-text-screening-reviewed.csv`: reviewed full-text decisions and reasons.

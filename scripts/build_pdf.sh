@@ -56,8 +56,7 @@ run_pdflatex() {
 
   if [[ -f "$log_file" ]] && grep -q "File ended while scanning use of" "$log_file"; then
     echo "WARN: pdflatex found a truncated aux file; removing aux state for a clean pipeline retry." >&2
-    rm -f paper.aux paper.bbl paper.blg paper.brf paper.out paper.toc \
-      primary.aux primary.bbl primary.blg
+    rm -f paper.aux paper.bbl paper.blg paper.brf paper.out paper.toc
     return 1
   fi
 
@@ -86,18 +85,16 @@ build_pdf_pipeline() {
   # This protects manual rebuilds where an old paper.aux may have survived
   # outside the normal clean path.
   rm -f paper.aux paper.bbl paper.blg paper.brf paper.fdb_latexmk paper.fls \
-    paper.lof paper.log paper.lot paper.out paper.toc primary.aux primary.bbl \
-    primary.blg
+    paper.lof paper.log paper.lot paper.out paper.toc
 
   # Use an explicit, deterministic LaTeX/BibTeX sequence instead of relying on
   # latexmk's dependency detection. This keeps citation and reference resolution
   # predictable across local TeX installations.
-  # multibib needs two initial passes to populate both bibliography aux files
+  # Two initial passes populate the bibliography and cross-reference state
   # reliably from a clean build directory.
   run_pdflatex || return 1
   run_pdflatex || return 1
   run_bibtex paper || return 1
-  run_bibtex primary || return 1
   run_pdflatex || return 1
   run_pdflatex || return 1
   run_pdflatex || return 1

@@ -66,13 +66,13 @@ Table \ref{tab:source-search-status} reports the execution status of every sourc
 | Source | Exact executed or attempted query | Result status |
 |---|---|---|
 | arXiv | Q1--Q3 in Table \ref{tab:arxiv-queries} | Complete retained run: 417 raw, 293 unique |
-| Semantic Scholar | `("LLM" OR "large language model") AND ("code review" OR "review comment" OR "pull request review")` | Attempted; HTTP 429; count unavailable |
-| ACM Digital Library | `"code review" AND "large language model"` | Attempted; native result set unavailable |
-| IEEE Xplore | `"code review" AND "large language model"` | Attempted; native result set unavailable |
-| ScienceDirect | `"code review" AND "large language model"` | Attempted; native result set unavailable |
-| SpringerLink | `"code review" AND "large language model"` | Attempted; native result set unavailable |
-| Google Scholar | No completed documented run | Pending; count unavailable |
-| Scopus | No completed documented run | Pending; count unavailable |
+| Semantic Scholar | `("LLM" OR "large language model") AND ("code review" OR "review comment" OR "pull request review")` | Graph API returned HTTP 403 on 6 August 2026; count unavailable |
+| ACM Digital Library | `"code review" AND "large language model"` | Cloudflare Turnstile blocked direct and headless-browser runs; count unavailable |
+| IEEE Xplore | `"code review" AND "large language model"` | Official search routes timed out from the current network; count unavailable |
+| ScienceDirect | `"code review" AND "large language model"` | Official search route timed out from the current network; count unavailable |
+| SpringerLink | `"code review" AND "large language model"` | Official search route timed out from the current network; count unavailable |
+| Google Scholar | `"code review" "large language model"` | Google refused the automated request; manual run required |
+| Scopus | `TITLE-ABS-KEY("code review" AND "large language model")` | Scopus API timed out; authenticated or institutional run required |
 
 The retained partial export contained 38 source rows from ACM Digital Library, IEEE Xplore, ScienceDirect, SpringerLink, and Semantic Scholar, which reconciled to 30 candidate records. Because native totals and complete result sets were unavailable, this export is a cross-check rather than a reproducible database-search denominator.
 
