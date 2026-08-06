@@ -36,7 +36,7 @@ Finally, the evaluator can become part of the problem. Manual evaluation is expe
 
 ## Evaluation Trade-Offs
 
-The same mitigation can be helpful and harmful at the same time, depending on what it removes and what it preserves. A filter that removes unsupported comments may reduce hallucinations, but it may also remove uncertain comments that would have been useful to a reviewer. A retrieval component may improve grounding, but it can increase latency, cost, and context noise. A relevance filter may reduce reviewer burden, but it may also reduce review coverage. A context-quality gate may avoid unreliable automatic review in low-context cases, but it can also increase human escalation.
+Mitigation changes several outcomes simultaneously. Filtering may improve precision at the expense of useful but uncertain feedback; retrieval may strengthen grounding while adding latency and context noise; and context gates may reduce unreliable automation while increasing human referral and reducing coverage.
 
 Evaluation should therefore ask three linked questions. First, is the instance valid and judgeable under the available context? Second, is the generated comment useful enough to preserve in some form? Third, what mitigation decision should follow: show, suppress, rewrite, or escalate? These questions connect error reduction to useful-feedback preservation, cost, workflow impact, dataset validity, and evaluator validity.
 

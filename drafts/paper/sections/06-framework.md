@@ -1,8 +1,8 @@
 # Trade-Off-Aware Evaluation Framework
 
-The reviewed evidence indicates that a mitigation mechanism cannot be evaluated only by the number of comments it removes. Filtering, context expansion, reformulation, verification, and human oversight can suppress useful signals, reduce coverage, change intent, or add latency and reviewer effort [@p04_kumar2026_swe_prbench; @p07_olewicki2024_revmate; @p10_sun2025_bitsai_cr; @p18_bensghaier2025_curated_reviews; @p35_mcaleese2024_llm_critics; @p65_ameen2026_qasecclaw]. This section derives a trade-off-aware framework from the synthesis; it is a proposal for future evaluation rather than a report of an executed comparison.
+The synthesis indicates that mitigation cannot be evaluated only by the number of comments it removes. Interventions may suppress useful signals, reduce coverage, change intent, or add latency and reviewer effort [@p04_kumar2026_swe_prbench; @p07_olewicki2024_revmate; @p10_sun2025_bitsai_cr; @p18_bensghaier2025_curated_reviews; @p35_mcaleese2024_llm_critics; @p65_ameen2026_qasecclaw]. The framework below is a proposal for future evaluation rather than an executed comparison.
 
-The framework connects six layers: input and context quality, generated-comment quality, problematic-comment type, mitigation decision, preservation and coverage, and cost and evaluator validity. These layers turn evaluation from passive scoring into a workflow decision problem.
+The framework connects six layers: input and context quality, comment quality, failure type, handling decision, preservation and coverage, and cost and evaluator validity. Together, they connect quality assessment to concrete workflow decisions.
 
 ## Framework Overview
 
@@ -10,13 +10,13 @@ The framework connects six layers: input and context quality, generated-comment 
 | Layer | Evaluation question | Example measurements |
 | --- | --- | --- |
 | Input and context quality | Is the instance judgeable under the available evidence? | context sufficiency, consistency, freshness, reviewability |
-| Generated-comment quality | Is the comment technically sound, grounded, relevant, useful, and actionable? | correctness, grounding, relevance, usefulness, actionability |
-| Problematic-comment type | What kind of failure, if any, explains why the comment is problematic? | unsupported, irrelevant, wrong cause, invalid fix, low-value |
+| Comment quality | Is the comment technically sound, grounded, relevant, useful, and actionable? | correctness, grounding, relevance, usefulness, actionability |
+| Failure type | What kind of failure, if any, explains why the comment is problematic? | unsupported, irrelevant, wrong cause, invalid fix, low-value |
 | Mitigation decision | What should happen before the comment reaches the user? | show, suppress, rewrite, escalate |
 | Preservation and coverage | What useful feedback or review coverage is preserved or lost? | useful comments retained, useful comments wrongly suppressed, coverage retained |
 | Cost and evaluator validity | What effort, computation, latency, or measurement risk is introduced? | model calls, human escalation, annotation agreement, judge robustness |
 
-The framework is designed to be applied consistently across strategies. For every generated comment, an evaluation should ask whether the comment is problematic, what type of problem it has, what decision should be taken, what useful feedback would be preserved or lost, and what cost the decision introduces.
+Applying the same layers across strategies makes their consequences comparable even when they address different failures.
 
 ## Layer 1: Input and Context Quality
 
@@ -24,13 +24,13 @@ Context quality determines whether a generated comment can be judged and whether
 
 A context-quality gate can use this layer before generation or before display. If the available context is too weak, the system may skip automatic review, request more context, or escalate the case. This is not a failure of the model alone; it may be a limitation of the evaluation instance. Treating context as an evaluation object helps separate unsupported model output from insufficient or inconsistent input evidence.
 
-## Layer 2: Generated-Comment Quality
+## Layer 2: Comment Quality
 
-Generated-comment quality is evaluated across several dimensions rather than a single correctness score. The key dimensions are technical correctness, grounding, relevance, specificity, explanation quality, usefulness, and actionability.
+Comment quality spans technical correctness, grounding, relevance, specificity, explanation quality, usefulness, and actionability rather than a single correctness score.
 
 These dimensions can disagree. A comment can be relevant but ungrounded, grounded but low-value, technically plausible but non-actionable, or useful but too uncertain to show directly. The framework therefore avoids a single pass/fail judgment and instead maps quality dimensions to mitigation decisions.
 
-## Layer 3: Problematic-Comment Type
+## Layer 3: Failure Type
 
 The taxonomy labels explain why a comment is problematic. The failure type matters because different failures require different interventions. Unsupported claims may be caught by verification, context-dependent cases may be routed by a context-quality gate, non-actionable comments may be improved by rewriting, and low-value comments may be suppressed or aggregated.
 
@@ -59,10 +59,10 @@ The final layer concerns the reliability of the measurement itself. Human annota
 
 An empirical study should report inter-annotator agreement and avoid treating LLM-as-a-Judge outputs as ground truth without validation. If LLM-based judges are used, their role should be explicit: they may support screening or provide auxiliary evidence, but primary mitigation-quality claims should be grounded in a validated annotation protocol.
 
-## Using the Framework in Future Empirical Work
+## Empirical Use
 
-For each strategy, a future analysis should report a trade-off profile rather than a single ranking. A profile includes the failure types reduced, useful comments preserved, useful comments wrongly suppressed, coverage retained, comments rewritten or escalated, and added cost.
+A strategy can be summarized by a trade-off profile: failures reduced, useful comments preserved or wrongly withheld, coverage retained, comments revised or escalated, and added cost.
 
-This design makes it possible to compare strategies without assuming that one strategy is universally best. Robust prompting may reduce non-actionable comments but leave unsupported claims. Post-generation verification may reduce unsupported comments but wrongly suppress useful weak signals. A context-quality gate may reduce context-dependent failures but lower coverage. A hybrid strategy may improve safety while adding cost and escalation burden. The framework is designed to make these trade-offs visible.
+Such profiles allow comparison without assuming that one strategy is universally best. Prompting may improve actionability while leaving unsupported claims; verification may remove those claims while also withholding weak but useful signals; context gates may improve reliability at the expense of coverage. Hybrid strategies can reduce several risks while adding cost and escalation burden.
 
 These examples are hypotheses derived from the review, not empirical findings of the present study. Future work should test them and report any framework dimensions that prove unmeasurable or require revision.
