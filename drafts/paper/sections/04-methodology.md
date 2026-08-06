@@ -67,10 +67,10 @@ Table \ref{tab:source-search-status} reports the execution status of every sourc
 |---|---|---|
 | arXiv | Q1--Q3 in Table \ref{tab:arxiv-queries} | Complete retained run: 417 raw, 293 unique |
 | Semantic Scholar | 16 pairwise bulk-API queries: each of `{"large language model", LLM, "generative AI", "AI-assisted"}` combined with each of `{"code review", "review comment", "pull request feedback", "automated code review"}` | Complete retained run on 6 August 2026: 963 raw, 427 unique |
-| ACM Digital Library | `"code review" AND "large language model"` | Cloudflare Turnstile blocked direct and headless-browser runs; count unavailable |
-| IEEE Xplore | `"code review" AND "large language model"` | Official search routes timed out from the current network; count unavailable |
-| ScienceDirect | `"code review" AND "large language model"` | Official search route timed out from the current network; count unavailable |
-| SpringerLink | `"code review" AND "large language model"` | Official search route timed out from the current network; count unavailable |
+| ACM Digital Library | `"code review" AND "large language model"` | Cloudflare human-verification challenge blocked the search; count unavailable |
+| IEEE Xplore | `"large language model" AND "code review"`, years 2021--2026 | Complete retained browser run on 6 August 2026: 69 results |
+| ScienceDirect | `"large language model" AND "code review"`, years 2021--2026 | Official search returned `Site Unavailable`; count unavailable |
+| SpringerLink | `"large language model" AND "code review"`, years 2021--2026, English | Native interface showed 155 results; CSV export did not complete, so the run is count-only |
 | Google Scholar | `"code review" "large language model"` | Google refused the automated request; manual run required |
 | Scopus | `TITLE-ABS-KEY("code review" AND "large language model")` | Scopus API timed out; authenticated or institutional run required |
 

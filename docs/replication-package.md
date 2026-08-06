@@ -18,6 +18,8 @@ This manifest identifies the repository artifacts used to audit the 121-study sy
 - `data/search/semantic-scholar/semantic-scholar-run.json`: exact query manifest, page accounting, timestamps, and counts.
 - `data/search/semantic-scholar/semantic-scholar-raw.jsonl.gz`: compressed retained responses before cross-query deduplication.
 - `data/search/semantic-scholar/semantic-scholar-unique.csv`: paper-ID-deduplicated result set with query membership.
+- `data/search/ieee-xplore-search-2026-08-06.csv`: complete 69-record IEEE Xplore browser result set.
+- `data/search/springerlink-attempt-2026-08-06.json`: verified SpringerLink count and incomplete-export evidence.
 - `data/search/raw/`: retained raw arXiv responses.
 - `data/search/arxiv-title-abstract-screening.csv`: title and abstract decisions.
 - `data/search/arxiv-full-text-screening-reviewed.csv`: reviewed full-text decisions and reasons.
