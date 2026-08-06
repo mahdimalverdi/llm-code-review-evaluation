@@ -74,7 +74,7 @@ The core/modifier split can be revised after reliability testing. Frequent, stab
 
 ## Boundary Rules for Common Ambiguities
 
-Some label boundaries are expected to be difficult in pilot annotation. Table \ref{tab:taxonomy-boundary-rules} records the intended rule for the most important ambiguous pairs; the annotation guideline expands these distinctions with examples and counterexamples.
+Some label boundaries are expected to be difficult in pilot annotation. Table \ref{tab:taxonomy-boundary-rules} records the intended rules for the most important ambiguous pairs and provides the distinctions needed for this review.
 
 <!-- table: caption="Boundary rules for common annotation ambiguities." label="tab:taxonomy-boundary-rules" longtable="true" -->
 | Ambiguous pair | Use the first label when | Use the second label when |
@@ -91,7 +91,7 @@ Future annotation should report the most frequent boundary disagreements and any
 
 ## Mapping Failure Labels to Mitigation Decisions
 
-The taxonomy does not map labels mechanically to one decision. Instead, labels constrain the plausible decisions. Table \ref{tab:taxonomy-decision-mapping} summarizes this mapping in a compact form. The final executed-study mapping must be reconciled with the human-decision mapping in the methodology and the annotation guideline.
+The taxonomy does not map labels mechanically to one decision. Instead, labels constrain the plausible decisions. Table \ref{tab:taxonomy-decision-mapping} summarizes this mapping in a compact form. A future empirical study should reconcile this mapping with the human reference decisions defined in the methodology.
 
 <!-- table: caption="Typical mapping from core failure labels to mitigation decisions." label="tab:taxonomy-decision-mapping" longtable="true" -->
 | Core label | Decision to avoid | Usually preferred decision |

@@ -111,7 +111,7 @@ Independent agreement was not measured. A future validation step should assign a
 | Trade-off reporting | preservation, coverage, escalation, and cost availability | RQ4 |
 | Method validity | annotation, limitations, and RQ evidence status | RQ5 and framework traceability |
 
-The complete field definitions and controlled labels are described in the manuscript.
+The main field definitions and controlled labels used in the synthesis are described in the manuscript.
 
 ## Synthesis
 
