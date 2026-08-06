@@ -29,7 +29,7 @@ The raw Atom responses are retained with the query identifiers. Candidates are d
 | IEEE Xplore | Complete public-browser run on 2026-08-06: 69 native results and 69 unique record links | Exact query and complete parsed CSV retained |
 | ScienceDirect | Complete manual-browser run on 2026-08-06: 318 native results and 318 unique PII record URLs | Four raw HTML pages, parsed CSV, checksum/provenance manifest, and importer retained; enforce the 2026-08-02 cutoff during screening |
 | SpringerLink | Complete manual-browser export on 2026-08-06: 155 native results and 155 unique DOI-bearing records | Native CSV and checksum/provenance manifest retained; screening remains pending |
-| Google Scholar | Pending | Use only a documented manual search; do not scrape |
+| Google Scholar | Complete manual-browser run on 2026-08-06: approximately 81 reported results and 81 unique Scholar result identifiers | Privacy-safe parsed CSV, nine private-input checksums, manifest, and importer retained; raw signed-in HTML excluded and date window applied during screening |
 | Scopus | Pending | Execute if institutional access is available; otherwise record the limitation |
 
 ## Supplied partial external-source export

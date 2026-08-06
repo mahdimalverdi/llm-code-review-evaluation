@@ -30,6 +30,9 @@ This manifest identifies the repository artifacts used to audit the 121-study sy
 - `data/search/sciencedirect/sciencedirect-search-2026-08-06-page-*.html.gz`: four compressed manual-browser captures covering ranks 1-318.
 - `data/search/sciencedirect/sciencedirect-search-2026-08-06.csv`: parsed 318-record ScienceDirect result set.
 - `data/search/sciencedirect/sciencedirect-search-2026-08-06.json`: ScienceDirect query, page ranges, checksums, count, uniqueness, and provenance manifest.
+- `scripts/import_google_scholar_search_html.py`: privacy-safe parser and completeness checks for private signed-in Google Scholar captures.
+- `data/search/google-scholar/google-scholar-search-2026-08-06.csv`: parsed 81-record Google Scholar result set with no account identifiers.
+- `data/search/google-scholar/google-scholar-search-2026-08-06.json`: Google Scholar query, page counts, private-input checksums, count limitation, privacy policy, and provenance manifest.
 - `data/search/acm-attempt-2026-08-06-retry.json`: retained evidence from the second ACM/Cloudflare verification block.
 - `data/search/raw/`: retained raw arXiv responses.
 - `data/search/arxiv-title-abstract-screening.csv`: title and abstract decisions.
