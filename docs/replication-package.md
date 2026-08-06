@@ -26,6 +26,10 @@ This manifest identifies the repository artifacts used to audit the 121-study sy
 - `data/search/springerlink-attempt-2026-08-06.json`: retained evidence from the initial incomplete SpringerLink export attempt.
 - `data/search/springerlink/springerlink-search-2026-08-06.csv`: complete native 155-record SpringerLink export.
 - `data/search/springerlink/springerlink-search-2026-08-06.json`: SpringerLink count, checksum, uniqueness, content-type, and provenance manifest.
+- `scripts/import_sciencedirect_search_html.py`: deterministic parser and completeness checks for manually saved ScienceDirect result pages.
+- `data/search/sciencedirect/sciencedirect-search-2026-08-06-page-*.html.gz`: four compressed manual-browser captures covering ranks 1-318.
+- `data/search/sciencedirect/sciencedirect-search-2026-08-06.csv`: parsed 318-record ScienceDirect result set.
+- `data/search/sciencedirect/sciencedirect-search-2026-08-06.json`: ScienceDirect query, page ranges, checksums, count, uniqueness, and provenance manifest.
 - `data/search/acm-attempt-2026-08-06-retry.json`: retained evidence from the second ACM/Cloudflare verification block.
 - `data/search/raw/`: retained raw arXiv responses.
 - `data/search/arxiv-title-abstract-screening.csv`: title and abstract decisions.

@@ -18,8 +18,8 @@ The review remains a targeted structured review. The evidence set is frozen at 1
 
 3. **Complete external source coverage only where authorised access becomes available.**
    - Screen and reconcile the completed 427-record Semantic Scholar result set.
-   - Screen and reconcile the completed 449-record ACM Digital Library, 69-record IEEE Xplore, and 155-record SpringerLink result sets.
-   - Execute the documented queries in ScienceDirect, Google Scholar, and Scopus through authorised/manual access where possible.
+   - Screen and reconcile the completed 449-record ACM Digital Library, 69-record IEEE Xplore, 318-record ScienceDirect, and 155-record SpringerLink result sets.
+   - Execute the documented queries in Google Scholar and Scopus through authorised/manual access where possible.
    - Record exact query, date, native retrieved count, deduplication result, and source-access limitation. The supplied external export is partial and cannot be used to claim exhaustive coverage.
 
 4. **Complete assurance and submission preparation.**
