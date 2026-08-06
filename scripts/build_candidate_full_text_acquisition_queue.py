@@ -12,6 +12,7 @@ DEFAULT_POOL = Path("data/search/unified-candidate-pool.csv")
 DEFAULT_BATCH_DIR = Path("data/search/screening-batches")
 DEFAULT_OUTPUT = Path("data/search/candidate-full-text-acquisition-queue.csv")
 DEFAULT_MANIFEST = Path("data/search/arxiv-full-text-manifest.csv")
+DEFAULT_ENRICHMENT = Path("data/search/doi-enrichment.csv")
 TARGET_DECISIONS = {"include_full_text_candidate", "uncertain"}
 
 
@@ -37,9 +38,15 @@ def main() -> int:
     parser.add_argument("--batch-dir", type=Path, default=DEFAULT_BATCH_DIR)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--arxiv-manifest", type=Path, default=DEFAULT_MANIFEST)
+    parser.add_argument("--enrichment", type=Path, default=DEFAULT_ENRICHMENT)
     args = parser.parse_args()
 
     pool = {row["candidate_id"]: row for row in read_rows(args.pool)}
+    enrichment = {
+        row["candidate_id"]: row
+        for row in read_rows(args.enrichment)
+        if row.get("status") == "high_confidence_suggestion" and row.get("proposed_doi")
+    } if args.enrichment.exists() else {}
     arxiv_manifest = {
         row["arxiv_id"].lower().split("v")[0]: row
         for row in read_rows(args.arxiv_manifest)
@@ -60,6 +67,11 @@ def main() -> int:
     output = []
     for candidate_id, decision in sorted(decisions.items()):
         row = pool[candidate_id]
+        enriched = enrichment.get(candidate_id)
+        effective_row = dict(row)
+        if enriched:
+            effective_row["doi"] = enriched["proposed_doi"]
+        row = effective_row
         manifest_row = arxiv_manifest.get(row.get("arxiv_id", "").lower().split("v")[0])
         already_downloaded = bool(
             manifest_row
@@ -72,7 +84,13 @@ def main() -> int:
             "title_abstract_decision": decision["title_abstract_decision"],
             "decision_rationale": decision["decision_rationale"],
             "acquisition_route": route(row),
-            "acquisition_status": "already_downloaded" if already_downloaded else "pending",
+            "acquisition_status": (
+                "already_downloaded"
+                if already_downloaded
+                else "unresolved_source_url"
+                if route(row) == "source_url"
+                else "pending"
+            ),
             "full_text_path": manifest_row.get("target_path", "") if already_downloaded else "",
             "full_text_decision": "pending",
             "full_text_reason": "",

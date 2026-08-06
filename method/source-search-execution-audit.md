@@ -2,7 +2,7 @@
 
 This audit records the source-by-source execution attempted on 6 August 2026. Blank counts mean that no result set was returned; they do not mean zero results. The exact run-level records are in `method/search-run-log.csv`.
 
-The retained complete source sets currently produce 1,499 raw records. Cross-source identity reconciliation yields 1,358 clusters, of which ten match the frozen corpus and 1,348 remain new, unscreened candidates. These figures are maintained in `data/search/unified-candidate-pool-summary.json`; they are not inclusion counts.
+The retained complete source sets currently produce 1,499 raw records. Cross-source identity reconciliation yields 1,358 clusters, of which 42 match historical baseline records and 1,316 remain outside the frozen corpus. These figures are maintained in `data/search/unified-candidate-pool-summary.json`; they are not inclusion counts.
 
 The conservative title/abstract triage then produced 281 obvious exclusions for no review-feedback connection, ten existing-corpus duplicate/version records, 413 records requiring manual title/abstract screening, and 654 metadata-only records requiring abstract or full-text acquisition. The triage labels are workflow states, not final eligibility decisions.
 

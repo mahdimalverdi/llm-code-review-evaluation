@@ -2,7 +2,7 @@
 
 ## Search and Selection Validity
 
-The search documentation and protocol were consolidated retrospectively. Complete native result sets, exact historical queries, dates, and exclusion trails were not preserved for the 71-study baseline, and only the arXiv amendment is reproducible as a complete search run. Selection effects and search sensitivity therefore cannot be estimated uniformly across sources. Two eligible full-text candidates found after corpus closure remained outside the denominator even though the stopping rule was not specified prospectively. The 53 substantively extracted reserve records mapped to existing high-level themes, although 26 other reserve candidates lacked substantive extraction. Claims about gaps in the literature are therefore limited to the reviewed corpus, which should be described as a targeted structured review rather than a fully reproducible SLR.
+The historical 71-study baseline cannot be fully reconstructed. The later multi-source amendment retained complete screenable result sets for all planned sources except Scopus, but these records have not yet undergone complete eligibility assessment and extraction. Selection effects and search sensitivity therefore cannot be estimated uniformly across sources. Two eligible full-text candidates found after corpus closure remained outside the denominator because the corpus had already been frozen. The 53 substantively extracted reserve records mapped to existing high-level themes, although 26 other reserve candidates lacked substantive extraction. Claims about gaps in the literature are therefore limited to the reviewed corpus, which should be described as a targeted structured review rather than a fully reproducible SLR.
 
 ## Extraction Reliability
 

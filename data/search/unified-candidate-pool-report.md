@@ -15,7 +15,7 @@ This artifact reconciles source identities only; it does not perform eligibility
 - Identity clusters: **1358**
 - Duplicate source records removed: **141**
 - Identity clusters with multiple source records: **113**
-- Existing corpus clusters: **10**
-- New candidate clusters: **1348**
+- Historical baseline matches: **42**
+- New candidate clusters outside the frozen corpus: **1316**
 
 A new candidate remains unscreened until a dated title/abstract decision is recorded.

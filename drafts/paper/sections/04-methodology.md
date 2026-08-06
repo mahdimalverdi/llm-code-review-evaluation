@@ -47,11 +47,13 @@ The review protocol identified ACM Digital Library, IEEE Xplore, ScienceDirect, 
 
 The synthesis corpus contains 121 unique full-text studies identified across arXiv, OpenAlex, Crossref, publisher indexes, and general scholarly-web search. Separate topic families covered direct code review, generated comments, evaluator validity, modern code review, surveys, security, refinement, efficiency, and industrial evidence. Every included study was verified as retrievable through at least one topic-level query without using its title, identifier, system name, or author name as the query. All included studies subsequently underwent the same eligibility, extraction, evidence-tier, and appraisal procedure.
 
-The later multi-source reconciliation produced a separate pool of 1,358 unique candidate identities, including 1,348 candidates not matched to the frozen corpus. These candidates remain search and screening artifacts rather than included studies: DOI enrichment and title/abstract triage do not establish eligibility, full-text inclusion, or extraction completeness. Their metadata are retained in the replication package for auditability, but they are not counted in any RQ denominator and are not displayed as article references in the PDF.
+The later multi-source reconciliation produced a separate pool of 1,358 unique candidate identities. Exact-title reconciliation linked 42 candidates to studies in the historical baseline, leaving 1,316 candidates outside the frozen corpus. These candidates remain search and screening artifacts rather than included studies: DOI enrichment and title/abstract triage do not establish eligibility, full-text inclusion, or extraction completeness. Their metadata are retained in the replication package for auditability, but they are not counted in any RQ denominator and are not displayed as article references in the PDF.
+
+We retained the 121-study corpus as the frozen synthesis denominator after the supplemental search reconciliation. Candidates identified after closure were not relabeled as eligible or ineligible solely because their full texts had not yet been assessed. They remain outside the synthesis as `not assessed after corpus closure` or `access-limited`, whereas a record is labeled excluded only when a documented eligibility decision supports exclusion. This boundary avoids turning incomplete follow-up screening into a post hoc exclusion rule.
 
 ### Search execution and corpus closure
 
-The principal reproducible run began with arXiv because its public API returned exact-query results and stable retrieval counts. Topic-level searches in OpenAlex, Crossref, publisher indexes, and the scholarly web broadened coverage for adjacent and foundational evidence. Semantic Scholar was initially rate-limited, but a rate-limited bulk-API rerun completed on 6 August 2026. Because the API does not accept the protocol's nested Boolean expression directly, the two concept blocks were expanded into 16 phrase-level conjunctions (four LLM terms crossed with four review terms), and results were deduplicated by Semantic Scholar paper identifier. Manual authorised-browser runs subsequently retained complete screenable sets from ACM Digital Library, IEEE Xplore, ScienceDirect, SpringerLink, and Google Scholar. These later sets remain outside the frozen synthesis denominator until title/abstract screening, full-text assessment, and cross-source identity reconciliation are complete.
+The principal reproducible run began with arXiv because its public API returned exact-query results and stable retrieval counts. Topic-level searches in OpenAlex, Crossref, publisher indexes, and the scholarly web broadened coverage for adjacent and foundational evidence. Semantic Scholar was initially rate-limited, followed by a retained bulk-API rerun. Because the API does not accept the protocol's nested Boolean expression directly, the two concept blocks were expanded into 16 phrase-level conjunctions (four LLM terms crossed with four review terms), and results were deduplicated by Semantic Scholar paper identifier. Manual authorised-browser runs subsequently retained complete screenable sets from ACM Digital Library, IEEE Xplore, ScienceDirect, SpringerLink, and Google Scholar. These later sets remain outside the frozen synthesis denominator until title/abstract screening and full-text eligibility assessment are complete.
 
 The arXiv search was executed on 2 August 2026 for records submitted from 1 January 2021 through 2 August 2026. Table \ref{tab:arxiv-queries} reports the exact API queries. The raw API responses and screening decisions were retained during the review process but are not included with this PDF.
 
@@ -62,7 +64,7 @@ The arXiv search was executed on 2 August 2026 for records submitted from 1 Janu
 | Q2 (61) | `(ti:"review comment" OR abs:"review comment") AND (ti:"large language model" OR abs:"large language model" OR ti:LLM OR abs:LLM) AND submittedDate:[202101010000 TO 202608022359]` |
 | Q3 (156) | `(ti:"code review" OR abs:"code review") AND (all:hallucination OR all:grounding OR all:context) AND submittedDate:[202101010000 TO 202608022359]` |
 
-Table \ref{tab:source-search-status} reports the execution status of every source named in the protocol through 6 August 2026. Blank counts denote unavailable result sets, not zero results.
+Table \ref{tab:source-search-status} reports the execution status of every source named in the protocol during the dated search amendment. Blank counts denote unavailable result sets, not zero results.
 
 <!-- table: caption="Execution status of the planned search sources through 6 August 2026." label="tab:source-search-status" longtable="false" -->
 | Source | Exact executed or attempted query | Result status |
@@ -76,15 +78,15 @@ Table \ref{tab:source-search-status} reports the execution status of every sourc
 | Google Scholar | `"large language model" AND "code review"`, date sorting | Complete exposed manual-browser set: approximately 81 reported results and 81 unique Scholar identifiers |
 | Scopus | `TITLE-ABS-KEY("large language model" AND "code review")` with years 2021--2026 | Formally closed: API unavailable and Scopus Preview did not expose document search or export |
 
-The retained partial export contained 38 source rows from ACM Digital Library, IEEE Xplore, ScienceDirect, SpringerLink, and Semantic Scholar, which reconciled to 30 candidate records. Because native totals and complete result sets were unavailable, this export is a cross-check rather than a reproducible database-search denominator.
+An earlier partial export contained 38 source rows and was initially used only as a cross-check. It was later superseded by the complete search amendment reported in Table \ref{tab:source-search-status}.
 
-The three result sets contained 417 raw records. Deduplication by arXiv identifier removed 124 cross-query repetitions while preserving every matching query identifier, leaving 293 unique records. Conservative title/abstract screening assigned one of four outcomes: include for full text, exclude, duplicate/companion, or uncertain. The controlled exclusion vocabulary was `out of scope`, `no review-feedback connection`, `insufficient method/evaluation`, `duplicate/companion`, `non-English`, `inaccessible`, and `supporting-only methodology`. This stage retained 140 records for full-text assessment, excluded 116, and identified 37 duplicate or likely companion records.
+The three arXiv query result sets contained 417 raw records. Deduplication by arXiv identifier removed 124 cross-query repetitions while preserving every matching query identifier, leaving 293 unique records. Conservative title/abstract screening assigned one of four outcomes: include for full text, exclude, duplicate/companion, or uncertain. The controlled exclusion vocabulary was `out of scope`, `no review-feedback connection`, `insufficient method/evaluation`, `duplicate/companion`, `non-English`, `inaccessible`, and `supporting-only methodology`. This stage retained 140 records for full-text assessment, excluded 116, and identified 37 duplicate or likely companion records.
 
 Full-text inclusion required a recorded decision, inclusion group, eligibility criterion, evidence location, rationale, reviewer, and screening date. Of the 140 records assessed in the arXiv stream, 132 were retained for consideration and eight were excluded. Fifty-three retained records met core criteria; identity reconciliation found one overlap with the existing candidate pool and two duplicate or companion identities. A candidate entered the final corpus only after its identity, eligibility decision, evidence record, and bibliographic entry were complete.
 
 The remaining 79 records form the supporting reserve: 53 have substantive provisional extraction, 16 have scaffolds only, and ten have no extraction packet. They are not included in the 121-study denominator. Inaccessible records without enough evidence for classification were excluded; seven access-limited records from the later external export remain metadata-only and outside the frozen corpus.
 
-An external 30-record export was screened separately after corpus closure. Reconciliation found 20 duplicates, two full-text candidates retained outside the closed corpus, seven access-limited metadata-only candidates, and one exclusion. The external export therefore contributes no study to the 121-study denominator. The two eligible full-text candidates were not incorporated because the corpus had already been frozen, but corpus closure was not specified prospectively. Their exclusion is therefore a post hoc boundary and a threat to selection validity. Candidate-level decisions are retained in the replication package.
+An external 30-record export was screened separately after corpus closure. Reconciliation found 20 duplicates, two full-text candidates retained outside the closed corpus, seven access-limited metadata-only candidates, and one exclusion. The external export therefore contributes no study to the 121-study denominator. The two eligible full-text candidates were not incorporated because the corpus had already been frozen. Candidate-level decisions are retained in the replication package, and the post-closure boundary is reported as a selection-validity limitation rather than as evidence that those candidates were ineligible.
 
 <!-- table: caption="Accounting of the unified corpus and auxiliary candidate sets." label="tab:corpus-flow-audit" -->
 | Record set | Identified or retained | Full text assessed | Included in synthesis corpus | Outside corpus |
@@ -92,12 +94,13 @@ An external 30-record export was screened separately after corpus closure. Recon
 | Unified synthesis corpus | 121 | 121 | 121 | 0 |
 | Reproducible arXiv stream | 293 unique | 140 | Reconciled into unified corpus | 79 supporting-reserve records |
 | External cross-check export | 30 | 3 | Reconciled into unified corpus | 2 post-closure candidates; 20 duplicates; 7 access-limited; 1 exclusion |
+| Multi-source search amendment | 1,358 candidates | 42 matched previously assessed baseline studies; 1,316 unmatched candidates not assessed after closure | 0 new studies | 1,316 unmatched candidates outside the synthesis denominator |
 
 The rows are not additive because the search streams overlap and are reconciled by study identity. The synthesis denominator is the 121 unique studies that passed the unified eligibility and extraction procedure.
 
 Figure \ref{fig:corpus-assembly-flow} summarizes the unified corpus assembly and the auxiliary records retained outside its denominator.
 
-<!-- figure: path="figures/corpus_assembly_flow.tex" caption="Unified corpus assembly. Overlapping multi-source search streams were reconciled into 121 included studies; the supporting reserve and external cross-check remain outside the synthesis denominator." label="fig:corpus-assembly-flow" -->
+<!-- figure: path="figures/corpus_assembly_flow.tex" caption="Unified corpus assembly. Overlapping multi-source search streams were reconciled into 121 included studies. The amendment contributed no new studies: 42 records matched existing corpus studies, while 1,316 unmatched candidates remained outside the synthesis denominator." label="fig:corpus-assembly-flow" -->
 
 ## Eligibility and Evidence Tiers
 
@@ -115,7 +118,22 @@ Because the final categories were calibrated during review preparation, we retai
 
 Each included study has one structured extraction record derived from its available full text. Records contain bibliographic identity, screening decision, study design, RQ1--RQ5 evidence, traceability, quality appraisal, trade-off and evaluator-validity fields, evidence locations, and unresolved verification items. All 121 records pass the same completeness check. Extraction was performed by one reviewer; the validator checks required fields and controlled values but does not test whether another reviewer would make the same judgments.
 
-Independent agreement was not measured. A future validation step should assign a random 10--20% sample to a second reviewer for blind eligibility screening and extraction of the principal fields. It should report raw agreement and Cohen's kappa for inclusion decisions, and Krippendorff's alpha for the core failure label, usefulness, actionability, context quality, and handling decision. Disagreements should be adjudicated before any revised rules are applied to affected records. This procedure is proposed future work, not part of the completed review.
+### Test--retest reliability
+
+To reduce single-reviewer reliability risk, a reproducible random 10% sample of 12 included studies was selected with seed 20260806 after the initial extraction. The reviewer completed a second-pass worksheet for eligibility, evidence tier, principal failure category, mitigation family, usefulness/actionability, and context quality. The preliminary same-reviewer comparison is reported in the supplementary audit package. Because several original fields are multi-valued while the retest worksheet uses single labels, the last two comparisons are not directly commensurable; these results are therefore a diagnostic test--retest audit, not independent inter-rater reliability evidence.
+
+Independent agreement was not measured in the original extraction. The retest worksheet is a documented audit step, not a substitute for completed independent coding. Once completed, disagreements should be adjudicated and any revised rules applied consistently to affected records.
+
+### Protocol deviations
+
+The following deviations were recorded in the supplementary audit package.
+
+| Item | Initial protocol | Executed procedure | Reason | Potential effect |
+|---|---|---|---|---|
+| Protocol | Fixed before the review | Documentation consolidated retrospectively | Iterative project development | Potential post-hoc decision-making |
+| Scopus | Planned database search | Not executed | No authenticated or institutional access | Potentially reduced coverage |
+| RQ4 | Four-level evidence-status coding | Broad availability coding; study-level separation remains incomplete | Time and extraction constraints | Mention and measurement may be conflated |
+| Supplemental search | Candidates eligible for corpus entry | Candidates retained outside the frozen denominator | Corpus closure preceded follow-up assessment | Relevant studies may be absent |
 
 <!-- table: caption="Study-level data items and their use in the review." label="tab:data-items" -->
 | Data-item group | Fields | Use |
@@ -143,4 +161,4 @@ We separately mapped the bounded synthesis claims in the 53 substantively extrac
 
 ## Protocol Consolidation
 
-The search documentation was consolidated retrospectively; however, all included studies were subsequently verified against the unified eligibility, extraction, and appraisal procedure. The 12-item appraisal instrument was finalized during extraction calibration on 1 August 2026, before the standardized corpus-wide scoring pass. Evidence-tier assignment distinguishes direct from supporting and peripheral evidence. Seven otherwise relevant records remain outside the frozen corpus because verified full text was unavailable. Any future search rerun will be dated and reported as an update to the consolidated protocol. RQ4 separates quantitative measurement, qualitative evaluation, limitation/design mention, and review inference; only the first two are treated as measured or evaluated evidence.
+The search documentation was consolidated retrospectively; however, all included studies were subsequently verified against the unified eligibility, extraction, and appraisal procedure. The 12-item appraisal instrument was finalized during extraction calibration on 1 August 2026, before the standardized corpus-wide scoring pass. Evidence-tier assignment distinguishes direct from supporting and peripheral evidence. Seven otherwise relevant records remain outside the frozen corpus because verified full text was unavailable. Any future search rerun will be dated and reported as an update to the consolidated protocol. The planned RQ4 evidence-status scheme distinguishes quantitative measurement, qualitative evaluation, limitation or design mention, and review inference. The current extraction has not yet applied this distinction consistently at study level.

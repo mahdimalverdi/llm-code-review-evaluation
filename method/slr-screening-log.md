@@ -33,4 +33,4 @@ Use one or more of: `out of scope`, `no review-feedback connection`, `insufficie
 
 ## Current limitation
 
-The frozen 121-study corpus is suitable for a targeted structured review, but not for a fully reproducible systematic review claim. The original database-specific search strings, dates, retrieved counts, deduplication counts, and exclusion trail were not preserved. The dated amendment improves traceability but cannot reconstruct the historical search.
+The frozen 121-study corpus is suitable for a targeted structured review, but not for a fully reproducible systematic review claim. The original database-specific search strings, dates, retrieved counts, deduplication counts, and exclusion trail were not preserved. The dated amendment improves traceability but cannot reconstruct the historical search. The later 1,358-identity candidate pool contains 42 exact-title matches to historical baseline records and 1,316 records outside the frozen denominator; records without full-text eligibility assessment are not called excluded solely because the corpus was closed.

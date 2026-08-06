@@ -1,6 +1,6 @@
 # Replication Package Manifest
 
-This manifest identifies the repository artifacts used to audit the 121-study synthesis corpus and reproduce the manuscript's descriptive tables. It does not reconstruct the unavailable search history of the 71-study historical baseline.
+This manifest identifies the repository artifacts used to audit the 121-study synthesis corpus and reproduce the manuscript's descriptive tables. It does not reconstruct the unavailable search history of the 71-study historical baseline. The checkout is release candidate `v1.0` (last updated 2026-08-06); a persistent DOI and public archive URL must be added after depositing this release in Zenodo, OSF, or an equivalent repository.
 
 ## Corpus and Bibliography
 
@@ -18,6 +18,7 @@ This manifest identifies the repository artifacts used to audit the 121-study sy
 - `scripts/build_unified_candidate_pool.py`: cross-source identity reconciliation without inferring eligibility.
 - `scripts/enrich_candidate_dois.py`: resumable Crossref/OpenAlex DOI suggestions with title/year scoring and provenance.
 - `scripts/resolve_source_url_dois.py`: cached DOI resolution for source-URL-only candidates, including direct arXiv/URL extraction and unresolved-status logging.
+- `scripts/apply_high_confidence_dois.py`: auditable promotion of high-confidence DOI suggestions into the unified candidate pool.
 - `scripts/sync_external_references.py`: dry-run-first, DOI/title-deduplicated promotion of reviewed external candidates into the canonical BibTeX file.
 - `scripts/triage_unified_candidate_pool.py`: conservative title/abstract triage with explicit metadata-only handling.
 - `scripts/build_full_text_screening_queue.py`: deterministic queue of candidates still requiring human full-text screening.
@@ -32,6 +33,7 @@ This manifest identifies the repository artifacts used to audit the 121-study sy
 - `data/search/source-url-doi-resolution.csv`: DOI resolution results for source-URL-only candidates.
 - `data/search/source-url-doi-cache.json`: cache for source-URL DOI resolution.
 - `data/search/source-url-doi-resolution.log`: progress and provider-error log for source-URL DOI resolution.
+- `data/search/high-confidence-doi-application.csv`: per-candidate DOI promotion decisions.
 - `data/search/external-reference-sync-report.csv`: per-candidate decisions from the bibliography promotion step.
 - `data/search/unified-title-abstract-screening.csv`: dated screening sheet for the 1,358 reconciled identities.
 - `data/search/full-text-screening-queue.csv`: 1,067 pending records separated into abstract-available and metadata-only queues.

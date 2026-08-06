@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import html
 import json
 import logging
 import re
@@ -54,6 +55,13 @@ def fetch_json(url: str) -> dict[str, object]:
     request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     with urllib.request.urlopen(request, timeout=30) as response:
         return json.load(response)
+
+
+def fetch_page(url: str) -> str:
+    """Fetch a source page for direct metadata extraction."""
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    with urllib.request.urlopen(request, timeout=30) as response:
+        return response.read().decode("utf-8", errors="replace")
 
 
 def crossref_candidates(title: str) -> list[dict[str, object]]:
@@ -101,6 +109,20 @@ def direct_resolution(row: dict[str, str]) -> tuple[str, str]:
     match = ARXIV_PATTERN.search(" ".join((row.get("source_url", ""), row.get("arxiv_id", ""))))
     if match:
         return f"10.48550/arxiv.{match.group(1).lower().removesuffix('.pdf')}", "arxiv_identifier"
+    source_url = row.get("source_url", "")
+    if "ieeexplore.ieee.org/" in source_url:
+        try:
+            page = html.unescape(fetch_page(source_url))
+            meta_match = re.search(
+                r"(?:name|property)=[\"']citation_doi[\"'][^>]*content=[\"']([^\"']+)",
+                page,
+                re.IGNORECASE,
+            )
+            page_doi = normalize_doi(meta_match.group(1)) if meta_match else normalize_doi(page)
+            if page_doi:
+                return page_doi, "ieee_page_metadata"
+        except Exception:
+            return "", ""
     return "", ""
 
 
