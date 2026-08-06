@@ -8,6 +8,8 @@ The historical 71-study baseline cannot be fully reconstructed. The later multi-
 
 One reviewer performed the screening, extraction, appraisal, and synthesis coding. Structural checks identified missing fields and invalid labels, but they could not detect interpretation errors or measure inter-reviewer agreement. This limitation is particularly important for boundaries among unsupported claims, insufficient context, incorrect technical claims, and incorrect causal explanations. A second reviewer should independently repeat eligibility and principal extraction decisions for a random 15--20% sample, followed by adjudication and reporting of raw agreement and an appropriate chance-corrected statistic, before the taxonomy is treated as reliable.
 
+A same-reviewer test--retest audit was conducted on a reproducible 10% sample. It provides limited evidence of temporal coding stability but does not replace independent inter-reviewer validation.
+
 ## Construct Validity
 
 Correctness, grounding, relevance, usefulness, actionability, acceptance, coverage, and cost are defined differently across studies. We avoid pooling incompatible measures and distinguish evaluation dimensions from failure categories and workflow decisions. However, the current RQ4 extraction combines measurement, qualitative evaluation, limitation mentions, and review inference within broad availability fields. Consequently, RQ4 counts indicate that an outcome was addressed, not that it was measured. Study-level evidence status must be re-extracted before separate measurement-frequency claims are made.

@@ -1,8 +1,9 @@
-# Test--retest comparison
+# Descriptive within-reviewer test--retest audit
 
 The 12-study worksheet was completed in a second pass and compared with the
 original extraction using the fixed sample seed `20260806`. Raw agreement and
-nominal Cohen's kappa are shown below.
+nominal Cohen's kappa are shown below as descriptive stability checks only.
+They are not independent inter-rater reliability estimates.
 
 | Field | Agreement | Cohen's kappa |
 |---|---:|---:|
@@ -13,9 +14,9 @@ nominal Cohen's kappa are shown below.
 | Evaluation/usefulness coding | 12/12 (100.0%) | 1.000 |
 | Context quality | 11/12 (91.7%) | 0.894 |
 
-These figures are a preliminary same-reviewer audit, not independent inter-rater
+These figures are a same-reviewer audit, not evidence of independent inter-rater
 reliability. The retest worksheet was aligned with the original multi-valued
 field representation before comparison. The eligibility disagreement reflects a
-real second-pass change for one study and should be adjudicated; the remaining
-differences are suitable for diagnostic review but do not replace independent
-reviewer agreement.
+real second-pass change for one study and should be adjudicated. A second
+reviewer and a pre-specified agreement analysis remain necessary before making a
+reliability claim about the taxonomy or extraction.

@@ -120,9 +120,20 @@ Each included study has one structured extraction record derived from its availa
 
 ### Test--retest reliability
 
-To reduce single-reviewer reliability risk, a reproducible random 10% sample of 12 included studies was selected with seed 20260806 after the initial extraction. The reviewer completed a second-pass worksheet for eligibility, evidence tier, principal failure category, mitigation family, usefulness/actionability, and context quality. The preliminary same-reviewer comparison is reported in the supplementary audit package. Because several original fields are multi-valued while the retest worksheet uses single labels, the last two comparisons are not directly commensurable; these results are therefore a diagnostic test--retest audit, not independent inter-rater reliability evidence.
+To check coding stability, a reproducible random 10% sample of 12 included studies was selected with seed 20260806 after the initial extraction. The same reviewer completed a second-pass worksheet for eligibility classification, evidence tier, principal failure category, mitigation family, usefulness/actionability, and context quality. The resulting agreement and Cohen's kappa values are reported only as a descriptive within-reviewer test--retest audit. They do not establish inter-rater reliability: no independent reviewer coded the sample, and the sample is too small to support a strong reliability claim. Because several original fields are multi-valued, the comparison also depends on the harmonized field representation documented in the supplement.
 
-Independent agreement was not measured in the original extraction. The retest worksheet is a documented audit step, not a substitute for completed independent coding. Once completed, disagreements should be adjudicated and any revised rules applied consistently to affected records.
+For the four single-label fields, the descriptive results were:
+
+| Field | Raw agreement | Cohen's kappa |
+|---|---:|---:|
+| Eligibility classification | 66.7% | 0.467 |
+| Evidence tier | 100.0% | 1.000 |
+| Principal failure category | 100.0% | 1.000 |
+| Mitigation family | 100.0% | 1.000 |
+
+Across the four single-label fields, raw agreement ranged from 66.7% to 100.0%. Exploratory Cohen's kappa ranged from 0.467 to 1.000. Eligibility classification agreed for 8 of the 12 retested studies; the four disagreements primarily concerned the boundary between direct, supporting, and out-of-scope evidence. These cases were reviewed against the consolidated eligibility rules, and the final decisions and rationales are recorded in the audit package. Agreement was perfect for the three synthesis-coding fields but moderate for eligibility classification, indicating that the boundary between direct, supporting, and out-of-scope evidence remains the least stable coding decision. Multi-label evaluation and context fields are reported separately as descriptive agreement checks in the supplement and are not assigned ordinary single-label kappa values in this table.
+
+Independent agreement was not measured. The retest worksheet is a documented audit step, not a substitute for independent coding. A future reliability study should recruit a second reviewer, lock the coding rules before recoding, report field-specific raw agreement and Cohen's kappa (or a multi-label statistic where appropriate), and adjudicate disagreements before applying revised rules to the corpus.
 
 ### Protocol deviations
 
