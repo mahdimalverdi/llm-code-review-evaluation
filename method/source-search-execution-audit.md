@@ -11,7 +11,7 @@ This audit records the source-by-source execution attempted on 6 August 2026. Bl
 | ScienceDirect | Manual browser run; 100 items per page; date sorting; 2021-2026 year filter | Complete native set: 318 results and 318 unique PII record URLs retained | Reproducible from the exact URL, four retained HTML pages, parsed CSV, manifest, and importer script |
 | SpringerLink | Manual browser search and native CSV export | Complete native set: 155 results, 155 unique DOIs, and 155 unique record URLs retained | Reproducible from the documented query, retained CSV, and checksum/provenance manifest |
 | Google Scholar | Manual signed-in browser run; date sorting; nine pages | Complete exposed set: approximately 81 reported results and 81 unique Scholar result identifiers retained | Reproducible from the parsed CSV, private-input checksums, manifest, and importer; raw signed-in HTML is excluded for privacy |
-| Scopus | Elsevier Scopus Search API | No HTTP response before bounded timeout; authenticated API access may also be required | Requires API credentials/institutional access or manual export |
+| Scopus | API attempt followed by owner verification in Scopus Preview | API produced no response; Preview exposed only author and source search, with no document search or export | Formally closed as unavailable without institutional access; no zero-result inference is made |
 
 ## Completion rule
 

@@ -16,10 +16,10 @@ The review remains a targeted structured review. The evidence set is frozen at 1
    - Expand Discussion with implications, conflicting evidence, operational trade-offs, and limits of transfer.
    - Ensure Methodology describes the baseline, dated amendment, freeze rule, duplicate handling, and access limitations.
 
-3. **Complete external source coverage only where authorised access becomes available.**
+3. **Screen the completed external source searches.**
    - Screen and reconcile the completed 427-record Semantic Scholar result set.
    - Screen and reconcile the completed 449-record ACM Digital Library, 69-record IEEE Xplore, 318-record ScienceDirect, 155-record SpringerLink, and 81-record Google Scholar result sets.
-   - Execute the documented Scopus query through authorised/manual access where possible.
+   - Preserve Scopus as a documented access exclusion; do not interpret the unavailable result set as zero records.
    - Record exact query, date, native retrieved count, deduplication result, and source-access limitation. The supplied external export is partial and cannot be used to claim exhaustive coverage.
 
 4. **Complete assurance and submission preparation.**

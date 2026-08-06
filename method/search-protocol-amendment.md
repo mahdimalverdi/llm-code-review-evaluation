@@ -30,7 +30,7 @@ The raw Atom responses are retained with the query identifiers. Candidates are d
 | ScienceDirect | Complete manual-browser run on 2026-08-06: 318 native results and 318 unique PII record URLs | Four raw HTML pages, parsed CSV, checksum/provenance manifest, and importer retained; enforce the 2026-08-02 cutoff during screening |
 | SpringerLink | Complete manual-browser export on 2026-08-06: 155 native results and 155 unique DOI-bearing records | Native CSV and checksum/provenance manifest retained; screening remains pending |
 | Google Scholar | Complete manual-browser run on 2026-08-06: approximately 81 reported results and 81 unique Scholar result identifiers | Privacy-safe parsed CSV, nine private-input checksums, manifest, and importer retained; raw signed-in HTML excluded and date window applied during screening |
-| Scopus | Pending | Execute if institutional access is available; otherwise record the limitation |
+| Scopus | Formally closed on 2026-08-06 | API access was unavailable and the repository owner had only Scopus Preview, which does not expose document search or result export; no zero-result claim is made |
 
 ## Supplied partial external-source export
 
@@ -44,4 +44,4 @@ Title/abstract screening uses the existing core, supporting, and exclusion crite
 
 ## Reporting restriction
 
-The review remains a targeted structured review during this amendment. The arXiv full-text decisions are now documented, but the review may be called an SLR only after the remaining source searches, screening decisions, full-text decisions, and final included set are documented.
+The review remains a targeted structured review during this amendment. The source searches are complete or formally closed, but the review may be called an SLR only after the new result sets are screened, full-text decisions are recorded, cross-source duplicates are reconciled, and the final included set is documented.
