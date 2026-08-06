@@ -2,7 +2,7 @@
 
 Mitigation changes the review stream. A filter decides which candidate comments disappear; retrieval changes the evidence available to the generator; verification adds another judgment; and referral transfers work to a reviewer. Studies of these mechanisms report losses in coverage, shifts in intent, and additional latency or effort [@p04_kumar2026_swe_prbench; @p07_olewicki2024_revmate; @p10_sun2025_bitsai_cr; @p18_bensghaier2025_curated_reviews; @p35_mcaleese2024_llm_critics; @p65_ameen2026_qasecclaw].
 
-The framework connects six layers: input and context quality, comment quality, failure type, handling decision, preservation and coverage, and cost and evaluator validity. Together, they connect quality assessment to concrete workflow decisions.
+This review proposes an integration of six layers: input and context quality, comment quality, failure type, handling decision, preservation and coverage, and cost and evaluator validity. Individual constructs and intervention families are reported in prior work; their organization into one framework and the four-way handling policy are author-derived. Neither has been empirically validated as an instrument.
 
 ## Framework Overview
 
@@ -32,7 +32,7 @@ Failure labels supply a diagnosis that quality ratings alone cannot provide. Ver
 
 ## Layer 4: Mitigation Decision
 
-The framework uses four mitigation decisions.
+This review proposes four mitigation decisions.
 
 - `show`: the comment is suitable to present as review feedback.
 - `suppress`: the comment should not be shown because it is harmful, unsupported, irrelevant, incorrect, or too low-value.

@@ -15,6 +15,8 @@ The evidence pool contains 121 unique full-text studies, each represented by one
 
 These counts describe the synthesis corpus, not a PRISMA-style database search flow. Identification, deduplication, title/abstract exclusion, and full-text exclusion counts for the historical baseline remain unavailable.
 
+All counts in this section use the study as the unit of analysis. Percentages use the row-specific study count shown in the corresponding table; none is a comment-level prevalence estimate.
+
 ## Research Streams
 
 The corpus spans six overlapping streams:

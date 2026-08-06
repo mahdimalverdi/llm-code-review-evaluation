@@ -1,6 +1,6 @@
 # Operational Taxonomy of Problematic Comments
 
-The reviewed literature requires labels that distinguish different kinds of problematic LLM-generated code review comments. A binary label such as correct or incorrect is insufficient because a comment may be unsupported, irrelevant, vague, non-actionable, incorrectly localized, or valid but too low-value to justify attention [@p02_tantithamthavorn2026_hallujudge; @p08_liu2025_too_noisy; @p19_nguyen2025_fine_grained_classification; @p35_mcaleese2024_llm_critics; @p57_heumuller2025_relevance_reviews; @p60_ahmed2025_feedback_useful]. It may also contain a recoverable signal while being unsuitable to show directly. This section defines the literature-derived taxonomy for future annotation and mitigation analysis.
+The reviewed literature reports unsupported, irrelevant, vague, non-actionable, incorrectly localized, and low-value feedback, among other problems [@p02_tantithamthavorn2026_hallujudge; @p08_liu2025_too_noisy; @p19_nguyen2025_fine_grained_classification; @p35_mcaleese2024_llm_critics; @p57_heumuller2025_relevance_reviews; @p60_ahmed2025_feedback_useful]. The source studies do not use one shared taxonomy. The labels below were derived through cross-study synthesis and then consolidated by the authors for future annotation and mitigation analysis.
 
 The taxonomy supports annotation, comparison across mitigation strategies, and analysis of handling decisions. It is intentionally smaller than the full failure inventory: specialized and context-specific details are represented as modifiers unless they explain the main reason that feedback should not be shown directly.
 
@@ -35,6 +35,20 @@ Table \ref{tab:problematic-comment-taxonomy} defines the core failure labels use
 | Low-value or redundant comment | The comment may be technically valid but is too obvious, stylistic, redundant, minor, or costly relative to its review value. | Suppress, aggregate, or show only under low-noise settings. |
 
 A generated comment can have one core label and multiple secondary modifiers. The core label should capture the dominant reason the comment should not be shown directly. Secondary modifiers should capture additional properties that affect mitigation, cost, or later analysis.
+
+Table \ref{tab:taxonomy-traceability} records the principal evidence basis for each proposed core label. “Direct” denotes code-review-specific evidence; “supporting” denotes adjacent evidence used to clarify a boundary. The grouping, names, and core/modifier architecture are author-derived integrations, and none of the rows has yet undergone independent reliability testing.
+
+<!-- table: caption="Traceability and validation status of the proposed core failure labels." label="tab:taxonomy-traceability" longtable="true" -->
+| Proposed core label | Principal supporting studies | Evidence tier | Author-derived component and validation status |
+| --- | --- | --- | --- |
+| Unsupported or hallucinated claim | [@p02_tantithamthavorn2026_hallujudge; @p35_mcaleese2024_llm_critics] | direct and supporting | unified evidence requirement and label boundary; not independently validated |
+| Context-dependent or insufficient-context comment | [@p04_kumar2026_swe_prbench; @p06_hu2025_contextcrbench; @p16_icoz2026_context_aware] | direct | separation from unsupported claims; not independently validated |
+| Incorrect technical claim | [@p01_lu2025_deepcrceval; @p03_tantithamthavorn2026_rovodev; @p19_nguyen2025_fine_grained_classification] | direct | consolidated technical-error scope; not independently validated |
+| Wrong location or wrong cause | [@p02_tantithamthavorn2026_hallujudge; @p21_peng2025_icodereviewer; @p58_jin2026_reliable_code_reviewers] | direct | combination of localization and causal-error cases; not independently validated |
+| Irrelevant or out-of-scope comment | [@p10_sun2025_bitsai_cr; @p19_nguyen2025_fine_grained_classification; @p57_heumuller2025_relevance_reviews] | direct | shared boundary between irrelevance and separate-issue routing; not independently validated |
+| Non-actionable or weakly explained comment | [@p01_lu2025_deepcrceval; @p19_nguyen2025_fine_grained_classification; @p60_ahmed2025_feedback_useful] | direct and supporting | merged actionability and explanation boundary; not independently validated |
+| Invalid fix suggestion | [@p21_peng2025_icodereviewer; @p46_zhou2025_vulnerability_repair; @p70_guo2023_chatgpt_code_refinement] | direct, supporting, and bounded peripheral | review-specific repair-safety label; not independently validated |
+| Low-value or redundant comment | [@p07_olewicki2024_revmate; @p10_sun2025_bitsai_cr; @p39_bosu2015_useful_reviews] | direct and supporting | value threshold and redundancy grouping; not independently validated |
 
 The taxonomy intentionally does not use **useful but not directly acceptable** or **specialized-risk comment** as default core failure labels. The first is a mitigation-relevant state that is better represented through usefulness, actionability, grounding, and the **recoverable signal** modifier. The second is usually a domain-risk modifier because specialized evidence may be required for several different core failures. If pilot annotation shows that either state is frequent, reliably identifiable, and decision-changing, the executed study may promote it to a core label and must report that change explicitly.
 
@@ -95,4 +109,4 @@ This mapping also distinguishes successful noise removal from recoverable feedba
 
 ## Reliability and Empirical Use
 
-The taxonomy can describe baseline failures, compare strategies by failure type, and identify useful feedback that mitigation loses. Pilot annotation should report agreement for the core label, usefulness, actionability, context quality, and handling decision; recurrent disagreements should guide revisions to label boundaries.
+The proposed taxonomy can be used to describe baseline failures, compare strategies by failure type, and identify useful feedback that mitigation loses. These are intended uses, not completed validation results. Pilot annotation should report agreement for the core label, usefulness, actionability, context quality, and handling decision; recurrent disagreements should guide revisions to label boundaries.

@@ -18,8 +18,10 @@ The corpus also reveals a difference between evidence coverage and evidence
 comparability. Many studies discuss correctness, usefulness, coverage, cost, or
 human involvement, but they operationalize these constructs with different
 artifacts, denominators, and evaluators. The study-level counts consequently
-describe reporting practice, not a common effect size. The framework uses the
-dimensions as a reporting structure and decision aid.
+describe reporting practice, not a common effect size. Our framework is an
+author-derived reporting and decision structure for making those differences
+visible; the present synthesis does not test whether the structure improves
+review outcomes.
 
 ## Denominators and Missing Outcomes
 
@@ -83,10 +85,13 @@ instrument can measure.
 
 ## Scope of the Framework
 
-The framework specifies what to record, but projects still have to set decision
-thresholds according to risk and review capacity. It also leaves preservation,
-coverage, escalation, and cost as separate fields. The empirical status of the
-taxonomy and framework is addressed in the Threats to Validity section.
+The reviewed studies supply the constructs, failure evidence, and intervention
+families used by the framework. This review supplies their six-layer organization,
+the core/modifier taxonomy architecture, and the show, suppress, rewrite, and
+escalate policy. Projects still have to set thresholds according to risk and
+review capacity. Independent annotation and controlled strategy comparisons are
+required before these author-derived components can be treated as validated
+instruments.
 
 ## Research Agenda
 

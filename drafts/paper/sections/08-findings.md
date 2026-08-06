@@ -1,6 +1,6 @@
 # Results
 
-The results characterize evidence coverage and reporting practice within the 121-study corpus. Study counts indicate that a topic was coded in the available full text; they do not rank mitigation strategies or estimate their comparative effects.
+The results characterize evidence coverage and reporting availability within the 121-study corpus. Unless another denominator is stated, a count is the number of included studies containing coded evidence for a field. It is not the prevalence of a failure among generated comments, the precision of displayed comments, issue coverage, an escalation rate, or a resource-cost estimate. The counts neither rank mitigation strategies nor estimate comparative effect sizes. A study with no extractable evidence for a field is coded as missing reporting, not as evidence of zero effect.
 
 ## RQ1: Problematic-comment Types
 
