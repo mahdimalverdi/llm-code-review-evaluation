@@ -107,7 +107,7 @@ Current focus:
 - [x] Acquire local text and create provisional extraction packets for the 70 supporting records selected from the full-text screen.
 - [x] Update `method/next-session-todo.md` and screening documentation to reflect the 121-study freeze.
 - [x] Complete and retain the Semantic Scholar bulk-API search (963 raw; 427 unique).
-- [x] Execute or formally close the remaining planned source searches: IEEE Xplore completed; ACM Digital Library, ScienceDirect, SpringerLink, Google Scholar, and Scopus retain explicit access/export limitations.
+- [x] Execute or formally close the remaining planned source searches: ACM Digital Library and IEEE Xplore completed; ScienceDirect, SpringerLink, Google Scholar, and Scopus retain explicit access/export limitations.
 - [x] Record exact queries, dates, native result counts, deduplication counts, and access limitations for every executed source.
 
 Exit criteria:

@@ -19,6 +19,10 @@ This manifest identifies the repository artifacts used to audit the 121-study sy
 - `data/search/semantic-scholar/semantic-scholar-raw.jsonl.gz`: compressed retained responses before cross-query deduplication.
 - `data/search/semantic-scholar/semantic-scholar-unique.csv`: paper-ID-deduplicated result set with query membership.
 - `data/search/ieee-xplore-search-2026-08-06.csv`: complete 69-record IEEE Xplore browser result set.
+- `scripts/import_acm_search_html.py`: deterministic parser and completeness checks for a manually saved ACM result page.
+- `data/search/acm/acm-search-2026-08-06.html.gz`: compressed manual-browser capture of the complete ACM result page.
+- `data/search/acm/acm-search-2026-08-06.csv`: parsed 449-record ACM result set.
+- `data/search/acm/acm-search-2026-08-06.json`: ACM query, count, checksum, uniqueness, and provenance manifest.
 - `data/search/springerlink-attempt-2026-08-06.json`: verified SpringerLink count and incomplete-export evidence.
 - `data/search/acm-attempt-2026-08-06-retry.json`: retained evidence from the second ACM/Cloudflare verification block.
 - `data/search/raw/`: retained raw arXiv responses.
@@ -42,11 +46,13 @@ This manifest identifies the repository artifacts used to audit the 121-study sy
 From the repository root, run:
 
 ```bash
+python3 -m pip install -r requirements-search.txt
+python3 scripts/import_acm_search_html.py saved-acm-results.html data/search/acm
 python3 scripts/build_slr_dataset.py
 python3 scripts/build_latex.py
 ```
 
-The first command rebuilds the study-level dataset and summary tables from the canonical notes. The second rebuilds `build/paper.tex` from the manuscript sections. These checks reproduce the structured corpus outputs; they do not supply independent reviewer agreement.
+The ACM importer verifies the expected 449 rows and 449 unique record URLs before replacing its CSV and manifest. The dataset command rebuilds the study-level dataset and summary tables from the canonical notes. The LaTeX command rebuilds `build/paper.tex` from the manuscript sections. These checks reproduce the structured corpus outputs; they do not supply independent reviewer agreement.
 
 The canonical notes contain criterion-level Q1–Q12 scores and evidence notes for each study; `data/slr-extraction.csv` currently exposes only their totals. The current extraction dataset also contains broad RQ4 reporting-availability fields rather than a completed study-by-study evidence-status field distinguishing quantitative measurement, qualitative evaluation, limitation/design mention, and review inference. Both publication-facing exports require an additional deterministic projection or manual audit before they are presented as standalone supplementary tables.
 
