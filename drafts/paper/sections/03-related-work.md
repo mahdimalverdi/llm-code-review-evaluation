@@ -2,7 +2,7 @@
 
 Research relevant to LLM-based code review spans review automation, benchmarks, grounding and context, human-centered evaluation, mitigation, and evaluator validity. Figure \ref{fig:related-work-coverage-map} shows the concerns emphasized by each stream and the limited overlap among them.
 
-<!-- figure: path="figures/related-work-coverage-map.tex" caption="Related-work coverage map for comment-level mitigation evaluation. Darker cells indicate stronger focus in prior work; the final row summarizes the integrated perspective examined in this review." label="fig:related-work-coverage-map" -->
+<!-- figure: path="figures/related-work-coverage-map.tex" caption="Interpretive related-work coverage map for comment-level mitigation evaluation. Marks summarize the authors' qualitative reading of each literature stream: dark indicates a primary concern, medium a recurring secondary concern, and light limited or incidental treatment. They are not frequency estimates or independently coded scores. The final row shows the scope integrated in this review." label="fig:related-work-coverage-map" -->
 
 ## Review Automation and Evaluation
 

@@ -64,6 +64,10 @@ The strongest recurring gap is asymmetric reporting. Studies commonly report imp
 
 The structured projection makes this asymmetry explicit but must be interpreted as reporting availability rather than outcome prevalence. Preservation-related evidence appears in 45 records, coverage in 46, human-escalation evidence in 27, and cost evidence in 34. In most cases, these fields are discussed as a design implication, limitation, or partial measurement rather than as a complete deployment outcome. The counts therefore show where a trade-off is addressed, not that it was measured with a common protocol or resolved favorably.
 
+Figure \ref{fig:rq4-tradeoff-evidence} shows the imbalance across these four reporting fields.
+
+<!-- figure: path="figures/rq4_tradeoff_evidence.tex" caption="Availability of reported trade-off evidence in the 121-study corpus. Values are counts of included studies with coded evidence for each field; they are not effect sizes, success rates, or estimates of intervention effectiveness." label="fig:rq4-tradeoff-evidence" -->
+
 <!-- table: caption="Availability of trade-off evidence in the 121 included studies." label="tab:rq4-reporting" -->
 | Trade-off field | Reported | No extractable evidence identified | Unclear or not applicable |
 |---|---:|---:|---:|

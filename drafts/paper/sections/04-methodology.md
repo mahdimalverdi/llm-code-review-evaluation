@@ -66,7 +66,7 @@ Full-text inclusion required a recorded decision, inclusion group, exact eligibi
 
 The remaining 79 records form the supporting reserve: 53 have substantive provisional extraction, 16 have scaffolds only, and ten have no extraction packet. They are not included in the 121-study denominator. Inaccessible records without enough evidence for classification were excluded; seven access-limited records from the later external export remain metadata-only and outside the frozen corpus.
 
-An external 30-record export was screened separately after corpus closure. Reconciliation found 20 duplicates, two full-text candidates retained outside the closed corpus, seven access-limited metadata-only candidates, and one exclusion. The external export therefore contributes no additional study to the 121-study denominator. Candidate-level decisions and provenance are included in the replication package.
+An external 30-record export was screened separately after corpus closure. Reconciliation found 20 duplicates, two full-text candidates retained outside the closed corpus, seven access-limited metadata-only candidates, and one exclusion. The external export therefore contributes no additional study to the 121-study denominator. The manuscript reports the resulting counts and provenance boundaries; the candidate-level decision records are not included with this PDF submission.
 
 <!-- table: caption="Auditable accounting of the baseline corpus and dated search amendments." label="tab:corpus-flow-audit" -->
 | Source | Identified | Full text assessed | Corpus records contributed | Reserve or post-closure | Overlaps or duplicate identities | Access-limited |
@@ -76,6 +76,10 @@ An external 30-record export was screened separately after corpus closure. Recon
 | External cross-check export | 30 | 3 | 0 | 2 full-text candidates | 20 | 7 |
 
 The rows are not additive identification stages: the external export is a post-closure cross-check and overlaps the baseline and arXiv records. The corpus arithmetic is therefore `71 + 50 = 121`.
+
+Figure \ref{fig:corpus-assembly-flow} summarizes the auditable corpus arithmetic. It is not a PRISMA flow diagram because identification and exclusion records for the historical baseline were not retained.
+
+<!-- figure: path="figures/corpus_assembly_flow.tex" caption="Corpus assembly and supplementary-search amendment flow. The 79-record supporting reserve and the 30-record external cross-check remain outside the 121-study synthesis denominator. The historical baseline is shown as an assembled input because its original identification flow is unavailable." label="fig:corpus-assembly-flow" -->
 
 ## Eligibility and Evidence Tiers
 
@@ -87,7 +91,7 @@ The synthesis corpus assigns 91 studies to the core tier, 24 to supporting evide
 
 The initial protocol specified eight criteria scored from 0 (`not reported`) to 2 (`clearly reported`). During extraction calibration on 1 August 2026, before the final standardized extraction pass and corpus-wide quantitative synthesis, the instrument was expanded to 12 items. The amendment separated broad criteria that otherwise combined review relevance, trade-off reporting, workflow consequences, and evaluator validity. All 121 included studies were subsequently scored with the same 12-item instrument, yielding a maximum of 24 points.
 
-This amendment improves field-level consistency but introduces retrospective design risk: the finer categories were informed by issues encountered during review preparation rather than fixed in the initial protocol. We therefore report it as a protocol amendment, retain criterion-level evidence, and do not use the total score as a mechanical inclusion threshold. Evidence tier and confidence remain separate from methodological appraisal. [AUTHOR ACTION REQUIRED: confirm that 1 August 2026 is the intended formal amendment date before external submission.]
+This amendment improves field-level consistency but introduces retrospective design risk: the finer categories were informed by issues encountered during review preparation rather than fixed in the initial protocol. We therefore report it as a protocol amendment dated 1 August 2026, retain criterion-level evidence, and do not use the total score as a mechanical inclusion threshold. Evidence tier and confidence remain separate from methodological appraisal.
 
 ## Data Extraction
 
@@ -107,13 +111,13 @@ No independent agreement results are available for the present manuscript. The p
 | Trade-off reporting | preservation, coverage, escalation, and cost availability | RQ4 |
 | Method validity | annotation, limitations, and RQ evidence status | RQ5 and framework traceability |
 
-The complete field definitions and controlled labels are provided in the replication package.
+The complete field definitions and controlled labels are described in the manuscript.
 
 ## Synthesis
 
 We used tabulation, thematic grouping, and framework mapping. We did not pool incompatible metrics. Initial categories were derived during cross-study synthesis and normalized into controlled vocabularies for failure types, evaluation dimensions, mitigation families, and context types. A deterministic transformation procedure produced one study-level record per included study, retained multi-valued controlled labels, and used `NR` when the extraction did not contain enough evidence. The resulting counts therefore describe coded evidence in the reviewed studies, not the prevalence of failures in deployed systems.
 
-Automated consistency checks ensure that each included study occurs once, evidence tiers do not overlap, admitted supplementary studies receive the intended tier, citations resolve, and appraisal scores are available. Findings were organized by research question. Stable study identifiers support traceability within the replication package, while citations support claims in this report. Every reported count uses the 121-study evidence pool as its denominator unless another denominator is stated.
+Automated consistency checks ensure that each included study occurs once, evidence tiers do not overlap, admitted supplementary studies receive the intended tier, citations resolve, and appraisal scores are available. Findings were organized by research question. Stable study identifiers support traceability within the project records, while citations support claims in this report. Every reported count uses the 121-study evidence pool as its denominator unless another denominator is stated.
 
 ### Supporting-reserve sensitivity analysis
 

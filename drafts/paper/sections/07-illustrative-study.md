@@ -75,4 +75,4 @@ Quality score and evidence tier are used together. A supporting or peripheral st
 
 ## Traceability
 
-The manuscript bibliography contains cited works, while the complete paper-level inventory of all 121 included records is provided in the replication package described in the Data and Replication Package Availability section. The inventory preserves study identifiers, citation keys, evidence tiers, extraction decisions, and evidence locations. This structure permits claims and counts to be checked against the corresponding full-text extraction while keeping the report organized by research question rather than by paper.
+The manuscript bibliography contains the cited works and identifies the 121-study evidence pool. The underlying paper-level inventory, including study identifiers, citation keys, evidence tiers, extraction decisions, and evidence locations, is not included with this standalone PDF. The report remains organized by research question rather than by paper.
