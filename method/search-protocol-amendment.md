@@ -28,7 +28,7 @@ The raw Atom responses are retained with the query identifiers. Candidates are d
 | ACM Digital Library | Complete manual-browser run on 2026-08-06: 449 native results and 449 unique record URLs | Exact URL, raw HTML capture, parsed CSV, manifest, and importer retained; apply the planned date window during screening |
 | IEEE Xplore | Complete public-browser run on 2026-08-06: 69 native results and 69 unique record links | Exact query and complete parsed CSV retained |
 | ScienceDirect | Attempted; search page returned no retrievable result set | Execute the same documented query manually or with institutional access |
-| SpringerLink | Attempted; search URL was unavailable to the current retrieval environment | Execute the same documented query manually or with institutional access |
+| SpringerLink | Complete manual-browser export on 2026-08-06: 155 native results and 155 unique DOI-bearing records | Native CSV and checksum/provenance manifest retained; screening remains pending |
 | Google Scholar | Pending | Use only a documented manual search; do not scrape |
 | Scopus | Pending | Execute if institutional access is available; otherwise record the limitation |
 

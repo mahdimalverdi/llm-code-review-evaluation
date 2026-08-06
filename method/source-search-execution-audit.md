@@ -9,7 +9,7 @@ This audit records the source-by-source execution attempted on 6 August 2026. Bl
 | ACM Digital Library | Manual browser run of `/action/doSearch`; 1,000 items per page; descending electronic-publication date | Complete native set: 449 results and 449 unique record URLs retained | Reproducible from the exact URL, retained HTML, parsed CSV, manifest, and importer script |
 | IEEE Xplore | Public search page; 75 items per page | Complete visible set: 69 results; titles, years, and canonical record links retained | Reproducible from the exact query and retained CSV |
 | ScienceDirect | Official `/search` page | `Site Unavailable` from the current browser/network | Requires manual or institutional execution |
-| SpringerLink | Official `/search` page and advertised CSV export | Native count 155; export did not complete | Count is verified, but the source remains incomplete without a retained screenable set |
+| SpringerLink | Manual browser search and native CSV export | Complete native set: 155 results, 155 unique DOIs, and 155 unique record URLs retained | Reproducible from the documented query, retained CSV, and checksum/provenance manifest |
 | Google Scholar | Scholar search page in headless Chrome | Google refused the request as automated traffic | Must be executed manually; scraping is not used |
 | Scopus | Elsevier Scopus Search API | No HTTP response before bounded timeout; authenticated API access may also be required | Requires API credentials/institutional access or manual export |
 
