@@ -1,6 +1,6 @@
 # Paper Pool
 
-This file records the current scope and evidence role of the 71-paper local corpus. Paper titles and paper-specific uses are listed in `matrices/cross-paper-synthesis.md`; extraction status, quality score, confidence, and unresolved items are listed in `papers/slr-review-progress.md`.
+This file records the current scope and evidence role of the 71-paper local corpus. Paper titles and paper-specific uses are listed in `matrices/cross-paper-synthesis.md`; extraction status, quality score, confidence, and unresolved items are listed in `papers/slr-review-progress.md`. A compact snapshot of the earlier planning sheet and its provenance is preserved in `data/historical-baseline-inventory.csv` and `method/historical-baseline-provenance.md`.
 
 ## Corpus Status
 

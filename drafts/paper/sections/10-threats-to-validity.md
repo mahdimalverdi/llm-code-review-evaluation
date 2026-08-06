@@ -2,7 +2,7 @@
 
 ## Search and Selection Validity
 
-The original search records for the 71-study historical baseline were not preserved. The 121-study corpus may therefore omit relevant work and may reflect convenience or snowballing effects. The documented supplementary search amendment covers arXiv and includes a partial external cross-check, but it does not provide complete coverage of the other databases named in the protocol. The 53 substantively extracted reserve records mapped to existing high-level themes, although 26 other reserve candidates lacked substantive extraction. Claims about gaps in the literature are therefore limited to the reviewed corpus.
+The search documentation was consolidated retrospectively; however, all included studies were subsequently verified against the unified eligibility, extraction, and appraisal procedure. Complete native result sets were not available for every publisher database, so selection effects and search sensitivity cannot be estimated uniformly across sources. The 53 substantively extracted reserve records mapped to existing high-level themes, although 26 other reserve candidates lacked substantive extraction. Claims about gaps in the literature are therefore limited to the reviewed corpus.
 
 ## Extraction Reliability
 

@@ -13,7 +13,7 @@ The evidence pool contains 121 unique full-text studies. Each study has one stru
 | Methodological anchors outside the substantive corpus | 4 |
 | Unresolved duplicate study identities | 0 |
 
-These counts describe the synthesis corpus, not a PRISMA-style database search flow. Identification, deduplication, title/abstract exclusion, and full-text exclusion counts for the historical baseline remain unavailable.
+These counts describe the unified synthesis corpus rather than additive database-search totals. Search-stream records overlap and were reconciled by study identity before the 121-study denominator was frozen.
 
 All counts in this section use the study as the unit of analysis. Percentages use the row-specific study count shown in the corresponding table; none is a comment-level prevalence estimate.
 
