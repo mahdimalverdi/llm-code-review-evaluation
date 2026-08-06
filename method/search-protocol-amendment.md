@@ -24,13 +24,13 @@ The raw Atom responses are retained with the query identifiers. Candidates are d
 | Source | Status on 2026-08-02 | Consequence |
 |---|---|---|
 | arXiv | Executed and recorded | 293 unique candidates; title/abstract screening retained 140 for full text, of which 132 were included and 8 excluded |
-| Semantic Scholar | Attempted; public API returned HTTP 429 | Retry required; do not treat as zero results |
-| ACM Digital Library | Attempted; search URL was unavailable to the current retrieval environment | Execute the same documented query manually or with institutional access |
-| IEEE Xplore | Attempted; search URL was unavailable to the current retrieval environment | Execute the same documented query manually or with institutional access |
-| ScienceDirect | Attempted; search page returned no retrievable result set | Execute the same documented query manually or with institutional access |
-| SpringerLink | Attempted; search URL was unavailable to the current retrieval environment | Execute the same documented query manually or with institutional access |
-| Google Scholar | Pending | Use only a documented manual search; do not scrape |
-| Scopus | Pending | Execute if institutional access is available; otherwise record the limitation |
+| Semantic Scholar | Complete retained bulk-API rerun on 2026-08-06: 963 raw, 427 unique | Exact query expansion and outputs retained |
+| ACM Digital Library | Complete manual-browser run on 2026-08-06: 449 native results and 449 unique record URLs | Exact URL, raw HTML capture, parsed CSV, manifest, and importer retained; apply the planned date window during screening |
+| IEEE Xplore | Complete public-browser run on 2026-08-06: 69 native results and 69 unique record links | Exact query and complete parsed CSV retained |
+| ScienceDirect | Complete manual-browser run on 2026-08-06: 318 native results and 318 unique PII record URLs | Four raw HTML pages, parsed CSV, checksum/provenance manifest, and importer retained; enforce the 2026-08-02 cutoff during screening |
+| SpringerLink | Complete manual-browser export on 2026-08-06: 155 native results and 155 unique DOI-bearing records | Native CSV and checksum/provenance manifest retained; screening remains pending |
+| Google Scholar | Complete manual-browser run on 2026-08-06: approximately 81 reported results and 81 unique Scholar result identifiers | Privacy-safe parsed CSV, nine private-input checksums, manifest, and importer retained; raw signed-in HTML excluded and date window applied during screening |
+| Scopus | Formally closed on 2026-08-06 | API access was unavailable and the repository owner had only Scopus Preview, which does not expose document search or result export; no zero-result claim is made |
 
 ## Supplied partial external-source export
 
@@ -44,4 +44,4 @@ Title/abstract screening uses the existing core, supporting, and exclusion crite
 
 ## Reporting restriction
 
-The review remains a targeted structured review during this amendment. The arXiv full-text decisions are now documented, but the review may be called an SLR only after the remaining source searches, screening decisions, full-text decisions, and final included set are documented.
+The review remains a targeted structured review during this amendment. The source searches are complete or formally closed, but the review may be called an SLR only after the new result sets are screened, full-text decisions are recorded, cross-source duplicates are reconciled, and the final included set is documented.

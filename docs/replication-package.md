@@ -14,6 +14,26 @@ This manifest identifies the repository artifacts used to audit the 121-study sy
 - `method/search-protocol-amendment.md`: scope and procedure of the dated amendment.
 - `method/search-run-log.csv`: recorded search runs and query provenance.
 - `method/source-search-execution-audit.md`: source-by-source endpoints, observed access failures, and completion rule.
+- `scripts/search_semantic_scholar.py`: Semantic Scholar query expansion, pagination, cutoff filtering, and deduplication.
+- `data/search/semantic-scholar/semantic-scholar-run.json`: exact query manifest, page accounting, timestamps, and counts.
+- `data/search/semantic-scholar/semantic-scholar-raw.jsonl.gz`: compressed retained responses before cross-query deduplication.
+- `data/search/semantic-scholar/semantic-scholar-unique.csv`: paper-ID-deduplicated result set with query membership.
+- `data/search/ieee-xplore-search-2026-08-06.csv`: complete 69-record IEEE Xplore browser result set.
+- `scripts/import_acm_search_html.py`: deterministic parser and completeness checks for a manually saved ACM result page.
+- `data/search/acm/acm-search-2026-08-06.html.gz`: compressed manual-browser capture of the complete ACM result page.
+- `data/search/acm/acm-search-2026-08-06.csv`: parsed 449-record ACM result set.
+- `data/search/acm/acm-search-2026-08-06.json`: ACM query, count, checksum, uniqueness, and provenance manifest.
+- `data/search/springerlink-attempt-2026-08-06.json`: retained evidence from the initial incomplete SpringerLink export attempt.
+- `data/search/springerlink/springerlink-search-2026-08-06.csv`: complete native 155-record SpringerLink export.
+- `data/search/springerlink/springerlink-search-2026-08-06.json`: SpringerLink count, checksum, uniqueness, content-type, and provenance manifest.
+- `scripts/import_sciencedirect_search_html.py`: deterministic parser and completeness checks for manually saved ScienceDirect result pages.
+- `data/search/sciencedirect/sciencedirect-search-2026-08-06-page-*.html.gz`: four compressed manual-browser captures covering ranks 1-318.
+- `data/search/sciencedirect/sciencedirect-search-2026-08-06.csv`: parsed 318-record ScienceDirect result set.
+- `data/search/sciencedirect/sciencedirect-search-2026-08-06.json`: ScienceDirect query, page ranges, checksums, count, uniqueness, and provenance manifest.
+- `scripts/import_google_scholar_search_html.py`: privacy-safe parser and completeness checks for private signed-in Google Scholar captures.
+- `data/search/google-scholar/google-scholar-search-2026-08-06.csv`: parsed 81-record Google Scholar result set with no account identifiers.
+- `data/search/google-scholar/google-scholar-search-2026-08-06.json`: Google Scholar query, page counts, private-input checksums, count limitation, privacy policy, and provenance manifest.
+- `data/search/acm-attempt-2026-08-06-retry.json`: retained evidence from the second ACM/Cloudflare verification block.
 - `data/search/raw/`: retained raw arXiv responses.
 - `data/search/arxiv-title-abstract-screening.csv`: title and abstract decisions.
 - `data/search/arxiv-full-text-screening-reviewed.csv`: reviewed full-text decisions and reasons.
@@ -35,11 +55,13 @@ This manifest identifies the repository artifacts used to audit the 121-study sy
 From the repository root, run:
 
 ```bash
+python3 -m pip install -r requirements-search.txt
+python3 scripts/import_acm_search_html.py saved-acm-results.html data/search/acm
 python3 scripts/build_slr_dataset.py
 python3 scripts/build_latex.py
 ```
 
-The first command rebuilds the study-level dataset and summary tables from the canonical notes. The second rebuilds `build/paper.tex` from the manuscript sections. These checks reproduce the structured corpus outputs; they do not supply independent reviewer agreement.
+The ACM importer verifies the expected 449 rows and 449 unique record URLs before replacing its CSV and manifest. The dataset command rebuilds the study-level dataset and summary tables from the canonical notes. The LaTeX command rebuilds `build/paper.tex` from the manuscript sections. These checks reproduce the structured corpus outputs; they do not supply independent reviewer agreement.
 
 The canonical notes contain criterion-level Q1–Q12 scores and evidence notes for each study; `data/slr-extraction.csv` currently exposes only their totals. The current extraction dataset also contains broad RQ4 reporting-availability fields rather than a completed study-by-study evidence-status field distinguishing quantitative measurement, qualitative evaluation, limitation/design mention, and review inference. Both publication-facing exports require an additional deterministic projection or manual audit before they are presented as standalone supplementary tables.
 

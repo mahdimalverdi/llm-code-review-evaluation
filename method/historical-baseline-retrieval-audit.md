@@ -43,8 +43,10 @@ a match to arXiv `2603.18740`: the historical sheet truncates the final zero and
 uses an earlier title variant, while the retained candidate metadata records
 the current title and versioned identifier.
 
-The Semantic Scholar bulk API returned HTTP 403 during the retrospective run.
-This access failure is not treated as a zero-result search. The OpenAlex and
+The first Semantic Scholar bulk-API attempt returned HTTP 403, but a later
+rate-limited rerun completed with 963 raw query hits and 427 unique records.
+Exact normalized-title reconciliation rediscovered 39 of the 71 historical
+baseline studies. The OpenAlex and
 Crossref interfaces returned ranked result sets rather than database-native
 Boolean searches, so their matches demonstrate independent retrievability but
 do not reconstruct the original publisher-database runs.
