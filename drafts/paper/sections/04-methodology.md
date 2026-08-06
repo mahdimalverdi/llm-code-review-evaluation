@@ -43,13 +43,13 @@ For each taxonomy category, annotation decision, and framework layer, we record 
 
 ## Search Scope and Corpus Assembly
 
-The review protocol identified ACM Digital Library, IEEE Xplore, ScienceDirect, SpringerLink, arXiv, Semantic Scholar, Google Scholar, and Scopus where available, with a primary focus on work from 2021 onward and earlier foundational modern-code-review studies. Query families covered LLM code review, automated review, generated comments, evaluation metrics, hallucination and grounding, context-aware review, LLM-as-a-Judge, and human--AI review. Only the arXiv stream produced a complete, retained result set with reproducible counts. The other sources contributed partial discovery or attempted searches and must not be interpreted as completed database searches.
+The review protocol identified ACM Digital Library, IEEE Xplore, ScienceDirect, SpringerLink, arXiv, Semantic Scholar, Google Scholar, and Scopus where available, with a primary focus on work from 2021 onward and earlier foundational modern-code-review studies. Query families covered LLM code review, automated review, generated comments, evaluation metrics, hallucination and grounding, context-aware review, LLM-as-a-Judge, and human--AI review. The arXiv stream and a later Semantic Scholar rerun produced complete retained result sets with reproducible counts. The other sources contributed partial discovery or attempted searches and must not be interpreted as completed database searches.
 
 The synthesis corpus contains 121 unique full-text studies identified across arXiv, OpenAlex, Crossref, publisher indexes, and general scholarly-web search. Separate topic families covered direct code review, generated comments, evaluator validity, modern code review, surveys, security, refinement, efficiency, and industrial evidence. Every included study was verified as retrievable through at least one topic-level query without using its title, identifier, system name, or author name as the query. All included studies subsequently underwent the same eligibility, extraction, evidence-tier, and appraisal procedure.
 
 ### Search execution and corpus closure
 
-The principal reproducible run began with arXiv because its public API returned exact-query results and stable retrieval counts. Topic-level searches in OpenAlex, Crossref, publisher indexes, and the scholarly web broadened coverage for adjacent and foundational evidence. Complete native result sets were not available from every publisher index, and Semantic Scholar access was rate-limited. A later export from five external sources therefore served as a partial cross-check rather than an independent denominator.
+The principal reproducible run began with arXiv because its public API returned exact-query results and stable retrieval counts. Topic-level searches in OpenAlex, Crossref, publisher indexes, and the scholarly web broadened coverage for adjacent and foundational evidence. Semantic Scholar was initially rate-limited, but a rate-limited bulk-API rerun completed on 6 August 2026. Because the API does not accept the protocol's nested Boolean expression directly, the two concept blocks were expanded into 16 phrase-level conjunctions (four LLM terms crossed with four review terms), and results were deduplicated by Semantic Scholar paper identifier. Complete native result sets remained unavailable from the publisher indexes. A later export from five external sources therefore served as a partial cross-check rather than an independent denominator.
 
 The arXiv search was executed on 2 August 2026 for records submitted from 1 January 2021 through 2 August 2026. Table \ref{tab:arxiv-queries} reports the exact API queries. The raw API responses and screening decisions were retained during the review process but are not included with this PDF.
 
@@ -60,13 +60,13 @@ The arXiv search was executed on 2 August 2026 for records submitted from 1 Janu
 | Q2 (61) | `(ti:"review comment" OR abs:"review comment") AND (ti:"large language model" OR abs:"large language model" OR ti:LLM OR abs:LLM) AND submittedDate:[202101010000 TO 202608022359]` |
 | Q3 (156) | `(ti:"code review" OR abs:"code review") AND (all:hallucination OR all:grounding OR all:context) AND submittedDate:[202101010000 TO 202608022359]` |
 
-Table \ref{tab:source-search-status} reports the execution status of every source named in the protocol. Blank counts denote unavailable result sets, not zero results.
+Table \ref{tab:source-search-status} reports the execution status of every source named in the protocol through 6 August 2026. Blank counts denote unavailable result sets, not zero results.
 
-<!-- table: caption="Execution status of the planned search sources on 2 August 2026." label="tab:source-search-status" longtable="false" -->
+<!-- table: caption="Execution status of the planned search sources through 6 August 2026." label="tab:source-search-status" longtable="false" -->
 | Source | Exact executed or attempted query | Result status |
 |---|---|---|
 | arXiv | Q1--Q3 in Table \ref{tab:arxiv-queries} | Complete retained run: 417 raw, 293 unique |
-| Semantic Scholar | `("LLM" OR "large language model") AND ("code review" OR "review comment" OR "pull request review")` | Graph API returned HTTP 403 on 6 August 2026; count unavailable |
+| Semantic Scholar | 16 pairwise bulk-API queries: each of `{"large language model", LLM, "generative AI", "AI-assisted"}` combined with each of `{"code review", "review comment", "pull request feedback", "automated code review"}` | Complete retained run on 6 August 2026: 963 raw, 427 unique |
 | ACM Digital Library | `"code review" AND "large language model"` | Cloudflare Turnstile blocked direct and headless-browser runs; count unavailable |
 | IEEE Xplore | `"code review" AND "large language model"` | Official search routes timed out from the current network; count unavailable |
 | ScienceDirect | `"code review" AND "large language model"` | Official search route timed out from the current network; count unavailable |

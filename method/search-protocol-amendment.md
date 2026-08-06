@@ -24,7 +24,7 @@ The raw Atom responses are retained with the query identifiers. Candidates are d
 | Source | Status on 2026-08-02 | Consequence |
 |---|---|---|
 | arXiv | Executed and recorded | 293 unique candidates; title/abstract screening retained 140 for full text, of which 132 were included and 8 excluded |
-| Semantic Scholar | Attempted; public API returned HTTP 429 | Retry required; do not treat as zero results |
+| Semantic Scholar | Complete retained bulk-API rerun on 2026-08-06: 963 raw, 427 unique | Exact query expansion and outputs retained |
 | ACM Digital Library | Attempted; search URL was unavailable to the current retrieval environment | Execute the same documented query manually or with institutional access |
 | IEEE Xplore | Attempted; search URL was unavailable to the current retrieval environment | Execute the same documented query manually or with institutional access |
 | ScienceDirect | Attempted; search page returned no retrievable result set | Execute the same documented query manually or with institutional access |

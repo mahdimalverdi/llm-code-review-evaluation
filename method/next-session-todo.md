@@ -17,7 +17,7 @@ The review remains a targeted structured review. The evidence set is frozen at 1
    - Ensure Methodology describes the baseline, dated amendment, freeze rule, duplicate handling, and access limitations.
 
 3. **Complete external source coverage only where authorised access becomes available.**
-   - Re-run Semantic Scholar after rate limits clear.
+   - Screen and reconcile the completed 427-record Semantic Scholar result set.
    - Execute the documented queries in ACM Digital Library, IEEE Xplore, ScienceDirect, SpringerLink, Google Scholar, and Scopus through authorised/manual access where possible.
    - Record exact query, date, native retrieved count, deduplication result, and source-access limitation. The supplied external export is partial and cannot be used to claim exhaustive coverage.
 

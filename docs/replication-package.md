@@ -14,6 +14,10 @@ This manifest identifies the repository artifacts used to audit the 121-study sy
 - `method/search-protocol-amendment.md`: scope and procedure of the dated amendment.
 - `method/search-run-log.csv`: recorded search runs and query provenance.
 - `method/source-search-execution-audit.md`: source-by-source endpoints, observed access failures, and completion rule.
+- `scripts/search_semantic_scholar.py`: Semantic Scholar query expansion, pagination, cutoff filtering, and deduplication.
+- `data/search/semantic-scholar/semantic-scholar-run.json`: exact query manifest, page accounting, timestamps, and counts.
+- `data/search/semantic-scholar/semantic-scholar-raw.jsonl.gz`: compressed retained responses before cross-query deduplication.
+- `data/search/semantic-scholar/semantic-scholar-unique.csv`: paper-ID-deduplicated result set with query membership.
 - `data/search/raw/`: retained raw arXiv responses.
 - `data/search/arxiv-title-abstract-screening.csv`: title and abstract decisions.
 - `data/search/arxiv-full-text-screening-reviewed.csv`: reviewed full-text decisions and reasons.

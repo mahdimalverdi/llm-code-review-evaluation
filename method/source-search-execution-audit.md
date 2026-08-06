@@ -5,7 +5,7 @@ This audit records the source-by-source execution attempted on 6 August 2026. Bl
 | Source | Executed route | Observed outcome | Reproducibility consequence |
 |---|---|---|---|
 | arXiv | Public Atom API, Q1–Q3 | Complete retained run: 417 raw and 293 unique records | Reproducible from retained queries and raw responses |
-| Semantic Scholar | Graph API `/paper/search` and `/paper/search/bulk` | Both returned `HTTP 403 Forbidden` | Requires an API key or manual authenticated export |
+| Semantic Scholar | Bulk Graph API; 16 phrase-level conjunctions | Complete retained run after rate-limited retries: 963 raw and 427 unique records | Reproducible from the run manifest, raw JSONL, deduplicated CSV, and rerun script |
 | ACM Digital Library | `/action/doSearch`; direct HTTP and headless Chrome | `HTTP 403` Cloudflare challenge; browser stopped at Turnstile verification | Requires a manual browser run; automated count is unavailable |
 | IEEE Xplore | Public search page and `/rest/search` | No HTTP response before bounded timeout from the current network | Requires manual or institutional execution |
 | ScienceDirect | Official `/search` page | No HTTP response before bounded timeout from the current network | Requires manual or institutional execution |

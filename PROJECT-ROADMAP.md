@@ -106,7 +106,8 @@ Current focus:
 - [ ] Resolve the metadata conflict recorded for EXT-0012.
 - [x] Acquire local text and create provisional extraction packets for the 70 supporting records selected from the full-text screen.
 - [x] Update `method/next-session-todo.md` and screening documentation to reflect the 121-study freeze.
-- [ ] Execute or formally close the remaining planned source searches: Semantic Scholar, ACM Digital Library, IEEE Xplore, ScienceDirect, SpringerLink, Google Scholar, and Scopus.
+- [x] Complete and retain the Semantic Scholar bulk-API search (963 raw; 427 unique).
+- [ ] Execute or formally close the remaining planned source searches: ACM Digital Library, IEEE Xplore, ScienceDirect, SpringerLink, Google Scholar, and Scopus.
 - [ ] Record exact queries, dates, native result counts, deduplication counts, and access limitations for every executed source.
 
 Exit criteria:
