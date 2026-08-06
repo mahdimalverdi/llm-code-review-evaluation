@@ -17,15 +17,25 @@ This manifest identifies the repository artifacts used to audit the 121-study sy
 - `scripts/search_semantic_scholar.py`: Semantic Scholar query expansion, pagination, cutoff filtering, and deduplication.
 - `scripts/build_unified_candidate_pool.py`: cross-source identity reconciliation without inferring eligibility.
 - `scripts/enrich_candidate_dois.py`: resumable Crossref/OpenAlex DOI suggestions with title/year scoring and provenance.
+- `scripts/resolve_source_url_dois.py`: cached DOI resolution for source-URL-only candidates, including direct arXiv/URL extraction and unresolved-status logging.
 - `scripts/sync_external_references.py`: dry-run-first, DOI/title-deduplicated promotion of reviewed external candidates into the canonical BibTeX file.
 - `scripts/triage_unified_candidate_pool.py`: conservative title/abstract triage with explicit metadata-only handling.
+- `scripts/build_full_text_screening_queue.py`: deterministic queue of candidates still requiring human full-text screening.
+- `scripts/split_screening_queue.py`: deterministic 50-record batches for manual screening.
+- `scripts/screen_remaining_batches.py`: conservative preliminary screening for batches without a manually reviewed decision file.
 - `data/search/unified-candidate-pool.csv`: one row per reconciled candidate identity with source provenance and screening placeholders.
+- The unified candidate pool contains 1,358 identities, but it is a screening/provenance artifact; only the 121 frozen records form the synthesis denominator and PDF bibliography.
 - `data/search/unified-candidate-duplicate-audit.csv`: all identity clusters supported by more than one source record.
 - `data/search/doi-enrichment.csv`: DOI suggestions, when the provider lookup completes; suggestions require review before promotion.
 - `data/search/doi-enrichment.log`: execution progress, provider failures, cache hits, and final counts.
 - `data/search/doi-lookup-cache.json`: resumable provider-response cache; interrupted runs resume from cached title/year keys.
+- `data/search/source-url-doi-resolution.csv`: DOI resolution results for source-URL-only candidates.
+- `data/search/source-url-doi-cache.json`: cache for source-URL DOI resolution.
+- `data/search/source-url-doi-resolution.log`: progress and provider-error log for source-URL DOI resolution.
 - `data/search/external-reference-sync-report.csv`: per-candidate decisions from the bibliography promotion step.
 - `data/search/unified-title-abstract-screening.csv`: dated screening sheet for the 1,358 reconciled identities.
+- `data/search/full-text-screening-queue.csv`: 1,067 pending records separated into abstract-available and metadata-only queues.
+- `data/search/screening-batches/`: 22 review batches generated from the pending queue.
 - `data/search/unified-candidate-pool-summary.json`: source counts, cluster counts, and corpus-match summary.
 - `data/search/unified-candidate-pool-report.md`: human-readable candidate-pool accounting.
 - `data/search/semantic-scholar/semantic-scholar-run.json`: exact query manifest, page accounting, timestamps, and counts.
@@ -78,6 +88,8 @@ python3 scripts/sync_external_references.py --apply
 python3 scripts/triage_unified_candidate_pool.py \
   --pool data/search/unified-candidate-pool.csv \
   --output data/search/unified-title-abstract-screening.csv
+python3 scripts/build_full_text_screening_queue.py
+python3 scripts/split_screening_queue.py
 python3 scripts/build_slr_dataset.py
 python3 scripts/build_latex.py
 ```
