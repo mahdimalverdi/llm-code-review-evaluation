@@ -747,7 +747,7 @@ def add_misc_publication_details(bibliography: str) -> str:
 
 
 def included_study_nocite() -> str:
-    """Return a nocite command for every included study."""
+    """Return nocite commands for included studies and synced external records."""
     if not STUDY_INVENTORY_FILE.exists():
         raise FileNotFoundError(f"Missing study inventory: {STUDY_INVENTORY_FILE}")
 
@@ -771,7 +771,11 @@ def included_study_nocite() -> str:
         raise ValueError(
             "Included studies missing from bibliography: " + ", ".join(missing_keys)
         )
-    return r"\nocite{" + ",".join(citation_keys) + "}"
+    external_keys = sorted(key for key in bibliography_keys if key.startswith("ext_"))
+    commands = [r"\nocite{" + ",".join(citation_keys) + "}"]
+    if external_keys:
+        commands.append(r"\nocite{" + ",".join(external_keys) + "}")
+    return "\n".join(commands)
 
 
 def build_latex(order_file: Path, output_file: Path) -> None:

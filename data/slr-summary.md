@@ -29,9 +29,9 @@
 
 | Type | Studies |
 |---|---:|
-| `preprint_or_other` | 54 |
+| `preprint_or_other` | 53 |
 | `conference` | 43 |
-| `journal` | 24 |
+| `journal` | 25 |
 
 ## RQ1 failure types
 

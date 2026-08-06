@@ -15,6 +15,19 @@ This manifest identifies the repository artifacts used to audit the 121-study sy
 - `method/search-run-log.csv`: recorded search runs and query provenance.
 - `method/source-search-execution-audit.md`: source-by-source endpoints, observed access failures, and completion rule.
 - `scripts/search_semantic_scholar.py`: Semantic Scholar query expansion, pagination, cutoff filtering, and deduplication.
+- `scripts/build_unified_candidate_pool.py`: cross-source identity reconciliation without inferring eligibility.
+- `scripts/enrich_candidate_dois.py`: resumable Crossref/OpenAlex DOI suggestions with title/year scoring and provenance.
+- `scripts/sync_external_references.py`: dry-run-first, DOI/title-deduplicated promotion of reviewed external candidates into the canonical BibTeX file.
+- `scripts/triage_unified_candidate_pool.py`: conservative title/abstract triage with explicit metadata-only handling.
+- `data/search/unified-candidate-pool.csv`: one row per reconciled candidate identity with source provenance and screening placeholders.
+- `data/search/unified-candidate-duplicate-audit.csv`: all identity clusters supported by more than one source record.
+- `data/search/doi-enrichment.csv`: DOI suggestions, when the provider lookup completes; suggestions require review before promotion.
+- `data/search/doi-enrichment.log`: execution progress, provider failures, cache hits, and final counts.
+- `data/search/doi-lookup-cache.json`: resumable provider-response cache; interrupted runs resume from cached title/year keys.
+- `data/search/external-reference-sync-report.csv`: per-candidate decisions from the bibliography promotion step.
+- `data/search/unified-title-abstract-screening.csv`: dated screening sheet for the 1,358 reconciled identities.
+- `data/search/unified-candidate-pool-summary.json`: source counts, cluster counts, and corpus-match summary.
+- `data/search/unified-candidate-pool-report.md`: human-readable candidate-pool accounting.
 - `data/search/semantic-scholar/semantic-scholar-run.json`: exact query manifest, page accounting, timestamps, and counts.
 - `data/search/semantic-scholar/semantic-scholar-raw.jsonl.gz`: compressed retained responses before cross-query deduplication.
 - `data/search/semantic-scholar/semantic-scholar-unique.csv`: paper-ID-deduplicated result set with query membership.
@@ -57,11 +70,19 @@ From the repository root, run:
 ```bash
 python3 -m pip install -r requirements-search.txt
 python3 scripts/import_acm_search_html.py saved-acm-results.html data/search/acm
+python3 scripts/build_unified_candidate_pool.py
+python3 scripts/enrich_candidate_dois.py --providers openalex
+python3 scripts/sync_external_references.py
+# After reviewing the report:
+python3 scripts/sync_external_references.py --apply
+python3 scripts/triage_unified_candidate_pool.py \
+  --pool data/search/unified-candidate-pool.csv \
+  --output data/search/unified-title-abstract-screening.csv
 python3 scripts/build_slr_dataset.py
 python3 scripts/build_latex.py
 ```
 
-The ACM importer verifies the expected 449 rows and 449 unique record URLs before replacing its CSV and manifest. The dataset command rebuilds the study-level dataset and summary tables from the canonical notes. The LaTeX command rebuilds `build/paper.tex` from the manuscript sections. These checks reproduce the structured corpus outputs; they do not supply independent reviewer agreement.
+The ACM importer verifies the expected 449 rows and 449 unique record URLs before replacing its CSV and manifest. The candidate-pool command reconciles DOI, arXiv ID, canonical URL, and normalized-title identities but does not make eligibility decisions. The dataset command rebuilds the study-level dataset and summary tables from the canonical notes. The LaTeX command rebuilds `build/paper.tex` from the manuscript sections. These checks reproduce the structured corpus outputs; they do not supply independent reviewer agreement.
 
 The canonical notes contain criterion-level Q1–Q12 scores and evidence notes for each study; `data/slr-extraction.csv` currently exposes only their totals. The current extraction dataset also contains broad RQ4 reporting-availability fields rather than a completed study-by-study evidence-status field distinguishing quantitative measurement, qualitative evaluation, limitation/design mention, and review inference. Both publication-facing exports require an additional deterministic projection or manual audit before they are presented as standalone supplementary tables.
 
