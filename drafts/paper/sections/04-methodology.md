@@ -2,7 +2,7 @@
 
 ## Review Design
 
-We conducted a targeted structured literature review with an auditable supplementary search amendment. The review follows question definition, eligibility assessment, quality appraisal, data extraction, thematic synthesis, and reporting, drawing on software-engineering SLR guidance without claiming a reproducible search for the historical baseline. Taxonomy construction and reliability planning additionally draw on established taxonomy and agreement methods [@m01_nickerson2013_taxonomy; @m02_cohen1960_kappa; @m03_krippendorff2018_content_analysis].
+We conducted a targeted structured literature review with a documented supplementary search amendment. The method covers question definition, eligibility assessment, quality appraisal, data extraction, thematic synthesis, and reporting. It draws on software-engineering SLR guidance, while taxonomy construction and reliability planning draw on established taxonomy and agreement methods [@m01_nickerson2013_taxonomy; @m02_cohen1960_kappa; @m03_krippendorff2018_content_analysis]. The method does not reconstruct the search for the historical baseline.
 
 ### Goal definition
 
@@ -49,9 +49,9 @@ The synthesis corpus contains 121 unique full-text studies. It combines a 71-stu
 
 ### Dated supplementary amendment and corpus closure
 
-The amendment began with arXiv because its public API returned exact-query results and stable retrieval counts that could be retained in the repository. Searches of ACM Digital Library, IEEE Xplore, ScienceDirect, and SpringerLink were attempted, but the available environment did not expose complete result sets; Semantic Scholar returned a rate-limit response, and Google Scholar and Scopus were not executed without a documented manual or institutional-access route. A later export from five external sources was retained only as a partial cross-check because it omitted native result totals and was not exhaustive. The amendment therefore improves recency coverage and candidate-level traceability, but it is not a multi-database replacement for the missing historical search.
+The amendment began with arXiv because its public API returned exact-query results and stable retrieval counts. Searches of ACM Digital Library, IEEE Xplore, ScienceDirect, and SpringerLink were attempted, but the available environment did not expose complete result sets. Semantic Scholar returned a rate-limit response, while Google Scholar and Scopus were not searched without a documented manual or institutional-access route. A later export from five external sources served only as a partial cross-check because it omitted native result totals and was not exhaustive. The amendment improves recency coverage, but it does not replace the missing historical search or provide complete multi-database coverage.
 
-The reproducible arXiv run was executed on 2 August 2026 for records submitted from 1 January 2021 through 2 August 2026. Table \ref{tab:arxiv-queries} reports the exact API queries. Raw Atom responses are retained under `data/search/raw/`.
+The arXiv search was executed on 2 August 2026 for records submitted from 1 January 2021 through 2 August 2026. Table \ref{tab:arxiv-queries} reports the exact API queries. The raw API responses and screening decisions were retained during the review process but are not included with this PDF.
 
 <!-- table: caption="Exact queries used in the dated arXiv amendment." label="tab:arxiv-queries" longtable="false" first-column-width="0.9in" -->
 | Query (retrieved) | Exact arXiv query |
@@ -62,13 +62,13 @@ The reproducible arXiv run was executed on 2 August 2026 for records submitted f
 
 The three result sets contained 417 raw records. Deduplication by arXiv identifier removed 124 cross-query repetitions while preserving every matching query identifier, leaving 293 unique records. Conservative title/abstract screening assigned one of four outcomes: include for full text, exclude, duplicate/companion, or uncertain. The controlled exclusion vocabulary was `out of scope`, `no review-feedback connection`, `insufficient method/evaluation`, `duplicate/companion`, `non-English`, `inaccessible`, and `supporting-only methodology`. This stage retained 140 records for full-text assessment, excluded 116, and identified 37 duplicate or likely companion records.
 
-Full-text inclusion required a recorded decision, inclusion group, exact eligibility criterion, evidence location, rationale, reviewer, and screening date. Of the 140 assessed records, 132 were retained for consideration and eight were excluded. Fifty-three retained records met core criteria; one matched a baseline study and two were duplicate or companion identities, leaving 50 unique additions to the corpus. A core candidate was frozen only after it also received a stable project ID, authoritative note, project-prefixed citation key, and a `freeze_ready` entry in `data/search/final-corpus-freeze-register.csv`.
+Full-text inclusion required a recorded decision, inclusion group, eligibility criterion, evidence location, rationale, reviewer, and screening date. Of the 140 assessed records, 132 were retained for consideration and eight were excluded. Fifty-three retained records met core criteria. One matched a baseline study and two represented duplicate or companion identities, leaving 50 unique additions to the corpus. A core candidate entered the final corpus only after its identity, eligibility decision, evidence record, and bibliographic entry were complete.
 
 The remaining 79 records form the supporting reserve: 53 have substantive provisional extraction, 16 have scaffolds only, and ten have no extraction packet. They are not included in the 121-study denominator. Inaccessible records without enough evidence for classification were excluded; seven access-limited records from the later external export remain metadata-only and outside the frozen corpus.
 
-An external 30-record export was screened separately after corpus closure. Reconciliation found 20 duplicates, two full-text candidates retained outside the closed corpus, seven access-limited metadata-only candidates, and one exclusion. The external export therefore contributes no additional study to the 121-study denominator. The manuscript reports the resulting counts and provenance boundaries; the candidate-level decision records are not included with this PDF submission.
+An external 30-record export was screened separately after corpus closure. Reconciliation found 20 duplicates, two full-text candidates retained outside the closed corpus, seven access-limited metadata-only candidates, and one exclusion. The external export therefore contributes no study to the 121-study denominator. Candidate-level decisions are not included with this PDF.
 
-<!-- table: caption="Auditable accounting of the baseline corpus and dated search amendments." label="tab:corpus-flow-audit" -->
+<!-- table: caption="Accounting of the baseline corpus and dated search amendment." label="tab:corpus-flow-audit" -->
 | Source | Identified | Full text assessed | Corpus records contributed | Reserve or post-closure | Overlaps or duplicate identities | Access-limited |
 |---|---:|---:|---:|---:|---:|---:|
 | Historical baseline | NR | 71 | 71 | 0 | NR | NR |
@@ -77,9 +77,9 @@ An external 30-record export was screened separately after corpus closure. Recon
 
 The rows are not additive identification stages: the external export is a post-closure cross-check and overlaps the baseline and arXiv records. The corpus arithmetic is therefore `71 + 50 = 121`.
 
-Figure \ref{fig:corpus-assembly-flow} summarizes the auditable corpus arithmetic. It is not a PRISMA flow diagram because identification and exclusion records for the historical baseline were not retained.
+Figure \ref{fig:corpus-assembly-flow} summarizes the documented corpus arithmetic. It is not a complete PRISMA flow diagram because identification and exclusion records for the historical baseline were not retained.
 
-<!-- figure: path="figures/corpus_assembly_flow.tex" caption="Corpus assembly and supplementary-search amendment flow. The 79-record supporting reserve and the 30-record external cross-check remain outside the 121-study synthesis denominator. The historical baseline is shown as an assembled input because its original identification flow is unavailable." label="fig:corpus-assembly-flow" -->
+<!-- figure: path="figures/corpus_assembly_flow.tex" caption="Corpus assembly and supplementary search amendment. The 79-record supporting reserve and 30-record external cross-check remain outside the 121-study synthesis corpus." label="fig:corpus-assembly-flow" -->
 
 ## Eligibility and Evidence Tiers
 
@@ -97,12 +97,12 @@ This amendment improves field-level consistency but introduces retrospective des
 
 Each included study has one structured extraction record derived from its available full text. Records contain bibliographic identity, screening decision, study design, RQ1--RQ5 evidence, traceability, quality appraisal, trade-off and evaluator-validity fields, evidence locations, and unresolved verification items. All 121 records pass the same completeness check. Extraction was performed by one reviewer; the validator checks required fields and controlled values but does not test whether another reviewer would make the same judgments.
 
-No independent agreement results are available for the present manuscript. The pre-submission reliability plan is to draw a reproducible random sample of 10--20% of the 121 studies and have a second reviewer independently repeat eligibility screening and the principal extraction fields without seeing the first decision. Raw agreement and Cohen's kappa will be reported for binary inclusion decisions. Krippendorff's alpha will be reported for the nominal or ordinal fields covering core failure label, usefulness, actionability, context quality, and handling decision because the fields may contain missing values and use different measurement levels. Disagreements will be adjudicated after the independent pass; resulting definition or boundary changes will be versioned in the annotation guideline and applied consistently to affected records. This is a planned calibration procedure, not completed methodology.
+Independent agreement was not measured. A future validation step should assign a random 10--20% sample to a second reviewer for blind eligibility screening and extraction of the principal fields. It should report raw agreement and Cohen's kappa for inclusion decisions, and Krippendorff's alpha for the core failure label, usefulness, actionability, context quality, and handling decision. Disagreements should be adjudicated before any revised rules are applied to affected records. This procedure is proposed future work, not part of the completed review.
 
 <!-- table: caption="Study-level data items and their use in the review." label="tab:data-items" -->
 | Data-item group | Fields | Use |
 |---|---|---|
-| Bibliographic | ID, citation key, title, year, venue, publication type | Corpus demographics |
+| Bibliographic | study identity, title, year, venue, publication type | Corpus demographics |
 | Evidence weighting | evidence tier, decision, relevance, quality score, confidence | Framework traceability and validity |
 | Review artifact | context types, evaluated artifact, evaluator types | RQ2 and RQ5 |
 | Failure coding | problematic-comment and related failure categories | RQ1 |
@@ -117,7 +117,7 @@ The complete field definitions and controlled labels are described in the manusc
 
 We used tabulation, thematic grouping, and framework mapping. We did not pool incompatible metrics. Initial categories were derived during cross-study synthesis and normalized into controlled vocabularies for failure types, evaluation dimensions, mitigation families, and context types. A deterministic transformation procedure produced one study-level record per included study, retained multi-valued controlled labels, and used `NR` when the extraction did not contain enough evidence. The resulting counts therefore describe coded evidence in the reviewed studies, not the prevalence of failures in deployed systems.
 
-Automated consistency checks ensure that each included study occurs once, evidence tiers do not overlap, admitted supplementary studies receive the intended tier, citations resolve, and appraisal scores are available. Findings were organized by research question. Stable study identifiers support traceability within the project records, while citations support claims in this report. Every reported count uses the 121-study evidence pool as its denominator unless another denominator is stated.
+Consistency checks ensured that each included study occurred once, evidence tiers did not overlap, admitted supplementary studies received the intended tier, citations resolved, and appraisal scores were available. Findings were organized by research question. Every reported count uses the 121-study evidence pool as its denominator unless another denominator is stated.
 
 ### Supporting-reserve sensitivity analysis
 

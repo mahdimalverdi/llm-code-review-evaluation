@@ -1,16 +1,5 @@
-# Data and Materials Availability
+# Data Availability
 
-This seminar submission is provided as a standalone PDF. The manuscript
-reports the exact supplementary arXiv queries, screening counts, corpus
-accounting, eligibility criteria, synthesis procedure, and complete
-bibliography of the 121 included studies.
+This paper is submitted as a standalone PDF. It reports the supplementary arXiv search queries, screening counts, eligibility criteria, corpus accounting, synthesis method, and references for the 121 included studies.
 
-The underlying extraction records, screening files, and build scripts are
-not included with this submission. Consequently, the reported claims and
-descriptive counts can be inspected from the manuscript, but the complete
-study-level dataset cannot be independently reconstructed from the PDF
-alone.
-
-The original search and screening history of the 71-study historical
-baseline was not preserved. Therefore, neither the PDF nor the underlying
-project artifacts can reproduce the selection of that baseline.
+The underlying extraction and screening records are not included in this submission. The review process and reported results can therefore be examined from the paper, but the complete study-level dataset cannot be reconstructed from the PDF alone. The original search history of the 71-study historical baseline was not preserved.

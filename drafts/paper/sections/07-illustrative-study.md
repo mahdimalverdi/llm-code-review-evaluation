@@ -2,7 +2,7 @@
 
 ## Corpus Accounting
 
-The evidence pool contains 121 unique full-text studies, each represented by one structured extraction record and one bibliographic identity. All records pass the same structural completeness check, and duplicate study representations were reconciled before analysis.
+The evidence pool contains 121 unique full-text studies. Each study has one structured extraction record and one bibliographic identity. Duplicate representations were reconciled before analysis, and all records passed the same completeness check.
 
 | Corpus property | Value |
 |---|---:|
@@ -75,4 +75,4 @@ Quality score and evidence tier are used together. A supporting or peripheral st
 
 ## Traceability
 
-The manuscript bibliography contains the cited works and identifies the 121-study evidence pool. The underlying paper-level inventory, including study identifiers, citation keys, evidence tiers, extraction decisions, and evidence locations, is not included with this standalone PDF. The report remains organized by research question rather than by paper.
+The bibliography provides the complete references for the 121 included studies. The paper reports the corpus accounting, evidence tiers, and synthesis procedure, but the study-level extraction records are not included with the standalone PDF.

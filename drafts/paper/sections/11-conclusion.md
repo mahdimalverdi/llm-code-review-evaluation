@@ -1,20 +1,7 @@
 # Conclusion
 
-This targeted structured literature review with an auditable supplementary
-search amendment synthesized 121 full-text studies relevant to trade-off-aware
-evaluation of LLM-based code review. Across the corpus, failures
-occurred in generated comments and in the surrounding data, context, agent
-trajectory, workflow, and evaluation procedure. Treating all of them as
-hallucination would conceal both their causes and the interventions they require.
+This targeted structured literature review with a documented supplementary search amendment synthesized 121 full-text studies relevant to trade-off-aware evaluation of LLM-based code review. Failures can originate in generated comments, context, data, workflow, agent trajectories, or evaluation procedures. These sources require different diagnoses and interventions.
 
-The main reporting gap concerns consequences that remain outside the preferred
-outcome measure. Studies often describe quality gains without measuring removed
-useful feedback, lost issue coverage, human workload, or added computational
-cost. This review proposes a taxonomy and framework for recording these outcomes
-in future comparisons; neither is a validated instrument.
+Mitigation studies often report quality gains without measuring useful-feedback preservation, review or issue coverage, human workload, or computational cost. This paper proposes a taxonomy and six-layer framework for recording these outcomes and supporting decisions to show, suppress, rewrite, or escalate feedback.
 
-The findings are bounded by the assembled corpus because the search and
-screening history of the 71-study historical baseline was not preserved.
-Independent annotation and
-controlled studies are still required before the proposed categories or decision
-rules can support deployment claims.
+The original search records for the 71-study historical baseline were not preserved, which limits reproducibility and literature-coverage claims. Independent annotation and controlled studies remain necessary before the proposed taxonomy and framework can support empirical or deployment claims.

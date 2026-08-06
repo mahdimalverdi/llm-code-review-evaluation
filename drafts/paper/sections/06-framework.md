@@ -2,7 +2,7 @@
 
 Mitigation changes the review stream. A filter decides which candidate comments disappear; retrieval changes the evidence available to the generator; verification adds another judgment; and referral transfers work to a reviewer. Studies of these mechanisms report losses in coverage, shifts in intent, and additional latency or effort [@p04_kumar2026_swe_prbench; @p07_olewicki2024_revmate; @p10_sun2025_bitsai_cr; @p18_bensghaier2025_curated_reviews; @p35_mcaleese2024_llm_critics; @p65_ameen2026_qasecclaw].
 
-This review proposes an integration of six layers: input and context quality, comment quality, failure type, handling decision, preservation and coverage, and cost and evaluator validity. Individual constructs and intervention families are reported in prior work; their organization into one framework and the four-way handling policy are author-derived. Neither has been empirically validated as an instrument.
+This review integrates six layers: input and context quality, comment quality, failure type, handling decision, preservation and coverage, and cost and evaluator validity. Prior studies report the individual constructs and intervention families. Their organization into one framework and the four-way handling policy are proposed here and require empirical validation.
 
 ## Framework Overview
 
@@ -39,19 +39,17 @@ This review proposes four mitigation decisions.
 - `rewrite`: the comment contains a useful signal but needs clarification, grounding, softening, or actionability improvements.
 - `escalate`: the comment may matter but requires human judgment or additional context.
 
-The middle two decisions preserve an important distinction. Some comments contain no defensible review signal and can be withheld; others contain a concern worth retaining, although the original wording is unsuitable for display.
+These decisions preserve an important distinction. Some comments contain no defensible review signal and can be suppressed. Others contain a concern worth retaining, although the original wording is unsuitable for display.
 
-## Layer 5: Preservation, Coverage, and Cost
+## Layer 5: Preservation and Coverage
 
-Preservation is observed in comments that remain useful after intervention and in useful candidates that are wrongly withheld. Coverage uses a different denominator: the review issues or changes for which the system still provides useful feedback. Keeping the underlying candidate identifiers makes both quantities recoverable after filtering, gating, or referral.
+Preservation concerns comments that remain useful after intervention and useful candidates that are wrongly withheld. Coverage uses a different denominator: the review issues or changes for which the system still provides useful feedback. Both should be measured after filtering, gating, rewriting, or escalation.
 
-Model and verifier calls, retrieval operations, latency, human referral, and annotation effort constitute the accompanying cost record. Exact monetary estimates will not always be available. Counts and latency proxies still reveal whether an apparent quality gain depends on substantially more computation or reviewer attention.
+## Layer 6: Cost and Evaluator Validity
 
-## Layer 6: Evaluator Validity
+The final layer records model and verifier calls, retrieval operations, latency, human escalation, and annotation effort. It also concerns the reliability of the measurement itself. Human annotators may disagree on usefulness, actionability, or severity, while LLM-as-a-Judge results may be sensitive to prompts, output order, model choice, and verbosity.
 
-The final layer concerns the reliability of the measurement itself. Human annotators may disagree on usefulness, actionability, or severity. LLM-based judges may be sensitive to prompts, output order, model choice, and verbosity. Evaluator validity is therefore part of the evaluation, not an implementation detail.
-
-An empirical study should report inter-annotator agreement and state what role, if any, an LLM judge plays. Such a judge may support screening or provide auxiliary evidence; claims about mitigation quality require comparison with an annotation protocol and its known limitations.
+An empirical study should report inter-annotator agreement and the role of any LLM-as-a-Judge procedure. A judge may support screening or provide auxiliary evidence, but mitigation claims still need comparison with a defined annotation protocol.
 
 ## Empirical Use
 

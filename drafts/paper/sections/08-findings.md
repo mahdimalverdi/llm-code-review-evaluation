@@ -1,12 +1,12 @@
 # Results
 
-The results characterize evidence coverage and reporting availability within the 121-study corpus. Unless another denominator is stated, a count is the number of included studies containing coded evidence for a field. It is not the prevalence of a failure among generated comments, the precision of displayed comments, issue coverage, an escalation rate, or a resource-cost estimate. The counts neither rank mitigation strategies nor estimate comparative effect sizes. A study with no extractable evidence for a field is coded as missing reporting, not as evidence of zero effect.
+The results describe evidence coverage and reporting within the 121-study corpus. Unless stated otherwise, each count is the number of included studies with coded evidence for a field. These study counts do not estimate comment-level prevalence or comparative effects. Missing reporting is not interpreted as a zero effect.
 
 ## RQ1: Problematic-comment Types
 
 The literature does not support treating all weak comments as hallucinations. Reported failures include unsupported or context-misaligned claims, incorrect technical claims, wrong location or cause, irrelevance, vagueness, non-actionability, invalid fixes, redundancy, low-value nitpicks, severity miscalibration, and context-dependent cases [@p02_tantithamthavorn2026_hallujudge; @p08_liu2025_too_noisy; @p19_nguyen2025_fine_grained_classification; @p21_peng2025_icodereviewer; @p35_mcaleese2024_llm_critics; @p58_jin2026_reliable_code_reviewers]. The synthesis further separates input/context failures, workflow failures, and evaluator failures because these require different remedies.
 
-The deterministic study-level coding found the broadest evidence coverage for incorrect claims (25 studies), irrelevance (23), spurious or false-positive findings (16), low-value or nitpick feedback (14), unsupported or hallucinated claims (13), and vague or generic feedback (12). These counts indicate how many studies contain coded evidence for a category; they are not comment-level prevalence estimates.
+Study-level coding found the broadest evidence coverage for incorrect claims (25 studies), irrelevance (23), spurious or false-positive findings (16), low-value or nitpick feedback (14), unsupported or hallucinated claims (13), and vague or generic feedback (12).
 
 <!-- table: caption="Most frequently coded problematic-comment or related failure categories." label="tab:rq1-failures" longtable="false" -->
 | Failure category | Studies with coded evidence |
@@ -62,7 +62,7 @@ Filtering/suppression is the most frequently coded family (30 studies), followed
 
 The strongest recurring gap is asymmetric reporting. Studies commonly report improved quality, precision, acceptance, issue coverage, or reduced false positives, but less often report useful comments wrongly removed, retained review coverage, escalation burden, or end-to-end cost. Evidence nevertheless shows that more context can degrade performance, filtering can favor precision over recall, reformulation can change intent, comprehensive critiques can add nitpicks, and verification can increase routing and model-call cost [@p04_kumar2026_swe_prbench; @p10_sun2025_bitsai_cr; @p18_bensghaier2025_curated_reviews; @p35_mcaleese2024_llm_critics; @p58_jin2026_reliable_code_reviewers; @p65_ameen2026_qasecclaw]. The evidence therefore supports reporting error reduction and preservation as separate outcomes.
 
-The structured projection makes this asymmetry explicit but must be interpreted as reporting availability rather than outcome prevalence. Preservation-related evidence appears in 45 records, coverage in 46, human-escalation evidence in 27, and cost evidence in 34. In most cases, these fields are discussed as a design implication, limitation, or partial measurement rather than as a complete deployment outcome. The counts therefore show where a trade-off is addressed, not that it was measured with a common protocol or resolved favorably.
+The reporting asymmetry is visible in the extracted counts. Preservation-related evidence appears in 45 records, coverage in 46, human-escalation evidence in 27, and cost evidence in 34. These fields often appear as design implications, limitations, or partial measurements rather than complete deployment outcomes. The counts show where a trade-off is addressed, not whether it was measured with a common protocol or resolved favorably.
 
 Figure \ref{fig:rq4-tradeoff-evidence} shows the imbalance across these four reporting fields.
 
@@ -76,7 +76,7 @@ Figure \ref{fig:rq4-tradeoff-evidence} shows the imbalance across these four rep
 | Human escalation | 27 | 91 | 3 |
 | Cost | 34 | 87 | 0 |
 
-`No extractable evidence identified` means that no measurement or reporting of the outcome was identified in the available full text during the standardized extraction. It does not establish that the construct was absent from the study setting. `Unclear or not applicable` means that the expected field is missing or its applicability cannot be determined. The zero values in the latter column for three outcomes reflect completion of the standardized extraction fields, not evidence that the outcomes were absent in the underlying systems.
+`No extractable evidence identified` means that the available full text did not report or measure the outcome. `Unclear or not applicable` means that the field was missing or its applicability could not be determined.
 
 ## RQ5: Context, Dataset, and Annotation Validity
 
@@ -86,11 +86,11 @@ Reviewer/workflow context is the most common controlled context code (68 studies
 
 ### Sensitivity to the Non-canonical Supporting Reserve
 
-The separate analysis of 53 substantively extracted supporting-reserve packets did not require a new top-level evaluation, context, human-workflow, data-validity, or trade-off component. The reserve most often corroborated human-review or workflow value (29 packets), evaluation or evaluator validity (26), context or grounding quality (25), and trade-off or mitigation design (23); two packets mapped explicitly to annotation or dataset validity. These figures are overlapping thematic mappings, not study frequencies comparable with the 121-study tables. The result reduces concern that exclusion of the reserve wholly omits a major framework layer, but it does not establish saturation at lower taxonomic levels: 16 reserve candidates have scaffolds only, ten have no packet, and all mapping was performed by one reviewer.
+The separate analysis of 53 substantively extracted supporting-reserve records did not require a new top-level evaluation, context, human-workflow, data-validity, or trade-off component. The reserve most often corroborated human-review or workflow value (29 records), evaluation or evaluator validity (26), context or grounding quality (25), and trade-off or mitigation design (23); two records mapped explicitly to annotation or dataset validity. These overlapping thematic mappings are not comparable with the study frequencies in the 121-study tables. They provide a limited robustness check, but do not establish lower-level saturation. Sixteen reserve candidates have only preliminary records, ten have none, and one reviewer performed the mapping.
 
 ## Derivation and Traceability of the Proposed Framework
 
-Core studies directly inform the failure taxonomy, evaluation dimensions, benchmark limitations, mitigation families, and workflow outcomes. Supporting studies inform human-review value, evaluator robustness, annotation, and context interpretation. Peripheral studies contribute only bounded transfer claims. These links explain how the framework was derived; they do not constitute independent empirical validation. Across these tiers, no single framework identified in this corpus operationalizes comment quality, context quality, preservation, coverage, cost, workflow, and evaluator validity together. This corpus-bounded gap motivates the integrated framework presented in the next section.
+Core studies inform the failure taxonomy, evaluation dimensions, benchmark limitations, mitigation families, and workflow outcomes. Supporting studies inform human-review value, evaluator robustness, annotation, and context interpretation. Peripheral studies contribute only limited transfer claims. These links explain the derivation of the framework. Within this corpus, no single framework combines comment quality, context quality, preservation, coverage, cost, workflow, and evaluator validity. This gap motivates the integrated framework presented in the next section.
 
 <!-- table: caption="Evidence trace for the proposed framework layers." label="tab:framework-traceability" -->
 | Framework component | Direct evidence | Supporting or transfer evidence | Qualification or tension |

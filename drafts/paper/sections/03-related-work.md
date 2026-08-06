@@ -2,7 +2,7 @@
 
 Research relevant to LLM-based code review spans review automation, benchmarks, grounding and context, human-centered evaluation, mitigation, and evaluator validity. Figure \ref{fig:related-work-coverage-map} shows the concerns emphasized by each stream and the limited overlap among them.
 
-<!-- figure: path="figures/related-work-coverage-map.tex" caption="Interpretive related-work coverage map for comment-level mitigation evaluation. Marks summarize the authors' qualitative reading of each literature stream: dark indicates a primary concern, medium a recurring secondary concern, and light limited or incidental treatment. They are not frequency estimates or independently coded scores. The final row shows the scope integrated in this review." label="fig:related-work-coverage-map" -->
+<!-- figure: path="figures/related-work-coverage-map.tex" caption="Interpretive coverage map of related literature. Dark marks indicate a primary concern, medium marks a recurring concern, and light marks limited treatment. The marks are qualitative, not frequency estimates or independently coded scores." label="fig:related-work-coverage-map" -->
 
 ## Review Automation and Evaluation
 
@@ -26,8 +26,8 @@ Generated feedback can fail through unsupported or incorrect claims, misplaced d
 
 Mitigation can alter data, context, generation, or post-generation handling. Representative approaches include data curation, retrieval, specification or tool grounding, fine-tuning, critics, filtering, rewriting, and human referral [@p08_liu2025_too_noisy; @p09_ren2025_hydra_reviewer; @p11_zhang2025_laura; @p12_wang2025_sgcr; @p22_jaoua2025_static_analyzers; @p24_bensghaier2025_reward_models; @p35_mcaleese2024_llm_critics]. Their evaluations use different outcomes and seldom provide directly comparable accounts of what an intervention retains, removes, or costs.
 
-## Evaluator Validity
+## LLM-as-a-Judge Validity
 
-LLM-based judges offer scalable structured assessment [@m04_zheng2023_llm_judge; @p29_wang2025_human_evaluators; @p31_jiang2025_codejudgebench; @p33_he2025_llmjudge_se; @p36_li2024_llms_as_judges]. Their decisions can vary with task, prompt, response order, source model, verbosity, and adversarial context [@p30_weyssow2025_codeultrafeedback; @p32_zhao2026_bias_loop; @p63_mitropoulos2026_confirmation_bias; @p64_thornton2026_adversarial_comments]. This literature contributes methods for calibration, repeated-run analysis, perturbation testing, and comparison with human judgments.
+LLM-as-a-Judge methods offer scalable structured assessment [@m04_zheng2023_llm_judge; @p29_wang2025_human_evaluators; @p31_jiang2025_codejudgebench; @p33_he2025_llmjudge_se; @p36_li2024_llms_as_judges]. Their decisions can vary with task, prompt, response order, source model, verbosity, and adversarial context [@p30_weyssow2025_codeultrafeedback; @p32_zhao2026_bias_loop; @p63_mitropoulos2026_confirmation_bias; @p64_thornton2026_adversarial_comments]. This literature contributes methods for calibration, repeated-run analysis, perturbation testing, and comparison with human judgments.
 
 Taken together, prior work supplies rich but fragmented evidence about comments, inputs, workflows, interventions, and evaluators. This review organizes that evidence around failure diagnosis and the consequences of mitigation, providing the basis for the taxonomy and framework developed below.
