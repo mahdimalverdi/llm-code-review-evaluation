@@ -2,7 +2,7 @@
 
 ## Review Design
 
-We conducted a targeted structured literature review inspired by software-engineering SLR guidance. The review follows question definition, study identification, eligibility assessment, quality appraisal, data extraction, thematic synthesis, and reporting. Taxonomy construction and reliability planning additionally draw on established taxonomy and agreement methods [@m01_nickerson2013_taxonomy; @m02_cohen1960_kappa; @m03_krippendorff2018_content_analysis]. The work is not presented as a fully reproducible SLR because the original database-specific search dates, queries, retrieval counts, deduplication counts, and title/abstract screening history were not preserved.
+We conducted a targeted structured literature review with an auditable supplementary search amendment. The review follows question definition, eligibility assessment, quality appraisal, data extraction, thematic synthesis, and reporting, drawing on software-engineering SLR guidance without claiming a reproducible search for the historical baseline. Taxonomy construction and reliability planning additionally draw on established taxonomy and agreement methods [@m01_nickerson2013_taxonomy; @m02_cohen1960_kappa; @m03_krippendorff2018_content_analysis].
 
 ### Goal definition
 
@@ -34,7 +34,7 @@ For each taxonomy category, annotation decision, and framework layer, we record 
 
 The review protocol identified ACM Digital Library, IEEE Xplore, ScienceDirect, SpringerLink, arXiv, Semantic Scholar, Google Scholar, and Scopus where available, with a primary focus on work from 2021 onward and earlier foundational modern-code-review studies. Query families covered LLM code review, automated review, generated comments, evaluation metrics, hallucination and grounding, context-aware review, LLM-as-a-Judge, and human--AI review.
 
-The synthesis corpus contains 121 unique full-text studies. It combines a 71-study baseline with 50 unique core studies admitted through a dated supplementary amendment. The baseline cannot be treated as the output of a reproducible search flow because its original retrieval and exclusion counts are unavailable. We therefore report only verified corpus and amendment counts and do not infer missing historical identification-stage counts.
+The synthesis corpus contains 121 unique full-text studies. It combines a 71-study historical baseline with 50 unique core studies admitted through a dated supplementary amendment. The historical set is treated as an assembled corpus, not as the output of a reproducible search flow. We report verified corpus and amendment counts and leave unavailable historical identification-stage counts as `NR`.
 
 ### Dated supplementary amendment and corpus closure
 

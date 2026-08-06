@@ -1,5 +1,7 @@
 # Results
 
+The results characterize evidence coverage and reporting practice within the 121-study corpus. Study counts indicate that a topic was coded in the available full text; they do not rank mitigation strategies or estimate their comparative effects.
+
 ## RQ1: Problematic-comment Types
 
 The literature does not support treating all weak comments as hallucinations. Reported failures include unsupported or context-misaligned claims, incorrect technical claims, wrong location or cause, irrelevance, vagueness, non-actionability, invalid fixes, redundancy, low-value nitpicks, severity miscalibration, and context-dependent cases [@p02_tantithamthavorn2026_hallujudge; @p08_liu2025_too_noisy; @p19_nguyen2025_fine_grained_classification; @p21_peng2025_icodereviewer; @p35_mcaleese2024_llm_critics; @p58_jin2026_reliable_code_reviewers]. The synthesis further separates input/context failures, workflow failures, and evaluator failures because these require different remedies.

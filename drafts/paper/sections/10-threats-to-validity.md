@@ -2,7 +2,7 @@
 
 ## Search and Selection Validity
 
-The main limitation is the missing original search history. Although the initial protocol defined databases and query families, database-specific strings, dates, retrieval counts, deduplication counts, and excluded-record logs were not preserved. The 121-study corpus may therefore omit relevant work and may reflect convenience or snowballing effects. A separate directional analysis maps the 53 substantively extracted supporting-reserve packets to existing high-level themes, but 26 reserve candidates lack substantive extraction and the reserve is not suitable for the quantitative denominators. We mitigate overclaiming by reporting a targeted structured review, not a complete SLR, and by bounding gap claims to the reviewed corpus.
+The main limitation is the missing original search history. Although the initial protocol defined databases and query families, database-specific strings, dates, retrieval counts, deduplication counts, and excluded-record logs were not preserved. The 121-study corpus may therefore omit relevant work and may reflect convenience or snowballing effects. A separate directional analysis maps the 53 substantively extracted supporting-reserve packets to existing high-level themes, but 26 reserve candidates lack substantive extraction and the reserve is not suitable for the quantitative denominators. The dated supplementary amendment has an auditable record; the historical baseline does not. Gap claims are consequently bounded to the reviewed corpus.
 
 ## Extraction Reliability
 
@@ -22,4 +22,4 @@ The corpus contains preprints, surveys, and recent work whose metadata or peer-r
 
 ## Framework Validity
 
-The taxonomy, annotation protocol, and trade-off framework synthesize recurring evidence gaps; they are not validated deployment instruments. Future pilot annotation and controlled evaluation may merge, split, or revise categories and decision rules. The present claims concern the structure and incompleteness of reported evaluation, not the effectiveness of an unexecuted mitigation method.
+The framework is literature-derived and operationally specified, but not empirically validated. The taxonomy and annotation protocol share this limitation. Future pilot annotation and controlled evaluation may merge, split, or revise categories and decision rules. The present claims concern the structure and incompleteness of reported evaluation, not the effectiveness of an unexecuted mitigation method.

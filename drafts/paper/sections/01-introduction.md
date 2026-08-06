@@ -12,4 +12,4 @@ This review addresses five research questions and a separate traceability analys
 
 The review makes four contributions. It consolidates a taxonomy that distinguishes failures in comments from those in their inputs, workflow, or evaluation; separates commonly conflated quality constructs; maps mitigation to its intervention point and reported consequences; and derives an annotation protocol and framework connecting evidence to concrete handling decisions.
 
-The contribution is bounded by the available corpus. The original database-specific retrieval counts and screening history were not preserved. We therefore describe the work as a targeted structured literature review and avoid claiming exhaustive coverage. A reproducible database search is required before upgrading the report to a formal SLR.
+The contribution is bounded by the available corpus. We describe the work as a targeted structured literature review with an auditable supplementary search amendment. The original database-specific retrieval counts and screening history for the 71-study historical baseline were not preserved, and the report does not claim exhaustive coverage.
