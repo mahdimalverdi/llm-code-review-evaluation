@@ -43,7 +43,7 @@ Mitigations intervene before generation, during generation, after generation, or
 
 Filtering/suppression is the most frequently coded family (30 studies), followed by human escalation (27), fine-tuning (20), verification/critics (15), retrieval/RAG (14), and prompting (11). Benchmark/rubric interventions appear in ten studies. Less frequent families include data cleaning, reward optimization, rewriting, static-analysis hybrids, multi-agent generation, specification grounding, and routing. Frequency does not establish effectiveness because the studies use different artifacts and outcomes.
 
-<!-- table: caption="Most frequently coded mitigation families." label="tab:rq3-mitigation" longtable="false" -->
+<!-- table: caption="Most frequently coded mitigation families." label="tab:rq3-mitigation" longtable="false" first-column-width="2.75in" -->
 | Mitigation family | Studies with coded evidence |
 |---|---:|
 | Filtering or suppression | 30 |

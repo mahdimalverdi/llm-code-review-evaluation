@@ -10,7 +10,7 @@ All records pass a uniform structural validator, but extraction was not independ
 
 ## Construct Validity
 
-Correctness, grounding, relevance, usefulness, actionability, acceptance, coverage, and cost are defined differently across studies. We avoid pooling incompatible measures and distinguish evaluation dimensions from failure categories and workflow decisions. The resulting taxonomy is literature-derived but not yet empirically validated through annotation.
+Correctness, grounding, relevance, usefulness, actionability, acceptance, coverage, and cost are defined differently across studies. We avoid pooling incompatible measures and distinguish evaluation dimensions from failure categories and workflow decisions. This preserves the reported constructs, although it limits quantitative comparison across studies.
 
 ## Evidence-transfer Validity
 

@@ -2,7 +2,7 @@
 
 A generated review comment can fail in several different ways. The comment may be wrong, the available context may be incomplete, the evaluation instance may be unjudgeable, or the evaluator may be unreliable. These failures should not be treated as the same problem. This section separates the concepts used in the review synthesis, taxonomy, annotation protocol, and evaluation framework.
 
-The key distinction is between the comment, the context around it, the dataset instance used to evaluate it, the evaluator that judges it, and the workflow decision that follows. Keeping these layers separate makes the later trade-off analysis more precise: a mitigation strategy may reduce bad comments, but it may also remove useful signals, escalate too many cases, or hide a weakness in the evaluation data.
+The key distinction is between the comment, its context, the evaluation instance, the evaluator, and the subsequent workflow action. These objects can fail independently and therefore require separate definitions.
 
 ## Key Concepts
 
@@ -12,13 +12,13 @@ In this paper, a generated review comment is natural-language review feedback pr
 
 Context quality asks whether we have enough relevant and coherent information to judge a comment fairly. A warning about a missing null check, for example, may look unsupported in the local diff but become reasonable once surrounding code, a runtime assumption, or a project convention is considered. The needed context may be local code, surrounding code, documentation, issue discussion, review history, runtime assumptions, or retrieved evidence.
 
-A mitigation decision is the action taken before a generated comment reaches the user: show the comment, suppress it, rewrite it, or escalate it for human review. These decisions create trade-offs because reducing noisy or unsupported comments can also remove weak but useful review signals.
+A mitigation decision is an action taken before generated feedback reaches the user. The framework later specifies the available actions and the evidence needed to select among them.
 
 Dataset validity asks whether the evaluation instance itself supports a fair judgment. Sometimes the problem is not the generated comment at all, but the target used to evaluate it. For example, if a mined reference comment is unclear from the provided context or linked to the wrong code, the model may look wrong even though the evaluation instance is the real problem. Prior code-review automation work shows that such cases occur in mined review data [@p52_tufano2021_automating_code_review_activities; @p53_tufano2024_code_review_automation_strengths_weaknesses].
 
 Evaluator validity asks whether the evaluation method measures the intended dimension reliably. Human evaluators can disagree or apply labels inconsistently. LLM-based evaluators add another source of risk because their judgments can change with the prompt, answer order, verbosity, model choice, or task framing [@m04_zheng2023_llm_judge; @p29_wang2025_human_evaluators; @p31_jiang2025_codejudgebench; @p32_zhao2026_bias_loop; @p33_he2025_llmjudge_se].
 
-The point of these distinctions is practical: they prevent us from blaming the model for every evaluation failure. Sometimes the model is wrong; sometimes the context, dataset, decision policy, or evaluator is the weaker link. Figure \ref{fig:evaluation-pipeline-concepts} summarizes how these concepts interact across the evaluation pipeline.
+Figure \ref{fig:evaluation-pipeline-concepts} locates these concepts in the evaluation pipeline. Its purpose is diagnostic: an observed error in the final score may originate in the generated comment, but it may also originate upstream in the instance or downstream in the judging procedure.
 
 <!-- figure: path="figures/evaluation-pipeline-concepts.png" caption="Conceptual pipeline for evaluating LLM-generated code review comments. The generated comment is only one part of the evaluation problem: dataset validity, context quality, evaluator validity, and mitigation trade-offs can each affect the final decision." label="fig:evaluation-pipeline-concepts" width="0.95\linewidth" -->
 
@@ -28,16 +28,10 @@ Generated review comments are difficult to evaluate because there is rarely a si
 
 There is also a quieter failure mode: a generated comment can sound fluent and relevant while having no support in the available context. It may infer a bug that is not present, assume a missing condition that is actually handled elsewhere, propose a fix that does not apply, or point the reviewer to the wrong location. Such comments can consume reviewer attention and reduce trust in the assistant [@p02_tantithamthavorn2026_hallujudge; @p35_mcaleese2024_llm_critics].
 
-A second trap is to treat usefulness and correctness as the same thing. A correct comment can be too vague, too minor, or too hard to act on. A partially grounded comment may still be useful if it highlights a real uncertainty that should be checked. A comment may be unsuitable to show directly but useful after rewriting, routing, or escalation to a human reviewer. These cases are difficult to capture with binary labels such as correct/incorrect or accepted/rejected [@p10_sun2025_bitsai_cr; @p19_nguyen2025_fine_grained_classification; @p39_bosu2015_useful_reviews; @p53_tufano2024_code_review_automation_strengths_weaknesses].
+Usefulness and correctness describe different properties. Correct feedback can be too vague or minor to assist a reviewer, whereas an uncertain observation can still prompt a worthwhile check. Binary correct/incorrect or accepted/rejected labels obscure these cases [@p10_sun2025_bitsai_cr; @p19_nguyen2025_fine_grained_classification; @p39_bosu2015_useful_reviews; @p53_tufano2024_code_review_automation_strengths_weaknesses].
 
 A third difficulty comes from the evaluation instance itself. In a generation failure, the model produces a poor comment for an otherwise valid instance. In a dataset-validity problem, the instance itself may not support a reliable judgment. Prior code-review automation work shows that mined review data can include comments that are unclear from the available context, comments that do not ask for a change, ignored comments, and comments linked to the wrong code [@p52_tufano2021_automating_code_review_activities; @p53_tufano2024_code_review_automation_strengths_weaknesses]. Such cases can distort both training and evaluation because the target itself may not represent a valid or judgeable review action.
 
-Finally, the evaluator can become part of the problem. Manual evaluation is expensive, but LLM-as-a-Judge is not a neutral replacement for human judgment. LLM-based evaluators can scale assessment and reduce manual effort, yet their judgments can depend on prompts, answer order, model choice, verbosity, and task framing. For this reason, LLM-as-a-Judge should be treated as a measurement instrument that needs calibration and validation, not as ground truth [@m04_zheng2023_llm_judge; @p29_wang2025_human_evaluators; @p31_jiang2025_codejudgebench; @p32_zhao2026_bias_loop; @p33_he2025_llmjudge_se].
+Evaluator behavior introduces a fourth difficulty. LLM-based assessment reduces some manual effort, but reported judgments vary with prompts, answer order, model choice, verbosity, and task framing [@m04_zheng2023_llm_judge; @p29_wang2025_human_evaluators; @p31_jiang2025_codejudgebench; @p32_zhao2026_bias_loop; @p33_he2025_llmjudge_se]. These sensitivities become part of construct validity whenever judge outputs support a performance claim.
 
-## Evaluation Trade-Offs
-
-Mitigation changes several outcomes simultaneously. Filtering may improve precision at the expense of useful but uncertain feedback; retrieval may strengthen grounding while adding latency and context noise; and context gates may reduce unreliable automation while increasing human referral and reducing coverage.
-
-Evaluation should therefore ask three linked questions. First, is the instance valid and judgeable under the available context? Second, is the generated comment useful enough to preserve in some form? Third, what mitigation decision should follow: show, suppress, rewrite, or escalate? These questions connect error reduction to useful-feedback preservation, cost, workflow impact, dataset validity, and evaluator validity.
-
-This framing leads to the two core artifacts developed in the next sections: an operational taxonomy of problematic generated review comments and a trade-off-aware framework for evaluating mitigation decisions.
+These distinctions provide the vocabulary used by the taxonomy and the evaluation framework developed later in the paper.

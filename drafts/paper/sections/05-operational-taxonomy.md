@@ -4,8 +4,6 @@ The reviewed literature requires labels that distinguish different kinds of prob
 
 The taxonomy supports annotation, comparison across mitigation strategies, and analysis of handling decisions. It is intentionally smaller than the full failure inventory: specialized and context-specific details are represented as modifiers unless they explain the main reason that feedback should not be shown directly.
 
-The taxonomy is a protocol-level measurement proposal, not an empirically validated instrument. Future work should test it through pilot annotation, agreement analysis, and adjudication of ambiguous cases, reporting any labels added, merged, removed, demoted, or clarified.
-
 ## Design Principles
 
 The taxonomy separates failure types, quality dimensions, and handling decisions. For example, grounding is a dimension, an unsupported claim is a failure, and withholding the comment is a possible decision. It also retains uncertain cases in which feedback is potentially useful but lacks evidence or requires revision. Applying the same labels across strategies permits paired comparison without assuming that one failure always implies one action. Detailed inclusion rules and counterexamples belong in the accompanying annotation guideline rather than the main argument.
@@ -97,4 +95,4 @@ This mapping also distinguishes successful noise removal from recoverable feedba
 
 ## Reliability and Empirical Use
 
-The taxonomy can describe baseline failures, compare strategies by failure type, and identify useful feedback that mitigation loses. It remains a literature-derived proposal rather than a validated instrument. Empirical use requires pilot annotation and agreement reporting for the core label, usefulness, actionability, context quality, and handling decision. Recurrent disagreements should inform revisions to both the labels and their boundaries.
+The taxonomy can describe baseline failures, compare strategies by failure type, and identify useful feedback that mitigation loses. Pilot annotation should report agreement for the core label, usefulness, actionability, context quality, and handling decision; recurrent disagreements should guide revisions to label boundaries.

@@ -1,6 +1,6 @@
 # Trade-Off-Aware Evaluation Framework
 
-The synthesis indicates that mitigation cannot be evaluated only by the number of comments it removes. Interventions may suppress useful signals, reduce coverage, change intent, or add latency and reviewer effort [@p04_kumar2026_swe_prbench; @p07_olewicki2024_revmate; @p10_sun2025_bitsai_cr; @p18_bensghaier2025_curated_reviews; @p35_mcaleese2024_llm_critics; @p65_ameen2026_qasecclaw]. The framework below is a proposal for future evaluation rather than an executed comparison.
+Mitigation changes the review stream. A filter decides which candidate comments disappear; retrieval changes the evidence available to the generator; verification adds another judgment; and referral transfers work to a reviewer. Studies of these mechanisms report losses in coverage, shifts in intent, and additional latency or effort [@p04_kumar2026_swe_prbench; @p07_olewicki2024_revmate; @p10_sun2025_bitsai_cr; @p18_bensghaier2025_curated_reviews; @p35_mcaleese2024_llm_critics; @p65_ameen2026_qasecclaw].
 
 The framework connects six layers: input and context quality, comment quality, failure type, handling decision, preservation and coverage, and cost and evaluator validity. Together, they connect quality assessment to concrete workflow decisions.
 
@@ -16,25 +16,19 @@ The framework connects six layers: input and context quality, comment quality, f
 | Preservation and coverage | What useful feedback or review coverage is preserved or lost? | useful comments retained, useful comments wrongly suppressed, coverage retained |
 | Cost and evaluator validity | What effort, computation, latency, or measurement risk is introduced? | model calls, human escalation, annotation agreement, judge robustness |
 
-Applying the same layers across strategies makes their consequences comparable even when they address different failures.
+The table is meant to be read from left to right for a particular review instance. It begins with the evidence available to the system and ends with the reliability and cost of the resulting assessment.
 
 ## Layer 1: Input and Context Quality
 
-Context quality determines whether a generated comment can be judged and whether a mitigation strategy has enough evidence to act. Context quality includes relevance, completeness, specificity, consistency, freshness, reviewability, provenance, behavioral evidence, attention load, and cost.
-
-A context-quality gate can use this layer before generation or before display. If the available context is too weak, the system may skip automatic review, request more context, or escalate the case. This is not a failure of the model alone; it may be a limitation of the evaluation instance. Treating context as an evaluation object helps separate unsupported model output from insufficient or inconsistent input evidence.
+Context quality covers relevance, completeness, specificity, consistency, freshness, reviewability, provenance, behavioral evidence, attention load, and cost. Consider a warning about an API contract that is absent from the diff. The warning is difficult to judge until the contract is retrieved; contradictory versions of that contract make the instance harder still. A context-quality gate can detect such cases before generation or display and route them for more evidence or human review.
 
 ## Layer 2: Comment Quality
 
-Comment quality spans technical correctness, grounding, relevance, specificity, explanation quality, usefulness, and actionability rather than a single correctness score.
-
-These dimensions can disagree. A comment can be relevant but ungrounded, grounded but low-value, technically plausible but non-actionable, or useful but too uncertain to show directly. The framework therefore avoids a single pass/fail judgment and instead maps quality dimensions to mitigation decisions.
+Comment quality covers technical correctness, grounding, relevance, specificity, explanation quality, usefulness, and actionability. These labels answer different questions about the same text. A precise comment about the changed line, for example, can still rest on a false account of runtime behavior. In the proposed annotation record, it would receive high localization and specificity ratings alongside a low correctness rating.
 
 ## Layer 3: Failure Type
 
-The taxonomy labels explain why a comment is problematic. The failure type matters because different failures require different interventions. Unsupported claims may be caught by verification, context-dependent cases may be routed by a context-quality gate, non-actionable comments may be improved by rewriting, and low-value comments may be suppressed or aggregated.
-
-This layer is the bridge between annotation and strategy comparison. It allows the study to report not only that a strategy reduces problematic comments, but which categories it reduces and which categories remain.
+Failure labels supply a diagnosis that quality ratings alone cannot provide. Verification is relevant to an unsupported claim, whereas vague wording points toward revision and a misplaced diagnosis requires correction of its target or cause. Strategy comparisons can then show the distribution of affected failure types instead of reporting only an overall change in problematic comments.
 
 ## Layer 4: Mitigation Decision
 
@@ -45,24 +39,22 @@ The framework uses four mitigation decisions.
 - `rewrite`: the comment contains a useful signal but needs clarification, grounding, softening, or actionability improvements.
 - `escalate`: the comment may matter but requires human judgment or additional context.
 
-These decisions are intentionally more expressive than binary accept/reject labels. They capture cases where a comment should not be shown as-is but should not be discarded either.
+The middle two decisions preserve an important distinction. Some comments contain no defensible review signal and can be withheld; others contain a concern worth retaining, although the original wording is unsuitable for display.
 
 ## Layer 5: Preservation, Coverage, and Cost
 
-This layer measures the trade-off introduced by each mitigation strategy. Error reduction is measured by the rate of problematic comments removed or corrected. Preservation is measured by useful comments retained, useful comments wrongly suppressed, and useful-but-not-directly-acceptable comments rewritten rather than removed. Coverage is measured by the proportion of review instances that still receive useful automatic feedback after filtering, gating, or escalation.
+Preservation is observed in comments that remain useful after intervention and in useful candidates that are wrongly withheld. Coverage uses a different denominator: the review issues or changes for which the system still provides useful feedback. Keeping the underlying candidate identifiers makes both quantities recoverable after filtering, gating, or referral.
 
-Cost includes additional model calls, verifier calls, retrieval operations, latency proxies, human escalation, and annotation or verification effort. Cost should be reported even when it is approximate because a strategy that improves quality at excessive cost may not be practical in real review workflows.
+Model and verifier calls, retrieval operations, latency, human referral, and annotation effort constitute the accompanying cost record. Exact monetary estimates will not always be available. Counts and latency proxies still reveal whether an apparent quality gain depends on substantially more computation or reviewer attention.
 
 ## Layer 6: Evaluator Validity
 
 The final layer concerns the reliability of the measurement itself. Human annotators may disagree on usefulness, actionability, or severity. LLM-based judges may be sensitive to prompts, output order, model choice, and verbosity. Evaluator validity is therefore part of the evaluation, not an implementation detail.
 
-An empirical study should report inter-annotator agreement and avoid treating LLM-as-a-Judge outputs as ground truth without validation. If LLM-based judges are used, their role should be explicit: they may support screening or provide auxiliary evidence, but primary mitigation-quality claims should be grounded in a validated annotation protocol.
+An empirical study should report inter-annotator agreement and state what role, if any, an LLM judge plays. Such a judge may support screening or provide auxiliary evidence; claims about mitigation quality require comparison with an annotation protocol and its known limitations.
 
 ## Empirical Use
 
-A strategy can be summarized by a trade-off profile: failures reduced, useful comments preserved or wrongly withheld, coverage retained, comments revised or escalated, and added cost.
+Empirical use starts with paired records for the unmitigated and mitigated outputs. The comparison retains the failure diagnosis, handling decision, issue coverage, and resource fields. This makes a familiar production result—higher precision after aggressive filtering—inspectable: researchers can trace whether the gain came from removing unsupported comments, discarding low-value comments, or losing difficult but useful concerns. A second strategy may reach a similar displayed-comment precision through verification and referral, yet impose a different reviewer workload.
 
-Such profiles allow comparison without assuming that one strategy is universally best. Prompting may improve actionability while leaving unsupported claims; verification may remove those claims while also withholding weak but useful signals; context gates may improve reliability at the expense of coverage. Hybrid strategies can reduce several risks while adding cost and escalation burden.
-
-These examples are hypotheses derived from the review, not empirical findings of the present study. Future work should test them and report any framework dimensions that prove unmeasurable or require revision.
+We have not executed that comparison in the present review. A future study will need to determine which fields annotators can apply reliably and which resource measures can be recovered from operational logs.
