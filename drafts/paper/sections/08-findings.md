@@ -1,6 +1,6 @@
 # Results
 
-The results describe evidence coverage and reporting within the 121-study corpus. Unless stated otherwise, each count is the number of included studies with coded evidence for a field. These study counts do not estimate comment-level prevalence or comparative effects. Missing reporting is not interpreted as a zero effect.
+The results describe evidence coverage and reporting within the 121-study corpus. Unless stated otherwise, each count is the number of included studies with coded evidence for a field. These study counts do not estimate comment-level prevalence or comparative effects. The current RQ4 fields identify broad reporting availability and do not yet separate quantitative measurement, qualitative evaluation, limitation mentions, and review inference at study level. The corresponding counts are therefore described as mentions or coded evidence, not as measurement frequencies. Missing reporting is not interpreted as a zero effect.
 
 ## RQ1: Problematic-comment Types
 
@@ -62,14 +62,14 @@ Filtering/suppression is the most frequently coded family (30 studies), followed
 
 The strongest recurring gap is asymmetric reporting. Studies commonly report improved quality, precision, acceptance, issue coverage, or reduced false positives, but less often report useful comments wrongly removed, retained review coverage, escalation burden, or end-to-end cost. Evidence nevertheless shows that more context can degrade performance, filtering can favor precision over recall, reformulation can change intent, and verification can increase routing and model-call cost [@p04_kumar2026_swe_prbench; @p10_sun2025_bitsai_cr; @p18_bensghaier2025_curated_reviews; @p65_ameen2026_qasecclaw]. The evidence therefore supports reporting error reduction and preservation as separate outcomes.
 
-The reporting asymmetry is visible in the extracted counts. Preservation-related evidence appears in 45 records, coverage in 46, human-escalation evidence in 27, and cost evidence in 34. These fields often appear as design implications, limitations, or partial measurements rather than complete deployment outcomes. The counts show where a trade-off is addressed, not whether it was measured with a common protocol or resolved favorably.
+The reporting asymmetry is visible in the extracted counts. Preservation-related evidence appears in 45 records, coverage in 46, human-escalation evidence in 27, and cost evidence in 34. These broad fields combine design implications, limitations, qualitative assessments, and partial or quantitative measurements. The present extraction therefore cannot support separate counts for measured and merely mentioned outcomes. The counts show where a trade-off is addressed, not whether it was measured with a common protocol or resolved favorably.
 
 Figure \ref{fig:rq4-tradeoff-evidence} shows the imbalance across these four reporting fields.
 
-<!-- figure: path="figures/rq4_tradeoff_evidence.tex" caption="Availability of reported trade-off evidence in the 121-study corpus. Values are counts of included studies with coded evidence for each field; they are not effect sizes, success rates, or estimates of intervention effectiveness." label="fig:rq4-tradeoff-evidence" -->
+<!-- figure: path="figures/rq4_tradeoff_evidence.tex" caption="Availability of broadly coded trade-off evidence in the 121-study corpus. Values combine mentions and evaluations; they are not measurement frequencies, effect sizes, success rates, or estimates of intervention effectiveness." label="fig:rq4-tradeoff-evidence" -->
 
-<!-- table: caption="Availability of trade-off evidence in the 121 included studies." label="tab:rq4-reporting" -->
-| Trade-off field | Reported | No extractable evidence identified | Unclear or not applicable |
+<!-- table: caption="Availability of broadly coded trade-off evidence in the 121 included studies." label="tab:rq4-reporting" -->
+| Trade-off field | Mentioned or evaluated | No extractable evidence identified | Unclear or not applicable |
 |---|---:|---:|---:|
 | Useful-feedback preservation | 45 | 76 | 0 |
 | Review or issue coverage | 46 | 75 | 0 |
@@ -90,7 +90,7 @@ The separate analysis of 53 substantively extracted supporting-reserve records d
 
 ## Derivation and Traceability of the Proposed Framework
 
-Core studies inform the failure taxonomy, evaluation dimensions, benchmark limitations, mitigation families, and workflow outcomes. Supporting studies inform human-review value, evaluator robustness, annotation, and context interpretation. Peripheral studies contribute only limited transfer claims. These links explain the derivation of the framework. Within this corpus, no single framework combines comment quality, context quality, preservation, coverage, cost, workflow, and evaluator validity. This gap motivates the integrated framework presented in the next section.
+Core studies inform the failure taxonomy, evaluation dimensions, benchmark limitations, mitigation families, and workflow outcomes. Supporting studies inform human-review value, evaluator robustness, annotation, and context interpretation. Peripheral studies contribute only limited transfer claims. These links explain the derivation of the framework. Within this corpus, no single framework combines comment quality, context quality, preservation, coverage, cost, workflow, and evaluator validity. This gap motivates the taxonomy and integrated framework presented in the subsequent sections.
 
 <!-- table: caption="Evidence trace for the proposed framework layers." label="tab:framework-traceability" -->
 | Framework component | Direct evidence | Supporting or transfer evidence | Qualification or tension |

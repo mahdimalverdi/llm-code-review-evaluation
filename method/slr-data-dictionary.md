@@ -1,6 +1,6 @@
 # SLR Data Dictionary
 
-This dictionary defines the study-level fields used to answer RQ1--RQ5 and the separate framework-traceability objective. One row in `data/slr-extraction.csv` represents one authoritative P01--P121 record. Multi-valued fields use semicolon-separated controlled labels. `NR` means that the authoritative note lacks the expected field or does not contain enough evidence to determine applicability; it does not mean zero or absence in the underlying study. For RQ4 reporting fields, `no` means that the standardized extraction identified no measurement or reporting of the outcome in the available full text. Publication-facing tables label these states as `Unclear or not applicable` and `No extractable evidence identified`, respectively.
+This dictionary defines the study-level fields used to answer RQ1--RQ5 and the separate framework-traceability objective. One row in `data/slr-extraction.csv` represents one authoritative P01--P121 record. Multi-valued fields use semicolon-separated controlled labels. `NR` means that the authoritative note lacks the expected field or does not contain enough evidence to determine applicability; it does not mean zero or absence in the underlying study. For RQ4 reporting fields, `no` means that the standardized extraction identified no measurement or reporting of the outcome in the available full text. Publication-facing tables label these states as `Unclear or not applicable` and `No extractable evidence identified`, respectively. The complete Q1–Q12 rubric is in `method/quality-appraisal-rubric.md`.
 
 | ID | CSV field | Meaning | Review use |
 |---|---|---|---|
@@ -33,6 +33,20 @@ This dictionary defines the study-level fields used to answer RQ1--RQ5 and the s
 | F30 | `source_note` | Authoritative Markdown record | Auditability |
 
 ## Controlled Coding Rules
+
+### Evidence-status levels for RQ4
+
+RQ4 records must distinguish the strength of the evidence rather than treating every mention as a measurement:
+
+| Status | Use when |
+|---|---|
+| `quantitative_measurement` | The outcome is measured with a numerical value, defined denominator, unit, or comparative result. |
+| `qualitative_evaluation` | The outcome is assessed through interviews, open coding, examples, or structured qualitative judgment without a quantitative estimate. |
+| `limitation_or_design_mention` | The paper mentions cost, coverage, preservation, escalation, or a related consequence as a limitation, motivation, or design consideration but does not evaluate it. |
+| `review_inference` | The status is inferred by this review from another result or design; it must not be counted as study-reported evidence. |
+| `not_reported` | No usable evidence was found in the available full text. |
+
+Only the first two statuses count as measured/evaluated evidence. Limitation mentions and review inferences are reported separately.
 
 The extraction script searches only the authoritative numbered sections of each note. It uses conservative phrase families and records `NR` when no phrase family is found. A positive code means that the note contains evidence for the category; it does not mean that the paper evaluated the category as a primary outcome.
 

@@ -22,6 +22,7 @@ This manifest identifies the repository artifacts used to audit the 121-study sy
 ## Coding and Derived Results
 
 - `method/slr-data-dictionary.md`: field definitions and controlled labels.
+- `method/quality-appraisal-rubric.md`: auditable Q1–Q12 definitions, scoring rules, and interpretation limits.
 - `method/slr-screening-log.md`: verified corpus accounting and unavailable historical fields.
 - `data/slr-summary.md`: generated demographics and RQ-level counts.
 - `data/search/supporting-reserve-sensitivity.csv`: supporting-reserve sensitivity mapping.
@@ -38,6 +39,8 @@ python3 scripts/build_latex.py
 ```
 
 The first command rebuilds the study-level dataset and summary tables from the canonical notes. The second rebuilds `build/paper.tex` from the manuscript sections. These checks reproduce the structured corpus outputs; they do not supply independent reviewer agreement.
+
+The canonical notes contain criterion-level Q1–Q12 scores and evidence notes for each study; `data/slr-extraction.csv` currently exposes only their totals. The current extraction dataset also contains broad RQ4 reporting-availability fields rather than a completed study-by-study evidence-status field distinguishing quantitative measurement, qualitative evaluation, limitation/design mention, and review inference. Both publication-facing exports require an additional deterministic projection or manual audit before they are presented as standalone supplementary tables.
 
 ## Known Limits
 

@@ -45,12 +45,12 @@ The corpus is recent: 95 of 121 records (78.5%) are dated 2025 or 2026. This con
 
 The bibliography classifies 44 records as conference papers, 25 as journal articles, and 52 as preprints or other publication forms. Publication type is descriptive and is not used as an inclusion or quality criterion.
 
-## Reporting-quality Profile
+## Appraisal Profile
 
-All 121 records have Q1--Q12 scores. The mean is 19.90/24, with a range from 12 to 24. Mean quality differs by evidence tier because peripheral studies are less aligned with the review-specific instrument, not necessarily because their underlying research is methodologically weaker.
+All 121 records have Q1--Q12 scores. The mean is 19.90/24, with a range from 12 to 24. This total combines reporting transparency, methodological information, trade-off reporting, and direct relevance to the review. It must therefore not be interpreted as a general measure of methodological quality. Mean scores differ by evidence tier partly because Q12 rewards direct support for this review, not necessarily because adjacent studies use weaker methods.
 
-<!-- table: caption="Quality score by evidence tier." label="tab:quality-tier" -->
-| Evidence tier | Studies | Mean quality score |
+<!-- table: caption="Mean appraisal score by evidence tier. The score combines reporting and review-specific relevance and is not a general study-quality measure." label="tab:quality-tier" -->
+| Evidence tier | Studies | Mean appraisal score |
 |---|---:|---:|
 | Core | 91 | 20.57/24 |
 | Supporting | 24 | 18.67/24 |
@@ -71,7 +71,7 @@ We repeated the RQ4 reporting-availability counts for prespecified corpus subset
 
 ## Evidence Weighting
 
-Quality score and evidence tier are used together. A supporting or peripheral study is not promoted to direct evidence because it has a high quality score, and a direct study is not excluded solely because some reporting criteria are weak. Where a paper does not report useful-feedback preservation, escalation, or cost, the absence is coded as missing evidence rather than interpreted as zero impact.
+Appraisal score and evidence tier are used together. A supporting or peripheral study is not promoted to direct evidence because it has a high appraisal score, and a direct study is not excluded solely because some reporting criteria are weak. Where a paper does not report useful-feedback preservation, escalation, or cost, the absence is coded as missing evidence rather than interpreted as zero impact.
 
 ## Traceability
 
